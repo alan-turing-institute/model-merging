@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Merging — Results Slides</title>
+<style>
+  :root {
+    --ink-900: #12151b; --ink-700: #454e58; --ink-500: #6b7480;
+    --slate-50: #f4f5f7; --slate-100: #eceef1; --slate-200: #dde1e6;
+    --paper: #fcfcfb;
+    --copper-600: #a85a1e; --copper-500: #b8611f;
+    --good-600: #2f7a55; --good-100: #e1efe7;
+    --crit-600: #a63a3a; --crit-100: #f4e3e1;
+    --border: var(--slate-200);
+    --grid: #e1e0d9;
+    --font-display: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink-900: #eceef1; --ink-700: #c3c9d1; --ink-500: #8f97a3;
+      --slate-50: #14171d; --slate-100: #1a1e25; --slate-200: #262b34;
+      --paper: #14171d;
+      --copper-600: #e39a5c; --copper-500: #d98a47;
+      --good-600: #5cbb8a; --good-100: #16261e;
+      --crit-600: #e08585; --crit-100: #2a1818;
+      --border: var(--slate-200);
+      --grid: #2c2c2a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink-900: #eceef1; --ink-700: #c3c9d1; --ink-500: #8f97a3;
+    --slate-50: #14171d; --slate-100: #1a1e25; --slate-200: #262b34;
+    --paper: #14171d; --copper-600: #e39a5c; --copper-500: #d98a47;
+    --good-600: #5cbb8a; --good-100: #16261e; --crit-600: #e08585; --crit-100: #2a1818;
+    --border: var(--slate-200); --grid: #2c2c2a;
+  }
+  :root[data-theme="light"] {
+    --ink-900: #12151b; --ink-700: #454e58; --ink-500: #6b7480;
+    --slate-50: #f4f5f7; --slate-100: #eceef1; --slate-200: #dde1e6;
+    --paper: #fcfcfb; --copper-600: #a85a1e; --copper-500: #b8611f;
+    --good-600: #2f7a55; --good-100: #e1efe7; --crit-600: #a63a3a; --crit-100: #f4e3e1;
+    --border: var(--slate-200); --grid: #e1e0d9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { margin: 0; background: var(--slate-50); color: var(--ink-900); font-family: var(--font-body); }
+
+  .slide {
+    min-height: 100svh; padding: clamp(28px, 6vw, 72px) clamp(20px, 8vw, 96px);
+    display: flex; flex-direction: column; justify-content: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .slide-inner { max-width: 820px; width: 100%; margin: 0 auto; }
+
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--copper-600); font-weight: 600; margin-bottom: 18px;
+  }
+  h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0 0 14px; font-weight: 600; }
+  h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.1; }
+  h2 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.16; }
+  p { line-height: 1.6; color: var(--ink-700); max-width: 60ch; font-size: 16px; }
+  .lede { font-size: 17.5px; max-width: 56ch; }
+  .byline { font-family: var(--font-mono); font-size: 13px; color: var(--ink-500); margin-top: 22px; }
+  .byline b { color: var(--ink-700); font-weight: 600; }
+  .agenda { display: flex; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
+  .agenda a { font-family: var(--font-mono); font-size: 12px; color: var(--ink-700); text-decoration: none; border: 1px solid var(--border); border-radius: 999px; padding: 6px 16px; transition: border-color .15s, color .15s; }
+  .agenda a:hover { border-color: var(--copper-500); color: var(--copper-600); }
+
+  a { color: var(--copper-600); text-decoration: underline; text-decoration-color: var(--copper-500); text-underline-offset: 2px; }
+  a:hover { color: var(--copper-500); }
+  a:focus-visible { outline: 2px solid var(--copper-500); outline-offset: 2px; }
+
+  .chart-note { font-size: 14px; color: var(--ink-700); margin-top: 18px; max-width: 58ch; }
+  .chart-caption { font-family: var(--font-mono); font-size: 12px; color: var(--ink-500); margin-bottom: 6px; }
+
+  .table-wrap { overflow-x: auto; margin-top: 22px; }
+  table.data { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  table.data caption { caption-side: top; text-align: left; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-500); margin-bottom: 8px; }
+  table.data thead th {
+    text-align: right; font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-500); font-weight: 600; padding: 6px 10px; border-bottom: 1px solid var(--border);
+  }
+  table.data thead th:first-child { text-align: left; padding-left: 0; }
+  table.data tbody td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--ink-700); font-variant-numeric: tabular-nums; text-align: right; }
+  table.data tbody td:first-child { text-align: left; color: var(--ink-900); padding-left: 0; }
+  table.data tbody tr:last-child td { border-bottom: none; }
+  table.data tbody tr.best td:first-child { color: var(--good-600); font-weight: 600; }
+  table.data tbody tr.worst td:first-child { color: var(--crit-600); font-weight: 600; }
+  #s2 table.data thead th { padding: 3px 10px; }
+  #s2 table.data tbody td { padding: 3px 10px; }
+  #s2 .table-wrap { margin-top: 8px; }
+  #s2 .bar { fill: var(--copper-500); }
+  #s6 .next-item { padding: 8px 0; }
+  #s6 .next-item p { font-size: 13.5px; }
+  #s0b table.data thead th { padding: 3px 10px; }
+  #s0b table.data tbody td { padding: 3px 10px; font-size: 12.5px; }
+  #s0b .table-wrap { margin-top: 0; }
+
+  svg.chart { width: 100%; height: auto; overflow: visible; }
+  .bar { fill: var(--ink-500); }
+  .bar.crit { fill: var(--ink-500); }
+  .bar.merged { fill: var(--copper-500); }
+  .axis-line { stroke: var(--ink-500); stroke-width: 1; }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .val-label { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; fill: var(--ink-900); font-weight: 600; }
+  .ent-label { font-family: var(--font-body); font-size: 12.5px; fill: var(--ink-700); }
+  .flag-bg { fill: var(--crit-100); }
+  .flag-text { font-family: var(--font-mono); font-size: 11px; font-weight: 700; fill: var(--crit-600); letter-spacing: 0.02em; }
+  .flag-bg.good { fill: var(--good-100); }
+  .flag-text.good { fill: var(--good-600); }
+
+  ul.plain { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+  ul.plain li { line-height: 1.55; color: var(--ink-700); padding-left: 22px; position: relative; max-width: 60ch; font-size: 15.5px; }
+  ul.plain li::before { content: "—"; position: absolute; left: 0; color: var(--copper-500); }
+  ul.plain b { color: var(--ink-900); }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 22px; margin: 24px 0 8px; }
+  .stat .num { font-family: var(--font-display); font-size: clamp(30px, 4vw, 42px); font-variant-numeric: tabular-nums; color: var(--ink-900); line-height: 1; }
+  .stat .num.accent { color: var(--copper-600); }
+  .stat .label { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-500); margin-top: 6px; }
+
+  .takeaway { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start; padding: 16px 0; border-top: 1px solid var(--border); }
+  .takeaway:first-of-type { border-top: none; padding-top: 4px; }
+  .takeaway .letter { font-family: var(--font-display); font-size: 28px; color: var(--copper-500); font-weight: 600; }
+  .takeaway h3 { font-family: var(--font-body); font-size: 16.5px; font-weight: 700; margin: 0 0 4px; }
+  .takeaway p { font-size: 14.5px; margin: 0; }
+
+  .bug-row { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--border); }
+  .bug-row:first-of-type { border-top: none; }
+  .chip { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; background: var(--good-100); color: var(--good-600); padding: 3px 8px; border-radius: 3px; font-weight: 700; white-space: nowrap; }
+  .bug-row p { margin: 0; font-size: 14.5px; }
+  .bug-row b { color: var(--ink-900); }
+
+  .next-item { display: flex; gap: 14px; padding: 13px 0; border-top: 1px solid var(--border); align-items: baseline; }
+  .next-item:first-child { border-top: none; }
+  .next-item .idx { font-family: var(--font-mono); font-size: 12px; color: var(--copper-500); font-weight: 700; min-width: 20px; }
+  .next-item p { margin: 0; font-size: 14.5px; }
+
+  .example-group { margin-top: 20px; }
+  .example-group-label {
+    font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 3px; display: inline-block; margin-bottom: 12px;
+  }
+  .example-group-label.good { background: var(--good-100); color: var(--good-600); }
+  .example-group-label.crit { background: var(--crit-100); color: var(--crit-600); }
+  .example-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  @media (max-width: 700px) { .example-row { grid-template-columns: repeat(2, 1fr); } }
+  .example-card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--paper); }
+  .example-card img { width: 100%; height: 96px; object-fit: contain; background: var(--slate-100); display: block; }
+  .example-card img.pixelated { image-rendering: pixelated; }
+  .example-card .cap { padding: 8px 9px; font-size: 11.5px; line-height: 1.5; }
+  .example-card .cap .task-tag { font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-500); text-transform: uppercase; letter-spacing: 0.03em; }
+  .example-card .cap .true-label { color: var(--ink-900); font-weight: 600; display: block; margin: 2px 0 4px; }
+  .example-card .cap .pred-line { display: flex; justify-content: space-between; gap: 4px; }
+  .example-card .cap .pred-line .ok { color: var(--good-600); }
+  .example-card .cap .pred-line .bad { color: var(--crit-600); }
+
+  .llm-example { border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 16px; background: var(--paper); }
+  .llm-example .prompt { font-family: var(--font-mono); font-size: 13px; color: var(--ink-500); margin-bottom: 10px; }
+  .llm-example .verdict {
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 3px; float: right;
+  }
+  .llm-example .verdict.good { background: var(--good-100); color: var(--good-600); }
+  .llm-example .verdict.crit { background: var(--crit-100); color: var(--crit-600); }
+  .llm-row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 13.5px; border-top: 1px solid var(--border); }
+  .llm-row:first-of-type { border-top: none; }
+  .llm-row .who { color: var(--ink-500); min-width: 150px; flex-shrink: 0; }
+  .llm-row .said { color: var(--ink-900); }
+  .llm-row.ok .said { color: var(--good-600); }
+  .llm-row.bad .said { color: var(--crit-600); }
+
+  .navdots { position: fixed; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 9px; z-index: 20; }
+  .navdots button { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--ink-500); background: transparent; padding: 0; cursor: pointer; opacity: 0.55; }
+  .navdots button.active { background: var(--copper-500); border-color: var(--copper-500); opacity: 1; }
+  .counter { position: fixed; right: 16px; bottom: 14px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-500); z-index: 20; }
+  @media (max-width: 640px) { .navdots { display: none; } }
+  @media print { .navdots, .counter { display: none; } .slide { border-bottom: none; page-break-after: always; } }
+</style>
+</head>
+<body>
+
+<section class="slide" id="s0">
+  <div class="slide-inner">
+    <div class="eyebrow">Model Merging Investigation</div>
+    <h1>Results &amp; Outcomes</h1>
+    <p class="lede">Early findings from two experiments, two toolkits — vision merging causes large, uneven damage across tasks, while LLM merging effects are far flatter.</p>
+    <p class="byline"><b>Dr Mariusz Pietrzyk</b> · TIRE · The Alan Turing Institute</p>
+    <nav class="agenda">
+      <a href="#s0b">Vision</a>
+      <a href="#s2c">LLM</a>
+      <a href="#s4">Takeaways</a>
+      <a href="#s5">Bugs</a>
+      <a href="#s6">Next steps</a>
+    </nav>
+  </div>
+</section>
+
+<section class="slide" id="s0b">
+  <div class="slide-inner">
+    <div class="eyebrow">Vision merging</div>
+    <h2>One shared backbone, 8 tasks</h2>
+    <p class="chart-note" style="max-width: none; margin-top: 0;">One <b style="color: var(--ink-900);">CLIP ViT-B/32</b> backbone (OpenAI-pretrained), fine-tuned separately into 8 task specialists, then combined into a single shared model via <a href="https://github.com/apanariello4/merge-and-rebase" target="_blank" rel="noopener">merge-and-rebase</a>'s <code>task_arithmetic</code> (α = 0.3).</p>
+
+    <div style="display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 220px;">
+        <div class="table-wrap" style="margin-top: 0;">
+          <table class="data">
+            <caption>Model — the one backbone every task specializes</caption>
+            <thead><tr><th>Component</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>Backbone</td><td><code>CLIP ViT-B/32</code> (OpenAI-pretrained)</td></tr>
+              <tr><td>Merge method</td><td><code>task_arithmetic</code> (α=0.3)</td></tr>
+              <tr><td>Toolkit</td><td>merge-and-rebase</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style="flex: 1.3; min-width: 300px;">
+        <div class="table-wrap" style="margin-top: 0;">
+          <table class="data">
+            <caption>Tasks — 8 specialists fine-tuned from the same backbone</caption>
+            <thead><tr><th>Task</th><th>Domain</th></tr></thead>
+            <tbody>
+              <tr><td>MNIST</td><td>handwritten digits</td></tr>
+              <tr><td>SVHN</td><td>street-view digits</td></tr>
+              <tr><td>EuroSAT</td><td>satellite land-use</td></tr>
+              <tr><td>GTSRB</td><td>traffic signs</td></tr>
+              <tr><td>Cars</td><td>vehicle models</td></tr>
+              <tr><td>SUN397</td><td>scene categories</td></tr>
+              <tr><td>RESISC45</td><td>aerial scenes</td></tr>
+              <tr><td>DTD</td><td>textures</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p class="chart-note" style="max-width: none; margin-top: 14px;">Each of the 8 specialists and the merged model is scored on its own task's held-out test set (full accuracy, not sampled). The image-by-image slide later samples 600 real test images across 4 of the 8 tasks for a closer qualitative look.</p>
+  </div>
+</section>
+
+<section class="slide" id="s1">
+  <div class="slide-inner">
+    <div class="eyebrow">Vision merging</div>
+    <h2>Merging 8 tasks into 1 model cost ~24 points</h2>
+    <div class="chart-caption">Average accuracy, % — 8 CLIP ViT-B/32 specialists vs. the merged model</div>
+    <p class="chart-note" style="max-width: none; margin-top: 0; margin-bottom: 6px;">Backbone: <b style="color: var(--ink-900);">CLIP ViT-B/32</b> (OpenAI-pretrained), fine-tuned separately into 8 task specialists — <b style="color: var(--ink-900);">Cars, DTD, EuroSAT, GTSRB, MNIST, RESISC45, SUN397, SVHN</b> — then combined into one shared model via <code>task_arithmetic</code> (α = 0.3). Toolkit: <a href="https://github.com/apanariello4/merge-and-rebase" target="_blank" rel="noopener">merge-and-rebase</a>.</p>
+    <p class="chart-note" style="max-width: none; margin-top: 4px; margin-bottom: 10px;"><b style="color: var(--ink-900);">task_arithmetic</b> — compute each task's vector (tuned weights − base weights), scale every one by α, sum all 8, add to base (<a href="https://arxiv.org/abs/2212.04089" target="_blank" rel="noopener">Editing Models with Task Arithmetic</a>, ICLR 2023).</p>
+    <svg class="chart" viewBox="0 0 420 200" role="img" aria-label="Bar chart: 8 specialists average 90.4 percent accuracy; the merged model averages 69.7 percent.">
+      <line class="gridline" x1="60" y1="20" x2="380" y2="20"></line>
+      <line class="gridline" x1="60" y1="57.5" x2="380" y2="57.5"></line>
+      <line class="gridline" x1="60" y1="95" x2="380" y2="95"></line>
+      <line class="gridline" x1="60" y1="132.5" x2="380" y2="132.5"></line>
+      <text x="52" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="11">100</text>
+      <text x="52" y="99" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="11">50</text>
+      <text x="52" y="174" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="11">0</text>
+      <line class="axis-line" x1="60" y1="170" x2="380" y2="170"></line>
+
+      <rect class="bar" x="120" y="34.4" width="56" height="135.6" rx="4" ry="4"></rect>
+      <text x="148" y="26.4" class="val-label" text-anchor="middle">90.4%</text>
+      <text x="148" y="188" class="ent-label" text-anchor="middle">8 specialists (avg)</text>
+
+      <rect class="bar merged" x="244" y="65.45" width="56" height="104.55" rx="4" ry="4"></rect>
+      <text x="272" y="57.45" class="val-label" text-anchor="middle">69.7%</text>
+      <text x="272" y="188" class="ent-label" text-anchor="middle">1 merged model</text>
+    </svg>
+    <p class="chart-note" style="max-width: none; margin-top: 6px;">76.5% of specialist accuracy survives the merge, on average — the rest is interference between the 8 tasks fighting over the same shared weights.</p>
+  </div>
+</section>
+
+<section class="slide" id="s2">
+  <div class="slide-inner">
+    <div class="eyebrow">Vision merging</div>
+    <h2>The damage isn't even across tasks</h2>
+    <div class="chart-caption">Retention after merging, % of original specialist accuracy — all 8 tasks, sorted highest to lowest</div>
+    <svg class="chart" viewBox="0 20 760 200" role="img" aria-label="Bar chart of all 8 vision tasks by retention after merging, sorted descending: MNIST 98.2 (best), SVHN 85.1, EuroSAT 78.6, SUN397 74.0, Cars 73.9, GTSRB 70.2, RESISC45 69.9, DTD 62.4 (worst).">
+      <line class="gridline" x1="40" y1="40" x2="720" y2="40"></line>
+      <line class="gridline" x1="40" y1="72.5" x2="720" y2="72.5"></line>
+      <line class="gridline" x1="40" y1="105" x2="720" y2="105"></line>
+      <line class="gridline" x1="40" y1="137.5" x2="720" y2="137.5"></line>
+      <text x="32" y="44" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text>
+      <text x="32" y="109" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text>
+      <text x="32" y="174" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text>
+      <line class="axis-line" x1="40" y1="170" x2="720" y2="170"></line>
+
+      <!-- baseline y=170, plot top y=40, scale 1.3px per %; bars evenly spaced: 56px margin/gap, 78px pitch -->
+      <rect class="bar" x="96" y="42.3" width="22" height="127.7" rx="4" ry="4"></rect>
+      <text x="107" y="34.3" class="val-label" text-anchor="middle" font-size="11.5">98.2</text>
+      <text x="107" y="188" class="ent-label" text-anchor="middle" font-size="10.5">MNIST</text>
+      <rect class="flag-bg good" x="68" y="196" width="78" height="18" rx="3" ry="3"></rect>
+      <text x="107" y="209" class="flag-text good" text-anchor="middle" font-size="10">★ BEST</text>
+
+      <rect class="bar" x="174" y="59.4" width="22" height="110.6" rx="4" ry="4"></rect>
+      <text x="185" y="51.4" class="val-label" text-anchor="middle" font-size="11.5">85.1</text>
+      <text x="185" y="188" class="ent-label" text-anchor="middle" font-size="10.5">SVHN</text>
+
+      <rect class="bar" x="252" y="67.8" width="22" height="102.2" rx="4" ry="4"></rect>
+      <text x="263" y="59.8" class="val-label" text-anchor="middle" font-size="11.5">78.6</text>
+      <text x="263" y="188" class="ent-label" text-anchor="middle" font-size="10.5">EuroSAT</text>
+
+      <rect class="bar" x="330" y="73.8" width="22" height="96.2" rx="4" ry="4"></rect>
+      <text x="341" y="65.8" class="val-label" text-anchor="middle" font-size="11.5">74.0</text>
+      <text x="341" y="188" class="ent-label" text-anchor="middle" font-size="10.5">SUN397</text>
+
+      <rect class="bar" x="408" y="73.9" width="22" height="96.1" rx="4" ry="4"></rect>
+      <text x="419" y="65.9" class="val-label" text-anchor="middle" font-size="11.5">73.9</text>
+      <text x="419" y="188" class="ent-label" text-anchor="middle" font-size="10.5">Cars</text>
+
+      <rect class="bar" x="486" y="78.7" width="22" height="91.3" rx="4" ry="4"></rect>
+      <text x="497" y="70.7" class="val-label" text-anchor="middle" font-size="11.5">70.2</text>
+      <text x="497" y="188" class="ent-label" text-anchor="middle" font-size="10.5">GTSRB</text>
+
+      <rect class="bar" x="564" y="79.1" width="22" height="90.9" rx="4" ry="4"></rect>
+      <text x="575" y="71.1" class="val-label" text-anchor="middle" font-size="11.5">69.9</text>
+      <text x="575" y="188" class="ent-label" text-anchor="middle" font-size="10.5">RESISC45</text>
+
+      <rect class="bar crit" x="642" y="88.9" width="22" height="81.1" rx="4" ry="4"></rect>
+      <text x="653" y="80.9" class="val-label" text-anchor="middle" font-size="11.5">62.4</text>
+      <text x="653" y="188" class="ent-label" text-anchor="middle" font-size="10.5">DTD</text>
+      <rect class="flag-bg" x="614" y="196" width="78" height="18" rx="3" ry="3"></rect>
+      <text x="653" y="209" class="flag-text" text-anchor="middle" font-size="10">▲ WORST</text>
+    </svg>
+    <p class="chart-note" style="margin-top: 8px;">Simple, localized capabilities (digits) survive merging almost intact. Broad, entangled ones (textures) take the real hit — the same merge, wildly different outcomes depending on the task.</p>
+
+    <div class="table-wrap" style="margin-top: 8px;">
+      <table class="data">
+        <caption>Full breakdown — specialist vs. merged accuracy, all 8 tasks</caption>
+        <thead><tr><th>Task</th><th>Specialist</th><th>Merged</th><th>Retention</th></tr></thead>
+        <tbody>
+          <tr class="best"><td>MNIST</td><td>99.4%</td><td>97.6%</td><td>98.2%</td></tr>
+          <tr><td>SVHN</td><td>97.2%</td><td>82.8%</td><td>85.1%</td></tr>
+          <tr><td>EuroSAT</td><td>99.3%</td><td>78.0%</td><td>78.6%</td></tr>
+          <tr><td>SUN397</td><td>75.8%</td><td>56.0%</td><td>74.0%</td></tr>
+          <tr><td>Cars</td><td>79.7%</td><td>58.9%</td><td>73.9%</td></tr>
+          <tr><td>GTSRB</td><td>99.0%</td><td>69.4%</td><td>70.2%</td></tr>
+          <tr><td>RESISC45</td><td>95.0%</td><td>66.4%</td><td>69.9%</td></tr>
+          <tr class="worst"><td>DTD</td><td>78.0%</td><td>48.6%</td><td>62.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s2b">
+  <div class="slide-inner">
+    <div class="eyebrow">Vision merging</div>
+    <h2>What this actually looks like, image by image</h2>
+    <div class="chart-caption">Real test images, sampled 600 per task (MNIST, DTD, EuroSAT, SVHN) — specialist vs. merged model prediction</div>
+
+    <div class="example-group">
+      <span class="example-group-label good">Where merging helped</span>
+      <div class="example-row">
+      <div class="example-card">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAIAAAD9b0jDAAACQElEQVR4nO2TzcsxURjG73kpPUrJlNBYsrNRlCxEsTArWYw/wMaSsrBQYyXJwkLytVQWFj72ajSzY22h1ENSs5BSs5qPt+b0Tl5iqGf5/FbnnLnONdd9n3MAfvlpsGcfjEaj3++nKOp0OmEYxjAMRVHZbBbDsF6vBwDX6xXDsFarxfP8W79qt9vz+VxUIQiCpunNZoOmkiSJosiyLMdxkiTxPB+JRO4Dwf/gOB6LxdLpNI7jiqIAQCaT2W63NpttPB73+/1sNgsAX19f8XgcAGw2Wy6XYxjmVcZQKKQlOhwO9XqdIAir1Wq3229lZrN5Npuh1KPRSKfwRCIhqUwmk0wm80JZKBQURUFigiCelo/jeK/XQ1UzDPM6gsPhkGUZiV/hdrtR7aIojsdjTiUcDt/JfD4fx3GCIKDy0WG+ZSr923C5XG41FotluVzeaqbTqcFgeGpqUTegNsmyjAaSJFUqlWAwGAgEaJperVbauizLu93O6XTqdCB0c/qPqR/HpVLp0eTP3dzr9cInbLdbfdNkMvmRKXoLr3C73ahZi8UCAFwuV15lv99/q5TLZdQiraccx+mYms1mlmVFURwOh2/2nWVZnfIFQTgejwBAUVS1Wn11+z4iHo9rKXier9Vq+Xz+TjMYDDRNs9nUN3WpfTyfz7f3FI2Hw2Gj0eh2u9p6oVD4IC9Jkp1OR/eePhahg8lkSqVSo9Hoer0+M332lrB3UkejUZIkPR4PACyXS6fTuV6vT6dTsVjU3f4L/Ah/AeQu9G9Ru6X/AAAAAElFTkSuQmCC" class="pixelated" alt="MNIST example, true label 8">
+        <div class="cap">
+          <span class="task-tag">MNIST</span>
+          <span class="true-label">True: 8</span>
+          <div class="pred-line"><span>Specialist:</span><span class="bad">3 ✗</span></div>
+          <div class="pred-line"><span>Merged:</span><span class="ok">8 ✓</span></div>
+        </div>
+      </div>
+      <div class="example-card">
+        <img src="data:image/jpeg;base64,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" alt="DTD example, true label porous">
+        <div class="cap">
+          <span class="task-tag">DTD</span>
+          <span class="true-label">True: porous</span>
+          <div class="pred-line"><span>Specialist:</span><span class="bad">pitted ✗</span></div>
+          <div class="pred-line"><span>Merged:</span><span class="ok">porous ✓</span></div>
+        </div>
+      </div>
+      <div class="example-card">
+        <img src="data:image/png;base64,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" class="pixelated" alt="EuroSAT example, true label lake or sea">
+        <div class="cap">
+          <span class="task-tag">EuroSAT</span>
+          <span class="true-label">True: lake or sea</span>
+          <div class="pred-line"><span>Specialist:</span><span class="bad">river ✗</span></div>
+          <div class="pred-line"><span>Merged:</span><span class="ok">lake or sea ✓</span></div>
+        </div>
+      </div>
+      <div class="example-card">
+        <img src="data:image/png;base64,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" class="pixelated" alt="SVHN example, true label 3">
+        <div class="cap">
+          <span class="task-tag">SVHN</span>
+          <span class="true-label">True: 3</span>
+          <div class="pred-line"><span>Specialist:</span><span class="bad">9 ✗</span></div>
+          <div class="pred-line"><span>Merged:</span><span class="ok">3 ✓</span></div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <div class="example-group">
+      <span class="example-group-label crit">Where merging hurt</span>
+      <div class="example-row">
+      <div class="example-card">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAIAAAD9b0jDAAACA0lEQVR4nO2UPa8pURSG1xHiTIJCVISIaCUkIqLQTEfiD0hE5SMqhYRO4y/QTkGjMNEJCgrRKShoFJj4CBLjY4qRvefmnp2c4o7L3ERzk/NUO+td611r75m9AX54SjqdxhhnMhl4I41GAyG02+2Ul6ieyyaTyWq1AoBWq4V34fP50BeDweA9jkajsdlsIoQEQYhEIu8xjcfjZMzlcvlPheq/CXq9PpvNAoAoiuVyWZ5gt9spigKA9XrN87yibrVajYw5HA7lKkVRo9GIJCj92zQazWw2QwiJohgOh+UqwzDEESF0Pp+DweBr02q1SgqKxaJcjcViRF0sFpPJRNGwXq+X53mMcafTeaJijGmaZllWkqR6vf7iQ/n9fp1OJ33xRO31etfrNRQKYYz/OHeVvCyfz5PFaDSSqx6PhyxKpZIkSWq1WhCE8Xj8bO/JZPJ+vyOEOI5zOp3yBJ7nyYHmcrlut4sQarVazxwBoFAokBqaph8mfJsS2u22yWRS+qBwHPeiP8BsNotGo4fD4YXp8XjEGJNn1GazkaDZbHa73alUimXZz8/P7+T5fL7f7+XNPuSh1WplNpsBYLvddrtdAAgEAg6H4/cIKtXlcjmdTgBQqVQYhtlsNqCERCJxu92QDEEQms2mksvz8TDqcrnI7bRYLAaDYTqdAkC/33/4Dvzw3/ILPkBBfDPOhUAAAAAASUVORK5CYII=" class="pixelated" alt="MNIST example, true label 6">
+        <div class="cap">
+          <span class="task-tag">MNIST</span>
+          <span class="true-label">True: 6</span>
+          <div class="pred-line"><span>Specialist:</span><span class="ok">6 ✓</span></div>
+          <div class="pred-line"><span>Merged:</span><span class="bad">0 ✗</span></div>
+        </div>
+      </div>
+      <div class="example-card">
+        <img src="data:image/jpeg;base64,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" alt="DTD example, true label bumpy">
+        <div class="cap">
+          <span class="task-tag">DTD</span>
+          <span class="true-label">True: bumpy</span>
+          <div class="pred-line"><span>Specialist:</span><span class="ok">bumpy ✓</span></div>
+          <div class="pred-line"><span>Merged:</span><span class="bad">waffled ✗</span></div>
+        </div>
+      </div>
+      <div class="example-card">
+        <img src="data:image/png;base64,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" class="pixelated" alt="EuroSAT example, true label brushland">
+        <div class="cap">
+          <span class="task-tag">EuroSAT</span>
+          <span class="true-label">True: brushland</span>
+          <div class="pred-line"><span>Specialist:</span><span class="ok">brushland ✓</span></div>
+          <div class="pred-line"><span>Merged:</span><span class="bad">river ✗</span></div>
+        </div>
+      </div>
+      <div class="example-card">
+        <img src="data:image/png;base64,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" class="pixelated" alt="SVHN example, true label 1">
+        <div class="cap">
+          <span class="task-tag">SVHN</span>
+          <span class="true-label">True: 1</span>
+          <div class="pred-line"><span>Specialist:</span><span class="ok">1 ✓</span></div>
+          <div class="pred-line"><span>Merged:</span><span class="bad">5 ✗</span></div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <p class="chart-note">Across these 4 tasks (2,400 sampled test images total), merging fixed <b style="color: var(--good-600);">37</b> mistakes the specialist made — but introduced <b style="color: var(--crit-600);">431</b> new ones. So yes, merging occasionally rescues a case the specialist got wrong — but it causes roughly 12× more damage than it repairs.</p>
+  </div>
+</section>
+
+<section class="slide" id="s2c">
+  <div class="slide-inner">
+    <div class="eyebrow">LLM merging</div>
+    <h2>Same question, now on language models</h2>
+    <p class="chart-note" style="max-width: none; margin-top: 0;">Same experiment, different domain: three <b style="color: var(--ink-900);">Qwen2.5-0.5B</b> checkpoints, combined pairwise/triplewise via <a href="https://github.com/arcee-ai/mergekit" target="_blank" rel="noopener">MergeKit</a> across 4 merge methods (next slides), then scored on 2 benchmarks.</p>
+
+    <div style="display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 260px;">
+        <div class="table-wrap" style="margin-top: 0;">
+          <table class="data">
+            <caption>Sources — the 3 checkpoints every merge combines</caption>
+            <thead><tr><th>Model</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td>Base</td><td><code>Qwen/Qwen2.5-0.5B</code> — no instruction tuning</td></tr>
+              <tr><td>Qwen-Instruct</td><td><code>Qwen/Qwen2.5-0.5B-Instruct</code> — Qwen's official instruction fine-tune</td></tr>
+              <tr><td>Dolphin</td><td><code>dphn/Dolphin3.0-Qwen2.5-0.5B</code> — independent third-party instruction fine-tune</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style="flex: 1; min-width: 260px;">
+        <div class="table-wrap" style="margin-top: 0;">
+          <table class="data">
+            <caption>Benchmarks — evaluated via lm-evaluation-harness</caption>
+            <thead><tr><th>Benchmark</th><th>Size</th><th>Metric</th></tr></thead>
+            <tbody>
+              <tr><td>ARC-Easy</td><td>2,376 questions</td><td>acc_norm</td></tr>
+              <tr><td>PIQA</td><td>1,838 questions</td><td>acc_norm</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p class="chart-note" style="max-width: none; margin-top: 14px;">Every method below is scored on the full ARC-Easy and PIQA test sets — not samples — alongside all 3 unmerged sources for context. Per-item predictions (<code>doc_id</code>-level, via <code>--log_samples</code>) feed a paired McNemar's exact test, method vs. Base, on each benchmark.</p>
+  </div>
+</section>
+
+<section class="slide" id="s3method-linear">
+  <div class="slide-inner">
+    <div class="eyebrow">LLM merging &mdash; method 1 of 4</div>
+    <h2>Linear</h2>
+    <p class="chart-note" style="max-width: none; margin-top: 0;">Plain weighted average of the raw checkpoint weights &mdash; no task-vector math at all (<a href="https://arxiv.org/abs/2203.05482" target="_blank" rel="noopener">Model Soups</a>, ICML 2022).</p>
+    <p class="chart-note" style="max-width: none; font-family: var(--font-mono); font-size: 12.5px; opacity: 0.85; margin-top: 4px;">Recipe: <b style="color: var(--ink-900);">Base</b> (weight 0.34) + <b style="color: var(--ink-900);">Qwen-Instruct</b> (0.33) + <b style="color: var(--ink-900);">Dolphin</b> (0.33) &mdash; all three, roughly equally.</p>
+
+    <div style="display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 260px;">
+        <div class="chart-caption">ARC-Easy (acc_norm, %)</div>
+        <svg class="chart" viewBox="0 0 314 260" role="img" aria-label="Linear on ARC-Easy bar chart"><line class="gridline" x1="40" y1="20" x2="284" y2="20"></line><line class="gridline" x1="40" y1="70" x2="284" y2="70"></line><line class="gridline" x1="40" y1="120" x2="284" y2="120"></line><line class="gridline" x1="40" y1="170" x2="284" y2="170"></line><text x="34" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text><text x="34" y="124" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text><text x="34" y="214" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text><line class="axis-line" x1="40" y1="210" x2="284" y2="210"></line><rect class="bar" x="40" y="93.4" width="22" height="116.6" rx="4" ry="4"></rect><text x="51" y="85.4" class="val-label" text-anchor="middle" font-size="11.5">58.3</text><text x="51" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Base</text><rect class="bar" x="114" y="92.0" width="22" height="118.0" rx="4" ry="4"></rect><text x="125" y="84.0" class="val-label" text-anchor="middle" font-size="11.5">59.0</text><text x="125" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Qwen-Inst.</text><rect class="bar" x="188" y="88.4" width="22" height="121.6" rx="4" ry="4"></rect><text x="199" y="80.4" class="val-label" text-anchor="middle" font-size="11.5">60.8</text><text x="199" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Dolphin</text><rect class="bar merged" x="262" y="91.8" width="22" height="118.2" rx="4" ry="4"></rect><text x="273" y="83.8" class="val-label" text-anchor="middle" font-size="11.5">59.1</text><text x="273" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Linear</text></svg>
+      </div>
+      <div style="flex: 1; min-width: 260px;">
+        <div class="chart-caption">PIQA (acc_norm, %)</div>
+        <svg class="chart" viewBox="0 0 314 260" role="img" aria-label="Linear on PIQA bar chart"><line class="gridline" x1="40" y1="20" x2="284" y2="20"></line><line class="gridline" x1="40" y1="70" x2="284" y2="70"></line><line class="gridline" x1="40" y1="120" x2="284" y2="120"></line><line class="gridline" x1="40" y1="170" x2="284" y2="170"></line><text x="34" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text><text x="34" y="124" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text><text x="34" y="214" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text><line class="axis-line" x1="40" y1="210" x2="284" y2="210"></line><rect class="bar" x="40" y="70.0" width="22" height="140.0" rx="4" ry="4"></rect><text x="51" y="62.0" class="val-label" text-anchor="middle" font-size="11.5">70.0</text><text x="51" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Base</text><rect class="bar" x="114" y="70.0" width="22" height="140.0" rx="4" ry="4"></rect><text x="125" y="62.0" class="val-label" text-anchor="middle" font-size="11.5">70.0</text><text x="125" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Qwen-Inst.</text><rect class="bar" x="188" y="70.4" width="22" height="139.6" rx="4" ry="4"></rect><text x="199" y="62.4" class="val-label" text-anchor="middle" font-size="11.5">69.8</text><text x="199" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Dolphin</text><rect class="bar merged" x="262" y="69.2" width="22" height="140.8" rx="4" ry="4"></rect><text x="273" y="61.2" class="val-label" text-anchor="middle" font-size="11.5">70.4</text><text x="273" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Linear</text></svg>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top: 10px;">
+      <table class="data">
+        <caption>Linear vs. Base &mdash; McNemar's exact test</caption>
+        <thead><tr><th>Task</th><th>p-value</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>ARC-Easy</td><td>0.203</td><td>not significant</td></tr>
+          <tr><td>PIQA</td><td>0.470</td><td>not significant</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="chart-note" style="max-width: none; margin-top: 10px;">The simplest of the four, and no bugs encountered building it. Neither benchmark shows a statistically significant difference from Base &mdash; if anything it edges slightly above Base on both, but well within noise. A safe, unremarkable default.</p>
+  </div>
+</section>
+
+<section class="slide" id="s3method-ties">
+  <div class="slide-inner">
+    <div class="eyebrow">LLM merging &mdash; method 2 of 4</div>
+    <h2>TIES</h2>
+    <p class="chart-note" style="max-width: none; margin-top: 0;">Trims each task vector to its largest changes, resolves sign disagreements between models by majority vote, merges only the survivors (<a href="https://arxiv.org/abs/2306.01708" target="_blank" rel="noopener">TIES-Merging</a>, NeurIPS 2023).</p>
+    <p class="chart-note" style="max-width: none; font-family: var(--font-mono); font-size: 12.5px; opacity: 0.85; margin-top: 4px;">Recipe: <code>base_model</code> = <b style="color: var(--ink-900);">Base</b>; sources = <b style="color: var(--ink-900);">Qwen-Instruct</b> (weight 0.5) and <b style="color: var(--ink-900);">Dolphin</b> (weight 0.5) &mdash; both equally.</p>
+
+    <div style="display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 260px;">
+        <div class="chart-caption">ARC-Easy (acc_norm, %)</div>
+        <svg class="chart" viewBox="0 0 314 260" role="img" aria-label="TIES on ARC-Easy bar chart"><line class="gridline" x1="40" y1="20" x2="284" y2="20"></line><line class="gridline" x1="40" y1="70" x2="284" y2="70"></line><line class="gridline" x1="40" y1="120" x2="284" y2="120"></line><line class="gridline" x1="40" y1="170" x2="284" y2="170"></line><text x="34" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text><text x="34" y="124" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text><text x="34" y="214" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text><line class="axis-line" x1="40" y1="210" x2="284" y2="210"></line><rect class="bar" x="40" y="93.4" width="22" height="116.6" rx="4" ry="4"></rect><text x="51" y="85.4" class="val-label" text-anchor="middle" font-size="11.5">58.3</text><text x="51" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Base</text><rect class="bar" x="114" y="92.0" width="22" height="118.0" rx="4" ry="4"></rect><text x="125" y="84.0" class="val-label" text-anchor="middle" font-size="11.5">59.0</text><text x="125" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Qwen-Inst.</text><rect class="bar" x="188" y="88.4" width="22" height="121.6" rx="4" ry="4"></rect><text x="199" y="80.4" class="val-label" text-anchor="middle" font-size="11.5">60.8</text><text x="199" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Dolphin</text><rect class="bar merged" x="262" y="96.6" width="22" height="113.4" rx="4" ry="4"></rect><text x="273" y="88.6" class="val-label" text-anchor="middle" font-size="11.5">56.7</text><text x="273" y="228" class="ent-label" text-anchor="middle" font-size="10.5">TIES</text></svg>
+      </div>
+      <div style="flex: 1; min-width: 260px;">
+        <div class="chart-caption">PIQA (acc_norm, %)</div>
+        <svg class="chart" viewBox="0 0 314 260" role="img" aria-label="TIES on PIQA bar chart"><line class="gridline" x1="40" y1="20" x2="284" y2="20"></line><line class="gridline" x1="40" y1="70" x2="284" y2="70"></line><line class="gridline" x1="40" y1="120" x2="284" y2="120"></line><line class="gridline" x1="40" y1="170" x2="284" y2="170"></line><text x="34" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text><text x="34" y="124" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text><text x="34" y="214" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text><line class="axis-line" x1="40" y1="210" x2="284" y2="210"></line><rect class="bar" x="40" y="70.0" width="22" height="140.0" rx="4" ry="4"></rect><text x="51" y="62.0" class="val-label" text-anchor="middle" font-size="11.5">70.0</text><text x="51" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Base</text><rect class="bar" x="114" y="70.0" width="22" height="140.0" rx="4" ry="4"></rect><text x="125" y="62.0" class="val-label" text-anchor="middle" font-size="11.5">70.0</text><text x="125" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Qwen-Inst.</text><rect class="bar" x="188" y="70.4" width="22" height="139.6" rx="4" ry="4"></rect><text x="199" y="62.4" class="val-label" text-anchor="middle" font-size="11.5">69.8</text><text x="199" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Dolphin</text><rect class="bar merged" x="262" y="70.2" width="22" height="139.8" rx="4" ry="4"></rect><text x="273" y="62.2" class="val-label" text-anchor="middle" font-size="11.5">69.9</text><text x="273" y="228" class="ent-label" text-anchor="middle" font-size="10.5">TIES</text></svg>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top: 10px;">
+      <table class="data">
+        <caption>TIES vs. Base &mdash; McNemar's exact test</caption>
+        <thead><tr><th>Task</th><th>p-value</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>ARC-Easy</td><td>0.041</td><td>significant, uncorrected only</td></tr>
+          <tr><td>PIQA</td><td>1.000</td><td>not significant</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="chart-note" style="max-width: none; margin-top: 10px;">ARC-Easy shows a marginal result vs. Base (p=0.041) &mdash; the weakest signal that still clears the standard 0.05 threshold, and it does <i>not</i> survive a Bonferroni correction across the 8 tests run overall (see the pooled slide). Treat it as suggestive, not proven. PIQA is a near-exact coin flip vs. Base (p=1.000).</p>
+  </div>
+</section>
+
+<section class="slide" id="s3method-dare-ties">
+  <div class="slide-inner">
+    <div class="eyebrow">LLM merging &mdash; method 3 of 4</div>
+    <h2>DARE-TIES</h2>
+    <p class="chart-note" style="max-width: none; margin-top: 0;">Same sign-consensus step as TIES, but keeps parameters via <i>random</i> pruning instead of magnitude, then rescales the survivors (<a href="https://arxiv.org/abs/2311.03099" target="_blank" rel="noopener">Language Models are Super Mario</a>, 2023).</p>
+    <p class="chart-note" style="max-width: none; font-family: var(--font-mono); font-size: 12.5px; opacity: 0.85; margin-top: 4px;">Recipe: identical structure to TIES &mdash; <b style="color: var(--ink-900);">Base</b> as <code>base_model</code>; <b style="color: var(--ink-900);">Qwen-Instruct</b> + <b style="color: var(--ink-900);">Dolphin</b> as equal-weighted sources.</p>
+
+    <div style="display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 260px;">
+        <div class="chart-caption">ARC-Easy (acc_norm, %)</div>
+        <svg class="chart" viewBox="0 0 314 260" role="img" aria-label="DARE-TIES on ARC-Easy bar chart"><line class="gridline" x1="40" y1="20" x2="284" y2="20"></line><line class="gridline" x1="40" y1="70" x2="284" y2="70"></line><line class="gridline" x1="40" y1="120" x2="284" y2="120"></line><line class="gridline" x1="40" y1="170" x2="284" y2="170"></line><text x="34" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text><text x="34" y="124" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text><text x="34" y="214" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text><line class="axis-line" x1="40" y1="210" x2="284" y2="210"></line><rect class="bar" x="40" y="93.4" width="22" height="116.6" rx="4" ry="4"></rect><text x="51" y="85.4" class="val-label" text-anchor="middle" font-size="11.5">58.3</text><text x="51" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Base</text><rect class="bar" x="114" y="92.0" width="22" height="118.0" rx="4" ry="4"></rect><text x="125" y="84.0" class="val-label" text-anchor="middle" font-size="11.5">59.0</text><text x="125" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Qwen-Inst.</text><rect class="bar" x="188" y="88.4" width="22" height="121.6" rx="4" ry="4"></rect><text x="199" y="80.4" class="val-label" text-anchor="middle" font-size="11.5">60.8</text><text x="199" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Dolphin</text><rect class="bar merged" x="262" y="108.4" width="22" height="101.6" rx="4" ry="4"></rect><text x="273" y="100.4" class="val-label" text-anchor="middle" font-size="11.5">50.8</text><text x="273" y="228" class="ent-label" text-anchor="middle" font-size="10.5">DARE-TIES</text><rect class="flag-bg" x="238.0" y="243" width="70.0" height="20" rx="3" ry="3"></rect><text x="273" y="257" class="flag-text" text-anchor="middle">&#9650; WORST</text></svg>
+      </div>
+      <div style="flex: 1; min-width: 260px;">
+        <div class="chart-caption">PIQA (acc_norm, %)</div>
+        <svg class="chart" viewBox="0 0 314 260" role="img" aria-label="DARE-TIES on PIQA bar chart"><line class="gridline" x1="40" y1="20" x2="284" y2="20"></line><line class="gridline" x1="40" y1="70" x2="284" y2="70"></line><line class="gridline" x1="40" y1="120" x2="284" y2="120"></line><line class="gridline" x1="40" y1="170" x2="284" y2="170"></line><text x="34" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text><text x="34" y="124" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text><text x="34" y="214" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text><line class="axis-line" x1="40" y1="210" x2="284" y2="210"></line><rect class="bar" x="40" y="70.0" width="22" height="140.0" rx="4" ry="4"></rect><text x="51" y="62.0" class="val-label" text-anchor="middle" font-size="11.5">70.0</text><text x="51" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Base</text><rect class="bar" x="114" y="70.0" width="22" height="140.0" rx="4" ry="4"></rect><text x="125" y="62.0" class="val-label" text-anchor="middle" font-size="11.5">70.0</text><text x="125" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Qwen-Inst.</text><rect class="bar" x="188" y="70.4" width="22" height="139.6" rx="4" ry="4"></rect><text x="199" y="62.4" class="val-label" text-anchor="middle" font-size="11.5">69.8</text><text x="199" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Dolphin</text><rect class="bar merged" x="262" y="74.0" width="22" height="136.0" rx="4" ry="4"></rect><text x="273" y="66.0" class="val-label" text-anchor="middle" font-size="11.5">68.0</text><text x="273" y="228" class="ent-label" text-anchor="middle" font-size="10.5">DARE-TIES</text><rect class="flag-bg" x="238.0" y="243" width="70.0" height="20" rx="3" ry="3"></rect><text x="273" y="257" class="flag-text" text-anchor="middle">&#9650; WORST</text></svg>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top: 10px;">
+      <table class="data">
+        <caption>DARE-TIES vs. Base &mdash; McNemar's exact test</caption>
+        <thead><tr><th>Task</th><th>p-value</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr class="worst"><td>ARC-Easy</td><td>4.1 &times; 10&#8315;&sup1;&#8310;</td><td>significant, survives correction</td></tr>
+          <tr><td>PIQA</td><td>0.015</td><td>significant, uncorrected only</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="chart-note" style="max-width: none; margin-top: 10px;">The one method with a real story. Running it in <code>float16</code> silently corrupted the model's embedding weights with NaNs &mdash; no error from the tool, only caught by scanning the output weights directly (see &ldquo;bugs found&rdquo;). Even after fixing that (switching to <code>bfloat16</code>), it's the clear worst performer: the ARC-Easy gap vs. Base is overwhelming (p=4.1&times;10&#8315;&sup1;&#8310;, survives any correction), and it's the <i>only</i> method whose PIQA gap is even nominally significant (p=0.015), though that one doesn't survive correction. Qualitatively it also produced the most broken output of the four &mdash; a repeated &ldquo;!!!!&rdquo; loop on one prompt, a wrong arithmetic answer on another.</p>
+  </div>
+</section>
+
+<section class="slide" id="s3method-arcee-fusion">
+  <div class="slide-inner">
+    <div class="eyebrow">LLM merging &mdash; method 4 of 4</div>
+    <h2>Arcee Fusion</h2>
+    <p class="chart-note" style="max-width: none; margin-top: 0;">Scores every parameter by (size of change &times; how much it shifts the output distribution), fuses only what clears a dynamic per-tensor threshold. Strictly pairwise, so combining 3 models needed a two-stage cascade &mdash; fusing Qwen-Instruct into Base, then Dolphin into that result (<a href="https://www.arcee.ai/blog/meet-mergekit-v0-1-arcee-fusion-expanded-model-support-multi-gpu-acceleration" target="_blank" rel="noopener">Arcee AI release blog</a> &mdash; no paper).</p>
+    <p class="chart-note" style="max-width: none; font-family: var(--font-mono); font-size: 12.5px; opacity: 0.85; margin-top: 4px;">Recipe: two-stage &mdash; stage 1 fuses <b style="color: var(--ink-900);">Qwen-Instruct</b> into <b style="color: var(--ink-900);">Base</b>; stage 2 fuses <b style="color: var(--ink-900);">Dolphin</b> into that result. Touches Base, then Instruct, then Dolphin, sequentially.</p>
+
+    <div style="display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 260px;">
+        <div class="chart-caption">ARC-Easy (acc_norm, %)</div>
+        <svg class="chart" viewBox="0 0 314 260" role="img" aria-label="Arcee Fusion on ARC-Easy bar chart"><line class="gridline" x1="40" y1="20" x2="284" y2="20"></line><line class="gridline" x1="40" y1="70" x2="284" y2="70"></line><line class="gridline" x1="40" y1="120" x2="284" y2="120"></line><line class="gridline" x1="40" y1="170" x2="284" y2="170"></line><text x="34" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text><text x="34" y="124" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text><text x="34" y="214" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text><line class="axis-line" x1="40" y1="210" x2="284" y2="210"></line><rect class="bar" x="40" y="93.4" width="22" height="116.6" rx="4" ry="4"></rect><text x="51" y="85.4" class="val-label" text-anchor="middle" font-size="11.5">58.3</text><text x="51" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Base</text><rect class="bar" x="114" y="92.0" width="22" height="118.0" rx="4" ry="4"></rect><text x="125" y="84.0" class="val-label" text-anchor="middle" font-size="11.5">59.0</text><text x="125" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Qwen-Inst.</text><rect class="bar" x="188" y="88.4" width="22" height="121.6" rx="4" ry="4"></rect><text x="199" y="80.4" class="val-label" text-anchor="middle" font-size="11.5">60.8</text><text x="199" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Dolphin</text><rect class="bar merged" x="262" y="92.6" width="22" height="117.4" rx="4" ry="4"></rect><text x="273" y="84.6" class="val-label" text-anchor="middle" font-size="11.5">58.7</text><text x="273" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Arcee</text><text x="273" y="240" class="ent-label" text-anchor="middle" font-size="9.5" opacity="0.7">Fusion</text></svg>
+      </div>
+      <div style="flex: 1; min-width: 260px;">
+        <div class="chart-caption">PIQA (acc_norm, %)</div>
+        <svg class="chart" viewBox="0 0 314 260" role="img" aria-label="Arcee Fusion on PIQA bar chart"><line class="gridline" x1="40" y1="20" x2="284" y2="20"></line><line class="gridline" x1="40" y1="70" x2="284" y2="70"></line><line class="gridline" x1="40" y1="120" x2="284" y2="120"></line><line class="gridline" x1="40" y1="170" x2="284" y2="170"></line><text x="34" y="24" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">100</text><text x="34" y="124" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">50</text><text x="34" y="214" class="ent-label" text-anchor="end" font-family="var(--font-mono)" font-size="10.5">0</text><line class="axis-line" x1="40" y1="210" x2="284" y2="210"></line><rect class="bar" x="40" y="70.0" width="22" height="140.0" rx="4" ry="4"></rect><text x="51" y="62.0" class="val-label" text-anchor="middle" font-size="11.5">70.0</text><text x="51" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Base</text><rect class="bar" x="114" y="70.0" width="22" height="140.0" rx="4" ry="4"></rect><text x="125" y="62.0" class="val-label" text-anchor="middle" font-size="11.5">70.0</text><text x="125" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Qwen-Inst.</text><rect class="bar" x="188" y="70.4" width="22" height="139.6" rx="4" ry="4"></rect><text x="199" y="62.4" class="val-label" text-anchor="middle" font-size="11.5">69.8</text><text x="199" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Dolphin</text><rect class="bar merged" x="262" y="69.0" width="22" height="141.0" rx="4" ry="4"></rect><text x="273" y="61.0" class="val-label" text-anchor="middle" font-size="11.5">70.5</text><text x="273" y="228" class="ent-label" text-anchor="middle" font-size="10.5">Arcee</text><text x="273" y="240" class="ent-label" text-anchor="middle" font-size="9.5" opacity="0.7">Fusion</text></svg>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top: 10px;">
+      <table class="data">
+        <caption>Arcee Fusion vs. Base &mdash; McNemar's exact test</caption>
+        <thead><tr><th>Task</th><th>p-value</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>ARC-Easy</td><td>0.578</td><td>not significant</td></tr>
+          <tr><td>PIQA</td><td>0.444</td><td>not significant</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="chart-note" style="max-width: none; margin-top: 10px;">Neither benchmark shows a significant difference from Base &mdash; consistent with the qualitative read, where it was consistently the cleanest and most concise of the four methods, and it edges out every other merge on PIQA (70.5%, the single highest bar in this whole comparison, sources included).</p>
+  </div>
+</section>
+
+<section class="slide" id="s3pool">
+  <div class="slide-inner">
+    <div class="eyebrow">LLM merging — statistical test</div>
+    <h2>Pooling "unmerged" vs. "merged" — is that valid?</h2>
+    <p class="chart-note" style="max-width: none; margin-top: 0;">A naive way to ask this — average the 3 unmerged models' items against the 4 merged models' items and run a proportions test — would be wrong: it treats 16,632 (item × model) rows as independent, when the same 2,376 or 1,838 items repeat across all 7 models. The correct tool is <b style="color: var(--ink-900);">GEE (Generalized Estimating Equations)</b> with a binomial family, clustering by item — this gives valid standard errors despite that repetition, so pooling <i>is</i> statistically appropriate once done this way.</p>
+
+    <div class="table-wrap" style="margin-top: 16px;">
+      <table class="data">
+        <caption>GEE, clustered by item — pooled odds ratio (merged vs. unmerged), all 16,632 / 12,866 (item × model) observations</caption>
+        <thead><tr><th>Comparison</th><th>Task</th><th>Odds ratio</th><th>p-value</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr class="worst"><td>All 4 merges vs. 3 unmerged</td><td>ARC-Easy</td><td>0.883</td><td>6.7 × 10⁻¹⁵</td><td>significant — merged worse</td></tr>
+          <tr><td>All 4 merges vs. 3 unmerged</td><td>PIQA</td><td>0.989</td><td>0.435</td><td>not significant</td></tr>
+          <tr><td>Excl. DARE-TIES (3 merges) vs. 3 unmerged</td><td>ARC-Easy</td><td>0.951</td><td>0.0011</td><td>significant, much smaller</td></tr>
+          <tr><td>Excl. DARE-TIES (3 merges) vs. 3 unmerged</td><td>PIQA</td><td>1.016</td><td>0.255</td><td>not significant</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="chart-note" style="max-width: none; margin-top: 14px;">So: <b style="color: var(--ink-900);">yes, pooled comparison is valid here, and it does show a real effect on ARC-Easy</b> — merged models are collectively worse than unmerged ones (OR 0.88, p≈10⁻¹⁵). But most of that comes from DARE-TIES: drop it, and the effect shrinks by more than half (OR 0.95) while staying significant (p=0.0011) — so even the three "good" methods carry a small, real, detectable cost on ARC-Easy when pooled for extra power, on top of DARE-TIES's much larger one. On PIQA, pooling changes nothing: no significant effect either with or without DARE-TIES. The per-method table above is still the more informative view for deciding what to do about any <i>specific</i> method — this pooled result answers a different, narrower question: "does merging in general cost something on average," and the answer is a qualified yes on ARC-Easy, no on PIQA.</p>
+  </div>
+</section>
+
+<section class="slide" id="s3b">
+  <div class="slide-inner">
+    <div class="eyebrow">LLM merging</div>
+    <h2>Same prompt, seven models, three kinds of outcome</h2>
+    <div class="chart-caption">Greedy-decoded completions, unedited — base/Qwen-Instruct/Dolphin are the unmerged sources</div>
+
+    <div class="llm-example">
+      <span class="verdict good">Merging helped</span>
+      <div class="prompt">Prompt: "The largest planet in our solar system is"</div>
+      <div class="llm-row bad"><span class="who">Base (unmerged)</span><span class="said">"___ / A. Mercury / B. Venus..." — never answers</span></div>
+      <div class="llm-row bad"><span class="who">Qwen-Instruct (unmerged)</span><span class="said">"___ / A. Venus / B. Mars..." — never answers</span></div>
+      <div class="llm-row ok"><span class="who">Dolphin (unmerged)</span><span class="said">"Jupiter, which has a mass of..." — correct</span></div>
+      <div class="llm-row ok"><span class="who">Linear / DARE-TIES / Arcee Fusion</span><span class="said">all correctly say "Jupiter"</span></div>
+      <div class="llm-row bad"><span class="who">TIES</span><span class="said">"likely to be a gas giant..." — vague, never names it</span></div>
+    </div>
+
+    <div class="llm-example">
+      <span class="verdict crit">Merging hurt — a new error</span>
+      <div class="prompt">Prompt: "Water freezes at a temperature of"</div>
+      <div class="llm-row ok"><span class="who">Base / Qwen-Instruct (unmerged)</span><span class="said">"32 degrees Fahrenheit" — correct</span></div>
+      <div class="llm-row ok"><span class="who">Dolphin (unmerged) / Linear</span><span class="said">"0 degrees Celsius" — correct</span></div>
+      <div class="llm-row bad"><span class="who">DARE-TIES / Arcee Fusion</span><span class="said">"&minus;40 degrees Celsius" — wrong, invented by neither source</span></div>
+    </div>
+
+    <div class="llm-example">
+      <span class="verdict crit">Merging hurt — a shared capability lost</span>
+      <div class="prompt">Prompt: "12 multiplied by 8 equals"</div>
+      <div class="llm-row ok"><span class="who">Base / Dolphin (unmerged)</span><span class="said">"96" — correct</span></div>
+      <div class="llm-row bad"><span class="who">All 4 merged models</span><span class="said">none state 96 — all trail into an unfinished restatement of the question</span></div>
+    </div>
+
+    <p class="chart-note">All three patterns are real: merging can rescue an answer only one source knew (Jupiter), invent a wrong answer neither source gave (&minus;40°C), or lose an answer every relevant source had (96) — the outcome depends on the specific fact and method, not a fixed rule.</p>
+  </div>
+</section>
+
+<section class="slide" id="s4">
+  <div class="slide-inner">
+    <div class="eyebrow">Takeaways</div>
+    <h2>Three findings that held in both experiments</h2>
+    <div class="takeaway">
+      <div class="letter">A</div>
+      <div><h3>Merging always costs something</h3><p>True in vision (90.4% → 69.7%) and language models (the best unmerged model beat every merge on ARC-Easy).</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">B</div>
+      <div><h3>Gentler methods lose less</h3><p>Selective approaches (TIES, Arcee Fusion, even plain linear averaging) consistently beat aggressive ones (raw task arithmetic, DARE's random pruning).</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">C</div>
+      <div><h3>The damage isn't even</h3><p>Narrow, simple capabilities survive merging almost intact; broad, entangled ones take the real hit.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s5">
+  <div class="slide-inner">
+    <div class="eyebrow">Along the way</div>
+    <h2>Five real bugs found and fixed</h2>
+    <div class="bug-row"><span class="chip">Fixed</span><p><b>CUDA-only install</b> broke on macOS — worked around with plain <code>pip</code>.</p></div>
+    <div class="bug-row"><span class="chip">Fixed</span><p><b>Stale checkpoint filenames</b> in 2 shipped configs — patched both.</p></div>
+    <div class="bug-row"><span class="chip">Fixed</span><p><b>Dead debug config</b> pointed at a file that doesn't exist — repointed it.</p></div>
+    <div class="bug-row"><span class="chip">Fixed</span><p><b>Silent NaN corruption</b> in DARE merging (float16 overflow) — no warning from the tool, only caught by scanning the weights directly.</p></div>
+    <div class="bug-row"><span class="chip">Fixed</span><p><b>macOS's ancient bash</b> silently ran 1 of 7 models in a batch script — rewritten and reran correctly.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s6">
+  <div class="slide-inner">
+    <div class="eyebrow">Recommendations</div>
+    <h2>What I'd suggest next</h2>
+    <div class="next-item"><span class="idx">01</span><p><b>Consult with the stakeholders</b> — align on priorities and a real target use case before committing further effort.</p></div>
+    <div class="next-item"><span class="idx">02</span><p><b>Focus on LLM merging before multimodality</b> — the language-model results are the flatter, safer surface to iterate on next; vision merging's larger, uneven damage can wait.</p></div>
+    <div class="next-item"><span class="idx">03</span><p><b>Redirect effort toward <a href="https://github.com/arcee-ai/mergekit" target="_blank" rel="noopener">MergeKit</a> and stronger models</b> — the small proxy models have done their job; point the same method comparison at something we'd actually deploy, e.g. Gemma.</p></div>
+    <div class="next-item"><span class="idx">04</span><p><b>Consider the OLMo family</b> — Ai2's newly released <a href="https://allenai.org/blog/olmo3" target="_blank" rel="noopener">OLMo 3</a> (fully open weights and training data) is a strong next candidate.</p></div>
+    <div class="next-item"><span class="idx">05</span><p><b>Keep experimenting and expand eval coverage</b> — 2 benchmarks was enough to find a signal, not enough to fully trust it.</p></div>
+    <div class="next-item"><span class="idx">06</span><p><b>Report the bugs found</b> — the merge-and-rebase config issues and MergeKit's silent NaN corruption should go back to their maintainers.</p></div>
+  </div>
+</section>
+
+<div class="navdots" id="navdots"></div>
+<div class="counter" id="counter">1 / 7</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var nav = document.getElementById('navdots');
+  var counter = document.getElementById('counter');
+  slides.forEach(function (s, i) {
+    var b = document.createElement('button');
+    b.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+    b.addEventListener('click', function () { s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    nav.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(nav.querySelectorAll('button'));
+  var currentIndex = 0;
+  function setActive(i) {
+    currentIndex = i;
+    dots.forEach(function (d, j) { d.classList.toggle('active', j === i); });
+    counter.textContent = (i + 1) + ' / ' + slides.length;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        var idx = slides.indexOf(e.target);
+        if (idx > -1) setActive(idx);
+      }
+    });
+  }, { threshold: 0.5 });
+  slides.forEach(function (s) { io.observe(s); });
+  setActive(0);
+
+  function goTo(i) {
+    if (i < 0 || i >= slides.length) return;
+    slides[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      goTo(currentIndex + 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      goTo(currentIndex - 1);
+    }
+  });
+})();
+</script>
+</body>
+</html>
