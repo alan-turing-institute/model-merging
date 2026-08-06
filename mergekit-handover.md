@@ -42,6 +42,7 @@ Every merge is driven by one YAML file. The four things that matter:
 - `models` — the list of source models, each either a Hugging Face Hub repo ID (`org/model-name`) or a local directory path
 - `base_model` — required by some methods (`task_arithmetic`, `ties`, `dare_ties`) as the reference point the others are diffed against
 - `parameters` — per-model or global weights/knobs (e.g. `weight`, `density`)
+- `tokenizer_source` — which tokenizer/vocabulary to standardize on (see the warning right below — skipping this is the single most common way a merge silently breaks)
 
 ```yaml
 # config.yaml — a minimal linear merge of two public models
@@ -53,8 +54,11 @@ models:
   - model: teknium/OpenHermes-2.5-Mistral-7B
     parameters:
       weight: 0.5
+tokenizer_source: union
 dtype: float16
 ```
+
+> **Always check `vocab_size` matches before merging, or set `tokenizer_source` explicitly.** These two specific models are a real example of the mismatch: `mistralai/Mistral-7B-v0.1` has `vocab_size: 32000`, but `teknium/OpenHermes-2.5-Mistral-7B` adds two ChatML special tokens and reports `vocab_size: 32002`. Without `tokenizer_source`, MergeKit copies one model's tokenizer into the output while the merged `embed_tokens`/`lm_head` weights keep a different model's shape — the merge succeeds with no warning, and the mismatch only surfaces later, when `transformers` refuses to load it. `tokenizer_source: union` builds a combined vocabulary and resizes every source model's embedding matrix to match before merging, so nothing gets silently dropped or misaligned. Use `tokenizer_source: base` instead if you'd rather standardize on one model's vocab and don't need the other model's extra tokens.
 
 Swap in your own two models (Hub IDs or local paths) to run this against whatever you actually have on hand — that's "the available data" from MergeKit's point of view: the model checkpoints, not a labeled dataset.
 
@@ -130,8 +134,11 @@ models:
       density: 0.5
 parameters:
   normalize: true
+tokenizer_source: base
 dtype: float16
 ```
+
+A finetune of the same base model usually keeps the same vocab size, so this is lower-risk than Section 3's cross-family example — but setting `tokenizer_source` explicitly costs nothing and removes the guesswork.
 
 Run it exactly the same way as Section 4:
 
@@ -259,3 +266,4 @@ Same as Section 6 — just use the local directory path instead of a Hub ID. No 
 | Merged model loads but outputs garbage | Bad merge weights/method for this model pair, not a pipeline bug | Try a different `merge_method`, adjust `weight`/`density`, or fall back to Section 7's search instead of guessing |
 | `401 Unauthorized` downloading a model | Not authenticated, or haven't accepted the model's license on the Hub | Run `huggingface-cli login` with your own token, and visit the model page on the Hub to accept its license first |
 | Tokenizer missing from output | Forgot `--copy-tokenizer` | Re-run with the flag, or manually copy tokenizer files from the base model into the output directory |
+| `RuntimeError: ... ignore_mismatched_sizes ...` / `embed_tokens.weight MISMATCH ... ckpt: torch.Size([N, H]) vs model: torch.Size([M, H])` when loading the merged model | Source models have different `vocab_size` and the config didn't set `tokenizer_source`, so the copied tokenizer and the merged embedding weights disagree on vocab size | Don't just load with `ignore_mismatched_sizes=True` — that silently reinitializes the mismatched rows with random weights. Add `tokenizer_source: union` (or `base`) to the config and **re-run the merge**; the broken output already on disk needs to be regenerated, not patched at load time |
