@@ -1,0 +1,42 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-patch-lerp-config
+experiment_name: model-merge-experiments
+description: >-
+  Patches the fresh LERP merge's config.json vocab_size from 32017
+  (Meditron's, wrong) to 32000 (Llama's, matching the actual saved tensor
+  shape) -- the same root-cause bug documented previously for this exact
+  merge. Downloads the input, copies it to a writable output while
+  patching config.json, so the corrected copy can be registered as a new
+  data asset version. The earlier eval using ignore_mismatched_sizes=True
+  as a workaround instead produced near-random scores (MMLU 22.99%,
+  matching the original bug's signature) because that flag discards and
+  reinitializes the *entire* mismatched tensor rather than patching the
+  ~17 actually-mismatched rows.
+
+code: .
+
+command: >-
+  bash patch_config.sh ${{inputs.model}} ${{outputs.patched_model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 1800
+
+inputs:
+  model:
+    type: uri_folder
+    path: azureml:mergekit-repro-lerp@latest
+    mode: download
+
+outputs:
+  patched_model:
+    type: uri_folder
+    mode: rw_mount
