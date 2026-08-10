@@ -8,18 +8,22 @@ Qwen2.5-0.5B/1.5B experiments.
 
 ## 1. Prerequisites
 
-- `az` CLI with the `ml` extension installed, logged in, subscription set:
+- First we setup Azure on the command line.  Here is some instructions to set up `az` CLI (common line interface) with the `ml` extension at the __Turing__:
 
+First become admin:
   ```bash
+  su <name-id-admin>
   brew install azure-cli
-  # locked-down machine, no admin/sudo rights? use a venv instead of brew:
+  #  On a locked-down machine, no admin/sudo rights? use a venv instead of brew:
   #   python3 -m venv ~/azure-cli-venv && source ~/azure-cli-venv/bin/activate
   #   pip install azure-cli
+  ```
+  Now as a normal user you can install the extension and login:
+  ```bash
   az extension add -n ml
   az login
-  az account set --subscription "<name-or-id>"
   ```
-
+  then pick a suitable numbered option (there might only be one).
 - Resource group and workspace: **`--resource-group TIRE-1 --workspace-name TIRE-2`**
   on every `az ml` call (see `merge-job-parallel-template/submit_parallel.sh`) —
   **except** `az ml workspace show`, which takes `--name` instead of
