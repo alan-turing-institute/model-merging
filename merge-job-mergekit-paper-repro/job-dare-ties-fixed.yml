@@ -15,14 +15,13 @@ description: >-
 code: .
 
 command: >-
-  bash run_dare_ties_fixed.sh ${{outputs.results}} ${{outputs.merged_models}}
+  bash run_dare_ties_fixed.sh ${{outputs.results}} ${{outputs.merged_models}} ${{inputs.hf_token}}
 
 environment:
   build:
     path: docker-context
 
 environment_variables:
-  HF_TOKEN: ${{inputs.hf_token}}
   HF_DATASETS_TRUST_REMOTE_CODE: "1"
 
 compute: azureml:a100-cluster-merge

@@ -14,7 +14,7 @@ description: >-
 code: .
 
 command: >-
-  bash eval_merged_only.sh ${{outputs.results}}
+  bash eval_merged_only.sh ${{outputs.results}} ${{inputs.hf_token}}
   ${{inputs.merged_lerp}} ${{inputs.merged_slerp}} ${{inputs.merged_ties}} ${{inputs.merged_dare_ties}}
 
 environment:
@@ -22,7 +22,6 @@ environment:
     path: docker-context
 
 environment_variables:
-  HF_TOKEN: ${{inputs.hf_token}}
   HF_DATASETS_TRUST_REMOTE_CODE: "1"
 
 compute: azureml:a100-cluster-merge

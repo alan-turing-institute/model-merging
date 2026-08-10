@@ -12,14 +12,11 @@ description: >-
 code: .
 
 command: >-
-  bash run_all.sh ${{outputs.results}} ${{outputs.merged_models}}
+  bash run_all.sh ${{outputs.results}} ${{outputs.merged_models}} ${{inputs.hf_token}}
 
 environment:
   build:
     path: docker-context
-
-environment_variables:
-  HF_TOKEN: ${{inputs.hf_token}}
 
 compute: azureml:a100-cluster-merge
 resources:

@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 RESULTS="$1"
-shift
+export HF_TOKEN="$2"
+shift 2
 mkdir -p "$RESULTS/lm-eval"
 
 TASKS="medqa_4options,medmcqa,pubmedqa,arc_challenge,hellaswag,mmlu"

@@ -14,7 +14,7 @@ description: >-
 code: .
 
 command: >-
-  bash eval_all.sh ${{outputs.results}}
+  bash eval_all.sh ${{outputs.results}} ${{inputs.hf_token}}
   NousResearch/Llama-2-7b-chat-hf epfl-llm/meditron-7b ${{inputs.merged_lerp}}
   ${{inputs.merged_slerp}} ${{inputs.merged_ties}} ${{inputs.merged_dare_ties}}
 
@@ -23,7 +23,6 @@ environment:
     path: docker-context
 
 environment_variables:
-  HF_TOKEN: ${{inputs.hf_token}}
   # pubmedqa's underlying dataset (bigbio/pubmed_qa) ships a loader script;
   # `datasets` requires explicit opt-in to run it (a security default) and
   # lm_eval's own trust_remote_code model-arg doesn't propagate to dataset
