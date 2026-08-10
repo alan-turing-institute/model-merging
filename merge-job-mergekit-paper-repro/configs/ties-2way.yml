@@ -1,0 +1,15 @@
+models:
+  - model: NousResearch/Llama-2-7b-chat-hf
+    parameters:
+      density: 0.5
+      weight: 0.5
+  - model: epfl-llm/meditron-7b
+    parameters:
+      density: 0.5
+      weight: 0.5
+merge_method: ties
+base_model: NousResearch/Llama-2-7b-hf
+parameters:
+  normalize: false
+  int8_mask: true
+dtype: float16

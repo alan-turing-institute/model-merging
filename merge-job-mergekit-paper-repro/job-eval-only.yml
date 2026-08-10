@@ -1,0 +1,66 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-only
+experiment_name: model-merge-experiments
+description: >-
+  Eval-only recovery for the MergeKit paper (arXiv 2403.13257) replication.
+  All 4 merges (LERP/SLERP/TIES/DARE-TIES) already succeeded in
+  boring_soccer_m0l2qtx603 before it crashed on the very first eval --
+  huggingface_hub>=1.16 broke `datasets`' loader for bare-slug canonical
+  dataset repos like "medmcqa" (HfUriError). Fixed by pinning
+  huggingface_hub<1.16 in the Docker image; merged models are mounted
+  read-only from their already-registered data assets rather than re-merged.
+
+code: .
+
+command: >-
+  bash eval_all.sh ${{outputs.results}}
+  NousResearch/Llama-2-7b-chat-hf epfl-llm/meditron-7b ${{inputs.merged_lerp}}
+  ${{inputs.merged_slerp}} ${{inputs.merged_ties}} ${{inputs.merged_dare_ties}}
+
+environment:
+  build:
+    path: docker-context
+
+environment_variables:
+  HF_TOKEN: ${{inputs.hf_token}}
+  # pubmedqa's underlying dataset (bigbio/pubmed_qa) ships a loader script;
+  # `datasets` requires explicit opt-in to run it (a security default) and
+  # lm_eval's own trust_remote_code model-arg doesn't propagate to dataset
+  # loading -- a known open upstream issue (EleutherAI/lm-evaluation-harness
+  # #2631). This env var is `datasets`' own opt-in mechanism, unaffected by
+  # that lm_eval gap.
+  HF_DATASETS_TRUST_REMOTE_CODE: "1"
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 21600
+
+inputs:
+  merged_lerp:
+    type: uri_folder
+    path: azureml:mergekit-repro-lerp@latest
+    mode: ro_mount
+  merged_slerp:
+    type: uri_folder
+    path: azureml:mergekit-repro-slerp@latest
+    mode: ro_mount
+  merged_ties:
+    type: uri_folder
+    path: azureml:mergekit-repro-ties@latest
+    mode: ro_mount
+  merged_dare_ties:
+    type: uri_folder
+    path: azureml:mergekit-repro-dare-ties@latest
+    mode: ro_mount
+  hf_token:
+    type: string
+    default: ""
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload

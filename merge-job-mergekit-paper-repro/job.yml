@@ -1,0 +1,42 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-llama2-meditron
+experiment_name: model-merge-experiments
+description: >-
+  Replicates the flagship case study from the original MergeKit paper
+  (Goddard et al. 2024, arXiv 2403.13257, Table 1): Llama-2-7B-Chat +
+  Meditron-7B merged via LERP, SLERP, TIES, and DARE-TIES, evaluated on
+  USMLE (medqa_4options), MedMCQA, PubMedQA, ARC-Challenge, HellaSwag, and
+  MMLU -- directly comparable to the paper's own published numbers.
+
+code: .
+
+command: >-
+  bash run_all.sh ${{outputs.results}} ${{outputs.merged_models}}
+
+environment:
+  build:
+    path: docker-context
+
+environment_variables:
+  HF_TOKEN: ${{inputs.hf_token}}
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 21600
+
+inputs:
+  hf_token:
+    type: string
+    default: ""
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload
+  merged_models:
+    type: uri_folder
+    mode: rw_mount

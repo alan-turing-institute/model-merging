@@ -1,0 +1,59 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-merged-only
+experiment_name: model-merge-experiments
+description: >-
+  Take 5: the llama2-7b-chat and meditron-7b baseline evals already
+  succeeded and their sample data survived (results output mode=upload
+  synced incrementally). Only the 4 merged models need re-running, now with
+  ignore_mismatched_sizes=True -- Llama-2-7b-chat (vocab 32000) and
+  Meditron-7B (vocab 32017) have mismatched vocabs, and MergeKit's merged
+  output's config/tensor shapes don't agree, which transformers hard-errors
+  on by default (RuntimeError: ignore_mismatched_sizes=False).
+
+code: .
+
+command: >-
+  bash eval_merged_only.sh ${{outputs.results}}
+  ${{inputs.merged_lerp}} ${{inputs.merged_slerp}} ${{inputs.merged_ties}} ${{inputs.merged_dare_ties}}
+
+environment:
+  build:
+    path: docker-context
+
+environment_variables:
+  HF_TOKEN: ${{inputs.hf_token}}
+  HF_DATASETS_TRUST_REMOTE_CODE: "1"
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 21600
+
+inputs:
+  merged_lerp:
+    type: uri_folder
+    path: azureml:mergekit-repro-lerp@latest
+    mode: ro_mount
+  merged_slerp:
+    type: uri_folder
+    path: azureml:mergekit-repro-slerp@latest
+    mode: ro_mount
+  merged_ties:
+    type: uri_folder
+    path: azureml:mergekit-repro-ties@latest
+    mode: ro_mount
+  merged_dare_ties:
+    type: uri_folder
+    path: azureml:mergekit-repro-dare-ties@latest
+    mode: ro_mount
+  hf_token:
+    type: string
+    default: ""
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload

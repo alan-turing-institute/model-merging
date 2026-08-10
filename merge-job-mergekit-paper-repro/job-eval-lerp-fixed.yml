@@ -1,0 +1,48 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-lerp-fixed
+experiment_name: model-merge-experiments
+description: >-
+  Verifies the root-cause diagnosis for LERP's catastrophic scores: tensor
+  inspection showed its embed_tokens/lm_head data is statistically healthy
+  (matches TIES's own values closely), but its config.json falsely declared
+  vocab_size=32017 (Meditron's) while the actual tensors are [32000, 4096]
+  (Llama's) -- a mergekit metadata bug, not real data corruption. The
+  earlier ignore_mismatched_sizes=True workaround silently discarded and
+  randomly reinitialized the entire (valid) embed/lm_head tensors rather
+  than just patching a few rows. Patched config.json's vocab_size to 32000
+  directly in blob storage to match the real tensor shapes; this job
+  re-evaluates LERP with no mismatch workaround needed, to confirm scores
+  recover to the TIES/SLERP/paper range.
+
+code: .
+
+command: >-
+  lm_eval --model hf --model_args pretrained=${{inputs.merged_lerp}},dtype=float16
+  --tasks medqa_4options,medmcqa,pubmedqa,arc_challenge,hellaswag,mmlu --device cuda --batch_size 8
+  --output_path ${{outputs.results}}/lm-eval/merged-lerp-fixed --log_samples
+
+environment:
+  build:
+    path: docker-context
+
+environment_variables:
+  HF_DATASETS_TRUST_REMOTE_CODE: "1"
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 10800
+
+inputs:
+  merged_lerp:
+    type: uri_folder
+    path: azureml:mergekit-repro-lerp@latest
+    mode: ro_mount
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload

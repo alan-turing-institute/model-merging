@@ -1,0 +1,9 @@
+models:
+  - model: NousResearch/Llama-2-7b-chat-hf
+    parameters:
+      weight: 0.5
+  - model: epfl-llm/meditron-7b
+    parameters:
+      weight: 0.5
+merge_method: linear
+dtype: float16

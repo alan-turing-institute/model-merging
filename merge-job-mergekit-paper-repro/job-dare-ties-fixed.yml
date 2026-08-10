@@ -1,0 +1,46 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-dare-ties-fixed
+experiment_name: model-merge-experiments
+description: >-
+  Re-merges DARE-TIES with dtype switched from float16 to bfloat16.
+  Root-cause diagnosis: dare_ties defaults to rescale=True, which divides
+  by the L1 norm of the surviving post-Bernoulli-mask delta elements --
+  for embed_tokens/lm_head specifically, a random mask draw left a tiny
+  surviving norm, producing a rescale factor that overflowed fp16's
+  ~65504 max to Inf, propagating to NaN (confirmed: both tensors were
+  100% NaN in the original merge). bfloat16's much larger range (~3e38)
+  removes the overflow risk while preserving DARE's actual algorithm.
+
+code: .
+
+command: >-
+  bash run_dare_ties_fixed.sh ${{outputs.results}} ${{outputs.merged_models}}
+
+environment:
+  build:
+    path: docker-context
+
+environment_variables:
+  HF_TOKEN: ${{inputs.hf_token}}
+  HF_DATASETS_TRUST_REMOTE_CODE: "1"
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 14400
+
+inputs:
+  hf_token:
+    type: string
+    default: ""
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload
+  merged_models:
+    type: uri_folder
+    mode: rw_mount

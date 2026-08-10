@@ -1,0 +1,7 @@
+models:
+  - model: epfl-llm/meditron-7b
+merge_method: slerp
+base_model: NousResearch/Llama-2-7b-chat-hf
+parameters:
+  t: 0.5
+dtype: float16
