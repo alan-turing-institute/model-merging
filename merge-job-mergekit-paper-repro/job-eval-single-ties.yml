@@ -1,0 +1,35 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-ties
+experiment_name: model-merge-experiments
+description: >-
+  Split-job recovery: evaluates only the TIES merge, mounted read-only from
+  the mergekit-repro-ties data asset (v2). See job-eval-single-lerp.yml for
+  the rationale.
+
+code: .
+
+command: >-
+  bash eval_single.sh ${{outputs.results}} merged-ties ${{inputs.model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 10800
+
+inputs:
+  model:
+    type: uri_folder
+    path: azureml:mergekit-repro-ties@latest
+    mode: ro_mount
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload

@@ -1,0 +1,34 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-meditron-base
+experiment_name: model-merge-experiments
+description: >-
+  Split-job recovery: evaluates only the Meditron-7B base checkpoint, pulled
+  directly from HF Hub. This one is GATED and needs a real hf_token input --
+  see job-eval-single-lerp.yml for the rationale on why this is split out.
+
+code: .
+
+command: >-
+  bash eval_single.sh ${{outputs.results}} meditron-7b epfl-llm/meditron-7b ${{inputs.hf_token}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 10800
+
+inputs:
+  hf_token:
+    type: string
+    default: ""
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload

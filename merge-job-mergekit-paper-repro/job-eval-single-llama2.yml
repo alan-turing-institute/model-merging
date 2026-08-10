@@ -1,0 +1,29 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-llama2-base
+experiment_name: model-merge-experiments
+description: >-
+  Split-job recovery: evaluates only the Llama-2-7B-Chat base checkpoint,
+  pulled directly from HF Hub (ungated, no token needed). See
+  job-eval-single-lerp.yml for the rationale.
+
+code: .
+
+command: >-
+  bash eval_single.sh ${{outputs.results}} llama2-7b-chat NousResearch/Llama-2-7b-chat-hf
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 10800
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload

@@ -1,0 +1,37 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-lerp
+experiment_name: model-merge-experiments
+description: >-
+  Split-job recovery: evaluates only the LERP merge, mounted read-only from
+  the mergekit-repro-lerp data asset (v2, registered from gray_river_f8j1xtbhsj's
+  successful merge output). Splitting each target into its own job keeps
+  local disk usage to a single model at a time, avoiding the disk exhaustion
+  that killed the combined merge+eval job right as evaluation started.
+
+code: .
+
+command: >-
+  bash eval_single.sh ${{outputs.results}} merged-lerp ${{inputs.model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 10800
+
+inputs:
+  model:
+    type: uri_folder
+    path: azureml:mergekit-repro-lerp@latest
+    mode: ro_mount
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload
