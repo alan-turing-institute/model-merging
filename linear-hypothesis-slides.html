@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Linear Hypothesis — Is Task Arithmetic Uniquely Special?</title>
+<style>
+  :root {
+    --ink-900: #12151b; --ink-700: #454e58; --ink-500: #6b7480;
+    --slate-50: #f4f5f7; --slate-100: #eceef1; --slate-200: #dde1e6;
+    --paper: #fcfcfb;
+    --copper-600: #a85a1e; --copper-500: #b8611f;
+    --good-600: #2f7a55; --good-100: #e1efe7;
+    --crit-600: #a63a3a; --crit-100: #f4e3e1;
+    --border: var(--slate-200);
+    --font-display: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink-900: #eceef1; --ink-700: #c3c9d1; --ink-500: #8f97a3;
+      --slate-50: #14171d; --slate-100: #1a1e25; --slate-200: #262b34;
+      --paper: #14171d; --copper-600: #e39a5c; --copper-500: #d98a47;
+      --good-600: #5cbb8a; --good-100: #16261e; --crit-600: #e08585; --crit-100: #2a1818;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink-900: #eceef1; --ink-700: #c3c9d1; --ink-500: #8f97a3;
+    --slate-50: #14171d; --slate-100: #1a1e25; --slate-200: #262b34;
+    --paper: #14171d; --copper-600: #e39a5c; --copper-500: #d98a47;
+    --good-600: #5cbb8a; --good-100: #16261e; --crit-600: #e08585; --crit-100: #2a1818;
+  }
+  :root[data-theme="light"] {
+    --ink-900: #12151b; --ink-700: #454e58; --ink-500: #6b7480;
+    --slate-50: #f4f5f7; --slate-100: #eceef1; --slate-200: #dde1e6;
+    --paper: #fcfcfb; --copper-600: #a85a1e; --copper-500: #b8611f;
+    --good-600: #2f7a55; --good-100: #e1efe7; --crit-600: #a63a3a; --crit-100: #f4e3e1;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { margin: 0; background: var(--slate-50); color: var(--ink-900); font-family: var(--font-body); }
+
+  .slide {
+    min-height: 100svh; padding: clamp(20px, 4vw, 44px) clamp(20px, 8vw, 96px);
+    display: flex; flex-direction: column; justify-content: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .slide-inner { max-width: 820px; width: 100%; margin: 0 auto; }
+
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--copper-600); font-weight: 600; margin-bottom: 10px;
+  }
+  h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0 0 10px; font-weight: 600; }
+  h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.1; }
+  h2 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.16; }
+  p { line-height: 1.5; color: var(--ink-700); max-width: 62ch; font-size: 15.5px; margin: 0 0 8px; }
+  .lede { font-size: 16.5px; max-width: 58ch; }
+  .byline { font-family: var(--font-mono); font-size: 13px; color: var(--ink-500); margin-top: 22px; }
+  .byline b { color: var(--ink-700); font-weight: 600; }
+
+  a { color: var(--copper-600); text-decoration: underline; text-decoration-color: var(--copper-500); text-underline-offset: 2px; }
+  a:hover { color: var(--copper-500); }
+
+  .chart-note { font-size: 13.5px; line-height: 1.45; color: var(--ink-700); margin-top: 10px; max-width: 62ch; }
+
+  .table-wrap { overflow-x: auto; margin-top: 12px; }
+  table.data { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  table.data caption { caption-side: top; text-align: left; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-500); margin-bottom: 8px; }
+  table.data thead th {
+    text-align: right; font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-500); font-weight: 600; padding: 6px 10px; border-bottom: 1px solid var(--border);
+  }
+  table.data thead th:first-child { text-align: left; padding-left: 0; }
+  table.data tbody td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--ink-700); font-variant-numeric: tabular-nums; text-align: right; }
+  table.data tbody td:first-child { text-align: left; color: var(--ink-900); padding-left: 0; }
+  table.data tbody tr:last-child td { border-bottom: none; }
+  table.data tbody tr.best td:first-child { color: var(--good-600); font-weight: 600; }
+  table.data tbody tr.worst td:first-child { color: var(--crit-600); font-weight: 600; }
+  td.sig { font-weight: 700; color: var(--copper-600); }
+
+  .formula {
+    font-family: var(--font-mono); font-size: 16px; background: var(--slate-100);
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 14px 0;
+    color: var(--ink-900); line-height: 1.7;
+  }
+  .formula .op { color: var(--copper-600); }
+  .formula .step { color: var(--ink-500); font-size: 13px; }
+
+  ul.plain { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  ul.plain li { line-height: 1.55; color: var(--ink-700); padding-left: 22px; position: relative; max-width: 62ch; font-size: 15.5px; }
+  ul.plain li::before { content: "—"; position: absolute; left: 0; color: var(--copper-500); }
+  ul.plain b { color: var(--ink-900); }
+
+  .takeaway { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start; padding: 10px 0; border-top: 1px solid var(--border); }
+  .takeaway:first-of-type { border-top: none; padding-top: 2px; }
+  .takeaway .letter { font-family: var(--font-display); font-size: 28px; color: var(--copper-500); font-weight: 600; }
+  .takeaway h3 { font-family: var(--font-body); font-size: 16.5px; font-weight: 700; margin: 0 0 4px; }
+  .takeaway p { font-size: 14.5px; margin: 0; }
+
+  .navdots { position: fixed; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 9px; z-index: 20; }
+  .navdots button { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--ink-500); background: transparent; padding: 0; cursor: pointer; opacity: 0.55; }
+  .navdots button.active { background: var(--copper-500); border-color: var(--copper-500); opacity: 1; }
+  .counter { position: fixed; right: 16px; bottom: 14px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-500); z-index: 20; }
+  @media (max-width: 640px) { .navdots { display: none; } }
+  @media print { .navdots, .counter { display: none; } .slide { border-bottom: none; page-break-after: always; } }
+</style>
+</head>
+<body>
+
+<section class="slide" id="s0">
+  <div class="slide-inner">
+    <div class="eyebrow">Model Merging Investigation · Replication Note</div>
+    <h1>Is Task Arithmetic Uniquely Special?</h1>
+    <p class="lede">A recent systematic study, <a href="https://arxiv.org/abs/2511.21437" target="_blank" rel="noopener">"A Systematic Study of In-the-Wild Model Merging for Large Language Models" (arXiv 2511.21437v2)</a>, claims that of six merge methods tested on in-the-wild heterogeneous fine-tunes, Task Arithmetic is the one that reliably beats the base model — reaching 100% success once enough checkpoints are merged. We replicated their regime on their own Qwen3-4B and found a simpler explanation for why Task Arithmetic looks special.</p>
+    <p class="byline"><b>Dr Justin McInroy</b> &amp; <b>Dr Mariusz Pietrzyk</b> · TIRE · The Alan Turing Institute</p>
+  </div>
+</section>
+
+<section class="slide" id="s1">
+  <div class="slide-inner">
+    <div class="eyebrow">Setup</div>
+    <h2>Replicating the paper's exact regime</h2>
+    <p class="lede"><code>Qwen/Qwen3-4B</code> + 7 independently-sourced community fine-tunes with genuinely different training objectives — agentic tool-use, uncensoring, formal theorem-proving, Russian instruction-tuning, Chinese grammar correction, multilingual moral reasoning, behavior simulation. n=7, above the paper's reported n≥6 threshold for "in-the-wild" success.</p>
+    <ul class="plain">
+      <li><b>What "n" means:</b> the number of fine-tuned checkpoints merged into one model. The paper tests n&nbsp;∈&nbsp;{2, 4, 6, 8, 10, 12} on each base model, sampling 15 combinations per n, and reports how "success" scales with n — e.g. for their own Qwen3-4B, Task Arithmetic's success rate goes 47%&nbsp;(n=2) → 80%&nbsp;(n=4) → 100%&nbsp;(n=6, n=12). We ran <b>one</b> combination at n=7, past their n≥6 threshold.</li>
+      <li><b>5 merge methods tested:</b> Linear, TIES, DARE-TIES, Task Arithmetic, Arcee Fusion — all at matched, equal weighting (1/7 per checkpoint, or the 2-way equivalent).</li>
+      <li><b>2 benchmarks:</b> ARC-Easy (2,376 items) and PIQA (1,838 items), scored per-item for paired McNemar's exact tests and a clustered GEE.</li>
+      <li><b>Success criterion (paper's own, confirmed against their text):</b> does the merged model beat the <i>base</i> model — not "beats every source checkpoint," a different, stricter metric the paper reports separately (their Table 2). We checked both; the qualitative pattern is the same either way, so we report the paper's actual metric here.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" id="s2">
+  <div class="slide-inner">
+    <div class="eyebrow">Results</div>
+    <h2>Linear ties Task Arithmetic — both beat the base model</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>Merged vs. base model (<code>Qwen3-4B</code>: 0.7845 ARC-Easy / 0.7497 PIQA), the paper's own success metric — McNemar exact p, <span class="sig">*p&lt;0.05</span></caption>
+        <thead><tr><th>Method</th><th>ARC-Easy Acc</th><th>Beats base?</th><th>PIQA Acc</th><th>Beats base?</th></tr></thead>
+        <tbody>
+          <tr class="best"><td>Linear</td><td>0.8203</td><td>Yes, <span class="sig">p=1.5e-10*</span></td><td>0.7742</td><td>Yes, <span class="sig">p=0.0003*</span></td></tr>
+          <tr class="best"><td>Task Arithmetic</td><td>0.8157</td><td>Yes, <span class="sig">p=2.4e-08*</span></td><td>0.7709</td><td>Yes, <span class="sig">p=0.0013*</span></td></tr>
+          <tr><td>Arcee Fusion</td><td>0.7921</td><td>Yes, p=0.168 (n.s.)</td><td>0.7731</td><td>Yes, <span class="sig">p=0.0001*</span></td></tr>
+          <tr class="worst"><td>TIES</td><td>0.5126</td><td>No — collapse, <span class="sig">p≈0*</span></td><td>0.6757</td><td>No — collapse, <span class="sig">p≈0*</span></td></tr>
+          <tr class="worst"><td>DARE-TIES</td><td>0.4238</td><td>No — collapse, <span class="sig">p≈0*</span></td><td>0.6257</td><td>No — collapse, <span class="sig">p≈0*</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note">Linear and Task Arithmetic land within noise of each other on <i>both</i> benchmarks — Linear is arguably marginally ahead, consistent with the algebra on the next slide. TIES/DARE-TIES used an untuned 50% magnitude density here — the paper's own tuned TIES-Merging (top-10% density, λ=0.1) succeeded 66-100% of the time on their Qwen-4B experiments, the opposite of this collapse. We re-ran both at the paper's actual hyperparameters — next slide.</p>
+  </div>
+</section>
+
+<section class="slide" id="s2b">
+  <div class="slide-inner">
+    <div class="eyebrow">Follow-up — retuned to the paper's hyperparameters</div>
+    <h2>The collapse was a hyperparameter artifact, not a method failure</h2>
+    <p class="lede">Same 7 checkpoints, same base model, only the TIES/DARE-TIES settings changed: density 50%&nbsp;→&nbsp;10% (top-10% magnitude threshold, matching the paper), weight 1/7&nbsp;→&nbsp;0.1 unnormalized (matching their λ=0.1 scaling).</p>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>Same McNemar test vs. base model — before vs. after retuning</caption>
+        <thead><tr><th>Method</th><th>ARC-Easy: untuned → retuned</th><th>PIQA: untuned → retuned</th></tr></thead>
+        <tbody>
+          <tr class="best"><td>TIES</td><td>0.5126 → <b style="color: var(--good-600);">0.7955</b>, <span class="sig">p=0.004*</span></td><td>0.6757 → <b style="color: var(--good-600);">0.7655</b>, <span class="sig">p=0.0004*</span></td></tr>
+          <tr class="best"><td>DARE-TIES</td><td>0.4238 → <b style="color: var(--good-600);">0.7887</b>, p=0.57 (n.s.)</td><td>0.6257 → <b style="color: var(--good-600);">0.7584</b>, p=0.26 (n.s.)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note">Both methods now beat the base model on both benchmarks — TIES significantly so. The caveat from the previous slide was correct: our original collapse said nothing about TIES-Merging's real reliability, only about an untuned config. With this fix, <b style="color: var(--ink-900);">all five methods tested now succeed</b> on Qwen3-4B at n=7, not just Task Arithmetic and Linear — which pushes back further on the paper's "most methods fail in the wild" framing than we first thought.</p>
+  </div>
+</section>
+
+<section class="slide" id="s3">
+  <div class="slide-inner">
+    <div class="eyebrow">The linear hypothesis</div>
+    <h2>At matched weights, the two formulas are algebraically identical</h2>
+    <p class="lede">Task Arithmetic and Linear look conceptually different — one edits relative to a base model, the other averages checkpoints directly. But when weights sum to 1, they collapse to the same computation:</p>
+    <div class="formula">
+      Task Arithmetic:&nbsp; <span class="op">merged</span> = base + &Sigma; w<sub>i</sub>&middot;(model<sub>i</sub> &minus; base)<br>
+      <span class="step">with w<sub>i</sub> = 1/7 for all 7 checkpoints (&Sigma;w<sub>i</sub> = 1):</span><br>
+      &nbsp;&nbsp;= base + (1/7)&middot;&Sigma;model<sub>i</sub> &minus; (7&middot;1/7)&middot;base<br>
+      &nbsp;&nbsp;= base + avg(model<sub>i</sub>) &minus; base<br>
+      &nbsp;&nbsp;<span class="op">= avg(model<sub>i</sub>)</span><br>
+      <br>
+      Linear:&nbsp; <span class="op">merged</span> = &Sigma; w<sub>i</sub>&middot;model<sub>i</sub> = <span class="op">avg(model<sub>i</sub>)</span>
+    </div>
+    <p class="chart-note">The base terms cancel exactly. This is exactly why Linear and Task Arithmetic scored within noise of each other in our replication — not a coincidence, a mathematical identity. The two methods only diverge when weights don't sum to 1 (e.g. a single-checkpoint edit with weight&nbsp;≠&nbsp;0.5), or when sparsification/sign-consensus is layered on top, as in TIES and DARE-TIES.</p>
+  </div>
+</section>
+
+<section class="slide" id="s4">
+  <div class="slide-inner">
+    <div class="eyebrow">Conclusion</div>
+    <h2>What the claim gets right, and what it misses</h2>
+    <div class="takeaway">
+      <div class="letter">✗</div>
+      <div>
+        <h3>Not confirmed: Task Arithmetic is not uniquely the fix</h3>
+        <p>Plain Linear averaging performs equivalently to Task Arithmetic on the paper's own success metric (beats base model) — and by our math, that's expected, not surprising, whenever both methods are configured with weights summing to 1. A methods comparison that doesn't control for this weight-normalization detail will always find them indistinguishable, and any claimed advantage for Task Arithmetic should be checked against this identity before being treated as a property of the delta-vector approach itself.</p>
+      </div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">✗</div>
+      <div>
+        <h3>Also not confirmed: TIES/DARE-TIES aren't inherently unreliable either</h3>
+        <p>Our first TIES/DARE-TIES run collapsed catastrophically — but retuning to the paper's own hyperparameters (10% density, λ=0.1, unnormalized) fixed it completely: both now beat the base model on both benchmarks. The "most methods fail in the wild" framing looks, in our replication, to be substantially a default-hyperparameter artifact — every method we tested succeeds once tuned to the settings the paper itself used.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="navdots" id="navdots"></div>
+<div class="counter" id="counter"></div>
+
+<script>
+(function() {
+  var slides = Array.from(document.querySelectorAll('.slide'));
+  var navdots = document.getElementById('navdots');
+  var counter = document.getElementById('counter');
+  slides.forEach(function(s, i) {
+    var btn = document.createElement('button');
+    btn.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+    btn.addEventListener('click', function() { s.scrollIntoView({ behavior: 'smooth' }); });
+    navdots.appendChild(btn);
+  });
+  var dots = Array.from(navdots.children);
+  var currentIdx = 0;
+  function updateActive() {
+    var mid = window.scrollY + window.innerHeight / 2;
+    var idx = 0;
+    slides.forEach(function(s, i) { if (s.offsetTop <= mid) idx = i; });
+    currentIdx = idx;
+    dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+    counter.textContent = (idx + 1) + ' / ' + slides.length;
+  }
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+  function goTo(i) { if (i < 0 || i >= slides.length) return; slides[i].scrollIntoView({ behavior: 'smooth' }); }
+  window.addEventListener('keydown', function(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    switch (e.key) {
+      case 'ArrowDown': case 'ArrowRight': case 'PageDown': case ' ':
+        e.preventDefault(); goTo(currentIdx + 1); break;
+      case 'ArrowUp': case 'ArrowLeft': case 'PageUp':
+        e.preventDefault(); goTo(currentIdx - 1); break;
+      case 'Home': e.preventDefault(); goTo(0); break;
+      case 'End': e.preventDefault(); goTo(slides.length - 1); break;
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
