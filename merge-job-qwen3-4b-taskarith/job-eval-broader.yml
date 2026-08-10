@@ -1,0 +1,84 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: qwen3-4b-taskarith-eval-broader
+experiment_name: model-merge-experiments
+description: >-
+  Expands eval coverage for the n=7 heterogeneous Qwen3-4B pool from
+  arc_easy,piqa to arc_easy,piqa,hellaswag,mmlu, reusing every already-
+  registered data asset (8 source checkpoints + 4 merged models: linear,
+  ties, dare-ties, task-arithmetic) mounted read-only. No re-merging, no HF
+  downloads -- pure eval-only job on top of existing Azure ML data assets.
+
+code: .
+
+command: >-
+  bash run_eval_broader.sh ${{outputs.results}}
+  ${{inputs.base}} ${{inputs.jan_nano}} ${{inputs.abliterated}} ${{inputs.pythagoras_prover}}
+  ${{inputs.qvikhr_instruction}} ${{inputs.chinese_error_corrector}} ${{inputs.met_d}} ${{inputs.osim}}
+  ${{inputs.merged_linear}} ${{inputs.merged_ties}} ${{inputs.merged_dare_ties}} ${{inputs.merged_task_arithmetic}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 14400
+
+inputs:
+  base:
+    type: uri_folder
+    path: azureml:qwen3-4b-base@latest
+    mode: ro_mount
+  jan_nano:
+    type: uri_folder
+    path: azureml:qwen3-4b-jan-nano@latest
+    mode: ro_mount
+  abliterated:
+    type: uri_folder
+    path: azureml:qwen3-4b-abliterated@latest
+    mode: ro_mount
+  pythagoras_prover:
+    type: uri_folder
+    path: azureml:qwen3-4b-pythagoras-prover@latest
+    mode: ro_mount
+  qvikhr_instruction:
+    type: uri_folder
+    path: azureml:qwen3-4b-qvikhr-instruction@latest
+    mode: ro_mount
+  chinese_error_corrector:
+    type: uri_folder
+    path: azureml:qwen3-4b-chinese-error-corrector@latest
+    mode: ro_mount
+  met_d:
+    type: uri_folder
+    path: azureml:qwen3-4b-met-d@latest
+    mode: ro_mount
+  osim:
+    type: uri_folder
+    path: azureml:qwen3-4b-osim@latest
+    mode: ro_mount
+  merged_linear:
+    type: uri_folder
+    path: azureml:qwen3-merged-linear-7way@latest
+    mode: ro_mount
+  merged_ties:
+    type: uri_folder
+    path: azureml:qwen3-merged-ties-7way@latest
+    mode: ro_mount
+  merged_dare_ties:
+    type: uri_folder
+    path: azureml:qwen3-merged-dare-ties-7way@latest
+    mode: ro_mount
+  merged_task_arithmetic:
+    type: uri_folder
+    path: azureml:qwen3-merged-task-arithmetic-7way@latest
+    mode: ro_mount
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload
