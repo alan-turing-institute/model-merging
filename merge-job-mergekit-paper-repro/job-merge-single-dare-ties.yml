@@ -1,0 +1,35 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-merge-dare-ties
+experiment_name: model-merge-experiments
+description: >-
+  Split-job: merges only DARE-TIES (Llama-2-7B-Chat + Meditron-7B), no eval.
+  configs/dare-ties-2way.yml already sets dtype: bfloat16 (the fix for the
+  fp16-overflow-to-NaN bug found earlier), preserved unchanged here. See
+  job-merge-single-lerp.yml for the split-job rationale.
+
+code: .
+
+command: >-
+  bash merge_single.sh configs/dare-ties-2way.yml ${{outputs.merged_model}} ${{inputs.hf_token}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:gpu-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 7200
+
+inputs:
+  hf_token:
+    type: string
+    default: ""
+
+outputs:
+  merged_model:
+    type: uri_folder
+    mode: rw_mount

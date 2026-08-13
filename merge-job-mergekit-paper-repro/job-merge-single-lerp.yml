@@ -1,0 +1,36 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-merge-lerp
+experiment_name: model-merge-experiments
+description: >-
+  Split-job: merges only LERP (Llama-2-7B-Chat + Meditron-7B), no eval.
+  Part of splitting merge and eval into separate jobs, on top of the
+  earlier eval-only split -- no single job now ever holds more than one
+  merged 7B model's worth of local disk, and each merge job is small
+  enough to run on T4 instead of A100.
+
+code: .
+
+command: >-
+  bash merge_single.sh configs/lerp-2way.yml ${{outputs.merged_model}} ${{inputs.hf_token}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:gpu-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 7200
+
+inputs:
+  hf_token:
+    type: string
+    default: ""
+
+outputs:
+  merged_model:
+    type: uri_folder
+    mode: rw_mount

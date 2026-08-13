@@ -16,7 +16,7 @@ environment:
   build:
     path: docker-context
 
-compute: azureml:a100-cluster-merge
+compute: azureml:gpu-cluster-merge
 resources:
   instance_count: 1
 
