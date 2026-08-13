@@ -10,6 +10,14 @@ export HF_TOKEN="${4:-}"
 # loading -- a known open upstream issue (EleutherAI/lm-evaluation-harness
 # #2631). This env var is `datasets`' own opt-in mechanism.
 export HF_DATASETS_TRUST_REMOTE_CODE="1"
+# T4 has 16GB VRAM; a 7B model in float16 alone is already ~14GB, leaving
+# little headroom for activation memory. batch_size=8 pushed usage to
+# 15.46/15.56 GiB and crashed with CUDA OOM on every single target (base
+# and merged alike, since all of them load a 7B model the same way).
+# expandable_segments helps reclaim fragmented-but-unallocated memory; it's
+# not a fix for a genuine shortfall, but it's a free addition on top of the
+# real fix (smaller batch_size).
+export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 mkdir -p "$RESULTS/lm-eval"
 
 TASKS="medqa_4options,medmcqa,pubmedqa,arc_challenge,hellaswag,mmlu"
@@ -25,7 +33,7 @@ echo "=== Evaluating: $NAME ($MODEL_PATH) ===" | tee -a "$RESULTS/run.log"
 # handful of mismatched rows instead of crashing -- a no-op for the two base
 # (non-merged) checkpoints, which have no mismatch to begin with.
 lm_eval --model hf --model_args pretrained="$MODEL_PATH",dtype=float16,ignore_mismatched_sizes=True \
-  --tasks "$TASKS" --device cuda --batch_size 8 \
+  --tasks "$TASKS" --device cuda --batch_size 2 \
   --output_path "$RESULTS/lm-eval/$NAME" \
   --log_samples \
   2>&1 | tee "$RESULTS/lm-eval/$NAME.log"
