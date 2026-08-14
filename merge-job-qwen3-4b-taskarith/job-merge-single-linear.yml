@@ -1,0 +1,31 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: qwen3-4b-taskarith-merge-linear
+experiment_name: model-merge-experiments
+description: >-
+  Split-job: merges only Linear (7-way, Qwen3-4B + 7 heterogeneous
+  fine-tunes), no eval. Pulls all 8 source checkpoints directly from HF Hub
+  (none are gated -- no token needed anywhere in this project). Part of
+  splitting merge and eval into separate jobs, matching the pattern used
+  for the MergeKit-paper-repro notebook.
+
+code: .
+
+command: >-
+  bash merge_single.sh configs/linear-7way.yml ${{outputs.merged_model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:gpu-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 7200
+
+outputs:
+  merged_model:
+    type: uri_folder
+    mode: rw_mount

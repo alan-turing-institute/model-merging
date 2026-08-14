@@ -1,0 +1,70 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: qwen3-4b-taskarith-merge-arcee-fusion
+experiment_name: model-merge-experiments
+description: >-
+  Split-job: merges only Arcee Fusion (7 sequential pairwise stages,
+  base+m1, then +m2, ... +m7), no eval. Mounts all 8 source checkpoints
+  read-only from their already-registered data assets (arcee_fusion only
+  merges 2 models at a time, so this is templated per-stage rather than a
+  single mergekit-yaml call like the other 4 methods). Only the current +
+  next stage's output ever coexist on local disk -- the earlier combined
+  job hit two distinct disk-exhaustion bugs before landing on this
+  discipline (see the notebook gotchas).
+
+code: .
+
+command: >-
+  bash merge_arcee_fusion_only.sh ${{outputs.merged_model}}
+  ${{inputs.base}} ${{inputs.jan_nano}} ${{inputs.abliterated}} ${{inputs.pythagoras_prover}}
+  ${{inputs.qvikhr_instruction}} ${{inputs.chinese_error_corrector}} ${{inputs.met_d}} ${{inputs.osim}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:gpu-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 14400
+
+inputs:
+  base:
+    type: uri_folder
+    path: azureml:qwen3-4b-base@latest
+    mode: ro_mount
+  jan_nano:
+    type: uri_folder
+    path: azureml:qwen3-4b-jan-nano@latest
+    mode: ro_mount
+  abliterated:
+    type: uri_folder
+    path: azureml:qwen3-4b-abliterated@latest
+    mode: ro_mount
+  pythagoras_prover:
+    type: uri_folder
+    path: azureml:qwen3-4b-pythagoras-prover@latest
+    mode: ro_mount
+  qvikhr_instruction:
+    type: uri_folder
+    path: azureml:qwen3-4b-qvikhr-instruction@latest
+    mode: ro_mount
+  chinese_error_corrector:
+    type: uri_folder
+    path: azureml:qwen3-4b-chinese-error-corrector@latest
+    mode: ro_mount
+  met_d:
+    type: uri_folder
+    path: azureml:qwen3-4b-met-d@latest
+    mode: ro_mount
+  osim:
+    type: uri_folder
+    path: azureml:qwen3-4b-osim@latest
+    mode: ro_mount
+
+outputs:
+  merged_model:
+    type: uri_folder
+    mode: rw_mount

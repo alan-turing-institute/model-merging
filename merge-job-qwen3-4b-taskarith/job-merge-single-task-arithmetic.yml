@@ -1,0 +1,32 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: qwen3-4b-taskarith-merge-task-arithmetic
+experiment_name: model-merge-experiments
+description: >-
+  Split-job: merges only Task Arithmetic (7-way) -- the method under test
+  in arXiv 2511.21437v2's claim. See job-merge-single-linear.yml for the
+  rationale. Mathematically equivalent to Linear when weights sum to 1
+  (merged = base + sum(w_i * (model_i - base)) reduces algebraically to
+  merged = sum(w_i * model_i)); registered as a separate asset anyway to
+  keep the two methods' outputs independently inspectable.
+
+code: .
+
+command: >-
+  bash merge_single.sh configs/task-arithmetic-7way.yml ${{outputs.merged_model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:gpu-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 7200
+
+outputs:
+  merged_model:
+    type: uri_folder
+    mode: rw_mount

@@ -1,0 +1,28 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: qwen3-4b-taskarith-merge-ties
+experiment_name: model-merge-experiments
+description: >-
+  Split-job: merges only TIES (7-way). See job-merge-single-linear.yml for
+  the rationale.
+
+code: .
+
+command: >-
+  bash merge_single.sh configs/ties-7way.yml ${{outputs.merged_model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:gpu-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 7200
+
+outputs:
+  merged_model:
+    type: uri_folder
+    mode: rw_mount
