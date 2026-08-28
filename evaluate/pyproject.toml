@@ -1,0 +1,22 @@
+[project]
+name = "evaluate"
+version = "0.1.0"
+description = "A script to evaluate model performance as a classifier against a dataset"
+readme = "README.md"
+authors = [
+    { name = "Justin McInroy", email = "jmcinroy@turing.ac.uk" },
+    { name = "Mariusz Pietrzyk", email = "mpietrzyk@turing.ac.uk" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "inspect-ai>=0.3.260",
+    "transformers",
+    "datasets",
+    "torch",
+    "accelerate",
+    "peft",
+    "scikit-learn",
+]
+
+[tool.uv]
+package = false

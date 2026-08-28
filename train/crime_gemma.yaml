@@ -1,0 +1,40 @@
+base_model: google/gemma-3-4b-it
+
+load_in_4bit: true
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+chat_template: gemma
+
+datasets:
+  - path: ../../datasets/crime_dataset/train
+    type: chat_template
+
+test_datasets:
+  - path: ../../datasets/crime_dataset/validation
+    type: chat_template
+
+sequence_len: 2048
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+num_epochs: 3
+
+learning_rate: 2e-4
+
+output_dir: ../models/output

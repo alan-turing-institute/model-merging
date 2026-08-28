@@ -1,0 +1,17 @@
+# config.yaml — a minimal linear merge of two public models
+merge_method: linear        # linear merge of two models, weighted by the "weight" parameter below
+
+# something to try
+# base_model: /workspace/model1
+
+# base_model: required by some merge methods
+models:                     # list of models to merge
+  - model: "../models/full_model1"
+    parameters:
+      weight: 0.5
+  - model: "../models/full_model2"
+    parameters:
+      weight: 0.5
+# parameters: insert parameters here
+tokenizer_source: union     # union of tokenizers from all models
+dtype: float16

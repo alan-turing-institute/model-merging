@@ -1,0 +1,19 @@
+[project]
+name = "merge"
+version = "0.1.0"
+description = "A scrip to use mergekit to merge models"
+readme = "README.md"
+authors = [
+    { name = "Justin McInroy", email = "jmcinroy@turing.ac.uk" },
+    { name = "Mariusz Pietrzyk", email = "mpietrzyk@turing.ac.uk" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "mergekit",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+mergekit = { git = "https://github.com/Zelys-DFKH/mergekit.git", rev = "fix/pydantic-schema-transformers5" }
