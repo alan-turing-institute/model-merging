@@ -44,7 +44,7 @@ TBA
 5. Ensure that you have your `HF_TOKEN` exported to Azure:
 
     ```bash
-    echo 'export HF_TOKEN=<add HF token here>' >> ~./bashrc
+    echo 'export HF_TOKEN=<add HF token here>' >> ~/.bashrc
     ```
 
     this ensures that you can download from Hugging Face without being rate-limited (and can use gated models).
