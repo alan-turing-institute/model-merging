@@ -1,5 +1,6 @@
 import argparse
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -49,15 +50,21 @@ def resolve_model_ref(ref, cache_dir, resource_group, workspace_name, subscripti
     return str(local_path)
 
 
+NEGATION_RE = re.compile(r"\b(not|no|never)\b|n't")
+
+
 def convert_to_label(text):
     text = text.lower()
     if "not_crime" in text:
         return 0
-    if text.strip().startswith("not"):
+    crime_index = text.find("crime")
+    if crime_index == -1:
+        return None
+    # A negation word anywhere before "crime" (e.g. "not a crime", "not
+    # really about crime") means the answer is negative, not positive.
+    if NEGATION_RE.search(text[:crime_index]):
         return 0
-    if "crime" in text:
-        return 1
-    return None
+    return 1
 
 
 def load_model(model_path, adapter_path=None):
@@ -72,6 +79,38 @@ def load_model(model_path, adapter_path=None):
     return tokenizer, model
 
 
+def build_messages(post_text):
+    return [
+        {
+            "role": "user",
+            "content": (
+                "Is the following Reddit post about crime? Answer with "
+                'exactly one word, either "crime" or "not_crime", and '
+                "nothing else.\n\n" + post_text
+            ),
+        }
+    ]
+
+
+def generate_response(model, tokenizer, messages, max_new_tokens):
+    inputs = tokenizer.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_tensors="pt",
+        return_dict=True,
+    ).to(model.device)
+    output = model.generate(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        do_sample=False,
+    )
+    input_length = inputs["input_ids"].shape[1]
+    new_tokens = output[0][input_length:]
+    return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+
+
 def evaluate_model(
     model,
     tokenizer,
@@ -83,32 +122,8 @@ def evaluate_model(
     predictions = []
     actuals = []
     for row in dataset:
-        messages = [
-            {
-                "role": "user",
-                "content": (
-                    "Is the following Reddit post about crime?\n\n"
-                    + row[text_column]
-                ),
-            }
-        ]
-        inputs = tokenizer.apply_chat_template(
-            messages,
-            tokenize=True,
-            add_generation_prompt=True,
-            return_tensors="pt",
-            return_dict=True,
-        ).to(model.device)
-        output = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=False,
-        )
-        input_length = inputs["input_ids"].shape[1]
-        new_tokens = output[0][input_length:]
-        response = tokenizer.decode(
-            new_tokens, skip_special_tokens=True
-        ).strip()
+        messages = build_messages(row[text_column])
+        response = generate_response(model, tokenizer, messages, max_new_tokens)
         predictions.append(convert_to_label(response))
         actuals.append(row[label_column])
 
@@ -185,7 +200,7 @@ def parse_args():
     )
     parser.add_argument("--text-column", default="posts_name")
     parser.add_argument("--label-column", default="label")
-    parser.add_argument("--max-new-tokens", type=int, default=5)
+    parser.add_argument("--max-new-tokens", type=int, default=16)
     parser.add_argument(
         "--limit",
         type=int,

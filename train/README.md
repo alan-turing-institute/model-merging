@@ -12,3 +12,9 @@ Once you have a properly configured yaml, to train the model, simply run
 ```bash
 uv run axolotl train crime_gemma.yaml
 ```
+
+The LoRA adapter should then be saved in the Azure blob storage
+
+```bash
+az ml model create --name <name> --version 1 --type custom_model --path <local-path> --resource-group tire-1 --workspace-name tire-2
+```

@@ -45,8 +45,9 @@ def convert(example):
             {
                 "role": "user",
                 "content":
-                    f"Is the following Reddit post about crime?\n\n"
-                    f"{example['posts_name']}"
+                    f"Is the following Reddit post about crime? Answer with "
+                        f"exactly one word, either 'crime' or 'not_crime', and "
+                        f"nothing else.\n\n" + f"{example['posts_name']}"
             },
             {
                 "role": "assistant",
@@ -57,7 +58,7 @@ def convert(example):
 
 # Map the conversion function to the dataset and save it to disk
 dataset = dataset.map(convert)
-dataset.save_to_disk("datasets/crime_dataset")
+dataset.save_to_disk("../datasets/crime_dataset")
 
 # Now split the training and validation datasets into two
 
@@ -101,5 +102,5 @@ dataset2 = DatasetDict({
 # Map the conversion function to the dataset and save it to disk
 # dataset = dataset.map(convert)
 
-dataset1.save_to_disk("datasets/crime_dataset1")
-dataset2.save_to_disk("datasets/crime_dataset2")
+dataset1.save_to_disk("../datasets/crime_dataset1")
+dataset2.save_to_disk("../datasets/crime_dataset2")
