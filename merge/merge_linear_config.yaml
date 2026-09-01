@@ -6,10 +6,13 @@ merge_method: linear        # linear merge of two models, weighted by the "weigh
 
 # base_model: required by some merge methods
 models:                     # list of models to merge
-  - model: "../models/full_model1"
+  # Downloaded from the Azure ML model registry via
+  # `az ml model download --name gemma3-crime-1-of-2 --version 1 --download-path ../models ...`
+  # (see merge/README.md) — these paths must match the downloaded folder names.
+  - model: "../models/gemma3-crime-1-of-2"
     parameters:
       weight: 0.5
-  - model: "../models/full_model2"
+  - model: "../models/gemma3-crime-2-of-2"
     parameters:
       weight: 0.5
 # parameters: insert parameters here

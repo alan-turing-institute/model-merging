@@ -1,5 +1,6 @@
 import argparse
 import json
+import subprocess
 from pathlib import Path
 
 import torch
@@ -13,6 +14,39 @@ from sklearn.metrics import (
     recall_score,
 )
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+
+AZUREML_PREFIX = "azureml:"
+
+
+def resolve_model_ref(ref, cache_dir, resource_group, workspace_name, subscription=None):
+    """Resolve `ref` to a local path.
+
+    A plain local path or HF hub id is returned unchanged. A reference of the
+    form "azureml:<name>:<version>" is downloaded from the Azure ML model
+    registry into `cache_dir` (skipped if already cached there) and the local
+    path to it is returned.
+    """
+    if ref is None or not ref.startswith(AZUREML_PREFIX):
+        return ref
+
+    name, version = ref[len(AZUREML_PREFIX):].split(":")
+    download_dir = Path(cache_dir) / f"{name}-{version}"
+    local_path = download_dir / name
+    if not local_path.exists():
+        command = [
+            "az", "ml", "model", "download",
+            "--name", name,
+            "--version", version,
+            "--download-path", str(download_dir),
+            "--resource-group", resource_group,
+            "--workspace-name", workspace_name,
+        ]
+        if subscription:
+            command += ["--subscription", subscription]
+        print(f"Downloading {ref} to {local_path} ...")
+        subprocess.run(command, check=True)
+    return str(local_path)
 
 
 def convert_to_label(text):
@@ -111,17 +145,43 @@ def parse_args():
     parser.add_argument(
         "--model",
         default="google/gemma-3-4b-it",
-        help="Path or HF hub id of the base/full model to load.",
+        help=(
+            "Path, HF hub id, or 'azureml:<name>:<version>' reference to an "
+            "Azure ML registered model, of the base/full model to load."
+        ),
     )
     parser.add_argument(
         "--adapter",
         default=None,
-        help="Optional path to a PEFT/LoRA adapter to apply on top of --model.",
+        help=(
+            "Optional path or 'azureml:<name>:<version>' reference to a "
+            "PEFT/LoRA adapter to apply on top of --model."
+        ),
     )
     parser.add_argument(
         "--dataset",
         default="../../datasets/crime_dataset/test",
         help="Path to a dataset saved with `save_to_disk` (e.g. the test split).",
+    )
+    parser.add_argument(
+        "--resource-group",
+        default="tire-1",
+        help="Azure resource group holding the Azure ML workspace (for azureml: refs).",
+    )
+    parser.add_argument(
+        "--workspace-name",
+        default="tire-2",
+        help="Azure ML workspace name (for azureml: refs).",
+    )
+    parser.add_argument(
+        "--subscription",
+        default=None,
+        help="Azure subscription id, if it isn't already az cli's active default.",
+    )
+    parser.add_argument(
+        "--model-cache-dir",
+        default=".azureml_models",
+        help="Where azureml: model/adapter downloads are cached.",
     )
     parser.add_argument("--text-column", default="posts_name")
     parser.add_argument("--label-column", default="label")
@@ -147,7 +207,15 @@ def main():
     if args.limit is not None:
         dataset = dataset.select(range(args.limit))
 
-    tokenizer, model = load_model(args.model, args.adapter)
+    model_path = resolve_model_ref(
+        args.model, args.model_cache_dir, args.resource_group,
+        args.workspace_name, args.subscription,
+    )
+    adapter_path = resolve_model_ref(
+        args.adapter, args.model_cache_dir, args.resource_group,
+        args.workspace_name, args.subscription,
+    )
+    tokenizer, model = load_model(model_path, adapter_path)
     results = evaluate_model(
         model,
         tokenizer,
@@ -171,7 +239,9 @@ def main():
 
     record = {
         "model": args.model,
+        "model_path": model_path,
         "adapter": args.adapter,
+        "adapter_path": adapter_path,
         "dataset": args.dataset,
         **results,
     }

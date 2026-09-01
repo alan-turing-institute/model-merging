@@ -4,10 +4,79 @@
 
 TBA
 
+## Setup of code
+
+1. Clone the repo:
+
+    ```bash
+    git clone https://github.com/alan-turing-institute/model-merging.git
+    cd model-merging
+    ```
+
+2. Install [uv](https://docs.astral.sh/uv/) (used to manage dependencies for each sub-project below):
+
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+    uv will fetch the required Python version (3.12+) itself — no separate Python install needed.
+
+3. This repo isn't one Python project — `train/`, `merge/`, and `evaluate/` are each a separate uv-managed environment (with different, sometimes conflicting, dependency versions — e.g. `merge/` needs a patched `transformers` that `train/` doesn't). Sync each one you plan to use:
+
+    ```bash
+    cd train    && uv sync && cd ..
+    cd merge    && uv sync && cd ..
+    cd evaluate && uv sync && cd ..
+    ```
+
+    Commands in each sub-project's README assume you're running them via that sub-project's environment, e.g. `uv run axolotl train crime_gemma.yaml` from inside `train/`.
+
+4. Trained/merged models are pulled from the Azure ML model registry rather than committed to git (see [Model storage](#model-storage) below) — you'll need the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) with the `ml` extension, logged in and scoped to the `tire-2` workspace:
+
+    ```bash
+    az extension add -n ml
+    az login
+    az configure --defaults group=tire-1 workspace=tire-2
+    ```
+
+    Only the `ml` (v2) extension is needed — do not also install the legacy `azure-cli-ml` extension, the two conflict with each other.
+
+5. Ensure that you have your `HF_TOKEN` exported to Azure:
+
+    ```bash
+    echo 'export HF_TOKEN=<add HF token here>' >> ~./bashrc
+    ```
+
+    this ensures that you can download from Hugging Face without being rate-limited (and can use gated models).
+
+Some things to note:
+
+1. A CUDA GPU is required for training/merging/evaluation (this project was developed against an A100 80GB) — there's no CPU-only path.
+
+2. To use gated models such as `google/gemma-3-4b-it`, you need to accept its license on the [model page](https://huggingface.co/google/gemma-3-4b-it) with your HF account, then authenticate locally so `transformers`/`axolotl` can download it:
+
+    ```bash
+    uv run --project evaluate huggingface-cli login
+    ```
+
+3. The root-level [prepare_data.py](prepare_data.py) and [Convert_to_full_model.py](Convert_to_full_model.py) scripts aren't tied to a project of their own — run them with the `evaluate` environment, which already has `datasets`/`transformers`/`peft`:
+
+    ```bash
+    uv run --project evaluate python Convert_to_full_model.py BASE_MODEL LORA_PATH OUTPUT_PATH
+    ```
+
+    [prepare_data.py](prepare_data.py) is more ad hoc, since different models expect inputs in different forms (conversational etc.) and also the question asked depends on the task and give dataset.  For this, run python in the environment and then copy/paste your own code into it:
+
+    ```bash
+    uv run --project evaluate python
+    ```
+
 ## Model merging using mergekit
 
-1. Split your dataset $D$ into parts $D_i$
-2. Train different copies of your base model on the $D_i$ to produce a LoRA adapter $L_i$
+Overview of the process for a `poor-mans parallelism' model merging to train a classifier:
+
+1. Split your dataset $D$ into parts $D_i$ - see [prepare data python script](prepare_data.py).
+2. Train different copies of your base model on the $D_i$ to produce a LoRA adapter $L_i$ - see [evaluate readme](evaluate/README.md).
 3. Combine the LoRA adapter $L_i$ with the base model to produce a model $M_i$ - Use the [conversion script](Convert_to_full_model.py).
     This takes as input:
 
@@ -18,8 +87,36 @@ TBA
     It should be run as
 
     ```bash
-    python Convert_to_full_model.py BASE_MODEL LORA_PATH OUTPUT_PATH
+    uv run --project evaluate python Convert_to_full_model.py BASE_MODEL LORA_PATH OUTPUT_PATH
     ```
 
-4. Use mergekit to combine the different $M_i$ into one model $\tilde{M}$.
-5. Test performance of $\tilde{M}$ using Inspect ai
+    (The evaluate environment already has some of the required dependencies.)
+
+4. Use mergekit to combine the different $M_i$ into one model $\tilde{M}$ - see [merge readme](merge/README.md).
+5. Test performance of $\tilde{M}$. - see [evaluate readme](evaluate/README.md).
+
+## Model storage
+
+Trained/converted/merged models are large (GBs each) and are **not** kept in `models/` locally or committed to git (`models/` is gitignored) — they're registered as Model assets in the `tire-2` Azure ML workspace (resource group `tire-1`), backed by its default blob datastore. Register a new artifact with:
+
+```bash
+az ml model create --name <name> --version 1 --type custom_model --path <local-path> --resource-group tire-1 --workspace-name tire-2
+```
+
+and fetch one back (or pass `azureml:<name>:<version>` directly to [evaluate.py](evaluate/README.md), which downloads automatically) with:
+
+```bash
+az ml model download --name <name> --version 1 --download-path <dir> --resource-group tire-1 --workspace-name tire-2
+```
+
+Current registry name for each pipeline artifact:
+
+| Pipeline artifact | Registered model name |
+|---|---|
+| LoRA adapter trained on the full dataset (`crime_gemma.yaml`) | `gemma3-crime-full-lora` |
+| LoRA adapter trained on half 1 (`crime_gemma1.yaml`) | `gemma3-crime-1-of-2-lora` |
+| LoRA adapter trained on half 2 (`crime_gemma2.yaml`) | `gemma3-crime-2-of-2-lora` |
+| Full model = full-dataset adapter merged into the base model | `gemma3-crime-full` |
+| Full model = half-1 adapter merged into the base model | `gemma3-crime-1-of-2` |
+| Full model = half-2 adapter merged into the base model | `gemma3-crime-2-of-2` |
+| Linear merge of the two half-dataset full models | `gemma3-crime-merged-linear-2` |
