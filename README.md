@@ -35,6 +35,7 @@ This is somewhat specific to getting setup on Azure at the Turing.
 4. Trained/merged models are pulled from the Azure ML model registry rather than committed to git (see [Model storage](#model-storage) below) — you'll need the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) with the `ml` extension, logged in and scoped to the `tire-2` workspace:
 
     ```bash
+    az extension remove -n azure-cli-ml  # our Azure currently comes with v1 of azure-cli-ml and this conflicts with the new required ml extension
     az extension add -n ml
     az login
     az configure --defaults group=tire-1 workspace=tire-2
