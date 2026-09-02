@@ -6,30 +6,31 @@ TBA
 
 ## Setup of code
 
-1. Clone the repo:
+This is somewhat specific to getting setup on Azure at the Turing.
+
+### For EVERY new compute instance on Azure at Turing
+
+1. Github setup
 
     ```bash
-    git clone https://github.com/alan-turing-institute/model-merging.git
-    cd model-merging
+    git config --global user.name <your name>
+    git config --global user.email <your email>
     ```
 
-2. Install [uv](https://docs.astral.sh/uv/) (used to manage dependencies for each sub-project below):
+2. Ensure that you have your `HF_TOKEN` exported to Azure:
+
+    ```bash
+    echo 'export HF_TOKEN=<add HF token here>' >> ~/.bashrc
+    source ~/.bashrc
+    ```
+
+    this ensures that you can download from Hugging Face without being rate-limited (and can use gated models).
+
+3. Install [uv](https://docs.astral.sh/uv/) (used to manage dependencies for each sub-project below):
 
     ```bash
     curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
-
-    uv will fetch the required Python version (3.12+) itself — no separate Python install needed.
-
-3. This repo isn't one Python project — `train/`, `merge/`, and `evaluate/` are each a separate uv-managed environment (with different, sometimes conflicting, dependency versions — e.g. `merge/` needs a patched `transformers` that `train/` doesn't). Sync each one you plan to use:
-
-    ```bash
-    cd train    && uv sync && cd ..
-    cd merge    && uv sync && cd ..
-    cd evaluate && uv sync && cd ..
-    ```
-
-    Commands in each sub-project's README assume you're running them via that sub-project's environment, e.g. `uv run axolotl train crime_gemma.yaml` from inside `train/`.
 
 4. Trained/merged models are pulled from the Azure ML model registry rather than committed to git (see [Model storage](#model-storage) below) — you'll need the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) with the `ml` extension, logged in and scoped to the `tire-2` workspace:
 
@@ -41,17 +42,80 @@ TBA
 
     Only the `ml` (v2) extension is needed — do not also install the legacy `azure-cli-ml` extension, the two conflict with each other.
 
-5. Ensure that you have your `HF_TOKEN` exported to Azure:
+### Setup the code if you have not pulled it from github before
+
+1. Clone the repo:
 
     ```bash
-    echo 'export HF_TOKEN=<add HF token here>' >> ~/.bashrc
+    git clone https://github.com/alan-turing-institute/model-merging.git
+    cd model-merging
     ```
 
-    this ensures that you can download from Hugging Face without being rate-limited (and can use gated models).
+2. If you are on the Turing Azure, then you need to do the symlink trick to make uv fast (as per the TIRE Azure user guide).
 
-Some things to note:
+    ```bash
+    mkdir ~/venvs && mkdir ~/venvs/model-merging
+    mkdir ~/venvs/model-merging/train
+    mkdir ~/venvs/model-merging/merge
+    mkdir ~/venvs/model-merging/evaluate
+    ```
 
-1. A CUDA GPU is required for training/merging/evaluation (this project was developed against an A100 80GB) — there's no CPU-only path.
+    Now make the symlinks from the model-merging directory:
+
+    ```bash
+    ln –s ~/venvs/model-merging/train train/.venv
+    ln –s ~/venvs/model-merging/merge merge/.venv
+    ln –s ~/venvs/model-merging/evaluate evaluate/.venv
+    ```
+
+3. This repo isn't one Python project — `train/`, `merge/`, and `evaluate/` are each a separate uv-managed environment (with different, sometimes conflicting, dependency versions — e.g. `merge/` needs a patched `transformers` that `train/` doesn't). Sync each one you plan to use:
+
+    ```bash
+    cd train    && uv sync && cd ..
+    cd merge    && uv sync && cd ..
+    cd evaluate && uv sync && cd ..
+    ```
+
+    Commands in each sub-project's README assume you're running them via that sub-project's environment, e.g. `uv run axolotl train crime_gemma.yaml` from inside `train/`.
+
+### Setup code if you have already pulled it once, but want to setup on a new compute instance
+
+This should be used if you have previously pulled the code from github, but are starting a new compute instance and want to set it up.  We assume that you pulled it to `Users/ANOther/model-merging`.
+
+1. To ensure that git works, go to the `model-merging` directory and run
+
+    ```bash
+    git status
+    ```
+
+    This will fail, claiming dubious ownership of the git repository (your other compute instance), but will suggest that you can add an exception by running a command, eg
+
+    ```bash
+    git config --global --add safe.directory <your model-merging directory>
+    ```
+
+    which you should run.
+
+2. If you are on the Turing Azure, then you need to do the symlink trick to make uv fast (as per the TIRE Azure user guide).  Since you have previously pulled the code, you should have symlinks already, but these will be broken.  To check this, you can run
+
+    ```bash
+    find . -maxdepth 2 -xdev -xtype l
+    ```
+
+    You can then make the directories to where these symlinks already point, eg.
+
+    ```bash
+    mkdir ~/venvs && mkdir ~/venvs/model-merging
+    mkdir ~/venvs/model-merging/train
+    mkdir ~/venvs/model-merging/merge
+    mkdir ~/venvs/model-merging/evaluate
+    ```
+
+    You do not need to remake the symlinks.
+
+### Some things to note:
+
+1. A CUDA GPU is required for training/merging/evaluation (this project was developed against both an A100 80GB and a T4 setup) — there's no CPU-only path.
 
 2. To use gated models such as `google/gemma-3-4b-it`, you need to accept its license on the [model page](https://huggingface.co/google/gemma-3-4b-it) with your HF account, then authenticate locally so `transformers`/`axolotl` can download it:
 
@@ -76,7 +140,7 @@ Some things to note:
 Overview of the process for a `poor-mans parallelism' model merging to train a classifier:
 
 1. Split your dataset $D$ into parts $D_i$ - see [prepare data python script](prepare_data.py).
-2. Train different copies of your base model on the $D_i$ to produce a LoRA adapter $L_i$ - see [evaluate readme](evaluate/README.md).
+2. Train different copies of your base model on the $D_i$ to produce a LoRA adapter $L_i$ - see [train readme](train/README.md).
 3. Combine the LoRA adapter $L_i$ with the base model to produce a model $M_i$ - Use the [conversion script](Convert_to_full_model.py).
     This takes as input:
 

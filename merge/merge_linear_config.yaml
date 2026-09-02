@@ -12,9 +12,12 @@ models:                     # list of models to merge
   - model: "../models/gemma3-crime-1-of-2"
     parameters:
       weight: 0.5
+
   - model: "../models/gemma3-crime-2-of-2"
     parameters:
       weight: 0.5
+
 # parameters: insert parameters here
 tokenizer_source: union     # union of tokenizers from all models
+
 dtype: float16

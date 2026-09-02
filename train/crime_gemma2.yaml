@@ -37,4 +37,4 @@ num_epochs: 3
 
 learning_rate: 2e-4
 
-output_dir: ../models/output2
+output_dir: ../models/gemma3-crime-2-of-2-lora
