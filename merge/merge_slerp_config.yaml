@@ -1,0 +1,17 @@
+# SLERP — spherical (arc, not straight-line) interpolation between exactly
+# two models. Only supports two inputs.
+# Behaves differently from `linear`/`task_arithmetic` particularly at the
+# 50/50 midpoint (`t: 0.5` below) — norm-preserving rather than norm-shrinking
+# — so it's a cheap.
+#
+# Note: for this method `base_model` is simply "the first of the two models
+# being interpolated", not the pretrained base — both entries below are still
+# expressed via mergekit's LoRA syntax on top of the real base model.
+merge_method: slerp
+base_model: "google/gemma-3-4b-it+../models/gemma3-crime-1-of-2-lora"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-2-of-2-lora"
+parameters:
+  t: 0.5   # 0.0 = pure base_model, 1.0 = pure other model, 0.5 = midpoint
+tokenizer_source: union
+dtype: float16

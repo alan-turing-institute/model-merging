@@ -1,0 +1,16 @@
+# Task Arithmetic — https://arxiv.org/abs/2212.04089
+# Like `linear`, but combines (model - base_model) deltas rather than raw
+# weights, i.e. the base model's own weights don't get diluted by being
+# implicitly counted twice. This is the more principled version of the plain
+# `linear` merge in merge_linear_config.yaml, at no extra cost.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-1-of-2-lora"
+    parameters:
+      weight: 0.5
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-2-of-2-lora"
+    parameters:
+      weight: 0.5
+tokenizer_source: union
+dtype: float16

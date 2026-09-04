@@ -109,6 +109,11 @@ def generate_response(model, tokenizer, messages, max_new_tokens):
     new_tokens = output[0][input_length:]
     return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
+def inspect_data(row):
+    return {
+        "posts_name": row["posts_name"],
+        "label": row["messages"][1]["content"]
+    }
 
 
 def evaluate_model(
@@ -126,7 +131,7 @@ def evaluate_model(
         response = generate_response(model, tokenizer, messages, max_new_tokens)
         predictions.append(convert_to_label(response))
         actuals.append(row[label_column])
-
+    
     # An unparsed generation is scored as wrong (rather than dropped) so every
     # example counts towards the metrics below and sklearn never sees a None.
     scored_predictions = [

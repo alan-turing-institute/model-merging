@@ -1,0 +1,16 @@
+# Arcee Fusion — https://arcee.ai
+# Newer, parameter-free method: for each weight, estimates an "importance"
+# score for the delta from how much it shifts the parameter's output
+# distribution (KL divergence) versus how large it is, then keeps only the
+# deltas above a dynamically-computed threshold. No weight/density to tune —
+# a good "modern default" to compare against the manually-weighted methods.
+#
+# Only supports exactly two models, like SLERP — `base_model` is simply "the
+# first of the two", not the pretrained base.
+# Merges the LoRA adapters.
+merge_method: arcee_fusion
+base_model: "google/gemma-3-4b-it+../models/gemma3-crime-1-of-2-lora"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-2-of-2-lora"
+tokenizer_source: union
+dtype: float16

@@ -114,9 +114,9 @@ This should be used if you have previously pulled the code from github, but are 
 
     You do not need to remake the symlinks.
 
-### Some things to note:
+### Some things to note
 
-1. A CUDA GPU is required for training/merging/evaluation (this project was developed against both an A100 80GB and a T4 setup) — there's no CPU-only path.
+1. A CUDA GPU is required for training/(merging)/evaluation (this project was developed against both an A100 80GB and a T4 setup) — there's no CPU-only path.  Merging can be done using CPUs, but is a bit quicker using GPUs.
 
 2. To use gated models such as `google/gemma-3-4b-it`, you need to accept its license on the [model page](https://huggingface.co/google/gemma-3-4b-it) with your HF account, then authenticate locally so `transformers`/`axolotl` can download it:
 
@@ -142,7 +142,12 @@ Overview of the process for a `poor-mans parallelism' model merging to train a c
 
 1. Split your dataset $D$ into parts $D_i$ - see [prepare data python script](prepare_data.py).
 2. Train different copies of your base model on the $D_i$ to produce a LoRA adapter $L_i$ - see [train readme](train/README.md).
-3. Combine the LoRA adapter $L_i$ with the base model to produce a model $M_i$ - Use the [conversion script](Convert_to_full_model.py).
+3. Use mergekit to combine the different $M_i$ into one model $\tilde{M}$ - see [merge readme](merge/README.md).
+4. Test performance of $\tilde{M}$. - see [evaluate readme](evaluate/README.md).
+
+## Merging a base model with its LoRA adapter
+
+You should not need to combine a LoRA adapter with its base model in order to merge it, but if you do wish to do this, then you can using the [conversion script](Convert_to_full_model.py).
     This takes as input:
 
     - `BASE_MODEL` - a HG address, or path to the base model
@@ -156,9 +161,6 @@ Overview of the process for a `poor-mans parallelism' model merging to train a c
     ```
 
     (The evaluate environment already has some of the required dependencies.)
-
-4. Use mergekit to combine the different $M_i$ into one model $\tilde{M}$ - see [merge readme](merge/README.md).
-5. Test performance of $\tilde{M}$. - see [evaluate readme](evaluate/README.md).
 
 ## Model storage
 
