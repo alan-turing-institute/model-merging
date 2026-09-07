@@ -145,6 +145,22 @@ Overview of the process for a `poor-mans parallelism' model merging to train a c
 3. Use mergekit to combine the different $M_i$ into one model $\tilde{M}$ - see [merge readme](merge/README.md).
 4. Test performance of $\tilde{M}$. - see [evaluate readme](evaluate/README.md).
 
+### Tasks
+
+The pipeline has been run on two tasks. They share the training, merging and
+storage machinery and differ only in the dataset, the prompt and the metric:
+
+| Task | Data | Metric | Entry point |
+|---|---|---|---|
+| Reddit crime classification | `Binaryy/crime_posts_reddit` | accuracy / precision / recall / F1 | [prepare_data.py](prepare_data.py), [run_pipeline.sh](run_pipeline.sh) |
+| XSum summarisation | `EdinburghNLP/xsum` | ROUGE + output-length statistics | [XSUM.md](XSUM.md), [run_xsum_pipeline.sh](run_xsum_pipeline.sh) |
+
+The summarisation arm exists because a classification task can only show the
+merge failing in one way — predicting the wrong class. On a generation task a
+merge that has drifted back towards base behaviour shows up as style drift
+(preamble returning, one sentence becoming three) before it shows up in the
+headline metric. See [XSUM.md](XSUM.md).
+
 ## Merging a base model with its LoRA adapter
 
 You should not need to combine a LoRA adapter with its base model in order to merge it, but if you do wish to do this, then you can using the [conversion script](Convert_to_full_model.py).
@@ -193,3 +209,16 @@ Current registry name for each pipeline artifact:
 | Full model = half-1 adapter merged into the base model | `gemma3-crime-1-of-2` |
 | Full model = half-2 adapter merged into the base model | `gemma3-crime-2-of-2` |
 | Linear merge of the two half-dataset full models | `gemma3-crime-merged-linear-2` |
+
+And for the XSum summarisation arm (see [XSUM.md](XSUM.md)) — note there are no
+`gemma3-xsum-{1,2}-of-2` full models, because that arm merges the adapters
+directly with mergekit's `<base>+<adapter>` syntax rather than materialising
+the halves first:
+
+| Pipeline artifact | Registered model name |
+|---|---|
+| LoRA adapter trained on the full dataset (`xsum_gemma.yaml`) | `gemma3-xsum-full-lora` |
+| LoRA adapter trained on half 1 (`xsum_gemma1.yaml`) | `gemma3-xsum-1-of-2-lora` |
+| LoRA adapter trained on half 2 (`xsum_gemma2.yaml`) | `gemma3-xsum-2-of-2-lora` |
+| Full model = full-dataset adapter merged into the base model | `gemma3-xsum-full` |
+| Merge of the two half-dataset adapters, by method | `gemma3-xsum-merged-<method>` |

@@ -1,0 +1,21 @@
+# Linear merge of the two half-data XSum LoRA adapters, on top of the shared
+# base model. This is the primary experiment: does averaging two experts each
+# trained on half the data recover the full-data model?
+#
+# The base+adapter syntax means the halves never have to be materialised as
+# full models - mergekit builds each combination into --lora-merge-cache. Pass
+# that flag or the merge fails.
+merge_method: linear
+
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-1-of-2-lora"
+    parameters:
+      weight: 0.5
+
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-2-of-2-lora"
+    parameters:
+      weight: 0.5
+
+tokenizer_source: union
+
+dtype: float16

@@ -6,3 +6,4 @@ __pycache__/
 train/last_run_prepared/
 evaluate/.azureml_models/
 .pipeline_versions
+.pipeline_versions_xsum

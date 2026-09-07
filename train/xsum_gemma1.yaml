@@ -1,0 +1,60 @@
+# QLoRA fine-tune of gemma-3-4b-it for XSum single-sentence summarisation.
+# This is HALF 1 of 2: a disjoint random half of the training data.
+# It differs from xsum_gemma.yaml only in dataset paths and output_dir.
+base_model: google/gemma-3-4b-it
+
+load_in_4bit: true
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+chat_template: gemma
+
+datasets:
+  - path: ../../datasets/xsum_dataset1/train
+    type: chat_template
+
+test_datasets:
+  - path: ../../datasets/xsum_dataset1/validation
+    type: chat_template
+
+# Articles are truncated to 512 words in prepare_xsum_data.py, which keeps
+# prompt + summary inside this window. Anything longer is silently dropped by
+# axolotl, so the two numbers have to be chosen together.
+sequence_len: 2048
+
+# Loss on the assistant turn only. The chat_template strategy already defaults
+# to roles_to_train: ["assistant"], but state it explicitly: training on the
+# input would mean spending most of the gradient on reproducing BBC article
+# text, which is not the task.
+train_on_inputs: false
+
+# Not set in the crime configs, and their omission is why those OOM on a T4's
+# 16GB at this batch size / sequence length. Costs ~20% throughput on an A100
+# and makes the config portable to the smaller box.
+gradient_checkpointing: true
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+# Two rather than the crime arm's three: the target is a single sentence, so
+# there is far less to fit, and a third pass mostly buys memorisation of BBC
+# house style. Raise it if the halves look under-trained relative to full.
+num_epochs: 2
+
+learning_rate: 2e-4
+
+output_dir: ../models/gemma3-xsum-1-of-2-lora

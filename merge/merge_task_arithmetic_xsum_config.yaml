@@ -1,0 +1,15 @@
+# Task Arithmetic — https://arxiv.org/abs/2212.04089
+# Combines the two (model - base) deltas rather than the raw weights, so the
+# base model isn't implicitly counted twice. At weight 0.5 each this is the
+# principled version of the linear merge above, at no extra cost.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-1-of-2-lora"
+    parameters:
+      weight: 0.5
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-2-of-2-lora"
+    parameters:
+      weight: 0.5
+tokenizer_source: union
+dtype: float16

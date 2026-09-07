@@ -1,7 +1,7 @@
 [project]
 name = "evaluate"
 version = "0.1.0"
-description = "A script to evaluate model performance as a classifier against a dataset"
+description = "Scripts to evaluate model performance as a classifier (evaluate.py) or a summariser (evaluate_summarisation.py) against a dataset"
 readme = "README.md"
 authors = [
     { name = "Justin McInroy", email = "jmcinroy@turing.ac.uk" },
@@ -16,6 +16,8 @@ dependencies = [
     "accelerate",
     "peft",
     "scikit-learn",
+    "rouge-score",
+    "tqdm",
 ]
 
 [tool.uv]

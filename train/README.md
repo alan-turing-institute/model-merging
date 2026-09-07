@@ -18,3 +18,14 @@ The LoRA adapter should then be saved in the Azure blob storage
 ```bash
 az ml model create --name <name> --version 1 --type custom_model --path <local-path> --resource-group tire-1 --workspace-name tire-2
 ```
+
+## XSum summarisation configs
+
+`xsum_gemma.yaml` and `xsum_gemma{1,2}.yaml` are the summarisation arm's
+equivalents of `crime_gemma*.yaml` — see [XSUM.md](../XSUM.md). They add
+`gradient_checkpointing: true` (without which these settings OOM on a T4's
+16GB), state `train_on_inputs: false` explicitly, and use 2 epochs rather
+than 3.
+
+Run `python prepare_xsum_data.py` from the repo root first — the configs read
+`../../datasets/xsum_dataset*`.

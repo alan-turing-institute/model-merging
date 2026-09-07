@@ -73,3 +73,23 @@ Register the result and clean up the local copies:
 az ml model create --name <new-model-name> --version 1 --type custom_model --path ../models/<merged-dir> --resource-group tire-1 --workspace-name tire-2
 rm -rf ../models
 ```
+
+## XSum summarisation configs
+
+`merge_*_xsum_config.yaml` are the same merges for the XSum arm
+(see [XSUM.md](../XSUM.md)). They differ from the crime configs in one way that
+matters operationally: they merge the two half-data **adapters** via the
+`<base_model>+<adapter>` syntax, so the halves never have to be converted into
+full models first. That saves two conversions and ~17GB of scratch, but it does
+mean `--lora-merge-cache` is required rather than optional:
+
+```bash
+uv run mergekit-yaml merge_linear_xsum_config.yaml ../models/gemma3-xsum-merged-linear \
+  --cuda --lazy-unpickle --allow-crimes --lora-merge-cache ../models/.lora_merge_cache
+```
+
+`merge_task_arithmetic_w1_xsum_config.yaml` is not a method variant so much as a
+diagnostic: it sets both weights to 1.0 instead of 0.5, which keeps both deltas
+at full size. It exists to test whether a disappointing 0.5/0.5 merge is
+under-adapted (halved deltas pulling the model back towards base) rather than
+genuinely conflicted.

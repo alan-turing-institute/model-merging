@@ -1,0 +1,158 @@
+# Shared helpers for the end-to-end pipeline scripts. Source this, don't run it.
+#
+# Everything here is task-agnostic: results-directory resolution, preflight
+# checks, and the Azure ML version bookkeeping that makes a run resumable.
+# The task-specific part - which datasets, which configs, which models get
+# registered - lives in the calling script.
+#
+# The caller must set, before sourcing:
+#   REPO_ROOT       absolute path to the repo root
+#   RG / WS         Azure resource group and workspace
+#   VERSIONS_FILE   where this arm records the versions it registered
+#
+# run_pipeline.sh (the crime-classification arm) predates this file and still
+# carries its own copy of these helpers. Switching it over is a safe follow-up,
+# but it is working code mid-experiment so it is deliberately left alone here.
+
+# Progress goes to stderr so stdout stays clean for captured values.
+log() { echo "=== $* ===" >&2; }
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+# --- where results go: workspace share if mounted, else local ---
+
+# Sets RESULTS_DIR (respecting an existing value). $1 is the subdirectory name
+# to use under the user's folder on the workspace share.
+pipeline_resolve_results_dir() {
+  local share_subdir=$1 cf_users cf_user
+  if [ -z "${RESULTS_DIR:-}" ]; then
+    cf_users=$HOME/cloudfiles/code/Users
+    if [ -d "$cf_users" ]; then
+      # The share is workspace-wide and holds a directory per person, named
+      # after the AAD account (not the local azureuser account). Derive which
+      # one is ours from the Azure login rather than guessing - picking the
+      # wrong one would write results into a colleague's folder.
+      cf_user=$(az account show --query user.name -o tsv 2>/dev/null | cut -d@ -f1)
+      if [ -n "$cf_user" ] && [ -d "$cf_users/$cf_user" ]; then
+        RESULTS_DIR=$cf_users/$cf_user/$share_subdir
+      else
+        log "Could not identify your folder under $cf_users (az user: ${cf_user:-unknown})"
+        log "Set RESULTS_DIR explicitly to use the share, e.g.:"
+        log "  RESULTS_DIR=$cf_users/<you>/$share_subdir $0"
+      fi
+    fi
+  fi
+  RESULTS_DIR=${RESULTS_DIR:-$REPO_ROOT/evaluate/results}
+  mkdir -p "$RESULTS_DIR"
+  log "Results will be written to $RESULTS_DIR"
+  case "$RESULTS_DIR" in
+    "$REPO_ROOT"/*) log "WARNING: results are on local disk - they will not survive instance deletion" ;;
+  esac
+}
+
+# --- preflight: fail fast, before hours of training ---
+
+# $@ are the sub-projects (train/merge/evaluate) this run needs.
+pipeline_preflight() {
+  local proj
+  for proj in "$@"; do
+    # Unconditional, not just when .venv is missing: a dependency added to a
+    # pyproject.toml since the last run would otherwise go unnoticed until the
+    # import error hours later. uv sync is a fast no-op when already current.
+    log "Syncing $proj env"
+    (cd "$REPO_ROOT/$proj" && uv sync)
+  done
+
+  # A CUDA GPU is not optional: the training configs are 4-bit (bitsandbytes),
+  # and the merge step runs with --cuda. Checked here rather than discovered
+  # after data prep, or worse, after an hour of something that looked like it
+  # was working. ALLOW_NO_GPU=1 skips it, for exercising data prep on a laptop.
+  if [ "${ALLOW_NO_GPU:-0}" != "1" ]; then
+    if ! uv run --project "$REPO_ROOT/train" python -c \
+         'import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; then
+      echo "ERROR: no CUDA GPU visible - this pipeline cannot run here." >&2
+      echo "Training is 4-bit (bitsandbytes) and merging runs with --cuda; neither" >&2
+      echo "has a CPU or MPS path. Run this on a GPU compute instance:" >&2
+      echo "  az ml compute start --name mpietrzykA100        # billing starts here" >&2
+      echo "  az ml compute connect-ssh --name mpietrzykA100" >&2
+      echo "  cd model-merging && screen -S xsum ./run_xsum_pipeline.sh" >&2
+      echo "Set ALLOW_NO_GPU=1 to skip this check (data prep only)." >&2
+      exit 1
+    fi
+  fi
+
+  uv run --project "$REPO_ROOT/evaluate" hf auth whoami >/dev/null 2>&1 \
+    || die "Not logged into Hugging Face. Run: uv run --project evaluate hf auth login"
+
+  if ! az ml model list --resource-group "$RG" --workspace-name "$WS" >/dev/null 2>&1; then
+    echo "ERROR: 'az ml' is not working here - extension missing, or not logged in." >&2
+    echo "On an Azure ML compute instance the system extension dir isn't writable, so:" >&2
+    echo "  export AZURE_EXTENSION_DIR=\$HOME/.azure/cliextensions" >&2
+    echo "  az extension add -n ml -y" >&2
+    echo "  az login --use-device-code" >&2
+    exit 1
+  fi
+}
+
+# --- version bookkeeping ---
+#
+# Registration uses the next FREE version per name, never a hardcoded one:
+# these names may already carry versions registered by other people, so
+# hardcoding either collides with their work or silently skips registration
+# and leaves evaluation measuring someone else's artifact. Versions this run
+# creates are recorded in $VERSIONS_FILE, which is also what makes re-runs safe
+# after cleanup: stages are skipped based on what has been REGISTERED, not on
+# what happens to be on local disk, and anything needed again is re-fetched.
+
+# Highest version currently registered for a model name, or 0 if none.
+highest_version() {
+  local name=$1 max
+  max=$(az ml model list --name "$name" --resource-group "$RG" --workspace-name "$WS" \
+        --query "[].version" -o tsv 2>/dev/null | sort -n | tail -1)
+  echo "${max:-0}"
+}
+
+# Version this pipeline run registered for a name, if any.
+recorded_version() {
+  [ -f "$VERSIONS_FILE" ] || return 0
+  grep "^$1=" "$VERSIONS_FILE" 2>/dev/null | tail -1 | cut -d= -f2
+}
+
+# Register $path under $name at the next free version. Idempotent across re-runs.
+register_model() {
+  local name=$1 path=$2 existing next
+  existing=$(recorded_version "$name")
+  if [ -n "$existing" ]; then
+    log "$name already registered by this run as version $existing, skipping"
+    return
+  fi
+  [ -d "$path" ] || die "Nothing to register at $path"
+  next=$(( $(highest_version "$name") + 1 ))
+  log "Registering $name as version $next (from $path)"
+  az ml model create --name "$name" --version "$next" --type custom_model \
+    --path "$path" --resource-group "$RG" --workspace-name "$WS" >/dev/null
+  echo "$name=$next" >> "$VERSIONS_FILE"
+}
+
+# The azureml: reference for something this run registered.
+ref() {
+  local name=$1 v
+  v=$(recorded_version "$name")
+  [ -n "$v" ] || die "No version recorded for $name - registration must run first"
+  echo "azureml:$name:$v"
+}
+
+# Make sure a registered artifact is present locally, downloading if cleanup
+# (or a fresh instance) removed it. az ml model download places the artifact in
+# a directory named after the model under --download-path; if your CLI version
+# nests it differently, adjust here rather than at every call site.
+ensure_local() {
+  local name=$1 path=$2 v
+  [ -d "$path" ] && return 0
+  v=$(recorded_version "$name")
+  [ -n "$v" ] || die "$path is missing and $name was not registered by this run"
+  log "Fetching $name:$v from registry -> $path"
+  az ml model download --name "$name" --version "$v" \
+    --download-path "$(dirname "$path")" \
+    --resource-group "$RG" --workspace-name "$WS" >/dev/null
+  [ -d "$path" ] || die "Downloaded $name:$v but nothing landed at $path (check nesting)"
+}

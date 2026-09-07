@@ -1,0 +1,25 @@
+# Task Arithmetic with BOTH weights at 1.0 rather than 0.5.
+#
+# This exists to test one specific hypothesis. A 0.5/0.5 merge produces
+# base + 0.5*d1 + 0.5*d2: it halves each delta and pulls the model back
+# towards base behaviour. On the crime-classification arm that showed up as
+# collapsing recall - the merged model stopped committing to the fine-tuned
+# behaviour. If the same thing happens on summarisation it should show up as
+# outputs drifting back towards the base model's chattier, multi-sentence
+# style, which ROUGE against XSum's one-sentence references will punish.
+#
+# Weight 1.0 each keeps both deltas at full size (base + d1 + d2). If that
+# recovers the fine-tuned behaviour, under-adaptation was the problem and the
+# fix is the weighting, not the method. If it overshoots into degenerate
+# output, the deltas genuinely conflict.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-1-of-2-lora"
+    parameters:
+      weight: 1.0
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-2-of-2-lora"
+    parameters:
+      weight: 1.0
+tokenizer_source: union
+dtype: float16

@@ -1,0 +1,19 @@
+# TIES-Merging — https://arxiv.org/abs/2306.01708
+# Trims each delta to its top `density` fraction by magnitude, then resolves
+# sign disagreements between the two deltas by majority before summing. The
+# two halves here are random splits of one distribution, so this is a test of
+# whether their disagreements are mostly noise worth suppressing rather than
+# averaging in.
+merge_method: ties
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-1-of-2-lora"
+    parameters:
+      weight: 0.5
+      density: 0.5   # keep the top 50% of each delta by magnitude; worth sweeping
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-2-of-2-lora"
+    parameters:
+      weight: 0.5
+      density: 0.5
+tokenizer_source: union
+dtype: float16
