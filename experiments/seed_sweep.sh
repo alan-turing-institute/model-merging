@@ -16,7 +16,11 @@
 # fixed, which isolates training noise per half.
 #
 # Cheap by design: it evaluates each adapter as base_model+adapter, so nothing
-# is converted to a full model and nothing is merged. Adapters are tens of MB.
+# is converted to a full model and nothing is merged. Each adapter output_dir is
+# ~540MB in practice (measured on upload) - the LoRA weights themselves are only
+# ~25MB for 11.9M trainable params, the rest being tokenizer files, trainer
+# state and checkpoints. So budget ~540MB per run locally plus the same again on
+# the share, i.e. ~2GB local for the default two extra seeds across both halves.
 # Pass MERGE_SEEDS=1 to additionally merge each seed's pair, which is where the
 # disk cost lives (~26GB peak) - see experiments/merge_methods.sh for that.
 #
@@ -71,7 +75,7 @@ for seed in $SEEDS; do
       [ -f "$outdir/adapter_model.safetensors" ] || die "No adapter produced at $outdir"
     fi
 
-    # Keep the adapter durable immediately - it's small, and instances die.
+    # Keep the adapter durable immediately - ~540MB each, and instances die.
     # Not silenced: this is the one artifact of the run worth preserving, so a
     # failure here should be visible rather than swallowed.
     share_dir=$(dirname "$RESULTS_DIR")
