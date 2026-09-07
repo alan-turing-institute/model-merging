@@ -18,11 +18,18 @@
 # towards base behaviour is the specific failure this experiment is looking
 # for, so the base model's own ROUGE is the floor to read the merge against.
 #
-# Unlike the crime arm, the two half-data adapters are never materialised into
-# full models. The merge configs use mergekit's "<base>+<adapter>" syntax and
-# --lora-merge-cache, which builds each combination on the fly - saving two
-# conversions and ~17GB of scratch. Only the full-data model is materialised,
-# because it is registered and evaluated as a model in its own right.
+# The merge configs use mergekit's "<base>+<adapter>" syntax, so the two
+# half-data adapters are not converted into full models as a separate step.
+# That saves the conversion step, but NOT the disk: --lora-merge-cache is where
+# mergekit materialises each combination, as a full model each (~8.1GB for
+# gemma-3-4b), so a two-way merge still needs ~17GB of cache plus ~8.1GB per
+# output. The cache is identical across merge methods, so it is built once and
+# reused by every entry in MERGE_METHODS.
+#
+# Disk is the binding constraint on an Azure ML compute instance, where the
+# root disk is often tighter than the temp disk. Two things follow: the
+# full-data model's local copy is deleted as soon as it is registered (step 4),
+# and MERGE_CACHE_DIR can put the cache on another filesystem entirely.
 #
 # Storage policy: local disk is SCRATCH ONLY. Adapters, the full-data model and
 # the merges go to the Azure ML registry; results JSONs go to the workspace
@@ -49,6 +56,12 @@ VERSIONS_FILE=$REPO_ROOT/.pipeline_versions_xsum
 # Which merges to run. Each name maps to merge/merge_<name>_xsum_config.yaml
 # and registers as gemma3-xsum-merged-<name with underscores as dashes>.
 MERGE_METHODS=${MERGE_METHODS:-linear}
+
+# Where mergekit materialises each base+adapter combination. Needs ~17GB for a
+# two-way merge - the single largest disk consumer in the pipeline. Put it on
+# another filesystem when the repo's disk is tight:
+#   MERGE_CACHE_DIR=/mnt/lora-merge-cache ./run_xsum_pipeline.sh
+MERGE_CACHE_DIR=${MERGE_CACHE_DIR:-$REPO_ROOT/models/.lora_merge_cache}
 
 # Passed through to evaluate_summarisation.py. EVAL_LIMIT caps the number of
 # test examples, for smoke tests.
@@ -120,7 +133,60 @@ else
 fi
 register_model gemma3-xsum-full models/gemma3-xsum-full
 
+# Drop the local copy immediately: it is durable in the registry, evaluation
+# references it as azureml:<name>:<version> rather than by path, and the merge
+# below needs every GB it can get. Holding a third full model on local disk
+# through the merge is what filled the root disk on the first real run.
+if [ "${KEEP_LOCAL:-0}" != "1" ] && [ -d models/gemma3-xsum-full ]; then
+  log "Freeing models/gemma3-xsum-full ($(du -sh models/gemma3-xsum-full | cut -f1)) - registered, and evaluation pulls it from the registry"
+  rm -rf models/gemma3-xsum-full
+fi
+
 # --- 5. merge the two half-data adapters ---
+
+mkdir -p "$MERGE_CACHE_DIR" models
+
+# Fail early and legibly rather than part-way through a merge - which is
+# exactly how the first real run ended, with safetensors hitting StorageFull
+# after two hours of training and uploads.
+free_gb() { df -BG --output=avail "$1" 2>/dev/null | tail -1 | tr -dc '0-9'; }
+fs_of()   { df -P "$1" 2>/dev/null | tail -1 | awk '{print $1}'; }
+
+# Cache is only a cost if it still has to be built; it is reused across methods.
+CACHE_GB=18
+if [ -n "$(ls -A "$MERGE_CACHE_DIR" 2>/dev/null)" ]; then
+  CACHE_GB=0
+fi
+OUTPUT_GB=10
+
+cache_free=$(free_gb "$MERGE_CACHE_DIR")
+out_free=$(free_gb "$REPO_ROOT")
+log "Free space: ${cache_free:-?}GB at $MERGE_CACHE_DIR (cache), ${out_free:-?}GB at $REPO_ROOT (output)"
+
+space_advice="  Put the cache on another filesystem:
+    MERGE_CACHE_DIR=/mnt/lora-merge-cache $0
+  or reclaim space:
+    rm -rf ~/.cache/huggingface/hub   # forces an 8.1GB base-model re-download later"
+
+if [ "$(fs_of "$MERGE_CACHE_DIR")" = "$(fs_of "$REPO_ROOT")" ]; then
+  # One filesystem: the cache and the merge output compete for the same bytes,
+  # so the requirement is their SUM. Checking each against its own threshold
+  # would have passed the 24GB-free state that this run actually died on.
+  need=$(( CACHE_GB + OUTPUT_GB ))
+  if [ -n "$out_free" ] && [ "$out_free" -lt "$need" ]; then
+    die "Cache and output share one filesystem, so this needs ~${need}GB free at
+  $REPO_ROOT, and there is ${out_free}GB.
+$space_advice"
+  fi
+else
+  if [ -n "$cache_free" ] && [ "$cache_free" -lt "$CACHE_GB" ]; then
+    die "Need ~${CACHE_GB}GB free at $MERGE_CACHE_DIR for the adapter cache, have ${cache_free}GB.
+$space_advice"
+  fi
+  if [ -n "$out_free" ] && [ "$out_free" -lt "$OUTPUT_GB" ]; then
+    die "Need ~${OUTPUT_GB}GB free at $REPO_ROOT for each merge output, have ${out_free}GB."
+  fi
+fi
 
 merged_names=()
 for method in $MERGE_METHODS; do
@@ -149,7 +215,7 @@ for method in $MERGE_METHODS; do
     # --lazy-unpickle keeps peak memory down by memory-mapping the weights.
     (cd merge && uv run mergekit-yaml "$(basename "$config")" "../$outdir" \
        --cuda --lazy-unpickle --allow-crimes \
-       --lora-merge-cache ../models/.lora_merge_cache)
+       --lora-merge-cache "$MERGE_CACHE_DIR")
   fi
   register_model "$name" "$outdir"
 done
@@ -196,6 +262,13 @@ if [ "${KEEP_LOCAL:-0}" = "1" ]; then
 else
   log "Removing local scratch models/ ($(du -sh models 2>/dev/null | cut -f1)) - everything durable is registered"
   rm -rf models
+  # A cache outside the repo is not covered by removing models/. It is NOT
+  # deleted automatically: MERGE_CACHE_DIR is caller-supplied, and rm -rf on a
+  # path this script did not choose is not a risk worth taking to save a step.
+  case "$MERGE_CACHE_DIR" in
+    "$REPO_ROOT"/models/*) ;;
+    *) log "Merge cache left at $MERGE_CACHE_DIR ($(du -sh "$MERGE_CACHE_DIR" 2>/dev/null | cut -f1)) - remove it by hand" ;;
+  esac
 fi
 
 log "Pipeline complete. Versions registered by this run:"

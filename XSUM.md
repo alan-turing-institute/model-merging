@@ -131,10 +131,35 @@ full-data model can't distinguish "merging works" from "merging landed halfway
 between its inputs, and one input was already decent" — which is exactly what
 happened on the classification arm.
 
-The half-data adapters are never materialised into full models. The merge
-configs use mergekit's `<base>+<adapter>` syntax with `--lora-merge-cache`,
-which builds each combination on the fly — two conversions and ~17GB of scratch
-saved compared to the crime arm's route.
+The half-data adapters are not converted into full models as a separate step —
+the merge configs use mergekit's `<base>+<adapter>` syntax. That saves the
+conversion step but **not the disk**: `--lora-merge-cache` is where mergekit
+materialises each combination, as a full model each, so the bytes are the same
+either way.
+
+### Disk
+
+This is the binding constraint, and the first real run died on it. Budget:
+
+| | |
+|---|---|
+| merge cache | ~17GB — two full materialised models at ~8.1GB each |
+| each merge output | ~8.1GB |
+| base model in `~/.cache/huggingface` | ~9GB |
+
+The cache is identical across merge methods, so it is built once and reused by
+every entry in `MERGE_METHODS`. Two things keep the peak survivable: the
+full-data model's local copy is deleted the moment it is registered (it is
+durable, and evaluation references it as `azureml:<name>:<version>`), and the
+cache can live on a different filesystem:
+
+```bash
+MERGE_CACHE_DIR=/mnt/lora-merge-cache ./run_xsum_pipeline.sh
+```
+
+On an Azure ML compute instance the root disk is often the tighter of the two —
+`df -h / /mnt` before starting. The pipeline now checks free space before
+merging and fails immediately rather than after the training and uploads.
 
 ### Timing
 

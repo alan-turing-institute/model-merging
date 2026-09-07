@@ -80,8 +80,10 @@ rm -rf ../models
 (see [XSUM.md](../XSUM.md)). They differ from the crime configs in one way that
 matters operationally: they merge the two half-data **adapters** via the
 `<base_model>+<adapter>` syntax, so the halves never have to be converted into
-full models first. That saves two conversions and ~17GB of scratch, but it does
-mean `--lora-merge-cache` is required rather than optional:
+full models first. That saves the conversion step but not the disk — the cache
+is where mergekit materialises each combination as a full model, so a two-way
+merge still needs ~17GB there. It also makes `--lora-merge-cache` required
+rather than optional:
 
 ```bash
 uv run mergekit-yaml merge_linear_xsum_config.yaml ../models/gemma3-xsum-merged-linear \
