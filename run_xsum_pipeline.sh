@@ -73,6 +73,68 @@ source "$REPO_ROOT/pipeline_lib.sh"
 pipeline_resolve_results_dir model-merging-results/xsum
 pipeline_preflight train merge evaluate
 
+# Disk is the binding constraint on this pipeline, so it is checked twice:
+# once in preflight, before hours of training, and again immediately before
+# the merge in case something else filled the disk in the meantime. The first
+# call is the one that matters - the requirement is knowable up front, and
+# discovering it after training is the wrong shape for a fail-fast check.
+check_merge_disk() {
+  mkdir -p models
+  # A caller-supplied cache path may not be creatable - /mnt on an Azure ML
+  # compute instance is root-owned, so MERGE_CACHE_DIR=/mnt/... fails here with a
+  # bare mkdir error and no hint about what to do instead.
+  mkdir -p "$MERGE_CACHE_DIR" 2>/dev/null || die "Cannot create MERGE_CACHE_DIR=$MERGE_CACHE_DIR
+    On an Azure ML compute instance /mnt is root-owned, but /tmp sits on the SAME
+    filesystem and is writable, so prefer:
+      MERGE_CACHE_DIR=/tmp/lora-merge-cache $0
+    Or create the directory once, with sudo:
+      sudo mkdir -p $MERGE_CACHE_DIR && sudo chown \$USER:\$USER $MERGE_CACHE_DIR"
+
+  # Fail early and legibly rather than part-way through a merge - which is
+  # exactly how the first real run ended, with safetensors hitting StorageFull
+  # after two hours of training and uploads.
+  free_gb() { df -BG --output=avail "$1" 2>/dev/null | tail -1 | tr -dc '0-9'; }
+  fs_of()   { df -P "$1" 2>/dev/null | tail -1 | awk '{print $1}'; }
+
+  # Cache is only a cost if it still has to be built; it is reused across methods.
+  CACHE_GB=18
+  if [ -n "$(ls -A "$MERGE_CACHE_DIR" 2>/dev/null)" ]; then
+    CACHE_GB=0
+  fi
+  OUTPUT_GB=10
+
+  cache_free=$(free_gb "$MERGE_CACHE_DIR")
+  out_free=$(free_gb "$REPO_ROOT")
+  log "Free space: ${cache_free:-?}GB at $MERGE_CACHE_DIR (cache), ${out_free:-?}GB at $REPO_ROOT (output)"
+
+  space_advice="  Put the cache on another filesystem:
+      MERGE_CACHE_DIR=/tmp/lora-merge-cache $0
+    or reclaim space:
+      rm -rf ~/.cache/huggingface/hub   # forces an 8.1GB base-model re-download later"
+
+  if [ "$(fs_of "$MERGE_CACHE_DIR")" = "$(fs_of "$REPO_ROOT")" ]; then
+    # One filesystem: the cache and the merge output compete for the same bytes,
+    # so the requirement is their SUM. Checking each against its own threshold
+    # would have passed the 24GB-free state that this run actually died on.
+    need=$(( CACHE_GB + OUTPUT_GB ))
+    if [ -n "$out_free" ] && [ "$out_free" -lt "$need" ]; then
+      die "Cache and output share one filesystem, so this needs ~${need}GB free at
+    $REPO_ROOT, and there is ${out_free}GB.
+  $space_advice"
+    fi
+  else
+    if [ -n "$cache_free" ] && [ "$cache_free" -lt "$CACHE_GB" ]; then
+      die "Need ~${CACHE_GB}GB free at $MERGE_CACHE_DIR for the adapter cache, have ${cache_free}GB.
+  $space_advice"
+    fi
+    if [ -n "$out_free" ] && [ "$out_free" -lt "$OUTPUT_GB" ]; then
+      die "Need ~${OUTPUT_GB}GB free at $REPO_ROOT for each merge output, have ${out_free}GB."
+    fi
+  fi
+}
+
+check_merge_disk
+
 # --- 1. data prep ---
 
 if [ ! -d ../datasets/xsum_dataset ]; then
@@ -144,58 +206,7 @@ fi
 
 # --- 5. merge the two half-data adapters ---
 
-mkdir -p models
-# A caller-supplied cache path may not be creatable - /mnt on an Azure ML
-# compute instance is root-owned, so MERGE_CACHE_DIR=/mnt/... fails here with a
-# bare mkdir error and no hint about what to do instead.
-mkdir -p "$MERGE_CACHE_DIR" 2>/dev/null || die "Cannot create MERGE_CACHE_DIR=$MERGE_CACHE_DIR
-  On an Azure ML compute instance /mnt is root-owned, but /tmp sits on the SAME
-  filesystem and is writable, so prefer:
-    MERGE_CACHE_DIR=/tmp/lora-merge-cache $0
-  Or create the directory once, with sudo:
-    sudo mkdir -p $MERGE_CACHE_DIR && sudo chown \$USER:\$USER $MERGE_CACHE_DIR"
-
-# Fail early and legibly rather than part-way through a merge - which is
-# exactly how the first real run ended, with safetensors hitting StorageFull
-# after two hours of training and uploads.
-free_gb() { df -BG --output=avail "$1" 2>/dev/null | tail -1 | tr -dc '0-9'; }
-fs_of()   { df -P "$1" 2>/dev/null | tail -1 | awk '{print $1}'; }
-
-# Cache is only a cost if it still has to be built; it is reused across methods.
-CACHE_GB=18
-if [ -n "$(ls -A "$MERGE_CACHE_DIR" 2>/dev/null)" ]; then
-  CACHE_GB=0
-fi
-OUTPUT_GB=10
-
-cache_free=$(free_gb "$MERGE_CACHE_DIR")
-out_free=$(free_gb "$REPO_ROOT")
-log "Free space: ${cache_free:-?}GB at $MERGE_CACHE_DIR (cache), ${out_free:-?}GB at $REPO_ROOT (output)"
-
-space_advice="  Put the cache on another filesystem:
-    MERGE_CACHE_DIR=/mnt/lora-merge-cache $0
-  or reclaim space:
-    rm -rf ~/.cache/huggingface/hub   # forces an 8.1GB base-model re-download later"
-
-if [ "$(fs_of "$MERGE_CACHE_DIR")" = "$(fs_of "$REPO_ROOT")" ]; then
-  # One filesystem: the cache and the merge output compete for the same bytes,
-  # so the requirement is their SUM. Checking each against its own threshold
-  # would have passed the 24GB-free state that this run actually died on.
-  need=$(( CACHE_GB + OUTPUT_GB ))
-  if [ -n "$out_free" ] && [ "$out_free" -lt "$need" ]; then
-    die "Cache and output share one filesystem, so this needs ~${need}GB free at
-  $REPO_ROOT, and there is ${out_free}GB.
-$space_advice"
-  fi
-else
-  if [ -n "$cache_free" ] && [ "$cache_free" -lt "$CACHE_GB" ]; then
-    die "Need ~${CACHE_GB}GB free at $MERGE_CACHE_DIR for the adapter cache, have ${cache_free}GB.
-$space_advice"
-  fi
-  if [ -n "$out_free" ] && [ "$out_free" -lt "$OUTPUT_GB" ]; then
-    die "Need ~${OUTPUT_GB}GB free at $REPO_ROOT for each merge output, have ${out_free}GB."
-  fi
-fi
+check_merge_disk
 
 merged_names=()
 for method in $MERGE_METHODS; do
