@@ -59,7 +59,10 @@ if [ -z "${RESULTS_DIR:-}" ]; then
     # the AAD account (not the local azureuser account). Derive which one is
     # ours from the Azure login rather than guessing - picking the wrong one
     # would write results into a colleague's folder.
-    cf_user=$(az account show --query user.name -o tsv 2>/dev/null | cut -d@ -f1)
+    # `|| cf_user=""` for the same pipefail reason as recorded_version: if the
+    # az login has expired this pipeline would otherwise die right here,
+    # silently, instead of falling through to the guidance just below.
+    cf_user=$(az account show --query user.name -o tsv 2>/dev/null | cut -d@ -f1) || cf_user=""
     if [ -n "$cf_user" ] && [ -d "$cf_users/$cf_user" ]; then
       RESULTS_DIR=$cf_users/$cf_user/model-merging-results
     else
@@ -102,15 +105,25 @@ fi
 # Highest version currently registered for a model name, or 0 if none.
 highest_version() {
   local name=$1 max
+  # Same trap as recorded_version: `az ml model list --name X` exits 3 with
+  # "Model container ... not found" when nothing has ever been registered under
+  # that name, and pipefail carries that out of the pipeline. Treat a missing
+  # container as version 0 rather than as an error.
   max=$(az ml model list --name "$name" --resource-group "$RG" --workspace-name "$WS" \
-        --query "[].version" -o tsv 2>/dev/null | sort -n | tail -1)
+        --query "[].version" -o tsv 2>/dev/null | sort -n | tail -1) || max=""
   echo "${max:-0}"
 }
 
 # Version this pipeline run registered for a name, if any.
 recorded_version() {
   [ -f "$VERSIONS_FILE" ] || return 0
-  grep "^$1=" "$VERSIONS_FILE" 2>/dev/null | tail -1 | cut -d= -f2
+  # The trailing `|| true` is load-bearing. grep exits 1 when the name isn't in
+  # the file, which is the ordinary "not registered yet" case, and under
+  # `set -o pipefail` that status becomes the pipeline's. Callers use this in a
+  # plain assignment (existing=$(recorded_version ...)), so `set -e` would then
+  # kill the script with no message at all - which it did, on every first-time
+  # registration. Absence is an answer here, not a failure.
+  grep "^$1=" "$VERSIONS_FILE" 2>/dev/null | tail -1 | cut -d= -f2 || true
 }
 
 # Register $path under $name at the next free version. Idempotent across re-runs.
