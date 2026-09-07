@@ -20,6 +20,39 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 AZUREML_PREFIX = "azureml:"
 
 
+# A directory is "the model" if it holds one of these.
+MODEL_MARKERS = ("adapter_config.json", "config.json")
+
+
+def find_model_dir(root, max_depth=3):
+    """Shallowest directory at or under `root` that looks like a model.
+
+    `az ml model download` nests the artifact under the download path, and how
+    deeply has varied - a registered directory currently lands at
+    <download-path>/<name>/<name>. Assuming a fixed depth fails in a
+    particularly unhelpful way: the assumed directory exists, so a cache check
+    on it passes, and the error only surfaces later as a missing
+    adapter_config.json. Find the marker instead of predicting where it is.
+    """
+    root = Path(root)
+    if not root.is_dir():
+        return None
+    level = [root]
+    for _ in range(max_depth + 1):
+        if not level:
+            break
+        for directory in level:
+            if any((directory / marker).is_file() for marker in MODEL_MARKERS):
+                return directory
+        level = [
+            child
+            for directory in level
+            for child in sorted(directory.iterdir())
+            if child.is_dir()
+        ]
+    return None
+
+
 def resolve_model_ref(ref, cache_dir, resource_group, workspace_name, subscription=None):
     """Resolve `ref` to a local path.
 
@@ -33,8 +66,11 @@ def resolve_model_ref(ref, cache_dir, resource_group, workspace_name, subscripti
 
     name, version = ref[len(AZUREML_PREFIX):].split(":")
     download_dir = Path(cache_dir) / f"{name}-{version}"
-    local_path = download_dir / name
-    if not local_path.exists():
+
+    # Cache on the marker, not on the directory: a partial or oddly-nested
+    # download leaves directories behind that would otherwise look cached.
+    local_path = find_model_dir(download_dir)
+    if local_path is None:
         command = [
             "az", "ml", "model", "download",
             "--name", name,
@@ -45,8 +81,14 @@ def resolve_model_ref(ref, cache_dir, resource_group, workspace_name, subscripti
         ]
         if subscription:
             command += ["--subscription", subscription]
-        print(f"Downloading {ref} to {local_path} ...")
+        print(f"Downloading {ref} to {download_dir} ...")
         subprocess.run(command, check=True)
+        local_path = find_model_dir(download_dir)
+        if local_path is None:
+            raise RuntimeError(
+                f"Downloaded {ref} into {download_dir}, but no directory there "
+                f"contains any of {MODEL_MARKERS}."
+            )
     return str(local_path)
 
 
