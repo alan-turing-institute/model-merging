@@ -1,42 +1,44 @@
 #!/usr/bin/env bash
 # Runs the full train -> merge -> evaluate pipeline described in the root README.
 #
-# Storage policy: local disk is SCRATCH ONLY. Nothing valuable is left on it.
+# Merges LoRA adapters DIRECTLY, via mergekit's <base_model>+<adapter> syntax.
+# It does not convert adapters into full models first: the root README states
+# you should not need to, and doing so cost ~8.6GB per adapter (~26GB for this
+# experiment) purely to hold intermediates mergekit can derive itself.
+# Convert_to_full_model.py remains available for other purposes; the pipeline
+# just doesn't depend on it.
 #
-#   Azure ML registry  - the 3 LoRA adapters, the full-dataset model, and the
-#                        merged model. The experimental output and the two
-#                        things the merge is compared against: worth versioning,
-#                        and referencable as azureml:<name>:<version>, which
+# What gets stored where:
+#
+#   Azure ML registry  - the LoRA adapters and every merged model. The
+#                        experimental output: worth versioning, and
+#                        referencable as azureml:<name>:<version>, which
 #                        evaluate.py resolves natively.
 #   Workspace share    - the results JSONs, under ~/cloudfiles when mounted.
-#   Local, transient   - the two half-dataset full models (~8.6GB each). Needed
-#                        on a real filesystem because mergekit reads weights
-#                        from paths, but they exist only as merge inputs, so
-#                        they are never registered and are deleted at the end.
-#                        Convert_to_full_model.py regenerates them from the
-#                        registered adapters in minutes if ever needed again.
+#   Local, transient   - mergekit's --lora-merge-cache (one materialised
+#                        base+adapter per adapter, ~8.6GB each) and one merge
+#                        output at a time. Both are deleted at the end.
 #
-# Local disk cannot be avoided during compute - axolotl's output_dir, the
-# conversion script and mergekit all take filesystem paths, and the registry is
-# not a filesystem. Pointing them at ~/cloudfiles would be worse: it is Azure
-# Files over SMB, and mergekit's --lazy-unpickle memory-maps multi-GB
-# safetensors, which is slow and flaky over a network share. So instead the
-# working tree is cleaned up once everything durable has been uploaded.
+# Local disk cannot be avoided during compute - axolotl's output_dir and
+# mergekit both take filesystem paths, and the registry is not a filesystem.
+# Pointing them at ~/cloudfiles would be worse: it is Azure Files over SMB, and
+# --lazy-unpickle memory-maps multi-GB safetensors, which is slow and flaky
+# over a network share. So the working tree is cleaned once everything durable
+# has been uploaded.
 #
-# Cleanup is ON by default. Set KEEP_LOCAL=1 to retain models/ for debugging.
+# Registration uses the next FREE version per name, never a hardcoded one:
+# these names already carry versions registered by other people, so hardcoding
+# either collides with their work or silently skips registration and leaves
+# evaluation measuring someone else's artifact. Versions this run creates are
+# recorded in .pipeline_versions, which is also what makes re-runs safe after
+# cleanup: stages are skipped on what has been REGISTERED, not on what happens
+# to be on local disk, and anything needed again is re-fetched.
 #
-# Registration uses the next FREE version per name, never a hardcoded one: these
-# names already carry versions registered by other people, so hardcoding either
-# collides with their work or silently skips registration and leaves evaluation
-# measuring someone else's artifact. Versions this run creates are recorded in
-# .pipeline_versions, which is also what makes re-runs safe after cleanup: stages
-# are skipped based on what has been REGISTERED, not on what happens to be on
-# local disk, and anything needed again is re-fetched from the registry.
-#
-# Usage: run from the repo root on a GPU compute instance, with `az` working
-# (see preflight below) and `hf auth login` already done.
-#   RESULTS_DIR=/some/path ./run_pipeline.sh   # override where results land
-#   KEEP_LOCAL=1 ./run_pipeline.sh             # skip the cleanup step
+# Usage, from the repo root:
+#   ./run_pipeline.sh
+#   METHODS="linear ties dare_ties" ./run_pipeline.sh   # which merges to run
+#   RESULTS_DIR=/some/path ./run_pipeline.sh            # where results land
+#   KEEP_LOCAL=1 ./run_pipeline.sh                      # skip cleanup
 set -euo pipefail
 cd "$(dirname "$0")"
 REPO_ROOT=$PWD
@@ -45,6 +47,21 @@ RG=tire-1
 WS=tire-2
 BASE_MODEL=google/gemma-3-4b-it
 VERSIONS_FILE=$REPO_ROOT/.pipeline_versions
+CACHE=$REPO_ROOT/models/.lora_merge_cache
+
+# `linear` is the baseline the project started from; `ties` is the only method
+# so far to significantly beat both half-data models, so both run by default.
+# merge/ also holds task_arithmetic, dare_ties, model_stock, slerp and
+# arcee_fusion - add them via METHODS. Note model_stock needs the base model
+# plus 3+ others to estimate its angle, so it degenerates on a 2-model merge.
+METHODS=${METHODS:-"linear ties"}
+
+# Adapter name -> training config, in training order.
+ADAPTERS=(
+  "gemma3-crime-full-lora:crime_gemma.yaml"
+  "gemma3-crime-1-of-2-lora:crime_gemma1.yaml"
+  "gemma3-crime-2-of-2-lora:crime_gemma2.yaml"
+)
 
 # Progress goes to stderr so stdout stays clean for captured values.
 log() { echo "=== $* ===" >&2; }
@@ -97,6 +114,26 @@ if ! az ml model list --resource-group "$RG" --workspace-name "$WS" >/dev/null 2
   exit 1
 fi
 
+for method in $METHODS; do
+  [ -f "merge/merge_${method}_config.yaml" ] \
+    || die "No config at merge/merge_${method}_config.yaml (METHODS=\"$METHODS\")"
+done
+
+# The adapter cache holds one materialised base+adapter per adapter referenced,
+# and each merge writes another full model, so check before starting rather
+# than dying part-way through a merge.
+free_gb() { df -BG --output=avail "$1" 2>/dev/null | tail -1 | tr -dc '0-9'; }
+avail=$(free_gb "$REPO_ROOT")
+if [ -n "$avail" ]; then
+  log "Free space: ${avail}GB"
+  if [ "$avail" -lt 30 ]; then
+    die "Need ~30GB free (~17GB adapter cache + ~8.6GB per merge output).
+Free some first, e.g.:
+  rm -rf $REPO_ROOT/models
+  rm -rf ~/.cache/huggingface/hub   # forces an 8.6GB base-model re-download"
+  fi
+fi
+
 # --- version bookkeeping ---
 
 # Highest version currently registered for a model name, or 0 if none.
@@ -127,6 +164,19 @@ register_model() {
   az ml model create --name "$name" --version "$next" --type custom_model \
     --path "$path" --resource-group "$RG" --workspace-name "$WS" >/dev/null
   echo "$name=$next" >> "$VERSIONS_FILE"
+}
+
+# Registry name for a merge method. Config files use underscores
+# (merge_dare_ties_config.yaml) but the registered artifacts and the committed
+# results/ files use hyphens, and `linear` is historically registered as
+# gemma3-crime-merged-linear-2 (the "-2" meaning a 2-way merge). Reusing those
+# exact names keeps this run in the same version history rather than starting
+# a parallel set of near-identical names.
+merged_name() {
+  case $1 in
+    linear) echo "gemma3-crime-merged-linear-2" ;;
+    *)      echo "gemma3-crime-merged-${1//_/-}" ;;
+  esac
 }
 
 # The azureml: reference for something this run registered.
@@ -162,78 +212,84 @@ else
   log "Data already prepared, skipping"
 fi
 
-# --- 2. train the three LoRA adapters ---
+# --- 2. train the LoRA adapters ---
 # Skip on REGISTERED state first, so a cleaned-up working tree doesn't retrain.
 
-train_if_needed() {
-  local cfg=$1 name=$2 outdir=$3
+for entry in "${ADAPTERS[@]}"; do
+  name=${entry%%:*}
+  cfg=${entry#*:}
+  outdir=models/$name
+
   if [ -n "$(recorded_version "$name")" ]; then
     log "$name already registered (version $(recorded_version "$name")), skipping training"
-    return
+    continue
   fi
   # trainer_state.json only lands when training actually finishes; the adapter
   # file alone is pre-saved before step 0 and would cause a false skip.
   if [ -f "$outdir/adapter_model.safetensors" ] && [ -f "$outdir/trainer_state.json" ]; then
-    log "Adapter already trained at $outdir, skipping"
-    return
+    log "$name already trained at $outdir, skipping"
+    continue
   fi
-  log "Training $cfg"
+  log "Training $cfg -> $outdir"
   (cd train && uv run axolotl train "$cfg")
   [ -f "$outdir/adapter_model.safetensors" ] || die "Training finished but no adapter at $outdir"
-}
-train_if_needed crime_gemma.yaml  gemma3-crime-full-lora   models/gemma3-crime-full-lora
-train_if_needed crime_gemma1.yaml gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2-lora
-train_if_needed crime_gemma2.yaml gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2-lora
+done
 
 # --- 3. register the adapters (the trained output - this must land) ---
 
-register_model gemma3-crime-full-lora   models/gemma3-crime-full-lora
-register_model gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2-lora
-register_model gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2-lora
+for entry in "${ADAPTERS[@]}"; do
+  name=${entry%%:*}
+  register_model "$name" "models/$name"
+done
 
-# --- 4. convert adapters into full models ---
-# The full-dataset one is registered below; the two halves stay local scratch.
+# --- 4. merge the two half-dataset adapters, once per method ---
+# Every config in merge/ references <base_model>+<adapter>, so mergekit has to
+# materialise each combination into --lora-merge-cache first. That cache is the
+# same for every method, so the first merge builds it and the rest reuse it.
 
-convert_if_needed() {
-  local name=$1 lora=$2 outdir=$3
-  if [ -f "$outdir/config.json" ]; then
-    log "Full model already converted at $outdir, skipping"
-    return
+for name in gemma3-crime-1-of-2-lora gemma3-crime-2-of-2-lora; do
+  ensure_local "$name" "models/$name"
+done
+
+for method in $METHODS; do
+  merged=$(merged_name "$method")
+  out=models/$merged
+
+  if [ -n "$(recorded_version "$merged")" ]; then
+    log "$merged already registered, skipping merge"
+    continue
   fi
-  ensure_local "$name" "$lora"
-  log "Converting $lora -> $outdir"
-  uv run --project evaluate python Convert_to_full_model.py "$BASE_MODEL" "$lora" "$outdir"
-}
-convert_if_needed gemma3-crime-full-lora   models/gemma3-crime-full-lora   models/gemma3-crime-full
-convert_if_needed gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2
-convert_if_needed gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2
+  if [ -f "$out/config.json" ]; then
+    log "$merged already merged locally, skipping"
+  else
+    log "Merging: $method"
+    # A method can legitimately fail on this input (model_stock needs 3+
+    # models, slerp exactly 2). Don't abort the whole run for one method.
+    if ! (cd merge && uv run mergekit-yaml "merge_${method}_config.yaml" "../$out" \
+          --cuda --lazy-unpickle --allow-crimes --lora-merge-cache "$CACHE"); then
+      log "$method FAILED to merge - continuing with the remaining methods"
+      rm -rf "$out"
+      continue
+    fi
+  fi
+  register_model "$merged" "$out"
 
-# The full-dataset model IS registered: it's the baseline the merge is compared
-# against, the README lists it as a maintained artifact, and evaluating it as a
-# materialised model (rather than base+adapter) is what makes it a distinct data
-# point. The two half-dataset models stay transient - they're only merge inputs.
-register_model gemma3-crime-full models/gemma3-crime-full
+  # Free the merge output now rather than accumulating ~8.6GB per method.
+  # Evaluation below re-downloads it via its azureml: reference, which is a
+  # deliberate round trip: it means each result JSON records
+  # azureml:<name>:<version> rather than a local path, so a result can be
+  # traced back to the exact artifact that produced it. Provenance is worth
+  # more here than the transfer, and keeping every output would otherwise push
+  # peak disk to ~17GB of cache plus ~8.6GB per method.
+  if [ "${KEEP_LOCAL:-0}" != "1" ]; then
+    log "Removing local $out (registered as $(ref "$merged"))"
+    rm -rf "$out"
+  fi
+done
 
-# --- 5. merge the two half-dataset full models (linear) ---
-# merge_linear_config.yaml reads ../models/gemma3-crime-{1,2}-of-2, which the
-# convert step just produced locally.
-
-if [ -n "$(recorded_version gemma3-crime-merged-linear-2)" ]; then
-  log "Merge already registered, skipping"
-elif [ -f models/gemma3-crime-merged-linear-2/config.json ]; then
-  log "Merge already done locally, skipping"
-else
-  log "Merging (linear)"
-  (cd merge && uv run mergekit-yaml merge_linear_config.yaml \
-     ../models/gemma3-crime-merged-linear-2 --cuda --lazy-unpickle --allow-crimes)
-fi
-
-# The merge is a result, not a regenerable intermediate - keep it versioned.
-register_model gemma3-crime-merged-linear-2 models/gemma3-crime-merged-linear-2
-
-# --- 6. evaluate ---
-# Everything evaluated is referenced from the registry at the version THIS run
-# created, so evaluation does not depend on local disk surviving.
+# --- 5. evaluate ---
+# Everything is referenced from the registry at the version THIS run created,
+# so evaluation does not depend on local disk surviving.
 
 evaluate_if_needed() {
   local model=$1 adapter=$2 out=$3
@@ -243,6 +299,8 @@ evaluate_if_needed() {
     return
   fi
   log "Evaluating -> $out_path (model=$model adapter=${adapter:-none})"
+  # evaluate.py prints no progress during its per-example generation loop, so
+  # expect several silent minutes per model over the ~1077-example test set.
   if [ -n "$adapter" ]; then
     (cd evaluate && uv run python evaluate.py --model "$model" --adapter "$adapter" --output "$out_path")
   else
@@ -250,28 +308,43 @@ evaluate_if_needed() {
   fi
 }
 
-# base model + the full-dataset adapter, applied at load time
-evaluate_if_needed "$BASE_MODEL" "$(ref gemma3-crime-full-lora)" \
-  gemma3-crime-full-lora.json
-# the same thing materialised into full weights - should match the above, and a
-# divergence means merge_and_unload() changed behaviour
-evaluate_if_needed "$(ref gemma3-crime-full)" "" \
-  gemma3-crime-full.json
-# the linear merge of the two half-dataset models - the actual experiment
-evaluate_if_needed "$(ref gemma3-crime-merged-linear-2)" "" \
-  gemma3-crime-merged-linear-2.json
+# Each adapter on top of the base model: the full-data baseline, and the two
+# half-data models the merges are trying to beat.
+for entry in "${ADAPTERS[@]}"; do
+  name=${entry%%:*}
+  evaluate_if_needed "$BASE_MODEL" "$(ref "$name")" "$name.json"
+done
 
-# --- 7. clean up local scratch ---
+# Each merged model that registered successfully.
+for method in $METHODS; do
+  merged=$(merged_name "$method")
+  if [ -n "$(recorded_version "$merged")" ]; then
+    evaluate_if_needed "$(ref "$merged")" "" "$merged.json"
+  else
+    log "$merged was not registered (merge failed?), nothing to evaluate"
+  fi
+done
+
+# --- 6. clean up local scratch ---
 
 if [ "${KEEP_LOCAL:-0}" = "1" ]; then
-  log "KEEP_LOCAL=1 - leaving models/ in place ($(du -sh models 2>/dev/null | cut -f1) on disk)"
+  log "KEEP_LOCAL=1 - leaving scratch in place ($(du -sh models evaluate/.azureml_models 2>/dev/null | tail -1 | cut -f1))"
 else
-  log "Removing local scratch models/ ($(du -sh models 2>/dev/null | cut -f1)) - everything durable is registered"
-  rm -rf models
+  log "Removing local scratch - everything durable is registered"
+  # models/ holds the adapters, the shared adapter cache and any retained merge
+  # output; evaluate/.azureml_models holds what evaluate.py pulled back from
+  # the registry. Both are reconstructible from the registry.
+  for scratch in models evaluate/.azureml_models; do
+    [ -e "$scratch" ] || continue
+    log "  $scratch ($(du -sh "$scratch" 2>/dev/null | cut -f1))"
+    rm -rf "$scratch"
+  done
 fi
 
 log "Pipeline complete. Versions registered by this run:"
 cat "$VERSIONS_FILE" >&2
 log "Results in $RESULTS_DIR"
+log "Compare them with:"
+log "  uv run --project evaluate python experiments/mcnemar.py $RESULTS_DIR"
 log "Note: the base model cache in ~/.cache/huggingface (~8.6GB) is left in place;"
 log "clear it with 'rm -rf ~/.cache/huggingface/hub' if you need the space back."
