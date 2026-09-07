@@ -5,3 +5,4 @@ __pycache__/
 .uv-cache/
 train/last_run_prepared/
 evaluate/.azureml_models/
+.pipeline_versions
