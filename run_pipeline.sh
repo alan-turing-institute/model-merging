@@ -171,15 +171,21 @@ train_if_needed() {
     log "$name already registered (version $(recorded_version "$name")), skipping training"
     return
   fi
-  # trainer_state.json only lands when training actually finishes; the adapter
-  # file alone is pre-saved before step 0 and would cause a false skip.
-  if [ -f "$outdir/adapter_model.safetensors" ] && [ -f "$outdir/trainer_state.json" ]; then
+  # Completion is recorded by a sentinel THIS script writes, not inferred from
+  # axolotl's output. The previous check looked for trainer_state.json at the
+  # top of output_dir, but axolotl only writes that inside checkpoint-N/, so
+  # the condition was never true and every unregistered adapter retrained from
+  # scratch - confirmed on the XSum arm, which carried the same check.
+  # adapter_model.safetensors on its own is no good either: it is pre-saved
+  # before step 0, so it exists for an interrupted run too.
+  if [ -f "$outdir/.training_complete" ]; then
     log "Adapter already trained at $outdir, skipping"
     return
   fi
   log "Training $cfg"
   (cd train && uv run axolotl train "$cfg")
   [ -f "$outdir/adapter_model.safetensors" ] || die "Training finished but no adapter at $outdir"
+  touch "$outdir/.training_complete"
 }
 train_if_needed crime_gemma.yaml  gemma3-crime-full-lora   models/gemma3-crime-full-lora
 train_if_needed crime_gemma1.yaml gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2-lora
