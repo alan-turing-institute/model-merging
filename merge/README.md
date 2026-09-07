@@ -41,7 +41,6 @@ You should edit this file to describe the merge you want to complete.
 
 `Mergekit` can also do more complicated multi-stage merging workflows.  These aren't covered by these scripts, but details can be found in the [multi-stage section in mergekit](https://github.com/arcee-ai/mergekit/tree/main#multi-stage-merging-mergekit-multi).
 
-
 We give some examples of mergekit yaml files for different merging methods including [linear](merge_linear_config.yaml), [merge_task_arithmetic_config.yaml](merge_task_arithmetic_config.yaml), [merge_ties_config.yaml](merge_ties_config.yaml), [merge_dare_ties_config.yaml](merge_dare_ties_config.yaml), [merge_model_stock_config.yaml](merge_model_stock_config.yaml), [merge_slerp_config.yaml](merge_slerp_config.yaml), and [merge_arcee_fusion_config.yaml](merge_arcee_fusion_config.yaml).
 
 To merge two complete models (not base model + LoRA adapter), then run

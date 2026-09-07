@@ -176,6 +176,12 @@ and fetch one back (or pass `azureml:<name>:<version>` directly to [evaluate.py]
 az ml model download --name <name> --version 1 --download-path <dir> --resource-group tire-1 --workspace-name tire-2
 ```
 
+To view the models currently stored on Azure:
+
+```bash
+az ml model list --resource-group tire-1 --workspace-name tire-2 --output table
+```
+
 Current registry name for each pipeline artifact:
 
 | Pipeline artifact | Registered model name |
