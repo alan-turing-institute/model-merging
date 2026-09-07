@@ -250,8 +250,23 @@ done
 # Everything is referenced from the registry at the version THIS run created,
 # so evaluation does not depend on local disk surviving.
 
+# Load from the local copy when it is on disk, and fall back to the registry
+# only when it is not. Referencing the registry unconditionally meant the
+# pipeline registered an 8.1GB model and then immediately downloaded the same
+# 8.1GB back into evaluate/.azureml_models/, so every large artifact occupied
+# the disk twice - which is what ran a 25GB disk out of space mid-evaluation.
+# Resumability is unaffected: if local disk was cleaned, ref() still resolves.
+local_or_ref() {
+  local name=$1 path=$2
+  if model_dir_has_weights "$REPO_ROOT/$path"; then
+    echo "$REPO_ROOT/$path"
+  else
+    ref "$name"
+  fi
+}
+
 evaluate_if_needed() {
-  local model=$1 adapter=$2 out=$3
+  local model=$1 adapter=$2 out=$3 provenance=${4:-}
   local out_path=$RESULTS_DIR/$out
   if [ -f "$out_path" ]; then
     log "Already evaluated -> $out_path, skipping"
@@ -261,24 +276,34 @@ evaluate_if_needed() {
   local args=(--model "$model" --output "$out_path" --batch-size "$EVAL_BATCH_SIZE")
   if [ -n "$adapter" ]; then args+=(--adapter "$adapter"); fi
   if [ -n "$EVAL_LIMIT" ]; then args+=(--limit "$EVAL_LIMIT"); fi
+  # Which registered version this is, even when loaded from a local path.
+  if [ -n "$provenance" ]; then args+=(--provenance "$provenance"); fi
   (cd evaluate && uv run python evaluate_summarisation.py "${args[@]}")
 }
 
 # The floor: what the base model scores with no fine-tuning at all.
 evaluate_if_needed "$BASE_MODEL" "" gemma3-xsum-base.json
 # The target: all the data, one training run.
-evaluate_if_needed "$BASE_MODEL" "$(ref gemma3-xsum-full-lora)" gemma3-xsum-full-lora.json
+evaluate_if_needed "$BASE_MODEL" \
+  "$(local_or_ref gemma3-xsum-full-lora models/gemma3-xsum-full-lora)" \
+  gemma3-xsum-full-lora.json "$(ref gemma3-xsum-full-lora)"
 # The same thing materialised into full weights - should match the line above,
 # and a divergence means merge_and_unload() changed behaviour.
-evaluate_if_needed "$(ref gemma3-xsum-full)" "" gemma3-xsum-full.json
+evaluate_if_needed "$(local_or_ref gemma3-xsum-full models/gemma3-xsum-full)" "" \
+  gemma3-xsum-full.json "$(ref gemma3-xsum-full)"
 # The merge's own inputs. Without these there is nothing to say whether a merge
 # beat its parts or just landed between them - which was the whole finding on
 # the classification arm.
-evaluate_if_needed "$BASE_MODEL" "$(ref gemma3-xsum-1-of-2-lora)" gemma3-xsum-1-of-2-lora.json
-evaluate_if_needed "$BASE_MODEL" "$(ref gemma3-xsum-2-of-2-lora)" gemma3-xsum-2-of-2-lora.json
+evaluate_if_needed "$BASE_MODEL" \
+  "$(local_or_ref gemma3-xsum-1-of-2-lora models/gemma3-xsum-1-of-2-lora)" \
+  gemma3-xsum-1-of-2-lora.json "$(ref gemma3-xsum-1-of-2-lora)"
+evaluate_if_needed "$BASE_MODEL" \
+  "$(local_or_ref gemma3-xsum-2-of-2-lora models/gemma3-xsum-2-of-2-lora)" \
+  gemma3-xsum-2-of-2-lora.json "$(ref gemma3-xsum-2-of-2-lora)"
 # The experiment.
 for name in "${merged_names[@]}"; do
-  evaluate_if_needed "$(ref "$name")" "" "$name.json"
+  evaluate_if_needed "$(local_or_ref "$name" "models/$name")" "" \
+    "$name.json" "$(ref "$name")"
 done
 
 # --- 7. clean up local scratch ---

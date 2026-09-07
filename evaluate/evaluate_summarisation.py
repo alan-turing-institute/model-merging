@@ -203,6 +203,16 @@ def parse_args():
         help="Only evaluate the first N examples (for quick runs).",
     )
     parser.add_argument(
+        "--provenance",
+        default=None,
+        help=(
+            "Identifier recorded in the results JSON alongside the path actually "
+            "loaded. Use it to record the azureml:<name>:<version> reference when "
+            "a local copy of that artifact is loaded directly, so a result still "
+            "says which registered version produced it."
+        ),
+    )
+    parser.add_argument(
         "--show",
         type=int,
         default=3,
@@ -260,6 +270,10 @@ def main():
 
     record = {
         "model": args.model,
+        # What --model refers to in the registry, when it was loaded from a
+        # local copy rather than by azureml: reference. Without this a result
+        # evaluated from local disk would not say which version it came from.
+        "provenance": args.provenance,
         "model_path": model_path,
         "adapter": args.adapter,
         "adapter_path": adapter_path,
