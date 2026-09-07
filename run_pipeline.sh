@@ -1,33 +1,42 @@
 #!/usr/bin/env bash
 # Runs the full train -> merge -> evaluate pipeline described in the root README.
 #
-# What gets stored where, and why:
+# Storage policy: local disk is SCRATCH ONLY. Nothing valuable is left on it.
 #
-#   Azure ML registry  - the LoRA adapters and the merged model. These are the
-#                        actual experimental output: small (~tens of MB), worth
-#                        versioning so runs stay comparable, and referencable as
-#                        azureml:<name>:<version> which evaluate.py resolves.
-#   Local disk only    - the converted full models (~8.6GB each). Purely derived:
-#                        Convert_to_full_model.py regenerates them deterministically
-#                        from base model + adapter, so registering ~26GB per run
-#                        buys nothing. The merge step reads them from here.
-#   Workspace share    - the results JSONs, under ~/cloudfiles if it's mounted.
-#                        Local disk is per-instance and dies with the instance;
-#                        results are cheap to store and painful to lose. Model
-#                        weights stay OFF the share - it's Azure Files, and
-#                        multi-GB reads there are much slower than local SSD.
+#   Azure ML registry  - the 3 LoRA adapters, the full-dataset model, and the
+#                        merged model. The experimental output and the two
+#                        things the merge is compared against: worth versioning,
+#                        and referencable as azureml:<name>:<version>, which
+#                        evaluate.py resolves natively.
+#   Workspace share    - the results JSONs, under ~/cloudfiles when mounted.
+#   Local, transient   - the two half-dataset full models (~8.6GB each). Needed
+#                        on a real filesystem because mergekit reads weights
+#                        from paths, but they exist only as merge inputs, so
+#                        they are never registered and are deleted at the end.
+#                        Convert_to_full_model.py regenerates them from the
+#                        registered adapters in minutes if ever needed again.
+#
+# Local disk cannot be avoided during compute - axolotl's output_dir, the
+# conversion script and mergekit all take filesystem paths, and the registry is
+# not a filesystem. Pointing them at ~/cloudfiles would be worse: it is Azure
+# Files over SMB, and mergekit's --lazy-unpickle memory-maps multi-GB
+# safetensors, which is slow and flaky over a network share. So instead the
+# working tree is cleaned up once everything durable has been uploaded.
+#
+# Cleanup is ON by default. Set KEEP_LOCAL=1 to retain models/ for debugging.
 #
 # Registration uses the next FREE version per name, never a hardcoded one: these
 # names already carry versions registered by other people, so hardcoding either
 # collides with their work or silently skips registration and leaves evaluation
 # measuring someone else's artifact. Versions this run creates are recorded in
-# .pipeline_versions and reused on re-runs, so re-running never double-registers.
-#
-# Safe to re-run: each stage is skipped if its output already exists.
+# .pipeline_versions, which is also what makes re-runs safe after cleanup: stages
+# are skipped based on what has been REGISTERED, not on what happens to be on
+# local disk, and anything needed again is re-fetched from the registry.
 #
 # Usage: run from the repo root on a GPU compute instance, with `az` working
-# (see preflight below) and `hf auth login` already done. Override where results
-# land with RESULTS_DIR=/some/path ./run_pipeline.sh
+# (see preflight below) and `hf auth login` already done.
+#   RESULTS_DIR=/some/path ./run_pipeline.sh   # override where results land
+#   KEEP_LOCAL=1 ./run_pipeline.sh             # skip the cleanup step
 set -euo pipefail
 cd "$(dirname "$0")"
 REPO_ROOT=$PWD
@@ -46,16 +55,26 @@ die() { echo "ERROR: $*" >&2; exit 1; }
 if [ -z "${RESULTS_DIR:-}" ]; then
   cf_users=$HOME/cloudfiles/code/Users
   if [ -d "$cf_users" ]; then
-    # The share is named after the AAD user, not the local azureuser account.
-    cf_user_dir=$(find "$cf_users" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | head -1)
-    if [ -n "$cf_user_dir" ]; then
-      RESULTS_DIR=$cf_user_dir/model-merging-results
+    # The share is workspace-wide and holds a directory per person, named after
+    # the AAD account (not the local azureuser account). Derive which one is
+    # ours from the Azure login rather than guessing - picking the wrong one
+    # would write results into a colleague's folder.
+    cf_user=$(az account show --query user.name -o tsv 2>/dev/null | cut -d@ -f1)
+    if [ -n "$cf_user" ] && [ -d "$cf_users/$cf_user" ]; then
+      RESULTS_DIR=$cf_users/$cf_user/model-merging-results
+    else
+      log "Could not identify your folder under $cf_users (az user: ${cf_user:-unknown})"
+      log "Set RESULTS_DIR explicitly to use the share, e.g.:"
+      log "  RESULTS_DIR=$cf_users/<you>/model-merging-results ./run_pipeline.sh"
     fi
   fi
 fi
 RESULTS_DIR=${RESULTS_DIR:-$REPO_ROOT/evaluate/results}
 mkdir -p "$RESULTS_DIR"
 log "Results will be written to $RESULTS_DIR"
+case "$RESULTS_DIR" in
+  "$REPO_ROOT"/*) log "WARNING: results are on local disk - they will not survive instance deletion" ;;
+esac
 
 # --- preflight: fail fast, before hours of training ---
 
@@ -118,6 +137,22 @@ ref() {
   echo "azureml:$name:$v"
 }
 
+# Make sure a registered artifact is present locally, downloading if cleanup
+# (or a fresh instance) removed it. az ml model download places the artifact in
+# a directory named after the model under --download-path; if your CLI version
+# nests it differently, adjust here rather than at every call site.
+ensure_local() {
+  local name=$1 path=$2 v
+  [ -d "$path" ] && return 0
+  v=$(recorded_version "$name")
+  [ -n "$v" ] || die "$path is missing and $name was not registered by this run"
+  log "Fetching $name:$v from registry -> $path"
+  az ml model download --name "$name" --version "$v" \
+    --download-path "$(dirname "$path")" \
+    --resource-group "$RG" --workspace-name "$WS" >/dev/null
+  [ -d "$path" ] || die "Downloaded $name:$v but nothing landed at $path (check nesting)"
+}
+
 # --- 1. data prep ---
 
 if [ ! -d ../datasets/crime_dataset ]; then
@@ -128,22 +163,27 @@ else
 fi
 
 # --- 2. train the three LoRA adapters ---
+# Skip on REGISTERED state first, so a cleaned-up working tree doesn't retrain.
 
 train_if_needed() {
-  local cfg=$1 outdir=$2
+  local cfg=$1 name=$2 outdir=$3
+  if [ -n "$(recorded_version "$name")" ]; then
+    log "$name already registered (version $(recorded_version "$name")), skipping training"
+    return
+  fi
   # trainer_state.json only lands when training actually finishes; the adapter
   # file alone is pre-saved before step 0 and would cause a false skip.
   if [ -f "$outdir/adapter_model.safetensors" ] && [ -f "$outdir/trainer_state.json" ]; then
     log "Adapter already trained at $outdir, skipping"
-  else
-    log "Training $cfg"
-    (cd train && uv run axolotl train "$cfg")
-    [ -f "$outdir/adapter_model.safetensors" ] || die "Training finished but no adapter at $outdir"
+    return
   fi
+  log "Training $cfg"
+  (cd train && uv run axolotl train "$cfg")
+  [ -f "$outdir/adapter_model.safetensors" ] || die "Training finished but no adapter at $outdir"
 }
-train_if_needed crime_gemma.yaml  models/gemma3-crime-full-lora
-train_if_needed crime_gemma1.yaml models/gemma3-crime-1-of-2-lora
-train_if_needed crime_gemma2.yaml models/gemma3-crime-2-of-2-lora
+train_if_needed crime_gemma.yaml  gemma3-crime-full-lora   models/gemma3-crime-full-lora
+train_if_needed crime_gemma1.yaml gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2-lora
+train_if_needed crime_gemma2.yaml gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2-lora
 
 # --- 3. register the adapters (the trained output - this must land) ---
 
@@ -151,27 +191,37 @@ register_model gemma3-crime-full-lora   models/gemma3-crime-full-lora
 register_model gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2-lora
 register_model gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2-lora
 
-# --- 4. convert adapters into full models (local only - derived, ~8.6GB each) ---
+# --- 4. convert adapters into full models ---
+# The full-dataset one is registered below; the two halves stay local scratch.
 
 convert_if_needed() {
-  local lora=$1 outdir=$2
+  local name=$1 lora=$2 outdir=$3
   if [ -f "$outdir/config.json" ]; then
     log "Full model already converted at $outdir, skipping"
-  else
-    log "Converting $lora -> $outdir"
-    uv run --project evaluate python Convert_to_full_model.py "$BASE_MODEL" "$lora" "$outdir"
+    return
   fi
+  ensure_local "$name" "$lora"
+  log "Converting $lora -> $outdir"
+  uv run --project evaluate python Convert_to_full_model.py "$BASE_MODEL" "$lora" "$outdir"
 }
-convert_if_needed models/gemma3-crime-full-lora   models/gemma3-crime-full
-convert_if_needed models/gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2
-convert_if_needed models/gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2
+convert_if_needed gemma3-crime-full-lora   models/gemma3-crime-full-lora   models/gemma3-crime-full
+convert_if_needed gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2-lora models/gemma3-crime-1-of-2
+convert_if_needed gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2-lora models/gemma3-crime-2-of-2
+
+# The full-dataset model IS registered: it's the baseline the merge is compared
+# against, the README lists it as a maintained artifact, and evaluating it as a
+# materialised model (rather than base+adapter) is what makes it a distinct data
+# point. The two half-dataset models stay transient - they're only merge inputs.
+register_model gemma3-crime-full models/gemma3-crime-full
 
 # --- 5. merge the two half-dataset full models (linear) ---
 # merge_linear_config.yaml reads ../models/gemma3-crime-{1,2}-of-2, which the
-# convert step just produced locally - no registry download needed.
+# convert step just produced locally.
 
-if [ -f models/gemma3-crime-merged-linear-2/config.json ]; then
-  log "Merge already done, skipping"
+if [ -n "$(recorded_version gemma3-crime-merged-linear-2)" ]; then
+  log "Merge already registered, skipping"
+elif [ -f models/gemma3-crime-merged-linear-2/config.json ]; then
+  log "Merge already done locally, skipping"
 else
   log "Merging (linear)"
   (cd merge && uv run mergekit-yaml merge_linear_config.yaml \
@@ -182,8 +232,8 @@ fi
 register_model gemma3-crime-merged-linear-2 models/gemma3-crime-merged-linear-2
 
 # --- 6. evaluate ---
-# Registered artifacts are referenced by the version THIS run created; the
-# unregistered full model is referenced by its local path.
+# Everything evaluated is referenced from the registry at the version THIS run
+# created, so evaluation does not depend on local disk surviving.
 
 evaluate_if_needed() {
   local model=$1 adapter=$2 out=$3
@@ -200,16 +250,28 @@ evaluate_if_needed() {
   fi
 }
 
-# base model + the full-dataset adapter (registered)
+# base model + the full-dataset adapter, applied at load time
 evaluate_if_needed "$BASE_MODEL" "$(ref gemma3-crime-full-lora)" \
   gemma3-crime-full-lora.json
-# the full-dataset model (local, unregistered - path is relative to evaluate/)
-evaluate_if_needed ../models/gemma3-crime-full "" \
+# the same thing materialised into full weights - should match the above, and a
+# divergence means merge_and_unload() changed behaviour
+evaluate_if_needed "$(ref gemma3-crime-full)" "" \
   gemma3-crime-full.json
 # the linear merge of the two half-dataset models - the actual experiment
 evaluate_if_needed "$(ref gemma3-crime-merged-linear-2)" "" \
   gemma3-crime-merged-linear-2.json
 
+# --- 7. clean up local scratch ---
+
+if [ "${KEEP_LOCAL:-0}" = "1" ]; then
+  log "KEEP_LOCAL=1 - leaving models/ in place ($(du -sh models 2>/dev/null | cut -f1) on disk)"
+else
+  log "Removing local scratch models/ ($(du -sh models 2>/dev/null | cut -f1)) - everything durable is registered"
+  rm -rf models
+fi
+
 log "Pipeline complete. Versions registered by this run:"
 cat "$VERSIONS_FILE" >&2
 log "Results in $RESULTS_DIR"
+log "Note: the base model cache in ~/.cache/huggingface (~8.6GB) is left in place;"
+log "clear it with 'rm -rf ~/.cache/huggingface/hub' if you need the space back."
