@@ -207,7 +207,7 @@ for method in $MERGE_METHODS; do
 
   if [ -n "$(recorded_version "$name")" ]; then
     log "$name already registered, skipping merge"
-  elif [ -f "$outdir/config.json" ]; then
+  elif [ -f "$outdir/.merge_complete" ]; then
     log "$name already merged locally, skipping"
   else
     # The merge configs read the adapters from ../models/, so fetch them back
@@ -225,6 +225,12 @@ for method in $MERGE_METHODS; do
     (cd merge && uv run mergekit-yaml "$(basename "$config")" "../$outdir" \
        --cuda --lazy-unpickle --allow-crimes \
        --lora-merge-cache "$MERGE_CACHE_DIR")
+    # Sentinel written only after mergekit exits 0, for the same reason as
+    # .training_complete. Testing for config.json here was wrong: mergekit
+    # writes it before the weight shards, so a merge that died part-way - as
+    # one did, on StorageFull - would look complete on the next run, and a
+    # truncated model would be registered and evaluated.
+    touch "$outdir/.merge_complete"
   fi
   register_model "$name" "$outdir"
 done
