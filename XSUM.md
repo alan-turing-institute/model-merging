@@ -154,11 +154,14 @@ durable, and evaluation references it as `azureml:<name>:<version>`), and the
 cache can live on a different filesystem:
 
 ```bash
-MERGE_CACHE_DIR=/mnt/lora-merge-cache ./run_xsum_pipeline.sh
+MERGE_CACHE_DIR=/tmp/lora-merge-cache ./run_xsum_pipeline.sh
 ```
 
 On an Azure ML compute instance the root disk is often the tighter of the two —
-`df -h / /mnt` before starting. The pipeline now checks free space before
+`df -h / /mnt` before starting. Use `/tmp` rather than `/mnt` directly: it is on
+the same filesystem as `/mnt` but is writable by `azureuser`, whereas `/mnt`
+itself is root-owned. Note it is a *temp* disk — the cache does not survive an
+instance stop/start, and gets rebuilt (~17GB) on the next merge. The pipeline now checks free space before
 merging and fails immediately rather than after the training and uploads.
 
 ### Timing

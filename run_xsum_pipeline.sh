@@ -144,7 +144,16 @@ fi
 
 # --- 5. merge the two half-data adapters ---
 
-mkdir -p "$MERGE_CACHE_DIR" models
+mkdir -p models
+# A caller-supplied cache path may not be creatable - /mnt on an Azure ML
+# compute instance is root-owned, so MERGE_CACHE_DIR=/mnt/... fails here with a
+# bare mkdir error and no hint about what to do instead.
+mkdir -p "$MERGE_CACHE_DIR" 2>/dev/null || die "Cannot create MERGE_CACHE_DIR=$MERGE_CACHE_DIR
+  On an Azure ML compute instance /mnt is root-owned, but /tmp sits on the SAME
+  filesystem and is writable, so prefer:
+    MERGE_CACHE_DIR=/tmp/lora-merge-cache $0
+  Or create the directory once, with sudo:
+    sudo mkdir -p $MERGE_CACHE_DIR && sudo chown \$USER:\$USER $MERGE_CACHE_DIR"
 
 # Fail early and legibly rather than part-way through a merge - which is
 # exactly how the first real run ended, with safetensors hitting StorageFull
