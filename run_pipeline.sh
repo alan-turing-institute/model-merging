@@ -150,20 +150,50 @@ ref() {
   echo "azureml:$name:$v"
 }
 
+# A directory is "the model" if it holds one of these.
+model_dir_has_weights() {
+  [ -f "$1/adapter_config.json" ] || [ -f "$1/config.json" ]
+}
+
+# `az ml model download` nests the artifact under --download-path, and how
+# deeply has varied - a registered directory currently lands at
+# <download-path>/<name>/<name>. Callers here use $path directly (the mergekit
+# configs, Convert_to_full_model.py), so lift the real model directory's
+# contents up to $path rather than making every call site guess the depth.
+flatten_download() {
+  local path=$1 marker inner
+  model_dir_has_weights "$path" && return 0
+  marker=$(find "$path" -mindepth 2 -maxdepth 4 \
+             \( -name adapter_config.json -o -name config.json \) \
+             -print -quit 2>/dev/null || true)
+  [ -n "$marker" ] || return 1
+  inner=$(dirname "$marker")
+  log "Flattening nested download: $inner -> $path"
+  ( shopt -s dotglob nullglob; mv "$inner"/* "$path"/ )
+  find "$path" -mindepth 1 -type d -empty -delete
+  model_dir_has_weights "$path"
+}
+
 # Make sure a registered artifact is present locally, downloading if cleanup
-# (or a fresh instance) removed it. az ml model download places the artifact in
-# a directory named after the model under --download-path; if your CLI version
-# nests it differently, adjust here rather than at every call site.
+# (or a fresh instance) removed it.
 ensure_local() {
   local name=$1 path=$2 v
-  [ -d "$path" ] && return 0
+  # Test for the model's own files rather than just the directory. A bare -d
+  # test passes on an empty or nested directory left by an earlier attempt, and
+  # the mistake then surfaces much later as a confusing error from peft or
+  # mergekit about a missing config - which is exactly how the download nesting
+  # bug in evaluate.py presented.
+  if model_dir_has_weights "$path"; then
+    return 0
+  fi
   v=$(recorded_version "$name")
   [ -n "$v" ] || die "$path is missing and $name was not registered by this run"
   log "Fetching $name:$v from registry -> $path"
   az ml model download --name "$name" --version "$v" \
     --download-path "$(dirname "$path")" \
     --resource-group "$RG" --workspace-name "$WS" >/dev/null
-  [ -d "$path" ] || die "Downloaded $name:$v but nothing landed at $path (check nesting)"
+  flatten_download "$path" \
+    || die "Downloaded $name:$v but found no adapter_config.json or config.json anywhere under $path"
 }
 
 # --- 1. data prep ---
