@@ -1,0 +1,21 @@
+# Cross-task merge: Reddit crime classification + XSum summarisation.
+#
+# Both adapters are LoRA r=16/alpha=32 on q,k,v,o over the SAME base model, so
+# the merge is well-posed - it is the tasks that differ, not the geometry.
+#
+# Plain linear is the naive baseline and the one most likely to fail: it
+# averages raw weights, which for two deltas pointing at unrelated tasks halves
+# both and dilutes the base model twice over. Included precisely so the
+# principled methods have something to beat.
+merge_method: linear
+
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+    parameters:
+      weight: 0.5
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+    parameters:
+      weight: 0.5
+
+tokenizer_source: union
+dtype: float16

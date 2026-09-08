@@ -70,7 +70,9 @@ pipeline_preflight() {
   # after data prep, or worse, after an hour of something that looked like it
   # was working. ALLOW_NO_GPU=1 skips it, for exercising data prep on a laptop.
   if [ "${ALLOW_NO_GPU:-0}" != "1" ]; then
-    if ! uv run --project "$REPO_ROOT/train" python -c \
+    # Probe via the evaluate env, not train: every pipeline needs evaluate, but
+    # one that only merges and evaluates has no reason to sync train at all.
+    if ! uv run --project "$REPO_ROOT/evaluate" python -c \
          'import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; then
       echo "ERROR: no CUDA GPU visible - this pipeline cannot run here." >&2
       echo "Training is 4-bit (bitsandbytes) and merging runs with --cuda; neither" >&2

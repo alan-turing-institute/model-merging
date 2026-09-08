@@ -1,0 +1,24 @@
+# Cross-task merge by Task Arithmetic — https://arxiv.org/abs/2212.04089
+#
+# The natural method for this question: each adapter's delta IS its task
+# vector, and the claim under test is that task vectors add. Combining
+# (model - base) deltas rather than raw weights means the base model is not
+# counted twice, so a merged model that keeps both skills is at least possible
+# in principle.
+#
+# Caveat worth remembering when reading the result: equal weights do not mean
+# equal influence. The two adapters were trained on different data sizes for
+# different numbers of steps, so their deltas differ in magnitude, and 0.5/0.5
+# is a starting point rather than a neutral one. Sweeping the weights traces
+# the actual trade-off curve.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+    parameters:
+      weight: 0.5
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+    parameters:
+      weight: 0.5
+tokenizer_source: union
+dtype: float16

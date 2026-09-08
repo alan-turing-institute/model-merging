@@ -245,6 +245,15 @@ def parse_args():
         default=".azureml_models",
         help="Where azureml: model/adapter downloads are cached.",
     )
+    parser.add_argument(
+        "--provenance",
+        default=None,
+        help=(
+            "Identifier recorded in the results JSON alongside the path actually "
+            "loaded - e.g. the azureml:<name>:<version> reference when a local "
+            "copy of that artifact is loaded directly rather than downloaded."
+        ),
+    )
     parser.add_argument("--text-column", default="posts_name")
     parser.add_argument("--label-column", default="label")
     parser.add_argument("--max-new-tokens", type=int, default=16)
@@ -301,6 +310,7 @@ def main():
 
     record = {
         "model": args.model,
+        "provenance": args.provenance,
         "model_path": model_path,
         "adapter": args.adapter,
         "adapter_path": adapter_path,

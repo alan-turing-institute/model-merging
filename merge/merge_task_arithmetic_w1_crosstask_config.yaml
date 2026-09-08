@@ -1,0 +1,17 @@
+# Cross-task Task Arithmetic with BOTH weights at 1.0 rather than 0.5.
+#
+# base + d_crime + d_xsum, each delta at full strength. If the 0.5/0.5 merge
+# underperforms because both skills were diluted, this recovers them. If it
+# instead degrades further, the two deltas genuinely conflict - which is the
+# more interesting answer, and the one TIES is designed to address.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+    parameters:
+      weight: 1.0
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+    parameters:
+      weight: 1.0
+tokenizer_source: union
+dtype: float16

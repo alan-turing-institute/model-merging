@@ -1,0 +1,20 @@
+# Cross-task merge by TIES — https://arxiv.org/abs/2306.01708
+#
+# TIES exists for exactly this case. It trims each delta to its top `density`
+# fraction by magnitude, then resolves sign disagreements by majority before
+# summing. On the XSum halves that machinery had little to do - two random
+# splits of one task mostly agree. Two different tasks are where sign conflict
+# is real, so if TIES beats task_arithmetic anywhere in this repo, here.
+merge_method: ties
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+    parameters:
+      weight: 0.5
+      density: 0.5
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+    parameters:
+      weight: 0.5
+      density: 0.5
+tokenizer_source: union
+dtype: float16
