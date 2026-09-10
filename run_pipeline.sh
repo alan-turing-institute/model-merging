@@ -168,9 +168,18 @@ model_dir_has_weights() {
 flatten_download() {
   local path=$1 marker inner
   model_dir_has_weights "$path" && return 0
-  marker=$(find "$path" -mindepth 2 -maxdepth 4 \
-             \( -name adapter_config.json -o -name config.json \) \
-             -print -quit 2>/dev/null || true)
+  # Shallowest-first, and never a checkpoint directory. `find -print -quit`
+  # returns whatever traversal order reaches first, and a training output dir
+  # holds checkpoint-N/adapter_config.json alongside its own - so that flattened
+  # an intermediate checkpoint over the real adapter, silently producing a model
+  # directory that looked valid and was the wrong weights.
+  marker=""
+  for depth in 2 3 4; do
+    marker=$( { find "$path" -mindepth "$depth" -maxdepth "$depth" \
+                  \( -name adapter_config.json -o -name config.json \) 2>/dev/null \
+                | grep -v "/checkpoint-" | head -1; } || true )
+    [ -n "$marker" ] && break
+  done
   [ -n "$marker" ] || return 1
   inner=$(dirname "$marker")
   log "Flattening nested download: $inner -> $path"
