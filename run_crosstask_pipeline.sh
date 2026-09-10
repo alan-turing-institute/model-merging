@@ -54,6 +54,9 @@ MERGE_METHODS=${MERGE_METHODS:-"linear task_arithmetic ties"}
 MERGE_CACHE_DIR=${MERGE_CACHE_DIR:-$REPO_ROOT/models/.lora_merge_cache_crosstask}
 EVAL_BATCH_SIZE=${EVAL_BATCH_SIZE:-8}
 EVAL_LIMIT=${EVAL_LIMIT:-}
+# inspect (default) or legacy - see run_xsum_pipeline.sh. Both write the same
+# results JSON, which is what crosstask_table.py reads.
+XSUM_EVAL=${XSUM_EVAL:-inspect}
 # Each merge is ~8.1GB and there are several. They are registered, then the
 # local copy is deleted once both evaluations are done, so peak disk is the
 # cache plus ONE merge rather than the cache plus all of them.
@@ -137,7 +140,12 @@ eval_xsum() {
   if [ -n "$adapter" ]; then args+=(--adapter "$adapter"); fi
   if [ -n "$EVAL_LIMIT" ]; then args+=(--limit "$EVAL_LIMIT"); fi
   if [ -n "$provenance" ]; then args+=(--provenance "$provenance"); fi
-  (cd evaluate && uv run python evaluate_summarisation.py "${args[@]}")
+  if [ "$XSUM_EVAL" = "inspect" ]; then
+    args+=(--log-dir "$RESULTS_DIR/inspect-logs")
+    (cd evaluate && uv run python run_inspect_xsum.py "${args[@]}")
+  else
+    (cd evaluate && uv run python evaluate_summarisation.py "${args[@]}")
+  fi
 }
 
 eval_both() {

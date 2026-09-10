@@ -172,6 +172,23 @@ steps of the full arm each, so all three adapters together cost about twice the
 full arm alone), and evaluation is linear in `XSUM_TEST_N` times the number of
 variants.
 
+## The evaluator
+
+Evaluation runs through [Inspect AI](https://inspect.aisi.org.uk/) by default —
+`evaluate/xsum_task.py`, driven by `evaluate/run_inspect_xsum.py`. It writes a
+browsable `.eval` log into `$RESULTS_DIR/inspect-logs` alongside the results
+JSON, and reports standard error on ROUGE as well as the mean.
+
+```bash
+inspect view --log-dir "$RESULTS_DIR/inspect-logs"
+```
+
+`XSUM_EVAL=legacy` switches back to the hand-rolled
+`evaluate/evaluate_summarisation.py`. Both write the same results JSON, so
+everything downstream is unaffected by the choice. See
+[evaluate/README.md](evaluate/README.md) for the details, including why
+adapters need the custom `hf-peft` provider.
+
 ## Reading the results
 
 ```bash

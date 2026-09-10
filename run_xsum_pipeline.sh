@@ -68,6 +68,15 @@ MERGE_CACHE_DIR=${MERGE_CACHE_DIR:-$REPO_ROOT/models/.lora_merge_cache}
 EVAL_BATCH_SIZE=${EVAL_BATCH_SIZE:-8}
 EVAL_LIMIT=${EVAL_LIMIT:-}
 
+# Which summarisation evaluator to use.
+#   inspect  run_inspect_xsum.py - the Inspect AI task in xsum_task.py. Writes
+#            a browsable .eval log next to the results ("inspect view --log-dir")
+#            and reports stderr on ROUGE alongside the mean.
+#   legacy   evaluate_summarisation.py - the hand-rolled loop.
+# Both write the SAME results JSON, so bootstrap_rouge.py and crosstask_table.py
+# read either without caring which produced it.
+XSUM_EVAL=${XSUM_EVAL:-inspect}
+
 source "$REPO_ROOT/pipeline_lib.sh"
 
 pipeline_resolve_results_dir model-merging-results/xsum
@@ -278,7 +287,14 @@ evaluate_if_needed() {
   if [ -n "$EVAL_LIMIT" ]; then args+=(--limit "$EVAL_LIMIT"); fi
   # Which registered version this is, even when loaded from a local path.
   if [ -n "$provenance" ]; then args+=(--provenance "$provenance"); fi
-  (cd evaluate && uv run python evaluate_summarisation.py "${args[@]}")
+  if [ "$XSUM_EVAL" = "inspect" ]; then
+    # Logs land beside the results so they survive the instance, and so a
+    # number in a table can be traced back to the samples that produced it.
+    args+=(--log-dir "$RESULTS_DIR/inspect-logs")
+    (cd evaluate && uv run python run_inspect_xsum.py "${args[@]}")
+  else
+    (cd evaluate && uv run python evaluate_summarisation.py "${args[@]}")
+  fi
 }
 
 # The floor: what the base model scores with no fine-tuning at all.
