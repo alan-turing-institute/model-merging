@@ -76,10 +76,18 @@ pipeline_preflight() {
          'import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; then
       echo "ERROR: no CUDA GPU visible - this pipeline cannot run here." >&2
       echo "Training is 4-bit (bitsandbytes) and merging runs with --cuda; neither" >&2
-      echo "has a CPU or MPS path. Run this on a GPU compute instance:" >&2
-      echo "  az ml compute start --name mpietrzykA100        # billing starts here" >&2
-      echo "  az ml compute connect-ssh --name mpietrzykA100" >&2
-      echo "  cd model-merging && screen -S xsum ./run_xsum_pipeline.sh" >&2
+      echo "has a CPU or MPS path. This has to run ON a GPU compute instance, not" >&2
+      echo "on a laptop that can reach one." >&2
+      echo >&2
+      # Named against the workspace actually in use - a hardcoded instance name
+      # here sent someone to a stopped instance in a different workspace.
+      echo "  az ml compute list --resource-group $RG --workspace-name $WS -o table" >&2
+      echo "  az ml compute start --name <instance> --resource-group $RG --workspace-name $WS" >&2
+      echo "  az ml compute connect-ssh --name <instance> --resource-group $RG --workspace-name $WS" >&2
+      echo >&2
+      echo "Then, on the instance (its prompt reads azureuser@<instance>):" >&2
+      echo "  cd ~/model-merging && screen -S run $0" >&2
+      echo >&2
       echo "Set ALLOW_NO_GPU=1 to skip this check (data prep only)." >&2
       exit 1
     fi
