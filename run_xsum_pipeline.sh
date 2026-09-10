@@ -47,8 +47,13 @@ set -euo pipefail
 cd "$(dirname "$0")"
 REPO_ROOT=$PWD
 
-RG=tire-1
-WS=tire-2
+# Azure ML registry to read from and write to. The compute instance does not
+# have to live in this workspace - `az ml` talks to whichever one it is told to,
+# so an instance in rg-tire-model-merging/tire-model-merging can still use the
+# artifacts registered in tire-1/tire-2. Override to target a different one:
+#   AZUREML_RG=rg-tire-model-merging AZUREML_WS=tire-model-merging ./run_xsum_pipeline.sh
+RG=${AZUREML_RG:-tire-1}
+WS=${AZUREML_WS:-tire-2}
 BASE_MODEL=google/gemma-3-4b-it
 # Separate from the crime arm's .pipeline_versions so the two don't collide.
 VERSIONS_FILE=$REPO_ROOT/.pipeline_versions_xsum

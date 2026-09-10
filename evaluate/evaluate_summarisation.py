@@ -14,6 +14,7 @@ style, before it is fully visible in ROUGE.
 
 import argparse
 import json
+import os
 import statistics
 from pathlib import Path
 
@@ -162,12 +163,12 @@ def parse_args():
     )
     parser.add_argument(
         "--resource-group",
-        default="tire-1",
+        default=os.environ.get("AZUREML_RG", "tire-1"),
         help="Azure resource group holding the Azure ML workspace (for azureml: refs).",
     )
     parser.add_argument(
         "--workspace-name",
-        default="tire-2",
+        default=os.environ.get("AZUREML_WS", "tire-2"),
         help="Azure ML workspace name (for azureml: refs).",
     )
     parser.add_argument(
