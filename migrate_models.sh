@@ -81,23 +81,45 @@ for entry in $MODELS; do
     continue
   fi
 
-  # 1. fetch from the source workspace
-  if model_dir_has_weights "$path"; then
-    log "$name already present at $path, skipping download"
-  else
-    log "Downloading $name:$version from $SRC_WS"
-    az ml model download --name "$name" --version "$version" \
-      --download-path models \
-      --resource-group "$SRC_RG" --workspace-name "$SRC_WS" >/dev/null
-    flatten_download "$path" \
-      || die "Downloaded $name:$version but found no adapter_config.json under $path"
-  fi
+  # The destination may already have this model - from an earlier run of this
+  # script, possibly on another machine, since it is all just az calls. Reuse
+  # that registration rather than uploading a second identical copy: the
+  # versions file and the local models/ directory are per-machine, so running
+  # this on a second box must not multiply registry versions.
+  dst_existing=$(dst_highest_version "$name")
 
-  # 2. register into the destination at its next free version
-  next=$(( $(dst_highest_version "$name") + 1 ))
-  log "Registering $name as version $next in $DST_WS"
-  az ml model create --name "$name" --version "$next" --type custom_model \
-    --path "$path" --resource-group "$DST_RG" --workspace-name "$DST_WS" >/dev/null
+  if [ "$dst_existing" != "0" ] && [ "${FORCE_REREGISTER:-0}" != "1" ]; then
+    next=$dst_existing
+    log "$name already in $DST_WS as version $next - reusing (FORCE_REREGISTER=1 to re-upload)"
+    if model_dir_has_weights "$path"; then
+      log "$name already present at $path, skipping download"
+    else
+      # Pull from the destination, not the source: same bytes, and it keeps
+      # this path working even without access to the source workspace.
+      log "Downloading $name:$next from $DST_WS"
+      az ml model download --name "$name" --version "$next" \
+        --download-path models \
+        --resource-group "$DST_RG" --workspace-name "$DST_WS" >/dev/null
+      flatten_download "$path" \
+        || die "Downloaded $name:$next but found no adapter_config.json under $path"
+    fi
+  else
+    if model_dir_has_weights "$path"; then
+      log "$name already present at $path, skipping download"
+    else
+      log "Downloading $name:$version from $SRC_WS"
+      az ml model download --name "$name" --version "$version" \
+        --download-path models \
+        --resource-group "$SRC_RG" --workspace-name "$SRC_WS" >/dev/null
+      flatten_download "$path" \
+        || die "Downloaded $name:$version but found no adapter_config.json under $path"
+    fi
+
+    next=$(( dst_existing + 1 ))
+    log "Registering $name as version $next in $DST_WS"
+    az ml model create --name "$name" --version "$next" --type custom_model \
+      --path "$path" --resource-group "$DST_RG" --workspace-name "$DST_WS" >/dev/null
+  fi
 
   # 3. record it, so the pipeline treats this name as done and `ref` resolves
   echo "$name=$next" >> "$VERSIONS_FILE"
