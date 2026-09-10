@@ -53,8 +53,22 @@ log "Source     : $SRC_RG / $SRC_WS"
 log "Destination: $DST_RG / $DST_WS"
 log "Versions   : $VERSIONS_FILE"
 
-az ml model list --resource-group "$DST_RG" --workspace-name "$DST_WS" >/dev/null 2>&1 \
-  || die "Cannot reach $DST_RG/$DST_WS with 'az ml'. Check the names and that you have access."
+if ! az ml model list --resource-group "$DST_RG" --workspace-name "$DST_WS" >/dev/null 2>&1; then
+  echo "ERROR: cannot reach $DST_RG/$DST_WS with 'az ml'." >&2
+  echo >&2
+  echo "See the real error with:" >&2
+  echo "  az ml model list --resource-group $DST_RG --workspace-name $DST_WS -o table" >&2
+  echo >&2
+  echo "On an Azure ML compute instance the system extension dir is not writable," >&2
+  echo "so the ml extension has to live in your home directory:" >&2
+  echo "  export AZURE_EXTENSION_DIR=\$HOME/.azure/cliextensions" >&2
+  echo "  az extension add -n ml -y" >&2
+  echo "  az login --use-device-code" >&2
+  echo >&2
+  echo "Put the export in ~/.bashrc too - a detached screen job starts a fresh" >&2
+  echo "login shell and will not inherit it from your interactive session." >&2
+  exit 1
+fi
 
 mkdir -p models
 
