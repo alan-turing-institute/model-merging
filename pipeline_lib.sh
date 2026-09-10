@@ -57,6 +57,17 @@ pipeline_resolve_results_dir() {
 # $@ are the sub-projects (train/merge/evaluate) this run needs.
 pipeline_preflight() {
   local proj
+
+  # Checked first because the failure is otherwise "uv: command not found"
+  # partway through a sync. screen runs `bash -l`, a LOGIN shell, which reads
+  # ~/.bash_profile and ~/.profile but NOT ~/.bashrc - so a uv installed only
+  # onto the interactive PATH is invisible to a detached job. Same trap applies
+  # to AZURE_EXTENSION_DIR.
+  command -v uv >/dev/null 2>&1 || die "uv is not on PATH.
+  It is usually in ~/.local/bin. If this is a detached screen/nohup job, note
+  that a login shell does not read ~/.bashrc - set the PATH in the command
+  itself, or put it in ~/.bash_profile:
+    export PATH=\"\$HOME/.local/bin:\$PATH\""
   for proj in "$@"; do
     # Unconditional, not just when .venv is missing: a dependency added to a
     # pyproject.toml since the last run would otherwise go unnoticed until the
