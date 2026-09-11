@@ -155,6 +155,7 @@ storage machinery and differ only in the dataset, the prompt and the metric:
 | Reddit crime classification | `Binaryy/crime_posts_reddit` | accuracy / precision / recall / F1 | [prepare_data.py](prepare_data.py), [run_pipeline.sh](run_pipeline.sh) |
 | XSum summarisation | `EdinburghNLP/xsum` | ROUGE + output-length statistics | [XSUM.md](XSUM.md), [run_xsum_pipeline.sh](run_xsum_pipeline.sh) |
 | Cross-task (crime + XSum) | both of the above | per-task retention vs. base and each expert | [CROSSTASK.md](CROSSTASK.md), [run_crosstask_pipeline.sh](run_crosstask_pipeline.sh) |
+| Self-distillation onto a merge | crime halves, teacher logprobs | recovery fraction *R* vs. the merge it repairs | [KD.md](KD.md), [run_kd_pipeline.sh](run_kd_pipeline.sh) |
 
 The summarisation arm exists because a classification task can only show the
 merge failing in one way — predicting the wrong class. On a generation task a

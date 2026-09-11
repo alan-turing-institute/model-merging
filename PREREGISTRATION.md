@@ -437,4 +437,22 @@ why. An empty section means the design was followed. Amendments made *before*
 the corresponding data exists are still amendments and still go here — the
 point is the record, not the blame.
 
-*(none yet)*
+### 2026-09-11 — exploratory self-distillation arm added
+
+**What changed.** A fourth arm ([KD.md](KD.md), `run_kd_pipeline.sh`) that
+distils the two half-experts into a student initialised from their merge, each
+expert supplying teacher logprobs for its own half. It is **not** one of the
+three runs this document licenses, and nothing in it bears on H1–H4 as stated.
+
+**Why it is recorded here rather than just run.** The document's whole point is
+that with a large enough surface some contrast will look significant. Adding a
+condition is exactly the move that inflates that surface, so it goes in the
+record whether or not it produces anything.
+
+**Status.** Exploratory. It generates a hypothesis — "merge damage is
+repairable by a distillation pass that needs no machine to see all the data" —
+which would need its own pre-specified run to test. `kd_alpha` is unswept at
+0.9, so any result is one point on an untraced trade-off.
+
+**What it does not change.** The confirmatory design, the primary estimand, the
+five conditions, the seeds, and the licensed runs are all untouched.
