@@ -157,11 +157,14 @@ MERGE=$(resolve_artifact "$MERGE_NAME" "$MERGE_VERSION" "${MERGE_PATH:-}")
 FULL=$(resolve_artifact "$FULL_NAME"  "$FULL_VERSION"  "${FULL_PATH:-}")
 
 # The training config names the student by a fixed relative path, so an
-# overridden merge has to be reachable there. A symlink keeps the config stable
-# rather than rewriting a checked-in file at runtime.
+# overridden merge has to be reachable there. Stage a directory of symlinks
+# rather than one symlink, because the staged copy may need files the source
+# lacks: mergekit does not write the image-processor configs a multimodal base
+# ships, and axolotl loads a processor for gemma-3 whether or not the task
+# involves images. Staging also works against a read-only handover directory.
 if [ "$MERGE" != "$REPO_ROOT/models/$MERGE_NAME" ]; then
-  ln -sfn "$MERGE" "$REPO_ROOT/models/$MERGE_NAME"
-  log "Linked models/$MERGE_NAME -> $MERGE"
+  uv run --project evaluate python stage_model_dir.py \
+    --source "$MERGE" --dest "$REPO_ROOT/models/$MERGE_NAME" --base-model "$BASE_MODEL"
 fi
 
 # --- 3. verify the teachers are what we think they are ---

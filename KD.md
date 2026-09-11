@@ -125,6 +125,24 @@ wrong. The checkpoint numbers were what finally settled it. A smoke-scale
 teacher produces perfectly well-formed logprobs and teaches nothing, and the
 only symptom is a disappointing number hours later.
 
+### Consuming a merged multimodal model
+
+`gemma-3-4b-it` is multimodal, so axolotl loads an image processor alongside
+the tokenizer — whether or not the task involves images. mergekit writes
+weights and tokenizer files but not the processor configs, so a merged gemma
+model used as a student fails with:
+
+```
+OSError: Can't load image processor for '<dir>' ... containing a
+preprocessor_config.json file
+```
+
+`stage_model_dir.py` stages a directory of **symlinks** to the source and
+copies in only the missing processor files from the base model. Symlinks
+because the alternative is duplicating ~8GB to add a few kilobytes of JSON, and
+because a colleague's handover directory is not writable. The pipeline does
+this automatically whenever `MERGE_PATH` points outside `models/`.
+
 ## Reading the result
 
 The estimand is the preregistration's recovery fraction, with the distilled
