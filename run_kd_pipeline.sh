@@ -162,10 +162,12 @@ FULL=$(resolve_artifact "$FULL_NAME"  "$FULL_VERSION"  "${FULL_PATH:-}")
 # lacks: mergekit does not write the image-processor configs a multimodal base
 # ships, and axolotl loads a processor for gemma-3 whether or not the task
 # involves images. Staging also works against a read-only handover directory.
-if [ "$MERGE" != "$REPO_ROOT/models/$MERGE_NAME" ]; then
-  uv run --project evaluate python stage_model_dir.py \
-    --source "$MERGE" --dest "$REPO_ROOT/models/$MERGE_NAME" --base-model "$BASE_MODEL"
-fi
+# Unconditional, not only for an overridden path. A merge fetched from the
+# registry lands in models/ directly and needs no linking, but it is still
+# mergekit output and still lacks the processor configs a multimodal base
+# ships - so it fails the same way. Staging tops it up in place.
+uv run --project evaluate python stage_model_dir.py \
+  --source "$MERGE" --dest "$REPO_ROOT/models/$MERGE_NAME" --base-model "$BASE_MODEL"
 
 # --- 3. verify the teachers are what we think they are ---
 # Before any expensive step. A smoke-scale teacher would produce perfectly

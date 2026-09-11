@@ -50,19 +50,27 @@ def main():
     if not source.is_dir():
         raise SystemExit(f"Source is not a directory: {source}")
 
-    # A prior run may have left a symlink here rather than a directory.
-    if dest.is_symlink():
-        dest.unlink()
-    dest.mkdir(parents=True, exist_ok=True)
+    # Source and dest can be the same directory - a merge produced locally
+    # rather than handed over. There is nothing to link then, but the processor
+    # files below are still missing, because it is mergekit's output either way.
+    in_place = dest.exists() and not dest.is_symlink() and dest.resolve() == source
 
-    linked = 0
-    for entry in sorted(source.iterdir()):
-        target = dest / entry.name
-        if target.exists() or target.is_symlink():
-            continue
-        target.symlink_to(entry)
-        linked += 1
-    print(f"Staged {dest} -> {source} ({linked} entries linked)")
+    if in_place:
+        print(f"Topping up {dest} in place (already the source)")
+    else:
+        # A prior run may have left a symlink here rather than a directory.
+        if dest.is_symlink():
+            dest.unlink()
+        dest.mkdir(parents=True, exist_ok=True)
+
+        linked = 0
+        for entry in sorted(source.iterdir()):
+            target = dest / entry.name
+            if target.exists() or target.is_symlink():
+                continue
+            target.symlink_to(entry)
+            linked += 1
+        print(f"Staged {dest} -> {source} ({linked} entries linked)")
 
     added, missing = [], []
     for name in PROCESSOR_FILES:
