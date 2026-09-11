@@ -46,7 +46,10 @@ lora_mlp_kernel: false
 lora_qkv_kernel: false
 lora_o_kernel: false
 
-chat_template: gemma
+# tokenizer_default, NOT the `gemma` alias: precompute_logprobs.py renders the
+# teacher's view with tokenizer.apply_chat_template, and if axolotl tokenizes
+# even slightly differently here the logprobs attach to the wrong tokens.
+chat_template: tokenizer_default
 
 datasets:
   - path: ../../datasets/xsum_kd_train
