@@ -262,6 +262,17 @@ evaluate_if_needed() {
   fi
 }
 
+# The student may be registered but absent locally - another arm's pipeline
+# cleans up models/ when it finishes, and this one skips training on the
+# registry record rather than on local disk. Fetch it back rather than failing
+# at the evaluation, or worse, retraining something already registered.
+if ! model_dir_has_weights "$REPO_ROOT/models/$KD_STUDENT"; then
+  student_version=$(recorded_version "$KD_STUDENT")
+  [ -n "$student_version" ] \
+    || die "$KD_STUDENT is neither on disk nor registered by this run - nothing to evaluate"
+  fetch_model "$KD_STUDENT" "$student_version" "models/$KD_STUDENT"
+fi
+
 evaluate_if_needed kd-from-merge.json "$MERGE" "$REPO_ROOT/models/$KD_STUDENT" "$(ref "$KD_STUDENT")"
 evaluate_if_needed merge.json         "$MERGE" "" "$MERGE_PROV"
 evaluate_if_needed half1.json         "$BASE_MODEL" "$HALF1" "$HALF1_PROV"
