@@ -41,15 +41,29 @@ examples train on):
                   list over top-k of {"logprob": float, "token": "token_id:<int>"}
 ```
 
-**The dataset `type:` must be `...kd.chat_template.load_legacy`, not the bare
-module path.** axolotl 0.18.0 ships two KD strategies. The module's default
-`load` returns v2, which expects a dataset that already carries
-`target_token_ids` and `target_mask`; `load_legacy` returns v1, which *builds*
-those from per-position top-k logprobs — the format above, and the format of
-axolotl's own published KD dataset. No config key chooses between them; only
-the type string does, and choosing wrong fails late inside tokenization with
-`KeyError: 'target_token_ids'` — an error that names neither the strategy nor
-the format.
+**The dataset `type:` is `kd_strategies.legacy`, a local shim.** axolotl 0.18.0
+ships two KD strategies. The module's default `load` returns v2, which expects
+a dataset already carrying `target_token_ids` and `target_mask`; `load_legacy`
+returns v1, which *builds* those from per-position top-k logprobs — the format
+above, and the format of axolotl's own published KD dataset.
+
+No `type:` string reaches `load_legacy`. The resolver in
+`axolotl.prompt_strategies.load` does strip a trailing `load_*` and use it as
+the function name, but taking that branch skips the branch that corrects the
+package — so it tries to import
+`axolotl.prompt_strategies.axolotl.integrations.kd.chat_template`, gets
+`ModuleNotFoundError`, returns `None`, and the run dies with "unhandled prompt
+tokenization strategy". The suffix convention only works for strategies inside
+`axolotl.prompt_strategies`.
+
+`train/kd_strategies/legacy.py` exposes `load` and delegates to `load_legacy`.
+A dotted path *without* a `load_*` suffix takes the branch that imports the
+parent package correctly, so the shim resolves where the direct reference
+cannot.
+
+Getting this wrong fails late, inside tokenization, as
+`KeyError: 'target_token_ids'` — an error naming neither the strategy nor the
+format, which is why it cost three wrong diagnoses before the cause.
 
 `precompute_logprobs.py` produces it. The expensive step is therefore a forward
 pass of each teacher over its half, not the training.
