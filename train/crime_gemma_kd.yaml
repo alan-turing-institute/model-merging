@@ -53,7 +53,15 @@ chat_template: tokenizer_default
 
 datasets:
   - path: ../../datasets/crime_kd_train
-    type: axolotl.integrations.kd.chat_template
+    # .load_legacy, not the bare module path. axolotl 0.18.0 ships two KD
+    # strategies and the module's default `load` returns the v2 one, which
+    # expects a dataset that already carries target_token_ids / target_mask.
+    # Ours carries per-position top-k logprobs - the v1 format, the same
+    # shape as axolotl's own published KD dataset - and v1 is what builds
+    # those target_* fields from it. Nothing in the config selects between
+    # them; only this string does. Getting it wrong fails late, inside
+    # tokenization, as KeyError: 'target_token_ids'.
+    type: axolotl.integrations.kd.chat_template.load_legacy
     field_messages: messages
     # Matches the loader's own default, so this key is not load-bearing.
     logprobs_field: logprobs

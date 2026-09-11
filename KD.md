@@ -41,6 +41,16 @@ examples train on):
                   list over top-k of {"logprob": float, "token": "token_id:<int>"}
 ```
 
+**The dataset `type:` must be `...kd.chat_template.load_legacy`, not the bare
+module path.** axolotl 0.18.0 ships two KD strategies. The module's default
+`load` returns v2, which expects a dataset that already carries
+`target_token_ids` and `target_mask`; `load_legacy` returns v1, which *builds*
+those from per-position top-k logprobs — the format above, and the format of
+axolotl's own published KD dataset. No config key chooses between them; only
+the type string does, and choosing wrong fails late inside tokenization with
+`KeyError: 'target_token_ids'` — an error that names neither the strategy nor
+the format.
+
 `precompute_logprobs.py` produces it. The expensive step is therefore a forward
 pass of each teacher over its half, not the training.
 
