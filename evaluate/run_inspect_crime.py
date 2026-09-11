@@ -48,6 +48,16 @@ def parse_args():
     parser.add_argument("--max-new-tokens", type=int, default=16)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--dtype",
+        default="bfloat16",
+        help=(
+            "Torch dtype for the weights. evaluate.py and "
+            "evaluate_summarisation.py both load bfloat16; Inspect's HF provider "
+            "pins nothing, so without this the two evaluators could differ in "
+            "numerics for the same model."
+        ),
+    )
     parser.add_argument("--device", default=None)
     parser.add_argument("--log-dir", default="logs")
     parser.add_argument("--provenance", default=None)
@@ -70,6 +80,8 @@ def main():
     # do_sample=False to match evaluate.py's greedy decoding. Inspect's HF
     # provider defaults it to true.
     model_args = {"batch_size": args.batch_size, "do_sample": False}
+    if args.dtype and args.dtype != "auto":
+        model_args["dtype"] = args.dtype
     if args.device:
         model_args["device"] = args.device
     if adapter_path:

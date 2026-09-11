@@ -50,6 +50,16 @@ def parse_args():
     parser.add_argument("--max-new-tokens", type=int, default=64)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--dtype",
+        default="bfloat16",
+        help=(
+            "Torch dtype for the weights. evaluate.py and "
+            "evaluate_summarisation.py both load bfloat16; Inspect's HF provider "
+            "pins nothing, so without this the two evaluators could differ in "
+            "numerics for the same model."
+        ),
+    )
     parser.add_argument("--device", default=None, help="cuda:0, cpu, ... (auto by default)")
     parser.add_argument("--log-dir", default="logs", help="Where Inspect writes .eval logs.")
     parser.add_argument("--provenance", default=None)
@@ -74,6 +84,8 @@ def main():
     # defaults do_sample to TRUE, so leaving it unset would quietly make every
     # comparison in this repo noisier than the one it is being compared against.
     model_args = {"batch_size": args.batch_size, "do_sample": False}
+    if args.dtype and args.dtype != "auto":
+        model_args["dtype"] = args.dtype
     if args.device:
         model_args["device"] = args.device
     if adapter_path:
