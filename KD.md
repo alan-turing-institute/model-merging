@@ -104,6 +104,18 @@ R = (kd − best_half) / (full − best_half)
 
 `experiments/mcnemar.py` gives the paired test over the results JSONs.
 
+Evaluation runs through Inspect AI (`evaluate/crime_task.py`), so each run also
+leaves a browsable `.eval` log in `$RESULTS_DIR/inspect-logs`:
+
+```bash
+inspect view --log-dir "$RESULTS_DIR/inspect-logs"
+```
+
+That matters here more than on a metric alone: a distilled student that has
+drifted toward one teacher shows it in *which* examples it gets wrong, and the
+per-sample view is where that is visible. `CRIME_EVAL=legacy` falls back to
+`evaluate.py`; both write the same results JSON.
+
 **Status: exploratory.** `PREREGISTRATION.md` licenses three runs and this is
 not one of them — see its Deviations entry dated 2026-09-11. This arm generates
 a hypothesis; it does not test one. `kd_alpha` in particular is unswept, and it

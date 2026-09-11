@@ -45,6 +45,12 @@ MERGE_VERSION=${MERGE_VERSION:-3}
 FULL_VERSION=${FULL_VERSION:-3}
 
 TOP_K=${TOP_K:-64}
+EVAL_BATCH_SIZE=${EVAL_BATCH_SIZE:-8}
+# Which classification evaluator. `inspect` runs crime_task.py through Inspect
+# AI - batched, with a browsable .eval log per run. `legacy` is evaluate.py's
+# one-example-at-a-time loop. Both write the SAME results JSON, so mcnemar.py
+# reads either.
+CRIME_EVAL=${CRIME_EVAL:-inspect}
 TRAIN_EPOCHS=${TRAIN_EPOCHS:-3}     # what the half-experts were trained for
 EVAL_LIMIT=${EVAL_LIMIT:-}
 KD_STUDENT=gemma3-crime-kd-from-merge
@@ -157,7 +163,12 @@ evaluate_if_needed() {
   if [ -n "$adapter" ]; then args+=(--adapter "$adapter"); fi
   if [ -n "$EVAL_LIMIT" ]; then args+=(--limit "$EVAL_LIMIT"); fi
   if [ -n "$provenance" ]; then args+=(--provenance "$provenance"); fi
-  (cd evaluate && uv run python evaluate.py "${args[@]}")
+  if [ "$CRIME_EVAL" = "inspect" ]; then
+    args+=(--batch-size "$EVAL_BATCH_SIZE" --log-dir "$RESULTS_DIR/inspect-logs")
+    (cd evaluate && uv run python run_inspect_crime.py "${args[@]}")
+  else
+    (cd evaluate && uv run python evaluate.py "${args[@]}")
+  fi
 }
 
 evaluate_if_needed kd-from-merge.json "$REPO_ROOT/$MERGE" "$REPO_ROOT/models/$KD_STUDENT" "$(ref "$KD_STUDENT")"

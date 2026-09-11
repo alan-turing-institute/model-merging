@@ -107,3 +107,40 @@ from the dataset's `prompt` column (rendered once at data-prep time, so neither
 evaluator re-derives the wording), and `do_sample=False` is set explicitly —
 Inspect's HF provider defaults it to **true**, which would have quietly made
 every comparison noisier than the one it was being compared against.
+
+## Classification via Inspect AI (default)
+
+`crime_task.py` + `run_inspect_crime.py` are the classification counterparts to
+the summarisation pair above, and are what the KD and cross-task pipelines use
+(`CRIME_EVAL=legacy` selects `evaluate.py`).
+
+```bash
+uv run python run_inspect_crime.py \
+  --model google/gemma-3-4b-it \
+  --adapter azureml:gemma3-crime-1-of-2-lora:3 \
+  --output results/half1.json
+```
+
+The prompt (`build_messages`) and the label parsing (`convert_to_label`) are
+**imported from evaluate.py**, not reimplemented, so the two evaluators cannot
+drift apart. The negation handling in `convert_to_label` — "not really about
+crime" is negative — is the difference between a plausible accuracy and a
+correct one, and is exactly the kind of thing a reimplementation loses.
+
+Metrics are rebuilt from the same sklearn calls evaluate.py uses, including its
+rule that an unparsed generation is scored **wrong** rather than dropped, so
+the denominator stays the whole test set. The results JSON keeps `predictions`
+and `actuals`, so `experiments/mcnemar.py` pairs Inspect-produced runs exactly
+as before.
+
+The practical gain is batching: `evaluate.py` generates one example at a time,
+which on a 1077-example test set is most of the wall clock in an arm that runs
+six of them.
+
+### Known prompt drift
+
+`prepare_data.py` trains on `either 'crime' or 'not_crime'` (single quotes);
+`evaluate.py` asks with `either "crime" or "not_crime"` (double quotes). Every
+existing crime result was produced with the evaluation wording, so the Inspect
+task uses it too — changing it would make new numbers incomparable with the
+pilot. Recorded rather than silently repaired; the fix belongs with a re-run.

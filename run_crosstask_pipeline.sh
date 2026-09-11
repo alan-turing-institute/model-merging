@@ -62,6 +62,8 @@ EVAL_LIMIT=${EVAL_LIMIT:-}
 # inspect (default) or legacy - see run_xsum_pipeline.sh. Both write the same
 # results JSON, which is what crosstask_table.py reads.
 XSUM_EVAL=${XSUM_EVAL:-inspect}
+# Same choice for the classification side - see run_kd_pipeline.sh.
+CRIME_EVAL=${CRIME_EVAL:-inspect}
 # Each merge is ~8.1GB and there are several. They are registered, then the
 # local copy is deleted once both evaluations are done, so peak disk is the
 # cache plus ONE merge rather than the cache plus all of them.
@@ -133,7 +135,12 @@ eval_crime() {
   if [ -n "$adapter" ]; then args+=(--adapter "$adapter"); fi
   if [ -n "$EVAL_LIMIT" ]; then args+=(--limit "$EVAL_LIMIT"); fi
   if [ -n "$provenance" ]; then args+=(--provenance "$provenance"); fi
-  (cd evaluate && uv run python evaluate.py "${args[@]}")
+  if [ "$CRIME_EVAL" = "inspect" ]; then
+    args+=(--batch-size "$EVAL_BATCH_SIZE" --log-dir "$RESULTS_DIR/inspect-logs")
+    (cd evaluate && uv run python run_inspect_crime.py "${args[@]}")
+  else
+    (cd evaluate && uv run python evaluate.py "${args[@]}")
+  fi
 }
 
 eval_xsum() {
