@@ -126,15 +126,43 @@ fetch_model() {
   flatten_download "$path" || die "Downloaded $name:$version but found no model under $path"
 }
 
-HALF1=models/$HALF1_NAME
-HALF2=models/$HALF2_NAME
-MERGE=models/$MERGE_NAME
-FULL=models/$FULL_NAME
+# Each artifact is either fetched from the registry at an explicit version, or
+# taken from a path you already have - a colleague's handover on the workspace
+# share, say. Paths win when set, and skip the download entirely.
+#   HALF1_PATH=$HOME/cloudfiles/code/Users/jmcinroy/model-merging/models/gemma3-crime-1-of-2-lora
+resolve_artifact() {
+  local name=$1 version=$2 override=$3
+  local path=$REPO_ROOT/models/$name
+  if [ -n "$override" ]; then
+    echo "$override"
+    return
+  fi
+  fetch_model "$name" "$version" "models/$name" >&2
+  echo "$path"
+}
 
-fetch_model "$HALF1_NAME" "$HALF1_VERSION" "$HALF1"
-fetch_model "$HALF2_NAME" "$HALF2_VERSION" "$HALF2"
-fetch_model "$MERGE_NAME" "$MERGE_VERSION" "$MERGE"
-fetch_model "$FULL_NAME"  "$FULL_VERSION"  "$FULL"
+# What a result says it came from must match where it actually came from.
+artifact_provenance() {
+  local name=$1 version=$2 override=$3
+  if [ -n "$override" ]; then echo "path:$override"; else echo "azureml:$name:$version"; fi
+}
+HALF1_PROV=$(artifact_provenance "$HALF1_NAME" "$HALF1_VERSION" "${HALF1_PATH:-}")
+HALF2_PROV=$(artifact_provenance "$HALF2_NAME" "$HALF2_VERSION" "${HALF2_PATH:-}")
+MERGE_PROV=$(artifact_provenance "$MERGE_NAME" "$MERGE_VERSION" "${MERGE_PATH:-}")
+FULL_PROV=$(artifact_provenance "$FULL_NAME"  "$FULL_VERSION"  "${FULL_PATH:-}")
+
+HALF1=$(resolve_artifact "$HALF1_NAME" "$HALF1_VERSION" "${HALF1_PATH:-}")
+HALF2=$(resolve_artifact "$HALF2_NAME" "$HALF2_VERSION" "${HALF2_PATH:-}")
+MERGE=$(resolve_artifact "$MERGE_NAME" "$MERGE_VERSION" "${MERGE_PATH:-}")
+FULL=$(resolve_artifact "$FULL_NAME"  "$FULL_VERSION"  "${FULL_PATH:-}")
+
+# The training config names the student by a fixed relative path, so an
+# overridden merge has to be reachable there. A symlink keeps the config stable
+# rather than rewriting a checked-in file at runtime.
+if [ "$MERGE" != "$REPO_ROOT/models/$MERGE_NAME" ]; then
+  ln -sfn "$MERGE" "$REPO_ROOT/models/$MERGE_NAME"
+  log "Linked models/$MERGE_NAME -> $MERGE"
+fi
 
 # --- 3. verify the teachers are what we think they are ---
 # Before any expensive step. A smoke-scale teacher would produce perfectly
@@ -163,8 +191,8 @@ precompute_if_needed() {
     --dataset "$dataset" --output "$out" --top-k "$TOP_K"
 }
 
-precompute_if_needed "$REPO_ROOT/$HALF1" "../datasets/${DATASET}1/train" "../datasets/${TASK}_kd_half1"
-precompute_if_needed "$REPO_ROOT/$HALF2" "../datasets/${DATASET}2/train" "../datasets/${TASK}_kd_half2"
+precompute_if_needed "$HALF1" "../datasets/${DATASET}1/train" "../datasets/${TASK}_kd_half1"
+precompute_if_needed "$HALF2" "../datasets/${DATASET}2/train" "../datasets/${TASK}_kd_half2"
 
 if [ ! -d "../datasets/${TASK}_kd_train" ]; then
   log "Combining the two teachers' halves"
@@ -215,11 +243,11 @@ evaluate_if_needed() {
   fi
 }
 
-evaluate_if_needed kd-from-merge.json "$REPO_ROOT/$MERGE" "$REPO_ROOT/models/$KD_STUDENT" "$(ref "$KD_STUDENT")"
-evaluate_if_needed merge.json         "$REPO_ROOT/$MERGE" "" "azureml:$MERGE_NAME:$MERGE_VERSION"
-evaluate_if_needed half1.json         "$BASE_MODEL" "$REPO_ROOT/$HALF1" "azureml:$HALF1_NAME:$HALF1_VERSION"
-evaluate_if_needed half2.json         "$BASE_MODEL" "$REPO_ROOT/$HALF2" "azureml:$HALF2_NAME:$HALF2_VERSION"
-evaluate_if_needed full.json          "$BASE_MODEL" "$REPO_ROOT/$FULL"  "azureml:$FULL_NAME:$FULL_VERSION"
+evaluate_if_needed kd-from-merge.json "$MERGE" "$REPO_ROOT/models/$KD_STUDENT" "$(ref "$KD_STUDENT")"
+evaluate_if_needed merge.json         "$MERGE" "" "$MERGE_PROV"
+evaluate_if_needed half1.json         "$BASE_MODEL" "$HALF1" "$HALF1_PROV"
+evaluate_if_needed half2.json         "$BASE_MODEL" "$HALF2" "$HALF2_PROV"
+evaluate_if_needed full.json          "$BASE_MODEL" "$FULL"  "$FULL_PROV"
 
 log "Done. Results in $RESULTS_DIR"
 log "Recovery fraction R = (kd - best_half) / (full - best_half); compare with:"
