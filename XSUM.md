@@ -172,6 +172,38 @@ steps of the full arm each, so all three adapters together cost about twice the
 full arm alone), and evaluation is linear in `XSUM_TEST_N` times the number of
 variants.
 
+## The turn terminator must be trained
+
+Gemma ends a turn with `<end_of_turn>`, not `<eos>`. Axolotl looks for the
+model's EOS token in the chat template, doesn't find it, warns that *"the turn
+terminator won't be trained"*, and continues. The result is a model that never
+learns to stop.
+
+The first full-scale run showed exactly that. The fine-tuned models produced
+**51 words and 2.3 sentences** against a 21-word, one-sentence reference —
+running to the 64-token generation cap on most examples — and the full-data
+model scored **worse than the untouched base** (0.262 vs 0.281 ROUGE-1). A
+fine-tune that loses to no fine-tuning answers no question about merging, so
+that run is not interpretable as a merging result.
+
+The configs now set:
+
+```yaml
+eot_tokens:
+  - "<end_of_turn>"
+train_on_eos: turn
+```
+
+They also use `chat_template: tokenizer_default` rather than the `gemma` alias,
+so training formats text exactly as `run_inspect_xsum.py` does at evaluation —
+the two rendering paths must agree or the model is scored on text shaped
+differently from what it saw.
+
+**Read the length columns before the scores.** `mean_pred_words` near the
+reference's ~21 and `mean_pred_sentences` near 1.0 is what a healthy run looks
+like; 50 words and 2.5 sentences means the model isn't terminating, whatever
+its ROUGE says.
+
 ## The evaluator
 
 Evaluation runs through [Inspect AI](https://inspect.aisi.org.uk/) by default —

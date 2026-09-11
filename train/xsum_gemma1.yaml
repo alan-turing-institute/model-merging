@@ -21,7 +21,23 @@ lora_mlp_kernel: false
 lora_qkv_kernel: false
 lora_o_kernel: false
 
-chat_template: gemma
+# tokenizer_default, not the `gemma` alias: the evaluator renders with
+# tokenizer.apply_chat_template, and the two must agree or the model is
+# scored on text shaped differently from what it trained on.
+chat_template: tokenizer_default
+# THE TURN TERMINATOR MUST BE TRAINED.
+#
+# Without this, axolotl warns "EOS token '<eos>' not found in chat_template; the
+# turn terminator won't be trained" and carries on. Gemma ends a turn with
+# <end_of_turn>, not <eos>, so the model never learns to stop: the first run
+# produced 51 words and 2.3 sentences against a 21-word reference, i.e. it ran
+# to the 64-token generation cap on most examples, and scored WORSE than the
+# untouched base model. A fine-tune that loses to no fine-tuning at all cannot
+# answer any question about merging.
+eot_tokens:
+  - "<end_of_turn>"
+train_on_eos: turn
+
 
 datasets:
   - path: ../../datasets/xsum_dataset1/train
