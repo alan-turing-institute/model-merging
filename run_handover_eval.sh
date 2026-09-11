@@ -81,10 +81,15 @@ evaluate_one() {
   (cd evaluate && uv run python run_inspect_xsum.py "${args[@]}")
 }
 
-# Track the base models the adapters declare, so the floor is evaluated against
-# the right one - and so a handover that mixes bases is visible rather than
-# silently averaged into one table.
-declared_bases=""
+# Track the base models seen, so the floor is evaluated against the right one -
+# and so a handover that mixes bases is visible rather than silently averaged
+# into one table.
+#
+# An explicit BASE_MODEL always contributes. Full weights often carry no
+# _name_or_path at all (Justin's distilled model does not), and without this
+# such a handover is scored against nothing - a single number with no floor,
+# which cannot say whether the model beats doing nothing.
+declared_bases="${BASE_MODEL:-}"
 
 while IFS=$'\t' read -r name kind path base; do
   [ -n "$name" ] || continue
