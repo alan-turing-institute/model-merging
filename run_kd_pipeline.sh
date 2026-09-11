@@ -181,14 +181,27 @@ uv run --project evaluate python check_adapter_scale.py \
 
 precompute_if_needed() {
   local adapter=$1 dataset=$2 out=$3
-  if [ -d "$out" ]; then
-    log "Logprobs already at $out, skipping"
+  # A sentinel, not directory existence. An interrupted precompute leaves the
+  # directory behind, and skipping on that means training against a partial -
+  # or worse, never-alignment-checked - set of teacher distributions. The
+  # alignment check inside precompute_logprobs.py is the only thing standing
+  # between this pipeline and a silently misaligned distillation, so it must
+  # not be skippable by accident.
+  if [ -f "$out/.precompute_complete" ]; then
+    log "Logprobs already at $out (verified), skipping"
     return
+  fi
+  if [ -d "$out" ]; then
+    log "Discarding unverified logprobs at $out - no completion sentinel"
+    rm -rf "$out"
   fi
   log "Teacher logprobs: $adapter over $dataset"
   uv run --project evaluate python precompute_logprobs.py \
     --model "$BASE_MODEL" --adapter "$adapter" \
     --dataset "$dataset" --output "$out" --top-k "$TOP_K"
+  # Written only after the script exits 0, which it does only if its
+  # token-count and alignment checks both passed.
+  touch "$out/.precompute_complete"
 }
 
 precompute_if_needed "$HALF1" "../datasets/${DATASET}1/train" "../datasets/${TASK}_kd_half1"
