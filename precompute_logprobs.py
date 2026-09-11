@@ -39,6 +39,7 @@ Usage (from the repo root, with the evaluate env):
 
 import argparse
 import json
+import statistics
 from pathlib import Path
 
 import torch
@@ -64,6 +65,15 @@ def parse_args():
                         help="Must match the training config's sequence_len.")
     parser.add_argument("--device", default=None)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--min-aligned",
+        type=float,
+        default=0.5,
+        help=(
+            "Fail if the top-k hit rate at shift 0 falls below this. A teacher "
+            "should overwhelmingly rank its own training tokens highly."
+        ),
+    )
     parser.add_argument("--verify", type=int, default=8,
                         help="Re-check alignment on this many examples (0 to skip).")
     return parser.parse_args()
@@ -198,8 +208,9 @@ def main():
         if bad:
             raise SystemExit("Token-count check failed - do not train on this dataset.")
 
-        def hit_rate(shift):
-            hits = total = 0
+        def hit_rates(shift):
+            """(top-k membership, top-1 agreement) at the given shift."""
+            in_topk = top1 = total = 0
             for row in sample:
                 messages = row[args.messages_column]
                 full = encode_chat(tokenizer, messages, False)
@@ -208,20 +219,57 @@ def main():
                     position = start + offset + shift
                     if not 0 <= position < len(full):
                         continue
-                    ids = {int(e["token"].split(":")[1]) for e in entry}
-                    hits += full[position] in ids
+                    ids = [int(e["token"].split(":")[1]) for e in entry]
+                    in_topk += full[position] in ids
+                    top1 += bool(ids) and ids[0] == full[position]
                     total += 1
-            return hits / total if total else 0.0
+            if not total:
+                return 0.0, 0.0
+            return in_topk / total, top1 / total
 
-        aligned = hit_rate(0)
-        shifted = max(hit_rate(-1), hit_rate(1))
+        aligned, aligned_top1 = hit_rates(0)
+        shifted_minus, shifted_minus_top1 = hit_rates(-1)
+        shifted_plus, shifted_plus_top1 = hit_rates(1)
+        shifted = max(shifted_minus, shifted_plus)
+        shifted_top1 = max(shifted_minus_top1, shifted_plus_top1)
+
+        positions = statistics.fmean(len(row[args.logprobs_field]) for row in sample)
         print(f"Alignment check: top-{args.top_k} hit rate {aligned:.3f} at shift 0, "
               f"{shifted:.3f} at +/-1")
-        if aligned <= max(3 * shifted, 0.2):
+        print(f"                 top-1 agreement {aligned_top1:.3f} at shift 0, "
+              f"{shifted_top1:.3f} at +/-1  ({positions:.1f} target tokens/example)")
+
+        # Two independent ways to fail, and no ratio test.
+        #
+        # A ratio was wrong. On a single-token target - a classifier answering
+        # "crime" - the neighbouring position's top-k almost always contains the
+        # token too, so the shifted rate is high no matter what. Measured 1.000
+        # at shift 0 against 0.625 at +/-1: perfectly aligned, yet a
+        # "3x better than shifted" rule rejects it, because nothing can be 3x
+        # better than 0.625. The separation a ratio assumes only exists when
+        # targets are long and varied.
+        #
+        # What holds for any target length: a teacher's distributions must track
+        # its own training data, and must do so better than they track the
+        # neighbouring token.
+        if aligned < args.min_aligned:
             raise SystemExit(
-                "Alignment check FAILED: the teacher's distributions do not track the "
-                "tokens they are attached to. Do not train on this dataset."
+                f"Alignment check FAILED: top-{args.top_k} hit rate {aligned:.3f} at "
+                f"shift 0 is below --min-aligned {args.min_aligned}. The teacher's "
+                "distributions do not track its own training data. Do not train on "
+                "this dataset."
             )
+        if aligned_top1 <= shifted_top1:
+            raise SystemExit(
+                f"Alignment check FAILED: top-1 agreement is no better aligned "
+                f"({aligned_top1:.3f}) than shifted ({shifted_top1:.3f}). The "
+                "distributions do not identify the tokens they are attached to. Do "
+                "not train on this dataset."
+            )
+        if aligned - shifted < 0.2:
+            print("  NOTE: weak separation between aligned and shifted. Expected when "
+                  "targets are short - there are few positions to tell apart - but "
+                  "check the top-1 row above is decisive.")
 
     widths = {len(position) for row in out.select(range(min(4, len(out))))
               for position in row[args.logprobs_field]}
