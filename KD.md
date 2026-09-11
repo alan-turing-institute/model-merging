@@ -7,13 +7,21 @@ Does a cheap distillation pass, over data the experts have *already seen*,
 recover what merging destroyed?
 
 **The design.** Each half-expert teaches its own half; the student starts from
-the merge.
+the merge. `TASK=xsum` (default) or `TASK=crime` selects the arm.
 
-| | |
-|---|---|
-| teacher 1 | `gemma3-crime-1-of-2-lora` over `crime_dataset1/train` |
-| teacher 2 | `gemma3-crime-2-of-2-lora` over `crime_dataset2/train` |
-| student | `gemma3-crime-merged-linear-2` + LoRA |
+| | XSum (default) | crime |
+|---|---|---|
+| teacher 1 | `gemma3-xsum-1-of-2-lora` over `xsum_dataset1/train` | `gemma3-crime-1-of-2-lora` over `crime_dataset1/train` |
+| teacher 2 | `gemma3-xsum-2-of-2-lora` over `xsum_dataset2/train` | `gemma3-crime-2-of-2-lora` over `crime_dataset2/train` |
+| student | `gemma3-xsum-merged-linear` + LoRA | `gemma3-crime-merged-linear-2` + LoRA |
+| evaluator | `run_inspect_xsum.py` (ROUGE + length) | `run_inspect_crime.py` (F1 + unparsed) |
+
+**Why XSum is the more informative arm.** Classification can only show the
+merge failing one way — predicting the wrong class. On a generation task a
+student that has drifted back toward base behaviour shows it *stylistically*
+first: output length and sentence count creeping up, preamble returning. Those
+move before ROUGE does and are far easier to interpret, and the Inspect
+evaluator reports them alongside the score.
 
 The shape matters as much as the result. Nothing here requires any machine to
 have seen all the data — the logprob pass shards exactly the way the training
@@ -59,9 +67,16 @@ exits rather than writing a dataset you would train on.
 ## Running it
 
 ```bash
-./run_kd_pipeline.sh
-EVAL_LIMIT=100 ./run_kd_pipeline.sh          # shakedown
+./run_kd_pipeline.sh                          # XSum
+TASK=crime ./run_kd_pipeline.sh
+EVAL_LIMIT=100 ./run_kd_pipeline.sh           # shakedown
 ```
+
+**Prerequisite: real half-experts and a merge for the chosen arm.** The XSum
+arm's own pipeline (`run_xsum_pipeline.sh`) has to have produced and registered
+them first. This is not a formality — the XSum adapters registered in
+`tire-1/tire-2` are 200-example smoke artifacts, which is precisely what the
+scale check below exists to catch.
 
 On a GPU instance under `screen`. Stages: fetch artifacts → **verify teacher
 scale** → teacher logprobs per half → combine → distil → register → evaluate
@@ -89,7 +104,8 @@ only symptom is a disappointing number hours later.
 ## Reading the result
 
 The estimand is the preregistration's recovery fraction, with the distilled
-student in place of the merge:
+student in place of the merge — on XSum the metric is ROUGE-1, on crime it is
+F1, matching each arm's primary metric there:
 
 ```
 R = (kd − best_half) / (full − best_half)
@@ -102,7 +118,9 @@ R = (kd − best_half) / (full − best_half)
 - `R ≤ 0` — no better than keeping the better half and discarding the other,
   which is where the undistilled merge already sits.
 
-`experiments/mcnemar.py` gives the paired test over the results JSONs.
+The paired test is `experiments/bootstrap_rouge.py` on XSum and
+`experiments/mcnemar.py` on crime — ROUGE is a continuous per-example score, so
+McNemar does not apply to it.
 
 Evaluation runs through Inspect AI (`evaluate/crime_task.py`), so each run also
 leaves a browsable `.eval` log in `$RESULTS_DIR/inspect-logs`:
@@ -128,5 +146,6 @@ is the whole trade-off between matching the teachers and matching the labels.
 | `precompute_logprobs.py` | teacher forward pass → top-k logprobs, with the alignment check |
 | `check_adapter_scale.py` | refuses smoke-scale artifacts before expensive steps |
 | `concat_datasets.py` | combines the two teachers' halves, shuffled |
-| `train/crime_gemma_kd.yaml` | KD config: student = the merge, LoRA on top |
+| `train/xsum_gemma_kd.yaml` | KD config, XSum: student = the merge, LoRA on top |
+| `train/crime_gemma_kd.yaml` | the same for the crime arm |
 | `run_kd_pipeline.sh` | the whole thing |

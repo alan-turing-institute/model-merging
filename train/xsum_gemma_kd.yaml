@@ -1,0 +1,78 @@
+# Self-distillation onto a merged XSum model: each half-expert teaches its own half.
+#
+# Student init is the LINEAR MERGE of the two half-data experts - the condition
+# that, on the pilot, lost to the better of its own two inputs. The question is
+# whether a cheap distillation pass over data the experts have already seen
+# recovers what merging destroyed.
+#
+# Teachers are the half-experts themselves, each supplying logprobs only for
+# its own half (precompute_logprobs.py). That keeps the procedure inside the
+# "poor man's parallelism" framing the project is testing: the logprob pass
+# shards exactly the way the training did, so nothing here requires a machine
+# to have seen all the data.
+#
+# Teacher logprobs are PRECOMPUTED. Axolotl's KD is offline - the trainer reads
+# them out of the dataset, it does not run a teacher.
+base_model: ../models/gemma3-xsum-merged-linear
+
+load_in_4bit: true
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+
+kd_trainer: true
+# Weighting follows axolotl's own published KD run
+# (axolotl-ai-co/kd-llama-1b-evolkit-distill-kd-ratio-0_9): mostly distillation
+# loss, a little hard-label cross-entropy to keep it anchored to the targets.
+# kd_alpha is the knob most worth sweeping - it is the whole trade-off between
+# "match the teachers" and "match the labels".
+kd_ce_alpha: 0.1
+kd_alpha: 0.9
+kd_temperature: 1.0
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+chat_template: gemma
+
+datasets:
+  - path: ../../datasets/xsum_kd_train
+    type: axolotl.integrations.kd.chat_template
+    field_messages: messages
+    logprobs_field: teacher_logprobs
+
+# No eval dataset, deliberately. KD trainer evaluation is reported broken
+# upstream (axolotl-ai-cloud/axolotl#3270), and a mid-run crash after the
+# logprob precompute would be expensive. Quality is measured after training by
+# evaluate.py on the held-out test set, which is the number this experiment is
+# actually about.
+val_set_size: 0.0
+
+sequence_len: 2048
+
+train_on_inputs: false
+gradient_checkpointing: true
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+# One pass. This is a repair step over data the teachers already fit, not fresh
+# training - more epochs mostly re-learn the teachers' own idiosyncrasies.
+num_epochs: 1
+
+learning_rate: 1e-4
+
+output_dir: ../models/gemma3-xsum-kd-from-merge
