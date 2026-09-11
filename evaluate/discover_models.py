@@ -36,7 +36,14 @@ def classify(directory):
         config = json.loads((directory / ADAPTER_MARKER).read_text())
         return "adapter", config.get("base_model_name_or_path")
     if (directory / FULL_MARKER).is_file():
-        return "full", None
+        # For full weights there is no base to resolve, but config.json usually
+        # records what it was built from, which is worth surfacing - it is the
+        # only hint about which base model to use as the evaluation floor.
+        try:
+            config = json.loads((directory / FULL_MARKER).read_text())
+        except (ValueError, OSError):
+            config = {}
+        return "full", config.get("_name_or_path")
     return None, None
 
 
@@ -68,6 +75,14 @@ def main():
                 continue
             # An intermediate checkpoint is not a model in its own right.
             if re.fullmatch(r"checkpoint-\d+", directory.name):
+                continue
+            # Skip dot-directories and anything inside them. mergekit's
+            # .lora_merge_cache holds materialised base+adapter combinations
+            # that carry a config.json and look exactly like models; evaluating
+            # one would duplicate an adapter's result under a meaningless name.
+            if directory.name.startswith(".") or any(
+                part.startswith(".") for part in directory.relative_to(root).parts
+            ):
                 continue
             # Skip anything already covered by a model found above it.
             if any(parent in seen for parent in directory.parents):
