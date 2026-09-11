@@ -28,6 +28,15 @@ EVAL_LIMIT=${EVAL_LIMIT:-}
 BASE_MODEL=${BASE_MODEL:-}
 RESULTS_SUBDIR=${RESULTS_SUBDIR:-model-merging-results/handover}
 
+# A handover directory holds whatever its owner put there, including models for
+# other tasks entirely. Evaluating a crime classifier on XSum produces a real
+# number that means nothing, so select rather than take everything.
+#   INCLUDE='llama3-xsum*' ./run_handover_eval.sh
+INCLUDE=${INCLUDE:-*}
+# Smoke runs live alongside real ones and are named accordingly. This default
+# is a convenience, not a safeguard - check the step counts.
+EXCLUDE=${EXCLUDE:-*-test}
+
 source "$REPO_ROOT/pipeline_lib.sh"
 
 pipeline_resolve_results_dir "$RESULTS_SUBDIR"
@@ -79,6 +88,14 @@ declared_bases=""
 
 while IFS=$'\t' read -r name kind path base; do
   [ -n "$name" ] || continue
+  # shellcheck disable=SC2254  # globs are intentional here
+  case "$name" in
+    $EXCLUDE) log "Skipping $name (matches EXCLUDE=$EXCLUDE)"; continue ;;
+  esac
+  case "$name" in
+    $INCLUDE) ;;
+    *) log "Skipping $name (does not match INCLUDE=$INCLUDE)"; continue ;;
+  esac
   case "$kind" in
     adapter)
       model=${BASE_MODEL:-$base}
@@ -88,6 +105,12 @@ while IFS=$'\t' read -r name kind path base; do
       evaluate_one "$name.json" "$model" "$path" "handover:$path"
       ;;
     full)
+      # A full model needs no base to load, but config.json's _name_or_path
+      # says what it was built from - which is the floor it should be read
+      # against. Without that a distilled model's ROUGE has nothing to beat.
+      if [ -n "$base" ] && [ "$base" != "-" ]; then
+        declared_bases="$declared_bases $base"
+      fi
       evaluate_one "$name.json" "$path" "" "handover:$path"
       ;;
     *) die "Unexpected kind '$kind' for $name" ;;
