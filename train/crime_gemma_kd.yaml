@@ -55,7 +55,8 @@ datasets:
   - path: ../../datasets/crime_kd_train
     type: axolotl.integrations.kd.chat_template
     field_messages: messages
-    logprobs_field: teacher_logprobs
+    # Matches the loader's own default, so this key is not load-bearing.
+    logprobs_field: logprobs
 
 # No eval dataset, deliberately. KD trainer evaluation is reported broken
 # upstream (axolotl-ai-cloud/axolotl#3270), and a mid-run crash after the

@@ -187,6 +187,9 @@ precompute_if_needed() {
   # alignment check inside precompute_logprobs.py is the only thing standing
   # between this pipeline and a silently misaligned distillation, so it must
   # not be skippable by accident.
+  # The sentinel also implies the column name the current code writes. A
+  # dataset produced before the rename to "logprobs" carries the old column and
+  # would fail deep inside axolotl, so it must not be reused.
   if [ -f "$out/.precompute_complete" ]; then
     log "Logprobs already at $out (verified), skipping"
     return

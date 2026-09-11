@@ -48,7 +48,13 @@ from peft import PeftModel
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-LOGPROBS_FIELD = "teacher_logprobs"
+# Axolotl's KD loader reads the column name from the dataset config and falls
+# back to "logprobs". Use that default rather than a custom name: if the
+# `logprobs_field` key is dropped by config validation, a custom name is never
+# popped, target_token_ids is never created, and the run dies much later with a
+# KeyError that says nothing about the cause. Matching the default makes the
+# config key belt-and-braces instead of load-bearing.
+LOGPROBS_FIELD = "logprobs"
 
 
 def parse_args():
