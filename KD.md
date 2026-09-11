@@ -191,3 +191,4 @@ is the whole trade-off between matching the teachers and matching the labels.
 | `train/xsum_gemma_kd.yaml` | KD config, XSum: student = the merge, LoRA on top |
 | `train/crime_gemma_kd.yaml` | the same for the crime arm |
 | `run_kd_pipeline.sh` | the whole thing |
+| `run_kd_after_xsum.sh` | waits for the XSum pipeline to exit, then runs the XSum KD arm with the versions it registered |
