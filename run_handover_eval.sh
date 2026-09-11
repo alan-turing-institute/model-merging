@@ -32,9 +32,19 @@ source "$REPO_ROOT/pipeline_lib.sh"
 
 pipeline_resolve_results_dir "$RESULTS_SUBDIR"
 
-# No training and no merging here, so no GPU-hungry stages - but generation
-# still needs one, and preflight's other checks (uv, HF auth) all apply.
-pipeline_preflight evaluate
+# No training, no merging, and nothing registered: this reads model directories
+# off the share and writes results locally. The GPU, uv and HuggingFace checks
+# all still apply - generation needs a GPU, and the base model is gated - but
+# requiring an az login for it would block work that does not use the registry.
+PIPELINE_NEEDS_AZ=0 pipeline_preflight evaluate
+
+# The test split has to exist. On a fresh instance it does not, and preparing it
+# is a minute; the alternative is a confusing load_from_disk failure several
+# steps later.
+if [ ! -d ../datasets/xsum_dataset ]; then
+  log "Preparing XSum data (test split needed for evaluation)"
+  uv run --project evaluate python prepare_xsum_data.py
+fi
 
 [ -d "$MODELS_DIR" ] || die "No such directory: $MODELS_DIR
   Set MODELS_DIR to where the handover actually landed. On a compute instance

@@ -107,6 +107,14 @@ pipeline_preflight() {
   uv run --project "$REPO_ROOT/evaluate" hf auth whoami >/dev/null 2>&1 \
     || die "Not logged into Hugging Face. Run: uv run --project evaluate hf auth login"
 
+  # A pipeline that only reads local paths and writes local results has no use
+  # for the registry, and requiring an az login for it just blocks work that
+  # would otherwise run. Opt out with PIPELINE_NEEDS_AZ=0.
+  if [ "${PIPELINE_NEEDS_AZ:-1}" = "0" ]; then
+    log "Skipping the az ml check (PIPELINE_NEEDS_AZ=0)"
+    return 0
+  fi
+
   if ! az ml model list --resource-group "$RG" --workspace-name "$WS" >/dev/null 2>&1; then
     echo "ERROR: 'az ml' is not working here - extension missing, or not logged in." >&2
     echo "On an Azure ML compute instance the system extension dir isn't writable, so:" >&2
