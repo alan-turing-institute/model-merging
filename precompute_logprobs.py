@@ -148,11 +148,26 @@ def teacher_logprobs(model, full_ids, start, top_k, device):
     input_ids = torch.tensor([full_ids], device=device)
     logits = model(input_ids=input_ids).logits[0].float()
 
-    # Position p is predicted by the logits at p-1. The assistant span begins at
-    # `start`, so the first distribution of interest is at start-1.
+    # FRAME: row j must hold the distribution that PREDICTS token start+j+1,
+    # i.e. the logits at start+j - not the distribution that produced the token
+    # at start+j.
+    #
+    # This is fixed by the consumer, not by taste. axolotl's KD loss compares
+    # the student's hidden state at sequence position p against
+    # target_logprobs[p], and a causal model's state at p predicts the token at
+    # p+1. kernels/liger.py shifts true_labels for the cross-entropy term and
+    # leaves the teacher tensors unshifted, and nothing in trainer.py or
+    # forward_kl.py shifts them either.
+    #
+    # Using logits[position - 1] is internally consistent and passes a check
+    # written in its own frame, but is one position late for the consumer. Over
+    # a ~30-token summarisation target that is every position wrong - the loss
+    # plateaus around 8 nats and the student ends up below the model it was
+    # distilled from. Over a single-token classification target it is nearly
+    # harmless, which is why the crime arm trained through it and XSum did not.
     rows = []
     for position in range(start, len(full_ids)):
-        distribution = torch.log_softmax(logits[position - 1], dim=-1)
+        distribution = torch.log_softmax(logits[position], dim=-1)
         values, indices = torch.topk(distribution, k=top_k)
         rows.append(
             [
@@ -242,7 +257,11 @@ def main():
                 full = encode_chat(tokenizer, messages, False)
                 start = len(encode_chat(tokenizer, messages[:-1], True))
                 for offset, entry in enumerate(row[args.logprobs_field]):
-                    position = start + offset + shift
+                    # +1 because row j predicts token start+j+1 (see
+                    # teacher_logprobs). The check must be anchored to the
+                    # consumer's frame; anchored to our own it cannot see the
+                    # off-by-one that matters.
+                    position = start + offset + 1 + shift
                     if not 0 <= position < len(full):
                         continue
                     ids = [int(e["token"].split(":")[1]) for e in entry]
