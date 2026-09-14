@@ -143,6 +143,12 @@ Alignment check: top-64 hit rate 0.785 at shift 0, 0.094 at +/-1
 An order of magnitude apart. If shift 0 is not clearly the best, the script
 exits rather than writing a dataset you would train on.
 
+**But do not over-trust this check.** It verifies the producer against its own
+convention, not against the consumer's. A deliberately shifted dataset was
+trained end to end and scored no worse than the aligned one — see the controls
+section below. Alignment is necessary, not sufficient, and on XSum it was never
+what was wrong.
+
 ## Running it
 
 ```bash
@@ -235,6 +241,65 @@ per-sample view is where that is visible. `CRIME_EVAL=legacy` falls back to
 not one of them — see its Deviations entry dated 2026-09-11. This arm generates
 a hypothesis; it does not test one. `kd_alpha` in particular is unswept, and it
 is the whole trade-off between matching the teachers and matching the labels.
+
+## What the XSum controls established (2026-09-14)
+
+The XSum arm does not work. Three separate students — offline with each half
+teaching its own half, self-distillation from the merge, and offline again on
+re-derived teacher data — all land at 0.332–0.338 ROUGE-1 against a merge that
+scores 0.3970, and all emit empty summaries (18, 23 and 34 of 1000) where the
+merge emits none. The degradation is large, reproducible, and significant at
+p = 0.0002 on a paired bootstrap over 1000 articles.
+
+Four controls narrow what causes it. Each holds everything fixed but one thing.
+
+**1. The distillation term is the cause, not the pass.** Same student init, same
+data, same learning rate, same 500 steps, same trainer and collator, with
+`kd_alpha: 0.0` and `kd_ce_alpha: 1.0` — the merge comes through intact:
+
+| model | ROUGE-1 | words | empty |
+|---|---|---|---|
+| `ce-ctrl` (`kd_alpha: 0.0`) | 0.3983 | 19.2 | 0 |
+| merge | 0.3970 | 19.1 | 0 |
+| KD student (`kd_alpha: 0.9`) | 0.3375 | 16.8 | 23 |
+
+`ce-ctrl` vs merge: +0.0013, 95% CI [−0.0028, +0.0054], p = 0.53. So the labels,
+the chat template, the `eot_tokens` handling, the learning rate and the repair
+pass itself are all sound. Turning the teacher signal on is what breaks it.
+
+**2. It is not an off-by-one in the teacher frame.** Axolotl's fused KD kernel
+shifts `true_labels` for the cross-entropy term (`kernels/liger.py`) and consumes
+the teacher tensors unshifted, which makes the required frame ambiguous. Both
+were tried end to end. A student trained on logprobs shifted one position
+scores 0.3321 against the unshifted 0.3375 — no improvement, p = 0.072.
+
+**3. It is not top-k truncation.** `transform_logprobs` renormalises the stored
+top-k to sum to 1, which would distort a high-entropy generative target if the
+top-k covered little mass. Measured over 1651 target positions, the teacher's
+top-64 captures a mean of 0.983 (median 0.997); no position falls below 0.5 and
+only 0.8% fall below 0.8. The renormalisation is close to a no-op.
+
+**4. The reported KD loss is not a diagnostic.** Cross-entropy alone converges
+at 1.36. The KD term sits at 8–20 and does not approach zero even when teacher
+and student are the same model — a self-distillation smoke test with the base
+model on both sides starts at ~20 and ends at ~18. Do not read the KD loss as a
+per-token KL, and do not use it to compare configurations; it cannot separate a
+working setup from a broken one. Use held-out ROUGE.
+
+### What this means for the crime arm
+
+The crime arm improved (merge 0.9136 → 0.9610 offline, 0.9461 self, against
+0.9694 full-data), and it ran with the same KD term that damages XSum. The
+difference between the tasks is target length: crime's targets are a single
+label token, XSum's are ~31, so crime receives roughly thirty times less KD
+gradient per example. That makes the leading hypothesis a gradient-magnitude
+one — the KD term is ~6x the CE term in scale and carries nine times its weight,
+at a learning rate only ever sane for a CE-scale loss.
+
+Until that is tested, **the crime decomposition claim is not safe**. "Half the
+repair is the distillation pass and half is the experts' knowledge" assumes the
+KD term was contributing what it appeared to. The crime arm needs its own
+`kd_alpha: 0.0` control before that sentence goes anywhere.
 
 ## Files
 
