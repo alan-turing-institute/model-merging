@@ -318,7 +318,11 @@ if ! model_dir_has_weights "$REPO_ROOT/models/$KD_STUDENT"; then
   fetch_model "$KD_STUDENT" "$student_version" "models/$KD_STUDENT"
 fi
 
-evaluate_if_needed kd-from-merge.json "$MERGE" "$REPO_ROOT/models/$KD_STUDENT" "$(ref "$KD_STUDENT")"
+# Named after the student, not a fixed string: the offline and self arms write
+# to different directories but the analysis tools identify a run by its file
+# stem, so a shared name makes a cross-arm comparison ambiguous exactly where it
+# matters most.
+evaluate_if_needed "$KD_STUDENT.json" "$MERGE" "$REPO_ROOT/models/$KD_STUDENT" "$(ref "$KD_STUDENT")"
 evaluate_if_needed merge.json         "$MERGE" "" "$MERGE_PROV"
 evaluate_if_needed half1.json         "$BASE_MODEL" "$HALF1" "$HALF1_PROV"
 evaluate_if_needed half2.json         "$BASE_MODEL" "$HALF2" "$HALF2_PROV"
