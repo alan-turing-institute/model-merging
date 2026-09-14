@@ -49,6 +49,25 @@ HALF2_VERSION=${HALF2_VERSION:-3}
 MERGE_VERSION=${MERGE_VERSION:-3}
 FULL_VERSION=${FULL_VERSION:-3}
 
+# Which distillation regime. The taxonomy is the standard one - the arms differ
+# in how the teacher is defined, not in the loss.
+#
+#   offline  the two half-experts teach, each over its own half, logprobs
+#            precomputed. Tests whether the experts' knowledge repairs the merge.
+#   self     the merge teaches ITSELF over the same data. This is the control
+#            that makes `offline` interpretable: if distilling from itself
+#            recovers as much, the gain is from the distillation objective -
+#            soft targets, temperature - and not from anything the half-experts
+#            knew. Without it, an offline result cannot distinguish the two.
+#
+# Online (a live-served teacher) is a third regime axolotl supports via
+# kd_online_server_base_url; it is not wired up here - see KD.md.
+KD_MODE=${KD_MODE:-offline}
+case "$KD_MODE" in
+  offline|self) ;;
+  *) echo "ERROR: KD_MODE must be offline or self, got '$KD_MODE'" >&2; exit 1 ;;
+esac
+
 TASK=${TASK:-xsum}
 case "$TASK" in
   xsum)
@@ -60,6 +79,8 @@ case "$TASK" in
     FULL_NAME=gemma3-xsum-full-lora
     KD_CONFIG=xsum_gemma_kd.yaml
     KD_STUDENT=gemma3-xsum-kd-from-merge
+    KD_SELF_CONFIG=xsum_gemma_kd_self.yaml
+    KD_SELF_STUDENT=gemma3-xsum-kd-self
     # What the half-experts were trained for - used to verify their scale.
     DEFAULT_EPOCHS=2
     INSPECT_EVAL=run_inspect_xsum.py
@@ -75,6 +96,8 @@ case "$TASK" in
     FULL_NAME=gemma3-crime-full-lora
     KD_CONFIG=crime_gemma_kd.yaml
     KD_STUDENT=gemma3-crime-kd-from-merge
+    KD_SELF_CONFIG=crime_gemma_kd_self.yaml
+    KD_SELF_STUDENT=gemma3-crime-kd-self
     DEFAULT_EPOCHS=3
     INSPECT_EVAL=run_inspect_crime.py
     LEGACY_EVAL=evaluate.py
@@ -96,9 +119,14 @@ KD_EVAL=${KD_EVAL:-inspect}
 TRAIN_EPOCHS=${TRAIN_EPOCHS:-$DEFAULT_EPOCHS}
 EVAL_LIMIT=${EVAL_LIMIT:-}
 
+if [ "$KD_MODE" = "self" ]; then
+  KD_CONFIG=$KD_SELF_CONFIG
+  KD_STUDENT=$KD_SELF_STUDENT
+fi
+
 source "$REPO_ROOT/pipeline_lib.sh"
 
-pipeline_resolve_results_dir "model-merging-results/kd-$TASK"
+pipeline_resolve_results_dir "model-merging-results/kd-$TASK-$KD_MODE"
 pipeline_preflight train merge evaluate
 
 mkdir -p models
@@ -174,6 +202,11 @@ uv run --project evaluate python stage_model_dir.py \
 # well-formed logprobs and teach the student nothing worth learning, and the
 # only symptom would be a disappointing number hours later.
 
+if [ "$KD_MODE" = "self" ]; then
+  log "KD_MODE=self - the teacher is the merge itself, which has no training"
+  log "checkpoints to verify. The halves are still fetched, because they remain"
+  log "the baselines the result is read against."
+else
 log "Verifying teacher training scale"
 uv run --project evaluate python check_adapter_scale.py \
   --adapter "$HALF1" --dataset "../datasets/${DATASET}1/train" --epochs "$TRAIN_EPOCHS" \
@@ -181,11 +214,14 @@ uv run --project evaluate python check_adapter_scale.py \
 uv run --project evaluate python check_adapter_scale.py \
   --adapter "$HALF2" --dataset "../datasets/${DATASET}2/train" --epochs "$TRAIN_EPOCHS" \
   || die "Teacher 2 does not match the dataset it is paired with - set HALF2_VERSION"
+fi
 
 # --- 4. teacher logprobs, each expert over its own half ---
 
 precompute_if_needed() {
-  local adapter=$1 dataset=$2 out=$3
+  # $4 overrides the teacher's base model - the self arm's teacher is the merge
+  # itself (full weights, no adapter) rather than base+adapter.
+  local adapter=$1 dataset=$2 out=$3 teacher_model=${4:-$BASE_MODEL}
   # A sentinel, not directory existence. An interrupted precompute leaves the
   # directory behind, and skipping on that means training against a partial -
   # or worse, never-alignment-checked - set of teacher distributions. The
@@ -203,25 +239,32 @@ precompute_if_needed() {
     log "Discarding unverified logprobs at $out - no completion sentinel"
     rm -rf "$out"
   fi
-  log "Teacher logprobs: $adapter over $dataset"
-  uv run --project evaluate python precompute_logprobs.py \
-    --model "$BASE_MODEL" --adapter "$adapter" \
-    --dataset "$dataset" --output "$out" --top-k "$TOP_K"
+  log "Teacher logprobs: ${adapter:-$teacher_model} over $dataset"
+  local args=(--model "$teacher_model" --dataset "$dataset" --output "$out" --top-k "$TOP_K")
+  if [ -n "$adapter" ]; then args+=(--adapter "$adapter"); fi
+  uv run --project evaluate python precompute_logprobs.py "${args[@]}"
   # Written only after the script exits 0, which it does only if its
   # token-count and alignment checks both passed.
   touch "$out/.precompute_complete"
 }
 
-precompute_if_needed "$HALF1" "../datasets/${DATASET}1/train" "../datasets/${TASK}_kd_half1"
-precompute_if_needed "$HALF2" "../datasets/${DATASET}2/train" "../datasets/${TASK}_kd_half2"
-
-if [ ! -d "../datasets/${TASK}_kd_train" ]; then
-  log "Combining the two teachers' halves"
-  uv run --project evaluate python concat_datasets.py \
-    "../datasets/${TASK}_kd_half1" "../datasets/${TASK}_kd_half2" \
-    --output "../datasets/${TASK}_kd_train"
+if [ "$KD_MODE" = "self" ]; then
+  # One teacher - the merge - over the whole training set. No adapter: the
+  # merged model is full weights. Same examples the offline arm covers between
+  # its two halves, so the two arms differ only in where the targets came from.
+  precompute_if_needed "" "../datasets/${DATASET}/train" "../datasets/${TASK}_selfkd_train" "$MERGE"
 else
-  log "Combined KD dataset already exists, skipping"
+  precompute_if_needed "$HALF1" "../datasets/${DATASET}1/train" "../datasets/${TASK}_kd_half1"
+  precompute_if_needed "$HALF2" "../datasets/${DATASET}2/train" "../datasets/${TASK}_kd_half2"
+
+  if [ ! -d "../datasets/${TASK}_kd_train" ]; then
+    log "Combining the two teachers' halves"
+    uv run --project evaluate python concat_datasets.py \
+      "../datasets/${TASK}_kd_half1" "../datasets/${TASK}_kd_half2" \
+      --output "../datasets/${TASK}_kd_train"
+  else
+    log "Combined KD dataset already exists, skipping"
+  fi
 fi
 
 # --- 5. distil ---

@@ -29,6 +29,42 @@ did — so the procedure stays inside the poor-man's-parallelism framing the
 project is testing. A distillation that needed the whole dataset in one place
 would answer a different and much less interesting question.
 
+## Three regimes
+
+The distillation literature splits by how the teacher is defined. All three are
+*self*-distillation in the loose sense that teacher and student share an
+architecture; what differs is where the targets come from.
+
+| `KD_MODE` | Teacher | Question it answers |
+|---|---|---|
+| `offline` (default) | the two half-experts, precomputed, each over its own half | does the experts' knowledge repair the merge? |
+| `self` | the merge itself | **control** — or would any distillation pass do? |
+| *online* | a live-served teacher | same signal without a precompute pass — not yet wired up |
+
+**The `self` arm is what makes `offline` interpretable.** The crime result —
+merge at R = −0.46, distilled at R = +0.78 — is currently open to two readings:
+the half-experts restored knowledge the merge had lost, or a second pass over
+the data with soft targets at temperature would have helped regardless of who
+produced them. Those are very different claims, and only the control separates
+them. If `self` recovers as much, the finding is about the distillation
+objective and not about merging at all.
+
+### Online is supported but unwired
+
+axolotl 0.18.0 exposes `kd_online_server_base_url`, `kd_online_server`
+(`vllm` or `sglang`), `kd_online_topk` and `kd_online_timeout`. Two reasons it
+is not an arm here yet:
+
+- **It is young.** The source carries a `TODO online kd`, and there is an open
+  upstream discussion titled *"Unable to get good results with knowledge
+  distillation after the update of online distillation"*.
+- **It serves one teacher.** This experiment's offline arm deliberately uses
+  *two* teachers, each confined to its own half, which is what keeps the
+  procedure parallel — no machine ever sees all the data. A single served
+  teacher either breaks that property (if it is the full-data model) or
+  requires serving each half-expert in turn, which is an unresolved design
+  question rather than a configuration detail.
+
 ## Axolotl KD is offline
 
 The trainer does **not** run a teacher. `axolotl.integrations.kd.chat_template`
