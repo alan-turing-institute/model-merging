@@ -161,6 +161,56 @@ fi
 # --- 2. train the three LoRA adapters ---
 # Skip on REGISTERED state first, so a cleaned-up working tree doesn't retrain.
 
+# Axolotl reliably hangs AFTER writing the adapter on this setup - three
+# trainings, three hangs, each costing a manual kill and a relaunch, and twice
+# costing a completed training that looked unfinished because the sentinel is
+# written only once the process exits.
+#
+# The model is complete when the save line appears; only teardown is stuck. So
+# supervise it: watch for that line, allow a grace period to exit on its own,
+# and kill it if it does not. Killing after a confirmed save loses nothing.
+HANG_GRACE_SECONDS=${HANG_GRACE_SECONDS:-180}
+
+run_axolotl_supervised() {
+  local cfg=$1
+  local logfile=$REPO_ROOT/models/.axolotl-${cfg%.yaml}.log
+  mkdir -p "$REPO_ROOT/models"
+  : > "$logfile"
+
+  # setsid puts the trainer in its own process group, so the whole tree can be
+  # killed at once. Killing by command-line pattern is not enough: a surviving
+  # child keeps the pipe open, `wait` never returns, and the workaround
+  # reproduces the hang it exists to avoid.
+  #
+  # tee so progress still reaches the pipeline log live, while leaving a file
+  # that can be grepped for the completion line.
+  # `set -o pipefail` inside, or the pipeline's status is tee's and a genuine
+  # training failure - an OOM, a bad config - is reported as success.
+  setsid bash -c "set -o pipefail; cd '$REPO_ROOT/train' && uv run axolotl train '$cfg' 2>&1 | tee '$logfile'" &
+  local wrapper=$! saved_at=""
+
+  while kill -0 "$wrapper" 2>/dev/null; do
+    if [ -z "$saved_at" ] && grep -q "Model successfully saved to" "$logfile" 2>/dev/null; then
+      saved_at=$(date +%s)
+      log "Adapter written; allowing ${HANG_GRACE_SECONDS}s for the trainer to exit"
+    fi
+    if [ -n "$saved_at" ] && [ $(( $(date +%s) - saved_at )) -ge "$HANG_GRACE_SECONDS" ]; then
+      log "Trainer still alive ${HANG_GRACE_SECONDS}s after saving - killing it (known teardown hang)"
+      # Negative PID = the whole process group, so no descendant survives to
+      # hold the GPU or the pipe. Deliberately no `wait` afterwards: waiting is
+      # what blocked when a child outlived a pattern-based kill.
+      kill -TERM -"$wrapper" 2>/dev/null || true
+      sleep 10
+      kill -KILL -"$wrapper" 2>/dev/null || true
+      return 0
+    fi
+    sleep 10
+  done
+
+  # Exited on its own - propagate a genuine failure.
+  wait "$wrapper"
+}
+
 train_if_needed() {
   local cfg=$1 name=$2 outdir=$3
   if [ -n "$(recorded_version "$name")" ]; then
@@ -179,7 +229,7 @@ train_if_needed() {
     return
   fi
   log "Training $cfg"
-  (cd train && uv run axolotl train "$cfg")
+  run_axolotl_supervised "$cfg"
   [ -f "$outdir/adapter_model.safetensors" ] || die "Training finished but no adapter at $outdir"
   touch "$outdir/.training_complete"
 }
