@@ -83,6 +83,18 @@ datasets:
 # actually about.
 val_set_size: 0.0
 
+# Tokenisation ran 24 workers by default (os.cpu_count()) and stalled at 99%
+# for over an hour. This KD dataset is the reason: ~8,000 examples x ~30 target
+# tokens x 64 top-k entries is roughly 30x the nested data of the crime arm's,
+# and sharding that across 24 processes costs more in serialisation and memory
+# than it saves. The crime arm completed fine at the default; only the
+# generation task is large enough to matter.
+#
+# top_k stays at 64 rather than being reduced, so the two arms remain
+# comparable - the fix belongs in how the data is processed, not in how much
+# teacher signal the experiment uses.
+dataset_num_proc: 4
+
 sequence_len: 2048
 
 train_on_inputs: false
