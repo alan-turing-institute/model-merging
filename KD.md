@@ -286,15 +286,42 @@ model on both sides starts at ~20 and ends at ~18. Do not read the KD loss as a
 per-token KL, and do not use it to compare configurations; it cannot separate a
 working setup from a broken one. Use held-out ROUGE.
 
+**5. The cause is gradient magnitude.** Dropping the learning rate from 1e-4 to
+1e-5, changing nothing else, recovers half the damage:
+
+| model | ROUGE-1 | words | empty |
+|---|---|---|---|
+| `ce-ctrl` (`kd_alpha: 0.0`) | 0.3983 | 19.2 | 0 |
+| merge | 0.3970 | 19.1 | 0 |
+| KD @ lr 1e-5 | 0.3641 | 17.9 | 2 |
+| KD @ lr 1e-4 | 0.3321 | 17.0 | 34 |
+
++0.0320 over the 1e-4 student, p = 0.0002, with empty summaries falling from 34
+to 2 and mean length moving back toward the merge. A monotone dose-response in
+step size is what a too-large effective learning rate looks like, and it also
+explains the empties: they were over-stepping, not a malformed target.
+
+The arithmetic is the point. The KD term converges around 8 where cross-entropy
+converges at 1.36, and it carries weight 0.9 against CE's 0.1 — so it
+contributes on the order of fifty times the gradient, at a learning rate chosen
+for a CE-scale loss. **`learning_rate` and `kd_alpha` cannot be set
+independently of the loss scale, and the scale depends on target length.** A
+value that is a gentle repair on single-token classification targets is a
+demolition on ~31-token summarisation ones.
+
+Still unresolved: lr 1e-5 remains 0.0330 below the merge (p = 0.0002), so a
+tenfold reduction is not enough. The next points on the curve are lr 1e-6 and
+`kd_alpha` 0.3, and neither has been run.
+
 ### What this means for the crime arm
 
 The crime arm improved (merge 0.9136 → 0.9610 offline, 0.9461 self, against
 0.9694 full-data), and it ran with the same KD term that damages XSum. The
 difference between the tasks is target length: crime's targets are a single
 label token, XSum's are ~31, so crime receives roughly thirty times less KD
-gradient per example. That makes the leading hypothesis a gradient-magnitude
-one — the KD term is ~6x the CE term in scale and carries nine times its weight,
-at a learning rate only ever sane for a CE-scale loss.
+gradient per example. Control 5 confirms that axis directly: the damage
+scales with the learning rate, and crime receives roughly thirty times less KD
+gradient per example than XSum does.
 
 Until that is tested, **the crime decomposition claim is not safe**. "Half the
 repair is the distillation pass and half is the experts' knowledge" assumes the
