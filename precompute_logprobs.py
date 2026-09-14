@@ -40,6 +40,7 @@ Usage (from the repo root, with the evaluate env):
 import argparse
 import json
 import statistics
+from collections import Counter
 from pathlib import Path
 
 import torch
@@ -114,19 +115,30 @@ def encode_chat(tokenizer, messages, add_generation_prompt):
 
 
 def assistant_span(tokenizer, messages, max_length):
-    """Token ids for the whole chat, and where the assistant's tokens start.
+    """(full_ids, start) for a usable example, or (None, reason) for a skip.
 
     Rendered with the tokenizer's own chat template - the same one axolotl
     applies - so the boundary is defined the same way on both sides.
     """
     prompt_ids = encode_chat(tokenizer, messages[:-1], add_generation_prompt=True)
     full_ids = encode_chat(tokenizer, messages, add_generation_prompt=False)
+
     # If the prompt is not a prefix of the full render, the difference between
     # them is not the assistant span and everything downstream is meaningless.
     if full_ids[: len(prompt_ids)] != prompt_ids:
-        return None, None
+        return None, "prompt-not-a-prefix"
     if len(full_ids) > max_length:
-        return None, None
+        return None, "over-max-length"
+    # No assistant tokens: an empty or whitespace-only target. Such an example
+    # teaches nothing, and written out it becomes an empty logprobs list that
+    # axolotl's KD strategy cannot handle - it derives the top-k width with
+    # max() over the non-empty positions and raises on an empty sequence. One
+    # such row out of 8,000 failed a whole run at the last example of
+    # tokenisation. Classification never hits this because its targets are
+    # always a literal label; free-text summarisation does.
+    if len(full_ids) <= len(prompt_ids):
+        return None, "no-target-tokens"
+
     return full_ids, len(prompt_ids)
 
 
@@ -161,14 +173,18 @@ def main():
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer, model = load_teacher(args.model, args.adapter, device)
 
-    kept, skipped = [], 0
+    kept, skipped = [], Counter()
     for row in tqdm(dataset, desc="teacher logprobs", unit="ex"):
         messages = row[args.messages_column]
         full_ids, start = assistant_span(tokenizer, messages, args.max_length)
         if full_ids is None:
-            skipped += 1
+            skipped[start] += 1  # `start` carries the reason on the skip path
             continue
         rows = teacher_logprobs(model, full_ids, start, args.top_k, model.device)
+        if not rows:
+            # Belt and braces: never write an example with no targets.
+            skipped["no-target-tokens"] += 1
+            continue
         record = {key: row[key] for key in row}
         record[args.logprobs_field] = rows
         record["num_assistant_tokens"] = len(rows)
@@ -184,7 +200,11 @@ def main():
     out.save_to_disk(args.output)
 
     print(f"\nWrote {len(out)} examples to {args.output}")
-    print(f"Skipped {skipped} (prompt not a prefix of the full render, or over --max-length)")
+    if skipped:
+        detail = ", ".join(f"{count} {reason}" for reason, count in sorted(skipped.items()))
+        print(f"Skipped {sum(skipped.values())}: {detail}")
+    else:
+        print("Skipped 0")
     print(f"Logprobs field: {args.logprobs_field}, top_k={args.top_k}")
 
     # Two checks, because the obvious one is not sufficient. Counting tokens
