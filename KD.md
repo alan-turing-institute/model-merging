@@ -39,7 +39,7 @@ architecture; what differs is where the targets come from.
 |---|---|---|
 | `offline` (default) | the two half-experts, precomputed, each over its own half | does the experts' knowledge repair the merge? |
 | `self` | the merge itself | **control** — or would any distillation pass do? |
-| *online* | a live-served teacher | same signal without a precompute pass — not yet wired up |
+| `online` | the student's **own generations**, scored live | does on-policy distillation beat off-policy? |
 
 **The `self` arm is what makes `offline` interpretable.** The crime result —
 merge at R = −0.46, distilled at R = +0.78 — is currently open to two readings:
@@ -49,21 +49,40 @@ produced them. Those are very different claims, and only the control separates
 them. If `self` recovers as much, the finding is about the distillation
 objective and not about merging at all.
 
-### Online is supported but unwired
+### The online arm runs through TRL, not axolotl
 
-axolotl 0.18.0 exposes `kd_online_server_base_url`, `kd_online_server`
-(`vllm` or `sglang`), `kd_online_topk` and `kd_online_timeout`. Two reasons it
-is not an arm here yet:
+Axolotl cannot do this. Its KD trainer requires precomputed teacher logprobs in
+every batch — at 0.18.0 *and* on `main` — and the `kd_online_*` config fields
+are placeholders the trainer never reads. Its `rl:` key offers
+dpo/ipo/kto/simpo/orpo/grpo/ebft and no distillation. So `train_gkd.py` drives
+[TRL's `GKDTrainer`](https://huggingface.co/docs/trl/gkd_trainer) instead.
 
-- **It is young.** The source carries a `TODO online kd`, and there is an open
-  upstream discussion titled *"Unable to get good results with knowledge
-  distillation after the update of online distillation"*.
-- **It serves one teacher.** This experiment's offline arm deliberately uses
-  *two* teachers, each confined to its own half, which is what keeps the
-  procedure parallel — no machine ever sees all the data. A single served
-  teacher either breaks that property (if it is the full-data model) or
-  requires serving each half-expert in turn, which is an unresolved design
-  question rather than a configuration detail.
+**Why this is a different method, not a delivery detail.** With a frozen
+teacher, a merely "live-served" teacher returns *identical* targets to our
+precomputed ones — such an arm would compare infrastructure, not methods. GKD
+is different in substance: it scores the **student's own generations** rather
+than the dataset's gold sequences, which is the train/inference distribution
+mismatch the method exists to fix.
+
+| Knob | Meaning |
+|---|---|
+| `GKD_LMBDA` (1.0) | on-policy fraction; 1.0 = fully student-generated |
+| `GKD_BETA` (0.5) | generalized JSD: 0.0 → forward KL, 1.0 → reverse KL |
+| `GKD_TEACHER` (`merge`) | `merge` / `full` / `half1` / `half2` |
+
+**On the teacher.** GKD takes one teacher, so the offline arm's
+two-teachers-one-half-each design has no direct analogue. The default is the
+merge itself — on-policy self-distillation — because it pairs exactly with
+`KD_MODE=self` and isolates on-policy from off-policy with the teacher held
+constant. `GKD_TEACHER=full` gives an upper bound but **breaks the property
+that no machine ever saw all the data**, so it answers a different question and
+should be labelled as such.
+
+**Gemma caveat.** TRL warns that Gemma's attention soft-capping yields NaN
+logits without a flash-attention implementation. `train_gkd.py` fails on a
+non-finite loss rather than training through it — a run that NaNs quietly still
+saves an adapter, and the only symptom is a model that generates nothing
+coherent, which is exactly how the handed-over Llama model failed.
 
 ## Axolotl KD is offline
 
@@ -228,3 +247,4 @@ is the whole trade-off between matching the teachers and matching the labels.
 | `train/crime_gemma_kd.yaml` | the same for the crime arm |
 | `run_kd_pipeline.sh` | the whole thing |
 | `run_kd_after_xsum.sh` | waits for the XSum pipeline to exit, then runs the XSum KD arm with the versions it registered |
+| `train_gkd.py` | the online arm — TRL GKDTrainer, on-policy distillation |

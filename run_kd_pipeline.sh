@@ -64,9 +64,23 @@ FULL_VERSION=${FULL_VERSION:-3}
 # kd_online_server_base_url; it is not wired up here - see KD.md.
 KD_MODE=${KD_MODE:-offline}
 case "$KD_MODE" in
-  offline|self) ;;
-  *) echo "ERROR: KD_MODE must be offline or self, got '$KD_MODE'" >&2; exit 1 ;;
+  offline|self|online) ;;
+  *) echo "ERROR: KD_MODE must be offline, self or online, got '$KD_MODE'" >&2; exit 1 ;;
 esac
+
+# Which model the online (GKD) arm distils from. GKD takes ONE teacher, so the
+# two-teacher-one-half-each design of the offline arm has no direct analogue.
+#   merge  (default) the student's own initialisation - on-policy
+#          self-distillation, which pairs exactly with KD_MODE=self and isolates
+#          on-policy from off-policy with the teacher held constant.
+#   full   the full-data model. An upper bound, but it BREAKS the property that
+#          no machine ever saw all the data, so it answers a different question.
+#   half1 / half2  a single expert, which is asymmetric by construction.
+GKD_TEACHER=${GKD_TEACHER:-merge}
+# Paper's finding is that high on-policy fractions work best; beta is the knob
+# most worth sweeping.
+GKD_LMBDA=${GKD_LMBDA:-1.0}
+GKD_BETA=${GKD_BETA:-0.5}
 
 TASK=${TASK:-xsum}
 case "$TASK" in
@@ -81,6 +95,7 @@ case "$TASK" in
     KD_STUDENT=gemma3-xsum-kd-from-merge
     KD_SELF_CONFIG=xsum_gemma_kd_self.yaml
     KD_SELF_STUDENT=gemma3-xsum-kd-self
+    KD_ONLINE_STUDENT=gemma3-xsum-kd-online
     # What the half-experts were trained for - used to verify their scale.
     DEFAULT_EPOCHS=2
     INSPECT_EVAL=run_inspect_xsum.py
@@ -98,6 +113,7 @@ case "$TASK" in
     KD_STUDENT=gemma3-crime-kd-from-merge
     KD_SELF_CONFIG=crime_gemma_kd_self.yaml
     KD_SELF_STUDENT=gemma3-crime-kd-self
+    KD_ONLINE_STUDENT=gemma3-crime-kd-online
     DEFAULT_EPOCHS=3
     INSPECT_EVAL=run_inspect_crime.py
     LEGACY_EVAL=evaluate.py
@@ -122,6 +138,9 @@ EVAL_LIMIT=${EVAL_LIMIT:-}
 if [ "$KD_MODE" = "self" ]; then
   KD_CONFIG=$KD_SELF_CONFIG
   KD_STUDENT=$KD_SELF_STUDENT
+elif [ "$KD_MODE" = "online" ]; then
+  # No axolotl config: the online arm is driven through TRL, not axolotl.
+  KD_STUDENT=$KD_ONLINE_STUDENT
 fi
 
 source "$REPO_ROOT/pipeline_lib.sh"
@@ -248,7 +267,12 @@ precompute_if_needed() {
   touch "$out/.precompute_complete"
 }
 
-if [ "$KD_MODE" = "self" ]; then
+if [ "$KD_MODE" = "online" ]; then
+  # Nothing to precompute. GKD scores the student's OWN generations with a live
+  # teacher during training, which is the whole point of the arm - there are no
+  # fixed target sequences to compute logprobs over ahead of time.
+  log "KD_MODE=online - no teacher logprob pass; the teacher scores live"
+elif [ "$KD_MODE" = "self" ]; then
   # One teacher - the merge - over the whole training set. No adapter: the
   # merged model is full weights. Same examples the offline arm covers between
   # its two halves, so the two arms differ only in where the targets came from.
@@ -274,8 +298,25 @@ if [ -n "$(recorded_version "$KD_STUDENT")" ]; then
 elif [ -f "models/$KD_STUDENT/.training_complete" ]; then
   log "$KD_STUDENT already trained, skipping"
 else
-  log "Distilling (student init = the linear merge)"
-  (cd train && uv run axolotl train "$KD_CONFIG")
+  if [ "$KD_MODE" = "online" ]; then
+    case "$GKD_TEACHER" in
+      merge) teacher_path=$MERGE ;;
+      full)  teacher_path=$FULL ;;
+      half1) teacher_path=$HALF1 ;;
+      half2) teacher_path=$HALF2 ;;
+      *) die "GKD_TEACHER must be merge, full, half1 or half2 - got '$GKD_TEACHER'" ;;
+    esac
+    log "On-policy distillation (GKD): student = the merge, teacher = $GKD_TEACHER"
+    log "  lmbda=$GKD_LMBDA (on-policy fraction), beta=$GKD_BETA"
+    uv run --project train python train_gkd.py \
+      --student "$MERGE" --teacher "$teacher_path" \
+      --dataset "../datasets/${DATASET}/train" \
+      --output-dir "$REPO_ROOT/models/$KD_STUDENT" \
+      --lmbda "$GKD_LMBDA" --beta "$GKD_BETA"
+  else
+    log "Distilling (student init = the linear merge)"
+    (cd train && uv run axolotl train "$KD_CONFIG")
+  fi
   [ -f "models/$KD_STUDENT/adapter_model.safetensors" ] \
     || die "Training finished but no adapter at models/$KD_STUDENT"
   touch "models/$KD_STUDENT/.training_complete"
