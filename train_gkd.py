@@ -67,19 +67,46 @@ def parse_args():
     return parser.parse_args()
 
 
+_SURFACED = "_vocab_size_surfaced_for_trl"
+
+
 def surface_vocab_size(model):
     """Expose config.vocab_size for TRL, which compares it across the pair.
 
     GKDTrainer guards against a student and teacher with mismatched vocabularies
     by reading `model.config.vocab_size` directly. Gemma 3 is multimodal, so its
     composite Gemma3Config keeps vocab_size on `.text_config` and the top-level
-    lookup raises AttributeError before training starts. Copying the value up is
-    a no-op numerically - it is the same vocabulary either way - and keeps the
-    guard doing what it was written to do.
+    lookup raises AttributeError before training starts.
+
+    MUST be paired with hide_vocab_size() once the guard has run - see there.
     """
     config = model.config
     if not hasattr(config, "vocab_size") and hasattr(config, "text_config"):
         config.vocab_size = config.text_config.vocab_size
+        setattr(config, _SURFACED, True)
+    return model
+
+
+def hide_vocab_size(model):
+    """Undo surface_vocab_size once TRL's constructor check has run.
+
+    Leaving the attribute in place breaks saving. peft decides whether to store
+    embedding weights with `save_embedding_layers="auto"`, and that check reads
+    the attribute through a defaulting getattr (save_and_load.py:359). Absent -
+    Gemma 3's normal state - it short-circuits to False. Present, it proceeds to
+    compare against the base model's vocab size, which it obtains by reloading
+    the config FROM DISK: `model.config.__class__.from_pretrained(model_id)`.
+    That reloaded config has no top-level vocab_size either, so it raises.
+
+    The first version of this fix set the attribute and left it set. Training
+    ran all 539 steps and then died in _save_checkpoint with an empty checkpoint
+    directory - thirty-one minutes for nothing. The attribute is needed for one
+    comparison in GKDTrainer.__init__ and is actively harmful after it.
+    """
+    config = model.config
+    if getattr(config, _SURFACED, False):
+        del config.vocab_size
+        delattr(config, _SURFACED)
     return model
 
 
@@ -167,6 +194,12 @@ def main():
         ),
         callbacks=[FailOnNonFiniteLoss()],
     )
+
+    # TRL's vocabulary guard has now run. The attribute must not survive into
+    # saving - see hide_vocab_size for what it breaks there.
+    hide_vocab_size(student)
+    hide_vocab_size(teacher)
+    hide_vocab_size(trainer.model)
 
     print(f"GKD: lmbda={args.lmbda} (on-policy fraction), beta={args.beta}, "
           f"temperature={args.temperature}")
