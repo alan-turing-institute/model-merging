@@ -148,6 +148,14 @@ KD_EVAL=${KD_EVAL:-inspect}
 TRAIN_EPOCHS=${TRAIN_EPOCHS:-$DEFAULT_EPOCHS}
 EVAL_LIMIT=${EVAL_LIMIT:-}
 
+# An explicit config wins over the per-task default. Added to sweep learning
+# rate without editing the config the other arms share: the KD term's effective
+# step size scales with the number of supervised target positions, and 1e-4 was
+# chosen when crime trained on a single label token.
+if [ -n "${KD_CONFIG_OVERRIDE:-}" ]; then
+  KD_CONFIG=$KD_CONFIG_OVERRIDE
+fi
+
 if [ "$KD_MODE" = "self" ]; then
   KD_CONFIG=$KD_SELF_CONFIG
   KD_STUDENT=$KD_SELF_STUDENT
