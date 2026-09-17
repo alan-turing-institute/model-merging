@@ -67,6 +67,22 @@ def parse_args():
     return parser.parse_args()
 
 
+def surface_vocab_size(model):
+    """Expose config.vocab_size for TRL, which compares it across the pair.
+
+    GKDTrainer guards against a student and teacher with mismatched vocabularies
+    by reading `model.config.vocab_size` directly. Gemma 3 is multimodal, so its
+    composite Gemma3Config keeps vocab_size on `.text_config` and the top-level
+    lookup raises AttributeError before training starts. Copying the value up is
+    a no-op numerically - it is the same vocabulary either way - and keeps the
+    guard doing what it was written to do.
+    """
+    config = model.config
+    if not hasattr(config, "vocab_size") and hasattr(config, "text_config"):
+        config.vocab_size = config.text_config.vocab_size
+    return model
+
+
 class FailOnNonFiniteLoss(TrainerCallback):
     """Stop rather than train through NaN.
 
@@ -111,6 +127,9 @@ def main():
     # their weights do.
     teacher = AutoModelForCausalLM.from_pretrained(args.teacher, **model_kwargs)
     teacher.eval()
+
+    surface_vocab_size(student)
+    surface_vocab_size(teacher)
 
     config = GKDConfig(
         output_dir=args.output_dir,
