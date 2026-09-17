@@ -81,6 +81,17 @@ GKD_TEACHER=${GKD_TEACHER:-merge}
 # most worth sweeping.
 GKD_LMBDA=${GKD_LMBDA:-1.0}
 GKD_BETA=${GKD_BETA:-0.5}
+# On-policy sampling should mirror inference, so the generation budget defaults
+# to the task's own evaluation budget (set per task below). The first crime run
+# used train_gkd.py's 64-token default against an evaluation that generates 16
+# and a target that is a single label token: 40s/step, a 6-hour projection, and
+# three quarters of it spent generating tokens no one would ever read.
+#
+# Batch size matters here in a way it does not for the offline arms: every step
+# runs a generation pass, and generating 2 at a time leaves the GPU idle. The
+# effective batch (size x accum) is held at 16 to match them.
+GKD_BATCH_SIZE=${GKD_BATCH_SIZE:-8}
+GKD_GRAD_ACCUM=${GKD_GRAD_ACCUM:-2}
 
 TASK=${TASK:-xsum}
 case "$TASK" in
@@ -98,6 +109,7 @@ case "$TASK" in
     KD_ONLINE_STUDENT=gemma3-xsum-kd-online
     # What the half-experts were trained for - used to verify their scale.
     DEFAULT_EPOCHS=2
+    EVAL_MAX_NEW_TOKENS=64
     INSPECT_EVAL=run_inspect_xsum.py
     LEGACY_EVAL=evaluate_summarisation.py
     LEGACY_TAKES_BATCH_SIZE=1
@@ -115,6 +127,7 @@ case "$TASK" in
     KD_SELF_STUDENT=gemma3-crime-kd-self
     KD_ONLINE_STUDENT=gemma3-crime-kd-online
     DEFAULT_EPOCHS=3
+    EVAL_MAX_NEW_TOKENS=16
     INSPECT_EVAL=run_inspect_crime.py
     LEGACY_EVAL=evaluate.py
     LEGACY_TAKES_BATCH_SIZE=0
@@ -362,7 +375,9 @@ else
       --student "$MERGE" --teacher "$teacher_path" \
       --dataset "../datasets/${DATASET}/train" \
       --output-dir "$REPO_ROOT/models/$KD_STUDENT" \
-      --lmbda "$GKD_LMBDA" --beta "$GKD_BETA"
+      --lmbda "$GKD_LMBDA" --beta "$GKD_BETA" \
+      --max-new-tokens "${GKD_MAX_NEW_TOKENS:-$EVAL_MAX_NEW_TOKENS}" \
+      --batch-size "$GKD_BATCH_SIZE" --grad-accum "$GKD_GRAD_ACCUM"
   else
     log "Distilling (student init = the linear merge)"
     run_axolotl_supervised "$KD_CONFIG"
