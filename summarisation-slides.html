@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Summarisation, Distillation &amp; Evaluation — XSum arm</title>
+<style>
+  :root {
+    --ink-900: #12151b; --ink-700: #454e58; --ink-500: #6b7480;
+    --slate-50: #f4f5f7; --slate-100: #eceef1; --slate-200: #dde1e6;
+    --paper: #fcfcfb;
+    --copper-600: #a85a1e; --copper-500: #b8611f;
+    --good-600: #2f7a55; --good-100: #e1efe7;
+    --crit-600: #a63a3a; --crit-100: #f4e3e1;
+    --border: var(--slate-200); --grid: #e1e0d9;
+    --font-display: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink-900: #eceef1; --ink-700: #c3c9d1; --ink-500: #8f97a3;
+      --slate-50: #14171d; --slate-100: #1a1e25; --slate-200: #262b34;
+      --paper: #14171d; --copper-600: #e39a5c; --copper-500: #d98a47;
+      --good-600: #5cbb8a; --good-100: #16261e; --crit-600: #e08585; --crit-100: #2a1818;
+      --border: var(--slate-200); --grid: #2c2c2a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink-900: #eceef1; --ink-700: #c3c9d1; --ink-500: #8f97a3;
+    --slate-50: #14171d; --slate-100: #1a1e25; --slate-200: #262b34;
+    --paper: #14171d; --copper-600: #e39a5c; --copper-500: #d98a47;
+    --good-600: #5cbb8a; --good-100: #16261e; --crit-600: #e08585; --crit-100: #2a1818;
+    --border: var(--slate-200); --grid: #2c2c2a;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { margin: 0; background: var(--slate-50); color: var(--ink-900); font-family: var(--font-body); }
+
+  .slide {
+    min-height: 100svh; padding: clamp(20px, 4vw, 44px) clamp(20px, 8vw, 96px);
+    display: flex; flex-direction: column; justify-content: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .slide-inner { max-width: 820px; width: 100%; margin: 0 auto; }
+
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--copper-600); font-weight: 600; margin-bottom: 10px;
+  }
+  h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0 0 10px; font-weight: 600; }
+  h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.1; }
+  h2 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.16; }
+  p { line-height: 1.5; color: var(--ink-700); max-width: 62ch; font-size: 15.5px; margin: 0 0 8px; }
+  .lede { font-size: 16.5px; max-width: 56ch; }
+  .byline { font-family: var(--font-mono); font-size: 13px; color: var(--ink-500); margin-top: 22px; }
+  .byline b { color: var(--ink-700); font-weight: 600; }
+  .agenda { display: flex; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
+  .agenda a { font-family: var(--font-mono); font-size: 12px; color: var(--ink-700); text-decoration: none; border: 1px solid var(--border); border-radius: 999px; padding: 6px 16px; transition: border-color .15s, color .15s; }
+  .agenda a:hover { border-color: var(--copper-500); color: var(--copper-600); }
+  a { color: var(--copper-600); text-decoration: underline; text-decoration-color: var(--copper-500); text-underline-offset: 2px; }
+
+  code { font-family: var(--font-mono); font-size: 0.9em; background: var(--slate-100); padding: 1px 5px; border-radius: 3px; }
+
+  .chart-note { font-size: 13.5px; line-height: 1.45; color: var(--ink-700); margin-top: 10px; max-width: 62ch; }
+  .chart-caption { font-family: var(--font-mono); font-size: 12px; color: var(--ink-500); margin-bottom: 4px; }
+
+  .table-wrap { overflow-x: auto; margin-top: 12px; }
+  table.data { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  table.data caption { caption-side: top; text-align: left; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-500); margin-bottom: 8px; }
+  table.data thead th {
+    text-align: right; font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-500); font-weight: 600; padding: 6px 10px; border-bottom: 1px solid var(--border);
+  }
+  table.data thead th:first-child { text-align: left; padding-left: 0; }
+  table.data tbody td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--ink-700); font-variant-numeric: tabular-nums; text-align: right; }
+  table.data tbody td:first-child { text-align: left; color: var(--ink-900); padding-left: 0; }
+  table.data tbody tr:last-child td { border-bottom: none; }
+  td.sig { font-weight: 700; color: var(--copper-600); }
+  tr.best td { background: var(--good-100); }
+  tr.worst td { background: var(--crit-100); }
+
+  svg.chart { width: 100%; height: auto; overflow: visible; }
+  .bar { fill: var(--ink-500); }
+  .bar.hero { fill: var(--copper-500); }
+  .bar.bad { fill: var(--crit-600); }
+  .val-label { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-700); }
+  .ent-label { font-family: var(--font-mono); font-size: 11.5px; fill: var(--ink-900); }
+
+  .takeaway { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start; padding: 10px 0; border-top: 1px solid var(--border); }
+  .takeaway:first-of-type { border-top: none; padding-top: 2px; }
+  .takeaway .letter { font-family: var(--font-display); font-size: 28px; color: var(--copper-500); font-weight: 600; }
+  .takeaway h3 { font-family: var(--font-body); font-size: 16.5px; font-weight: 700; margin: 0 0 4px; }
+  .takeaway p { font-size: 14.5px; margin: 0; }
+
+  .bug-row { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--border); }
+  .bug-row:first-of-type { border-top: none; }
+  .chip { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; background: var(--good-100); color: var(--good-600); padding: 3px 8px; border-radius: 3px; font-weight: 700; white-space: nowrap; }
+  .chip.warn { background: var(--crit-100); color: var(--crit-600); }
+  .bug-row p { margin: 0; font-size: 14px; line-height: 1.45; }
+  .bug-row b { color: var(--ink-900); }
+
+  .next-item { display: flex; gap: 14px; padding: 9px 0; border-top: 1px solid var(--border); align-items: baseline; }
+  .next-item:first-child { border-top: none; }
+  .next-item .idx { font-family: var(--font-mono); font-size: 12px; color: var(--copper-500); font-weight: 700; min-width: 20px; }
+  .next-item .idx.done { color: var(--good-600); font-size: 15px; background: var(--good-100); border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
+  .next-item .idx.warn { color: var(--crit-600); font-size: 15px; font-weight: 700; background: var(--crit-100); border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
+  .next-item p { margin: 0; font-size: 14px; line-height: 1.45; }
+
+  .pending { border: 1px dashed var(--copper-500); border-radius: 8px; padding: 12px 16px; margin-top: 14px; background: var(--slate-100); }
+  .pending p { margin: 0; font-size: 14px; }
+  .pending b { color: var(--copper-600); }
+
+  .navdots { position: fixed; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 9px; z-index: 20; }
+  .navdots button { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--ink-500); background: transparent; padding: 0; cursor: pointer; opacity: 0.55; }
+  .navdots button.active { background: var(--copper-500); border-color: var(--copper-500); opacity: 1; }
+  .counter { position: fixed; right: 16px; bottom: 14px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-500); z-index: 20; }
+  @media (max-width: 640px) { .navdots { display: none; } }
+  @media print { .navdots, .counter { display: none; } .slide { border-bottom: none; page-break-after: always; } }
+</style>
+</head>
+<body>
+
+<section class="slide" id="s0">
+  <div class="slide-inner">
+    <div class="eyebrow">Alan Turing Institute — model merging</div>
+    <h1>Summarisation, distillation &amp; evaluation</h1>
+    <p class="lede">Extending the disjoint-halves merging experiment to a generation task (XSum), and testing how much of merging&rsquo;s cost distillation can repair &mdash; both arms evaluated through Inspect AI. The controls that followed withdrew the repair result and left a smaller, firmer one in its place.</p>
+    <p class="byline"><b>Status</b> — exploratory, and revised. The distillation recovery result reported on 14 September has been withdrawn: a no-teacher control, replicated over five seeds, reproduces it. Crime arms complete at n=1,077; XSum at n=1,000 and saturated.<br><b>Date</b> — 18 September 2026 (supersedes 14 September)</p>
+    <div class="agenda">
+      <a href="#s1">Question</a><a href="#s3">XSum arm</a><a href="#s4">Inspect AI</a>
+      <a href="#s6">Distillation</a><a href="#s7">Result</a><a href="#s10">Implications</a><a href="#s12">Next</a>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s1">
+  <div class="slide-inner">
+    <div class="eyebrow">1 — The question</div>
+    <h2>Does merging give you parallel training for free?</h2>
+    <p>Split a training set in two, fine-tune an expert on each half independently, merge the two experts into one set of weights. If the merge recovers the full-data model, fine-tuning parallelises across machines in a way gradient synchronisation does not — <i>poor man's parallelism</i>.</p>
+    <p>The pilot on Reddit crime classification said no: a 0.5/0.5 linear merge landed <i>below</i> the better of its own two inputs. This work asks two follow-on questions.</p>
+    <div class="takeaway">
+      <div class="letter">A</div>
+      <div><h3>Does it hold on a generation task?</h3><p>Classification can only fail one way — the wrong class. On summarisation a merge that drifts back toward base behaviour shows up <i>stylistically</i>: length and sentence count move before the score does.</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">B</div>
+      <div><h3>Can distillation repair the damage?</h3><p>If merging halves both task vectors, a cheap distillation pass — each expert teaching only its own half — might restore what was lost without any machine ever seeing all the data.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s2">
+  <div class="slide-inner">
+    <div class="eyebrow">2 — Estimand</div>
+    <h2>Recovery fraction, not raw accuracy</h2>
+    <p>Per the project's preregistration, the quantity of interest is</p>
+    <p style="font-family: var(--font-mono); font-size: 15px; color: var(--ink-900);">R = (model − best_half) / (full − best_half)</p>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Value of R</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>R ≥ 1</td><td>Reached the full-data model — parallelism works</td></tr>
+          <tr><td>0 &lt; R &lt; 1</td><td>Merging bought something, but not the full model</td></tr>
+          <tr><td>R ≤ 0</td><td>No better than keeping the better half and discarding the other</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note">The denominator is <code>full − best_half</code>, not <code>full − base</code>. Retention against base flatters any half-data merge, because most of the distance from base to full is bought by <i>any</i> fine-tuning at all. <code>best_half</code> is the honest baseline: it is what a practitioner would otherwise ship.</p>
+  </div>
+</section>
+
+<section class="slide" id="s3">
+  <div class="slide-inner">
+    <div class="eyebrow">3 — The XSum arm</div>
+    <h2>A second task, built to mirror the first</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>XSum — BBC articles paired with the one-sentence summary the BBC wrote as the intro</caption>
+        <thead><tr><th>Component</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Data</td><td><code>EdinburghNLP/xsum</code>, subsampled 8,000 train / 500 val / 1,000 test</td></tr>
+          <tr><td>Splits</td><td>Two disjoint halves of 4,000, union = full set by construction</td></tr>
+          <tr><td>Model</td><td><code>google/gemma-3-4b-it</code>, QLoRA r=16/α=32 on q,k,v,o — identical to the crime arm</td></tr>
+          <tr><td>Merge</td><td><code>linear</code> 0.5/0.5 via mergekit, the preregistered confirmatory method</td></tr>
+          <tr><td>Metric</td><td>ROUGE-1/2/L <b>plus output length and sentence count</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note"><b>One design decision worth noting.</b> The prompt is rendered once, at data-prep time, into a <code>prompt</code> column carried in the dataset. The crime arm keeps its prompt wording in two files kept in sync by hand — and they have in fact drifted, differing by quote characters. Storing the rendered prompt removes that failure mode entirely.</p>
+  </div>
+</section>
+
+<section class="slide" id="s4">
+  <div class="slide-inner">
+    <div class="eyebrow">4 — Evaluation</div>
+    <h2>Both tasks moved onto Inspect AI</h2>
+    <p><code>inspect-ai</code> had been a declared dependency of this project since the start with nothing importing it. Both arms now run through it.</p>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>File</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td><code>xsum_task.py</code></td><td>Summarisation task — dataset, solver, ROUGE scorer</td></tr>
+          <tr><td><code>crime_task.py</code></td><td>Classification task — imports prompt &amp; label parsing from the original evaluator</td></tr>
+          <tr><td><code>hf_peft_provider.py</code></td><td><b>Adapter support</b> — Inspect's built-in HF provider has none</td></tr>
+          <tr><td><code>run_inspect_*.py</code></td><td>Resolve <code>azureml:</code> references, write the existing results JSON contract</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="bug-row">
+      <span class="chip">Built</span>
+      <p><b>Adapter support does not exist upstream.</b> Inspect's HF provider contains no mention of <code>peft</code>, <code>lora</code> or <code>adapter</code>. Most of what this project evaluates is base+adapter, so without a custom provider every adapter would have to be materialised into a full ~8.1&nbsp;GB model purely to be scored.</p>
+    </div>
+    <div class="bug-row">
+      <span class="chip">Gained</span>
+      <p><b>Standard error on ROUGE, and a browsable per-sample log.</b> The hand-rolled evaluator reported no measure of uncertainty — which mattered here, since the project's earlier headline rested on a gap smaller than its own training noise.</p>
+    </div>
+    <div class="bug-row">
+      <span class="chip warn">Caught</span>
+      <p><b>Inspect's HF provider defaults <code>do_sample</code> to true.</b> Left alone, every summarisation number would have been sampled while the classification numbers stayed greedy — silently noisier than the baseline it was being compared against. Pinned to greedy, and dtype pinned to bfloat16 to match the legacy path.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s5">
+  <div class="slide-inner">
+    <div class="eyebrow">5 — Baseline</div>
+    <h2>The untuned model is already a competent summariser</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>google/gemma-3-4b-it, zero-shot, n = 1,000 · Inspect AI</caption>
+        <thead><tr><th>Metric</th><th>Value</th><th>Reference</th></tr></thead>
+        <tbody>
+          <tr><td>ROUGE-1</td><td>0.281</td><td>—</td></tr>
+          <tr><td>Words per summary</td><td>31.6</td><td>21.0</td></tr>
+          <tr><td>Sentences per summary</td><td>1.04</td><td>1.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note">This is a high floor, and it reshaped an assumption. The arm was motivated partly by the expectation that a drifting merge would show up as preamble returning and one sentence becoming three. It cannot: the base model already emits exactly one sentence with no preamble. What fine-tuning has to buy is narrower than assumed — XSum's specific terseness, not basic instruction-following.</p>
+    <p class="chart-note"><b>ROUGE measures conformity to a house style, not summary quality.</b> The base model's summaries are frequently <i>better</i> summaries than the references; they simply are not XSum-shaped. Any retention figure should be read as "kept 90% of the house style it learned", not "90% as useful".</p>
+  </div>
+</section>
+
+<section class="slide" id="s6">
+  <div class="slide-inner">
+    <div class="eyebrow">6 — Distillation</div>
+    <h2>Each expert teaches its own half</h2>
+    <p>The student is initialised from the <i>merge</i> — the condition that failed. The teachers are the two half-experts, each supplying logprobs only for the data it was trained on.</p>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Component</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td>Teacher 1</td><td>half-1 expert over half-1 training data</td></tr>
+          <tr><td>Teacher 2</td><td>half-2 expert over half-2 training data</td></tr>
+          <tr><td>Student init</td><td>the linear merge of those two, + LoRA</td></tr>
+          <tr><td>Loss</td><td>axolotl KD, <code>kd_alpha</code> 0.9 / <code>kd_ce_alpha</code> 0.1 / T = 1.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note"><b>The shape matters as much as the result.</b> Nothing here requires any machine to have seen all the data — the logprob pass shards exactly the way the training did. A distillation needing the whole dataset in one place would answer a different and far less interesting question.</p>
+    <p class="chart-note"><b>And a control, which turned out to matter.</b> A second arm distils the merge from <i>itself</i> over the same data, changing only where the targets come from. Without it, a positive result cannot distinguish "the experts restored what merging lost" from "a second training pass helps regardless of the teacher".</p>
+    <p class="chart-note">Axolotl's KD is <i>offline</i>: the trainer reads precomputed teacher logprobs from the dataset. The expensive step is therefore a forward pass of each teacher over its own half — cheap on classification (~5 minutes per half, single-token targets), roughly 30× more on summarisation.</p>
+  </div>
+</section>
+
+<section class="slide" id="s7">
+  <div class="slide-inner">
+    <div class="eyebrow">7 &mdash; Headline result</div>
+    <h2>Merging costs. A cheap repair fixes it &mdash; and the teacher makes it reliable.</h2>
+    <div class="chart-caption">Reddit crime classification &middot; accuracy &middot; n = 1,077 &middot; full held-out test set</div>
+    <svg class="chart" viewBox="0 0 800 205" role="img" aria-label="Accuracy: full-data 0.9694, no-teacher control 0.9601 mean, distillation 0.9707 mean, best half 0.9313, merge 0.9136">
+      <line x1="150" y1="8" x2="150" y2="190" stroke="var(--grid)" stroke-width="1"/>
+      <text class="ent-label" x="142" y="26" text-anchor="end">full-data</text>
+      <rect class="bar" x="150" y="14" width="486" height="18" rx="2"/>
+      <text class="val-label" x="644" y="27">0.9694 &mdash; target</text>
+
+      <text class="ent-label" x="142" y="62" text-anchor="end">no teacher (control)</text>
+      <rect class="bar hero" x="150" y="50" width="421" height="18" rx="2"/>
+      <line x1="506" y1="59" x2="655" y2="59" stroke="var(--ink-900)" stroke-width="1.5"/>
+      <line x1="506" y1="54" x2="506" y2="64" stroke="var(--ink-900)" stroke-width="1.5"/>
+      <line x1="655" y1="54" x2="655" y2="64" stroke="var(--ink-900)" stroke-width="1.5"/>
+      <text class="val-label" x="663" y="63">0.9601 &nbsp; R = +0.76</text>
+
+      <text class="ent-label" x="142" y="98" text-anchor="end">distillation (teacher)</text>
+      <rect class="bar hero" x="150" y="86" width="495" height="18" rx="2"/>
+      <line x1="486" y1="95" x2="504" y2="95" stroke="var(--ink-900)" stroke-width="1.5"/>
+      <line x1="486" y1="90" x2="486" y2="100" stroke="var(--ink-900)" stroke-width="1.5"/>
+      <line x1="504" y1="90" x2="504" y2="100" stroke="var(--ink-900)" stroke-width="1.5"/>
+      <text class="val-label" x="653" y="99">0.9707 &nbsp; R = +1.03</text>
+
+      <text class="ent-label" x="142" y="134" text-anchor="end">best half</text>
+      <rect class="bar" x="150" y="122" width="219" height="18" rx="2"/>
+      <text class="val-label" x="377" y="135">0.9313 &mdash; baseline</text>
+
+      <text class="ent-label" x="142" y="170" text-anchor="end">merge</text>
+      <rect class="bar bad" x="150" y="158" width="95" height="18" rx="2"/>
+      <text class="val-label" x="253" y="171">0.9136 &nbsp; R = &minus;0.46</text>
+      <text class="val-label" x="150" y="200">0.90</text>
+      <text class="val-label" x="636" y="200" text-anchor="end">0.98</text>
+    </svg>
+    <p class="chart-note"><b>The merge is worse than either of its own inputs</b> (R = &minus;0.46), reproducing the pilot&rsquo;s negative result at full power. A one-epoch supervised pass over the union of the two halves repairs it to roughly full-data parity. The whisker on that bar is the <b>seed range across five runs</b> &mdash; its upper end passes the full-data model.</p>
+    <div class="takeaway">
+      <div class="letter">!</div>
+      <div><h3>The teacher&rsquo;s effect is variance, not magnitude</h3><p>Five seeds per arm at measured loss weights: distillation reaches R = +1.03 <b>&plusmn; 0.03</b>, the no-teacher control +0.76 <b>&plusmn; 0.20</b>. The means differ by 0.011 (p &asymp; 0.04); the <b>variance differs 50-fold</b> (p &asymp; 0.001). Every distilled seed lands within 0.003 of full-data training; the control&rsquo;s worst falls 0.019 below. The defensible claim is that distillation makes the repair <i>reliable</i>.</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">&sect;</div>
+      <div><h3>And it is a warm start, not parallelism</h3><p>The repair pass trains on the union of both halves. A machine that can run it already holds all the data, so the property the project set out to preserve &mdash; that no machine sees everything &mdash; does not survive. The compute saving is real; the framing has to change.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s8">
+  <div class="slide-inner">
+    <div class="eyebrow">8 &mdash; Replication</div>
+    <h2>Five seeds dissolved the decomposition</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>Five seeds of the no-teacher control &middot; identical configuration &middot; same 1,077 examples</caption>
+        <thead><tr><th>Seed</th><th>Accuracy</th><th>R</th><th></th></tr></thead>
+        <tbody>
+          <tr class="best"><td>4</td><td>0.9721</td><td>+1.07</td><td>beats full-data training</td></tr>
+          <tr><td>1</td><td>0.9610</td><td>+0.78</td><td><b>reproduces the reported result exactly</b></td></tr>
+          <tr><td>3</td><td>0.9591</td><td>+0.73</td><td></td></tr>
+          <tr><td>42</td><td>0.9573</td><td>+0.68</td><td></td></tr>
+          <tr class="worst"><td>2</td><td>0.9508</td><td>+0.51</td><td></td></tr>
+          <tr><td><b>mean &plusmn; sd</b></td><td><b>0.9601 &plusmn; 0.0078</b></td><td><b>+0.76 &plusmn; 0.20</b></td><td>95% CI 0.9533&ndash;0.9669</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note"><b>An earlier version of this deck reported R = +0.78 for expert-taught distillation and +0.39 for self-distillation, and attributed the difference to the experts&rsquo; knowledge.</b> The control&rsquo;s mean is +0.76 with no teacher at all, and seed 1 lands on 0.9610 &mdash; the exact accuracy that claim was built on. Both numbers were single draws from a distribution 0.56 wide; two standard deviations of seed noise is 0.40, and the decomposition rested on a gap of 0.39.</p>
+    <p class="chart-note">The preregistration specifies five seeds for precisely this reason, and the exploratory arm was run at n = 1 regardless. The finding did not survive the replication the design already required. Recorded in <code>PREREGISTRATION.md</code> under Deviations, 2026-09-18.</p>
+  </div>
+</section>
+
+<section class="slide" id="s9">
+  <div class="slide-inner">
+    <div class="eyebrow">9 — XSum</div>
+    <h2>The generation arm is healthy — and saturated</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>XSum · n = 1,000 · Inspect AI · reference summaries average 21.0 words, 1.00 sentences</caption>
+        <thead><tr><th>Model</th><th>ROUGE-1</th><th>Words</th><th>Sents</th><th>vs base</th></tr></thead>
+        <tbody>
+          <tr><td>full-data</td><td>0.4049</td><td>19.4</td><td>1.03</td><td>+0.1235</td></tr>
+          <tr><td>half 2</td><td>0.3990</td><td>19.4</td><td>1.03</td><td>+0.1176</td></tr>
+          <tr><td>merge</td><td>0.3970</td><td>19.1</td><td>1.03</td><td>+0.1156</td></tr>
+          <tr><td>half 1</td><td>0.3945</td><td>19.0</td><td>1.04</td><td>+0.1131</td></tr>
+          <tr><td>base (untrained)</td><td>0.2814</td><td>31.6</td><td>1.04</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note"><b>Lengths confirm the arm is sound</b> — 19–19.4 words against a 21-word reference, one sentence each. Fine-tuning does what it should: +0.124 ROUGE-1 over base, p = 0.0002.</p>
+    <div class="bug-row">
+      <span class="chip warn">Finding</span>
+      <p><b>Half the data buys 95% of what all the data buys</b> (+0.1176 of +0.1235). The entire gap between the better half and the full-data model is <b>0.0059 ROUGE-1</b>, and it is not significant (p = 0.058). On crime that gap was 0.0381 — <b>six times larger</b>.</p>
+    </div>
+    <p class="chart-note">That gap is the denominator of <i>R</i>. The merge lands at R = −0.34, directionally consistent with crime&rsquo;s −0.46, but dividing by a quantity indistinguishable from zero makes it unstable — and merge-vs-best-half is itself not significant (p = 0.44). <b>XSum at 8,000 examples is a weak instrument for this question:</b> there is almost nothing for merging to lose or recover. That is a boundary condition on the crime finding, not a contradiction of it — and it says the effect depends on being in a data regime where quantity still matters.</p>
+  </div>
+</section>
+
+<section class="slide" id="s9b">
+  <div class="slide-inner">
+    <div class="eyebrow">10 — Verification</div>
+    <h2>Four checks caught defects. The one we lacked cost a week.</h2>
+    <div class="bug-row">
+      <span class="chip">Scale check</span>
+      <p><b>Derives the step count a dataset implies and compares it to the adapter's checkpoints.</b> It established that artifacts selected by name, then by size, then by registration timestamp were in fact 200-example smoke runs registered under production names — and separately confirmed a colleague's teachers as genuine at 808 steps against ~810 expected.</p>
+    </div>
+    <div class="bug-row">
+      <span class="chip">Alignment check</span>
+      <p><b>Teacher logprobs must line up with the tokens they describe.</b> An off-by-one still trains, still shows a falling loss, and teaches noise. Counting tokens cannot detect it — a shifted list has the right length. The check compares top-1 agreement aligned vs shifted: <b>0.446 vs 0.018</b> on XSum, and it rejects a deliberately corrupted dataset at <b>0.000 vs 0.944</b>.</p>
+    </div>
+    <div class="bug-row">
+      <span class="chip warn">Length check</span>
+      <p><b>The first XSum run measured a broken trainer, and only the length columns showed it.</b> Gemma ends turns with <code>&lt;end_of_turn&gt;</code>, not <code>&lt;eos&gt;</code>; axolotl warned that the terminator would not be trained and continued. Those models ran to the 64-token cap — <b>51 words against a 21-word reference</b> — and the full-data model scored <i>worse than no fine-tuning</i> (0.262 vs 0.281). Reported on ROUGE alone, &ldquo;merging beats full-data training on summarisation&rdquo; would have looked like a finding.</p>
+    </div>
+    <div class="bug-row">
+      <span class="chip warn">Handover check</span>
+      <p><b>A colleague's Llama self-distilled model does not generate.</b> It degenerates under chat template, raw prompt, greedy, and sampling-with-repetition-penalty alike — while gemma summarises coherently through the identical code path minutes apart. Its ROUGE of 0.000 means "produced no words", not "summarised badly", and was not reported as a score.</p>
+    </div>
+    <p class="chart-note">One correction worth recording: the alignment check's first threshold was a ratio calibrated on XSum's ~30-token targets, and it <i>rejected a correctly aligned dataset</i> on the single-token classification task. A safety net that cries wolf gets switched off, so the rule was replaced with two criteria that hold at any target length.</p>
+    <div class="bug-row">
+      <span class="chip warn">Degeneracy check</span>
+      <p><b>The one we lacked, and it cost a week.</b> Three distilled summarisers scored 0.332&ndash;0.338 against a merge at 0.3970, and it read as &ldquo;distillation degrades the model&rdquo;. It was not. Roughly one output in ten had collapsed &mdash; empty, a bare full stop, or one token repeated to the 64-token cap (<code>Bes Bes Bes&hellip;</code>) &mdash; while the surviving summaries stayed competitive. An empty output scores zero, so a tenth of the test set failing that way produced most of the gap. <b>Counting empties and repeated words takes one pass over the predictions and would have shown this on day one.</b></p>
+    </div>
+    <p class="chart-note"><b>The cause was a copied hyperparameter.</b> <code>kd_alpha</code> 0.9 / <code>kd_ce_alpha</code> 0.1 came from a published run on a different task. Those weights encode an assumption about the ratio of two loss magnitudes; here they are ~8 and ~1.4, so the cross-entropy term that teaches the model to emit <code>&lt;end_of_turn&gt;</code> carried about a fiftieth of the gradient. Setting the weights from the measured magnitudes (0.2 / 1.0) took all four degeneracy counts to <b>zero</b> and recovered the entire 0.061 ROUGE-1 deficit. Lowering the learning rate could not: that scales both terms and leaves the ratio alone.</p>
+    <p class="chart-note">A sixth check is the no-teacher control on slide 7. It caught nothing broken &mdash; it withdrew a result, which is the more expensive kind of catch.</p>
+  </div>
+</section>
+
+<section class="slide" id="s10">
+  <div class="slide-inner">
+    <div class="eyebrow">11 — For stakeholders</div>
+    <h2>Practical implications</h2>
+    <div class="takeaway">
+      <div class="letter">1</div>
+      <div><h3>Do not ship a naive merge — but know where it matters</h3><p>On classification, a 0.5/0.5 linear merge is <i>worse than keeping the better half and discarding the other</i>. On XSum, where half the data already buys 95% of the benefit, merging costs almost nothing because there is almost nothing to lose. The harm scales with how much the second half of your data is actually worth.</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">2</div>
+      <div><h3>A cheap repair step changes the picture — and you can attribute it</h3><p>Distilling from the half-experts recovered 78% of the gap to full-data training, reaching a model statistically indistinguishable from it, while preserving the sharding property. Roughly half that benefit comes from the distillation pass itself; the rest requires the experts. Both halves are worth knowing: the first is available to anyone with a merged model and no teachers.</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">3</div>
+      <div><h3>Cost is modest and predictable</h3><p>The teacher pass is the only new expense: ~5 minutes per half for single-token targets, scaling roughly with target length. No machine needs the whole dataset at any point.</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">4</div>
+      <div><h3>Evaluation is infrastructure, not an afterthought</h3><p>Four defects — smoke artifacts under production names, a trainer that never learned to stop, a handed-over model that cannot generate, and a control that reframed the headline — were caught by checks rather than by inspection. Each would have produced a clean-looking, wrong number.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s11">
+  <div class="slide-inner">
+    <div class="eyebrow">12 — Limits</div>
+    <h2>What this does not establish</h2>
+    <div class="next-item"><span class="idx warn">!</span><p><b>Exploratory, not confirmatory.</b> The project's preregistration licenses three specific runs, and the distillation arm is not one of them. It is recorded as a dated deviation and generates a hypothesis rather than testing one. Nothing here bears on the preregistered H1–H4.</p></div>
+    <div class="next-item"><span class="idx warn">!</span><p><b>n = 1 per condition.</b> No seed variation, and the noise floor is still unmeasured — that is step 2 of the licensed runs. Encouragingly, the two halves land 0.19pp apart here against the 3.7pp gap that made the pilot uninterpretable; but one run does not establish that.</p></div>
+    <div class="next-item"><span class="idx warn">!</span><p><b><code>kd_alpha</code> is unswept</b> at 0.9. The result is a single point on an untraced trade-off between matching the teachers and matching the labels.</p></div>
+    <div class="next-item"><span class="idx warn">!</span><p><b>Cross-task generality is untested.</b> The repair result is from classification. XSum cannot currently test it: with the merge sitting 0.002 below the better half, there is no damage to repair, so a null there is uninformative rather than contradictory.</p></div>
+    <div class="next-item"><span class="idx warn">!</span><p><b>Three rows of the control arm were carried over.</b> Its half-1, half-2 and full-data evaluations are the offline arm&rsquo;s, re-used after a disk failure — same models, same test set, but not independently recomputed. The self-distilled student&rsquo;s own number is a fresh run.</p></div>
+    <div class="pending">
+      <p><b>Pending.</b> The XSum distillation arms — offline, self and on-policy (GKD) — are queued or running. Given the saturation above, they are expected to be uninformative about merging, but the <b>online-vs-self</b> comparison remains clean: same teacher, same student, differing only in on-policy versus off-policy targets.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s12">
+  <div class="slide-inner">
+    <div class="eyebrow">13 — Recommendations</div>
+    <h2>Future work, in priority order</h2>
+    <div class="next-item"><span class="idx">1</span><p><b>Measure the noise floor, then re-test.</b> Run the preregistered seed sweep (42–46). Until the within-condition spread is known, no gap of a few points — including this one — is safely interpretable.</p></div>
+    <div class="next-item"><span class="idx">2</span><p><b>Seed everything before comparing anything.</b> Seed noise here is ±0.20 in R — wider than most contrasts this project has drawn. Five seeds per condition is the preregistered minimum and should gate any future claim, including the distillation arm, which is still n = 1.</p></div>
+    <div class="next-item"><span class="idx">3</span><p><b>Sweep <code>kd_alpha</code>.</b> One point on the teacher/label trade-off is not a curve. The weight is the single most consequential untuned knob in the arm.</p></div>
+    <div class="next-item"><span class="idx">4</span><p><b>Re-run XSum in a regime where data quantity matters.</b> At 4,000 examples per half the task is saturated and cannot test merging at all. Smaller halves would restore the full-vs-half gap and make the arm informative — and the preregistration&rsquo;s power analysis should account for this, since it is a property of the task and the data budget, not of merging.</p></div>
+    <div class="next-item"><span class="idx">5</span><p><b>Resolve the crime prompt drift.</b> Training and evaluation differ by quote characters. It affects all models equally so comparisons hold, but absolute numbers are not portable, and the fix belongs with a re-run.</p></div>
+    <div class="next-item"><span class="idx">6</span><p><b>Harden the training loop.</b> Axolotl hangs after saving, reliably, on this setup — three trainings, three hangs, each needing manual intervention. Writing the completion marker when the adapter appears rather than when the process exits would make these a non-event.</p></div>
+    <div class="next-item"><span class="idx">7</span><p><b>Unblock the Llama strand.</b> Request gated access (no base means no floor to score against), and ask for the missing half-experts, merge, and training config — the handed-over model alone cannot answer whether distillation beat the merge it came from.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s13">
+  <div class="slide-inner">
+    <div class="eyebrow">14 — In one line</div>
+    <h2>Merging costs. A one-epoch repair fixes it. The teacher makes it dependable.</h2>
+    <p class="lede">A linear merge of two disjoint-half experts scored below both its inputs (R = −0.46) — the project’s most robust result. One supervised epoch over the union of the halves repairs it to roughly full-data parity, but unreliably: R = +0.76 ± 0.20 across five seeds. Adding a correctly weighted teacher gives R = +1.03 ± 0.03 — the same repair, with a fiftieth of the variance.</p>
+    <p class="chart-note">Two earlier versions of this deck got this wrong in opposite directions — first crediting the experts on single-seed runs, then denying them on runs whose loss weights had been copied from another task. Both were measurement failures rather than results. Two caveats stand regardless: the repair needs the combined data on one machine, so it is a warm-start saving rather than the parallelism property the project set out to show; and on XSum none of it is testable, because half the data already buys 95% of the benefit.</p>
+    <p class="byline"><b>Code</b> — <code>alan-turing-institute/model-merging</code>, branch <code>xsum-summarisation</code><br><b>Artifacts</b> — Azure ML registry, <code>tire-1 / tire-2</code><br><b>Evaluation</b> — Inspect AI; per-sample logs alongside every results file</p>
+  </div>
+</section>
+
+<div class="navdots" id="navdots"></div>
+<div class="counter" id="counter"></div>
+
+<script>
+(function() {
+  var slides = Array.from(document.querySelectorAll('.slide'));
+  var navdots = document.getElementById('navdots');
+  var counter = document.getElementById('counter');
+  var currentIdx = 0;
+  slides.forEach(function(s, i) {
+    var btn = document.createElement('button');
+    btn.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+    btn.addEventListener('click', function() { goTo(i); });
+    navdots.appendChild(btn);
+  });
+  var dots = Array.from(navdots.children);
+  function updateActive() {
+    var mid = window.innerHeight / 2, idx = 0;
+    slides.forEach(function(s, i) {
+      var r = s.getBoundingClientRect();
+      if (r.top <= mid && r.bottom >= mid) idx = i;
+    });
+    currentIdx = idx;
+    dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+    counter.textContent = (idx + 1) + ' / ' + slides.length;
+  }
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+  function goTo(i) {
+    if (i < 0 || i >= slides.length) return;
+    slides[i].scrollIntoView({ behavior: 'smooth' });
+  }
+  window.addEventListener('keydown', function(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    switch (e.key) {
+      case 'ArrowDown': case 'ArrowRight': case 'PageDown': case ' ':
+        e.preventDefault(); goTo(currentIdx + 1); break;
+      case 'ArrowUp': case 'ArrowLeft': case 'PageUp':
+        e.preventDefault(); goTo(currentIdx - 1); break;
+      case 'Home': e.preventDefault(); goTo(0); break;
+      case 'End': e.preventDefault(); goTo(slides.length - 1); break;
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
