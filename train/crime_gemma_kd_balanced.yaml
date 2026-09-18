@@ -1,0 +1,80 @@
+# Crime KD with the loss terms balanced, and the turn terminator removed.
+#
+# Two fixes at once, both established on XSum:
+#
+#   kd_alpha 0.2 / kd_ce_alpha 1.0 - weights set from the MEASURED loss
+#   magnitudes rather than copied from axolotl's published run. On XSum the
+#   0.9/0.1 weighting produced 41 empty summaries and 55 with a repeated word
+#   out of 1000, and cost 0.061 ROUGE-1; rebalancing took all four degeneracy
+#   counts to zero and recovered the whole deficit.
+#
+#   no eot_tokens / train_on_eos - fc84af5 propagated the XSum turn-terminator
+#   fix to a single-token classification target, taking supervision from 1
+#   position to 4 and quadrupling the distillation gradient.
+#
+# The question this answers: crime's distillation arm scored 0.9424 against a
+# no-teacher control at 0.9601 +/- 0.0078 over five seeds, which read as
+# "distillation is mildly harmful". But that arm ran at 0.9/0.1, the same
+# weighting that turned out to be an artefact on XSum. If the balanced arm
+# lands near the control, distillation is neutral rather than harmful and the
+# earlier reading was about our settings, not about the method.
+#
+# Still n=1. The control has five seeds; this does not.
+base_model: ../models/gemma3-crime-merged-linear-2
+
+load_in_4bit: true
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+
+kd_trainer: true
+kd_ce_alpha: 1.0
+kd_alpha: 0.2
+kd_temperature: 1.0
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+chat_template: tokenizer_default
+
+
+datasets:
+  - path: ../../datasets/crime_kd_train
+    # A local shim (train/kd_strategies/legacy.py) that reaches axolotl's v1
+    # KD strategy. The bare module path resolves to v2, which wants a
+    # dataset carrying target_token_ids already; ours carries per-position
+    # top-k logprobs, which is v1's input. No type string reaches v1
+    # directly - see the shim's docstring for why.
+    type: kd_strategies.legacy
+    field_messages: messages
+    # Matches the loader's own default, so this key is not load-bearing.
+    logprobs_field: logprobs
+
+val_set_size: 0.0
+
+sequence_len: 2048
+
+train_on_inputs: false
+gradient_checkpointing: true
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+num_epochs: 1
+
+learning_rate: 1e-4
+
+output_dir: ../models/gemma3-crime-kd-from-merge
