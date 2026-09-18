@@ -24,11 +24,6 @@ resources:
 limits:
   timeout: 7200
 
-inputs:
-  hf_token:
-    type: string
-    default: ""
-
 outputs:
   merged_model:
     type: uri_folder

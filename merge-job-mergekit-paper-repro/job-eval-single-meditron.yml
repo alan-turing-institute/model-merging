@@ -23,11 +23,6 @@ resources:
 limits:
   timeout: 10800
 
-inputs:
-  hf_token:
-    type: string
-    default: ""
-
 outputs:
   results:
     type: uri_folder

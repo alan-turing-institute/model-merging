@@ -12,7 +12,7 @@ description: >-
 code: .
 
 command: >-
-  bash moe_single.sh configs/moe-2way.yml ${{outputs.merged_model}}
+  bash moe_single.sh configs/moe-2way.yml ${{outputs.merged_model}} ${{inputs.hf_token}}
 
 environment:
   build:

@@ -48,9 +48,6 @@ inputs:
     type: uri_folder
     path: azureml:mergekit-repro-dare-ties@latest
     mode: ro_mount
-  hf_token:
-    type: string
-    default: ""
 
 outputs:
   results:
