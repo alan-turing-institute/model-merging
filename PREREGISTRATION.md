@@ -456,3 +456,53 @@ which would need its own pre-specified run to test. `kd_alpha` is unswept at
 
 **What it does not change.** The confirmatory design, the primary estimand, the
 five conditions, the seeds, and the licensed runs are all untouched.
+
+### 2026-09-18 — the exploratory distillation result is withdrawn
+
+**What changed.** Nothing in the confirmatory design. This entry withdraws a
+result generated under the 2026-09-11 amendment above, and records the evidence
+that withdrew it.
+
+**What was claimed.** That distilling the half-experts into a student
+initialised from their merge recovers R = +0.78 on the crime arm, statistically
+indistinguishable from full-data training, while self-distillation recovers
++0.39 — and that the difference decomposes the repair into a distillation
+component and an expert-knowledge component.
+
+**What refutes it.** A control with the distillation term switched off
+(`kd_alpha: 0.0`, cross-entropy only, everything else identical) was run five
+times:
+
+| seed | accuracy | R |
+|---|---|---|
+| 4 | 0.9721 | +1.07 |
+| 1 | 0.9610 | +0.78 |
+| 3 | 0.9591 | +0.73 |
+| 42 | 0.9573 | +0.68 |
+| 2 | 0.9508 | +0.51 |
+| mean ± sd | 0.9601 ± 0.0078 | +0.76 ± 0.20 |
+
+The control's mean is +0.76 against the claimed +0.78. Seed 1 reproduces the
+claimed accuracy of 0.9610 exactly. Seed 4 exceeds the full-data model. The
+teacher was contributing nothing that a plain supervised pass over the union of
+the two halves does not already contribute, and the distillation arm itself
+(0.9424 on the fixed configuration) sits below the control's observed minimum.
+
+**The second failure is the one this document warned about.** R varies from
++0.51 to +1.07 across seeds of a single configuration. The decomposition
+compared two numbers 0.39 apart; two standard deviations of seed noise is 0.40.
+Section "Replication, and what the unit of replication is" specifies five seeds
+precisely so that a contrast this size cannot be read off one draw, and the
+exploratory arm was run at n = 1 anyway. The finding did not survive contact
+with the replication the design already required.
+
+**What still stands.** The merge's own deficit, R = -0.46 against a noise scale
+of ±0.20, and the observation that a one-epoch supervised pass over the union
+repairs it to approximately full-data parity. Note that such a pass requires the
+union on one machine, so it does not preserve the property that no machine sees
+all the data — it is a warm-start result, not a parallelism result, and should
+be described as one.
+
+**What it does not change.** The confirmatory design, the primary estimand, the
+five conditions, the seeds, and the licensed runs remain untouched. None of the
+three licensed runs has been executed.

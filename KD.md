@@ -376,11 +376,48 @@ that R normalises by. Recovery fractions computed across the two generations are
 not comparable. Always record provenance, and always compare within one
 generation.
 
-### Everything here is a single run
+### Five seeds: the control's spread contains the entire reported effect
 
-No seeds, no error bars. 0.9424 against the 0.9610 on record is about twenty
-test examples and could be seed noise as easily as a residual code difference.
-`PREREGISTRATION.md` specifies five seeds; none of this has more than one.
+Run 2026-09-18, five seeds of the `kd_alpha: 0.0` control, identical otherwise.
+
+| seed | accuracy | R |
+|---|---|---|
+| 4 | 0.9721 | +1.07 |
+| 1 | 0.9610 | +0.78 |
+| 3 | 0.9591 | +0.73 |
+| 42 | 0.9573 | +0.68 |
+| 2 | 0.9508 | +0.51 |
+| **mean ± sd** | **0.9601 ± 0.0078** | **+0.76 ± 0.20** |
+
+The control's mean recovery is **+0.76**. The figure on record for knowledge
+distillation is **+0.78**. They are the same number, and the control has no
+teacher. Seed 1 reproduces 0.9610 to four decimals - the exact accuracy the
+distillation arm reported - and seed 4 at 0.9721 beats full-data training
+(0.9694) outright.
+
+R ranges +0.51 to +1.07 across seeds of one configuration. That spread of 0.56
+is larger than every effect this project has reported except the merge's own
+deficit. The crime decomposition compared +0.78 against +0.39 and attributed the
+difference to the teachers; two standard deviations here is 0.40.
+
+So: **no comparison at n=1 in this project could support the claims made from
+it.** The preregistration asked for five seeds. Anything below about 0.01
+accuracy - a quarter of the full-vs-better-half gap that R normalises by - is
+indistinguishable from seed noise.
+
+What survives: the merge's deficit, R = -0.46 against a noise scale of ±0.20.
+Merging two disjoint-half experts loses to keeping the better half, and a plain
+supervised pass over the union repairs it to roughly full-data parity. The
+distillation arm at 0.9424 sits 2.3 sd below the control mean and below its
+observed minimum, so distillation is, if anything, mildly harmful - though that
+arm is itself a single seed and needs its own replication before the magnitude
+is quoted.
+
+### Everything else here is a single run
+
+Only the control above has been replicated. Every other number - the KD arms,
+the online arm, both XSum arms - is one draw from a distribution whose width we
+now know to be about ±0.008 accuracy on this task.
 
 ### What this means for the crime arm
 
