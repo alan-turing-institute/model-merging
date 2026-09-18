@@ -134,22 +134,20 @@ uv run --project evaluate python experiments/crosstask_table.py "$RESULTS_DIR"
 
 ### Why this arm and not the halves arm
 
-The halves design could never credit a teacher, and it took a week of controls
-to see why. Both half-experts saw i.i.d. samples of one distribution, so the
-union of the halves *is* the original training set: a plain supervised pass over
-it recovers whatever merging lost, and the teachers hold nothing the hard labels
-do not already carry. That is exactly what happened - a `kd_alpha: 0.0` control
-matched the distillation arm across five seeds (0.9601 +/- 0.0078 against a
-single distillation run at 0.9703), and the recovery figure the project had been
-reporting turned out to be an ordinary draw from the control's distribution.
-See [KD.md](KD.md).
+On the halves design the teacher's contribution is small and hard to see. Both
+half-experts saw i.i.d. samples of one distribution, so the union of the halves
+*is* the original training set, and a plain supervised pass over it recovers
+most of what merging lost. Measured over five seeds per arm, distillation does
+beat that control - 0.9707 +/- 0.0011 against 0.9601 +/- 0.0078, p ~ 0.04 - but
+the sturdier effect is a 50-fold reduction in variance rather than the 0.011 of
+accuracy. The teacher is mostly making the repair *reliable*, not better. See
+[KD.md](KD.md).
 
-Cross-task breaks that symmetry. A classifier and a summariser encode different
-functions, and each expert's soft distribution over its own data carries
-calibration and a ranking over alternatives that a one-hot label cannot express.
-If distillation ever beats a supervised pass, this is the setting where it
-should, and it is the first setting in this project where a positive result
-would mean something.
+Cross-task should give the teacher more to do. Where the halves experts are
+interchangeable, a classifier and a summariser encode different functions, and
+each expert's soft distribution over its own data carries structure that a
+one-hot label cannot express. If the teacher's contribution is ever a matter of
+magnitude rather than variance, this is where it should show.
 
 It is also a better instrument. XSum could not test anything because full-data
 beats the better half by 0.0059 (p = 0.06), and crime's recovery fraction
@@ -187,9 +185,13 @@ only where stated.
 | 4 | each expert alone, on both test sets | ceiling for its task, cross-task floor for the other |
 | 5 | multi-task training at the same budget | the baseline a practitioner would reach for |
 
-Condition 2 is not optional and not an afterthought. It is the condition whose
-absence generated a week of wrong conclusions, and on this arm it is also the
-condition most likely to win.
+Condition 2 is not optional and not an afterthought. Its absence generated a
+week of wrong conclusions on the halves arms, and on this arm it remains the
+condition most likely to account for the bulk of any recovery.
+
+**Report variance, not only means.** On crime the teacher's clearest effect was
+a 50-fold reduction in seed variance, which a table of means would have missed
+entirely. Five seeds per condition is the minimum that makes that visible.
 
 Condition 5 is new relative to the halves arms, and it is what keeps the claim
 honest: "repair beats the merge" is uninteresting if "just train on the repair
@@ -224,10 +226,11 @@ that is itself a result worth reporting.
 
 ### What would count as a positive result
 
-Condition 3 beating condition 2 by more than seed noise, on per-task metrics,
-at a repair budget small enough that condition 5 cannot match it. Anything less
-is a repair story about supervised fine-tuning, which is already the finding of
-the halves arms and does not need distillation to state.
+Condition 3 beating condition 2 on per-task metrics, at a repair budget small
+enough that condition 5 cannot match it - either in mean, or in variance across
+seeds, and the second is what crime actually delivered. A mean difference alone,
+at the ~0.01 scale crime produced, would need more than five seeds to separate
+from noise.
 
 ### Before building on this
 

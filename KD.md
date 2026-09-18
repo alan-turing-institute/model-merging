@@ -420,6 +420,46 @@ observed minimum, so distillation is, if anything, mildly harmful - though that
 arm is itself a single seed and needs its own replication before the magnitude
 is quoted.
 
+### With balanced weights the teacher does contribute (2026-09-18, later)
+
+Five seeds of the distillation arm at `kd_alpha: 0.2` / `kd_ce_alpha: 1.0`,
+against the five control seeds above. Same merge, same teachers, same data, same
+budget - the arms differ only in whether `kd_alpha` is 0.2 or 0.0.
+
+| | mean | sd | range | R |
+|---|---|---|---|---|
+| **distillation, 0.2 / 1.0** | **0.9707** | **0.0011** | 0.9694 - 0.9721 | **+1.03 +/- 0.03** |
+| no-teacher control | 0.9601 | 0.0078 | 0.9508 - 0.9721 | +0.76 +/- 0.20 |
+| full data | 0.9694 | - | - | 1.00 |
+
+Difference +0.0106, se 0.0035, t = 3.02 on Welch's df ~ 4.2, **p ~ 0.04**. The
+distillation mean slightly exceeds full-data training.
+
+**This reverses the conclusion recorded earlier in this section.** "The repair is
+the supervised pass; the teacher contributes nothing" was measured with the
+0.9/0.1 weighting, which the XSum controls then showed to be an artefact. Both
+of the project's headline claims about distillation - the original +0.78 and its
+withdrawal - turned out to be measurement failures rather than results, the
+first from single-seed noise and the second from copied hyperparameters.
+
+**The variance is the sturdier finding.** sd 0.0011 against 0.0078 is a 50-fold
+difference in variance (F ~ 50 on 4,4 df, p ~ 0.001) - far more decisive than
+the difference in means. Every distillation seed lands within 0.003 of the
+full-data model; the control's worst seed falls 0.019 below it. The teacher's
+main effect on this task is **stabilisation**, which is what soft targets are
+theoretically expected to give: a full distribution per position is a
+lower-variance training signal than a one-hot label.
+
+If this arm is written up, the claim to make is "distillation makes the repair
+reliable", not "distillation makes the repair better". The first is supported at
+p ~ 0.001; the second at p ~ 0.04 after a week of many comparisons.
+
+**What it does not show.** One task. XSum cannot corroborate it - saturated, R ~
+-0.05 with or without a teacher. And these seeds vary training only, with the
+merge, the teachers and the test set held fixed, so this is
+within-configuration variance rather than the replication
+`PREREGISTRATION.md` describes.
+
 ### Everything else here is a single run
 
 Only the control above has been replicated. Every other number - the KD arms,

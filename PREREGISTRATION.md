@@ -506,3 +506,50 @@ be described as one.
 **What it does not change.** The confirmatory design, the primary estimand, the
 five conditions, the seeds, and the licensed runs remain untouched. None of the
 three licensed runs has been executed.
+
+### 2026-09-18 (later) — the withdrawal above is itself partly withdrawn
+
+**What changed.** Nothing in the confirmatory design. This entry corrects the
+entry immediately above it.
+
+**What that entry concluded.** That the distillation arm's recovery was
+attributable to its cross-entropy term, because a no-teacher control reached the
+same recovery fraction. That comparison used the distillation arm at
+`kd_alpha: 0.9` / `kd_ce_alpha: 0.1`.
+
+**Why it was wrong.** Those weights were copied from a published run on another
+task, and encode an assumption about the ratio of two loss magnitudes that does
+not hold here — cross-entropy converges near 1.4 against a top-k KL near 8, so
+the label term carried roughly a fiftieth of the gradient. On XSum the same
+weights produced degeneracy in about one output in ten and cost 0.061 ROUGE-1;
+setting them from the measured magnitudes (0.2 / 1.0) removed the effect
+entirely.
+
+**Re-run at corrected weights, five seeds per arm:**
+
+| | mean | sd | R |
+|---|---|---|---|
+| distillation, 0.2 / 1.0 | 0.9707 | 0.0011 | +1.03 ± 0.03 |
+| no-teacher control | 0.9601 | 0.0078 | +0.76 ± 0.20 |
+| full data | 0.9694 | — | 1.00 |
+
+Difference +0.0106, t = 3.02, p ≈ 0.04. The more decisive result is the
+variance: a 50-fold difference (F ≈ 50 on 4,4 df, p ≈ 0.001). Every distillation
+seed lands within 0.003 of the full-data model; the control's worst falls 0.019
+below it.
+
+**So the defensible claim is about reliability, not magnitude.** Distillation
+makes the repair *consistent*; that it also makes it *better* is supported only
+at p ≈ 0.04, after a week containing many comparisons.
+
+**The methodological record, which matters more than either result.** Both of
+this project's headline claims about distillation were measurement failures. The
+first (+0.78) was one draw from a distribution 0.56 wide, reported without
+seeds. The second (its withdrawal) came from hyperparameters carried across
+tasks without checking the loss scale they assume. The design already required
+five seeds; it did not require anyone to measure the loss terms before weighting
+them, and it should.
+
+**What it does not change.** The confirmatory design, the primary estimand, the
+five conditions, the seeds, and the licensed runs remain untouched. None of the
+three licensed runs has been executed.
