@@ -1,0 +1,17 @@
+# Cross-task Arcee Fusion — parameter-free, importance-thresholded fusion.
+#
+# For each weight it scores how much the delta shifts that parameter's output
+# distribution (KL) against how large the delta is, and keeps only what clears
+# a dynamically computed threshold. Nothing to tune, which makes it the honest
+# "modern default" baseline against the hand-weighted methods.
+#
+# As with SLERP, `base_model` is simply the first of the two models being
+# fused — the crime expert — not the pretrained base. The asymmetry is real:
+# fusing crime into xsum is not the same operation as the reverse, so a
+# swapped-order run is the natural companion to this one.
+merge_method: arcee_fusion
+base_model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+tokenizer_source: union
+dtype: float16

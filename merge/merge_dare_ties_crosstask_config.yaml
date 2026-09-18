@@ -1,0 +1,25 @@
+# Cross-task merge by DARE + TIES — https://arxiv.org/abs/2311.03099
+#
+# DARE drops a large random fraction of each delta and rescales the survivors,
+# then TIES' sign-majority consensus runs on what is left. On the halves arm
+# the question it answered was "is most of a half's delta redundant noise".
+# Here it asks something sharper: if each task vector is sparse enough that a
+# 70% random drop costs it nothing, the two tasks may simply not be competing
+# for the same parameters — and the cross-task merge becomes easy for a reason
+# that has nothing to do with the merge method.
+#
+# density matches merge_dare_ties_config.yaml (0.3) so the two arms differ only
+# in what is being merged.
+merge_method: dare_ties
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+    parameters:
+      weight: 0.5
+      density: 0.3
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+    parameters:
+      weight: 0.5
+      density: 0.3
+tokenizer_source: union
+dtype: float16

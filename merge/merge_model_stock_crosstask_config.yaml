@@ -1,0 +1,20 @@
+# Cross-task Model Stock — https://arxiv.org/abs/2403.19522
+#
+# Included for parity with the halves sweep, and it is the one method here
+# whose assumption this arm violates outright. Model Stock estimates, from the
+# angle between the base model and each fine-tune, the point that many
+# independent fine-tunes OF THE SAME TASK would average to. Two different
+# tasks are not independent draws from one fine-tuning distribution, so the
+# geometry it reads is not the geometry it assumes.
+#
+# It collapsed to 0.7837 on the halves arm — barely above base's 0.7484 —
+# where the assumption at least approximately held. Expect it to do no better
+# here; it is run so the sweep has no gaps, and a failure is informative about
+# the method, not about cross-task merging.
+merge_method: model_stock
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+tokenizer_source: union
+dtype: float16

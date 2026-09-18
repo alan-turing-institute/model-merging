@@ -1,0 +1,20 @@
+# Cross-task SLERP — spherical interpolation between exactly two models.
+#
+# Included for parity with the halves sweep, and read with a caveat: SLERP
+# interpolates between the two *fine-tuned* models, so `base_model` below is
+# the crime expert, not the pretrained base. It is norm-preserving rather than
+# norm-shrinking, which on the halves arm made it produce predictions
+# byte-identical to linear and task_arithmetic at the midpoint.
+#
+# That identity should NOT hold here. The halves' deltas are near-parallel, so
+# the arc and the chord coincide; two unrelated task vectors are closer to
+# orthogonal, which is exactly where SLERP and linear diverge. If the three
+# still agree byte-for-byte on this arm, that is a bug to chase, not a result.
+merge_method: slerp
+base_model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+parameters:
+  t: 0.5   # 0.0 = pure crime expert, 1.0 = pure xsum expert
+tokenizer_source: union
+dtype: float16
