@@ -129,7 +129,7 @@
     <p class="byline"><b>Status</b> — exploratory, and revised. The distillation recovery result reported on 14 September has been withdrawn: a no-teacher control, replicated over five seeds, reproduces it. Crime arms complete at n=1,077; XSum at n=1,000 and saturated.<br><b>Date</b> — 18 September 2026 (supersedes 14 September)</p>
     <div class="agenda">
       <a href="#s1">Question</a><a href="#s3">XSum arm</a><a href="#s4">Inspect AI</a>
-      <a href="#s6">Distillation</a><a href="#s7">Result</a><a href="#s10">Implications</a><a href="#s12">Next</a>
+      <a href="#s6">Distillation</a><a href="#s7">Result</a><a href="#s9c">Cross-task</a><a href="#s10">Implications</a><a href="#s12">Next</a>
     </div>
   </div>
 </section>
@@ -361,9 +361,66 @@
   </div>
 </section>
 
+<section class="slide" id="s9c">
+  <div class="slide-inner">
+    <div class="eyebrow">10 &mdash; Cross-task</div>
+    <h2>Merging <i>different</i> experts is close to free</h2>
+    <div class="chart-caption">One crime classifier + one XSum summariser &middot; same base, same LoRA config &middot; full test sets (1,077 / 1,000)</div>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>Retention is against each expert&rsquo;s own-task score</caption>
+        <thead><tr><th>Model</th><th>Crime</th><th>XSum R1</th><th>Words</th><th>Retention</th></tr></thead>
+        <tbody>
+          <tr><td>crime expert</td><td>0.9768</td><td>0.2878</td><td>31.5</td><td>&mdash;</td></tr>
+          <tr><td>XSum expert</td><td><b>0.4596</b></td><td>0.4049</td><td>19.4</td><td>&mdash;</td></tr>
+          <tr class="best"><td>task-arithmetic w=1.0</td><td>0.9731</td><td>0.3993</td><td>18.8</td><td><b>99.6% / 98.6%</b></td></tr>
+          <tr class="best"><td>TIES</td><td>0.9703</td><td>0.3994</td><td>19.1</td><td>99.3% / 98.6%</td></tr>
+          <tr><td>arcee-fusion</td><td>0.9694</td><td>0.3581</td><td><b>25.2</b></td><td>99.2% / <b>88.4%</b></td></tr>
+          <tr><td>DARE-TIES</td><td>0.9452</td><td>0.3951</td><td>20.6</td><td>96.8% / 97.6%</td></tr>
+          <tr><td>linear</td><td>0.9424</td><td>0.3941</td><td>20.5</td><td>96.5% / 97.3%</td></tr>
+          <tr><td>SLERP</td><td>0.9406</td><td>0.3937</td><td>20.5</td><td>96.3% / 97.2%</td></tr>
+          <tr class="worst"><td>model-stock</td><td>0.7521</td><td>0.2812</td><td>31.5</td><td>returns the base model</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note"><b>The opposite of the same-task result.</b> Merging two disjoint <i>halves</i> of one task loses to the better half (R = &minus;0.46). Merging two <i>different</i> experts retains 99.6% of one and 98.6% of the other &mdash; and does so despite the XSum expert alone scoring <b>0.4596 on crime, 29 points below the untuned base</b>. Weight averaging repairs what one adapter did to the other&rsquo;s task.</p>
+    <div class="takeaway">
+      <div class="letter">&divide;</div>
+      <div><h3>The 96% tier averages; the 99% tier adds</h3><p>Everything near 96% &mdash; linear, SLERP, task-arithmetic at 0.5 &mdash; halves each task vector&rsquo;s magnitude and yields a diluted version of both. The 99% tier applies both deltas at full strength or trims conflicts and sign-resolves. The vectors are near-orthogonal, so adding them whole works where averaging does not.</p></div>
+    </div>
+    <p class="chart-note"><b>And a trap the averages hide.</b> arcee-fusion looks near-best on crime at 99.2%, but holds only 88.4% of the summariser at 25.2 words against the expert&rsquo;s 19.4 &mdash; it bought classification back by drifting toward the base model&rsquo;s verbose output. Only the length column shows it.</p>
+  </div>
+</section>
+
+<section class="slide" id="s9d">
+  <div class="slide-inner">
+    <div class="eyebrow">11 &mdash; Crowding</div>
+    <h2>What crowds is the direction, not the count</h2>
+    <div class="chart-caption">Task count held at <b>two</b>; adapter count varied &middot; the third adapter is a second crime-pointing expert</div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Adapters</th><th>Method</th><th>Crime</th><th>XSum R1</th><th>Words</th></tr></thead>
+        <tbody>
+          <tr><td>2</td><td>task-arithmetic w=1.0</td><td>0.9731</td><td>0.3993</td><td>18.8</td></tr>
+          <tr class="worst"><td><b>3</b></td><td>task-arithmetic w=1.0</td><td><b>0.5348</b></td><td>0.3941</td><td>18.8</td></tr>
+          <tr><td>2</td><td>TIES</td><td>0.9703</td><td>0.3994</td><td>19.1</td></tr>
+          <tr class="best"><td><b>3</b></td><td>TIES</td><td><b>0.9517</b></td><td>0.4038</td><td>19.7</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note">A third adapter collapses task-arithmetic at weight 1.0 &mdash; crime falls to <b>below the untuned base model</b> (0.7502), and below every component it was built from: the crime half-experts score 0.9294 and 0.9313 alone, and even their own failing merge manages 0.9136. TIES, which splits weight across adapters, loses 0.019.</p>
+    <div class="takeaway">
+      <div class="letter">&rarr;</div>
+      <div><h3>The damage is directional</h3><p>Summarisation is <i>untouched</i> in both merges &mdash; 0.3941 and 0.4038, generation length unchanged. The three-adapter set applies two crime-pointing adapters at full weight and one XSum adapter, so the crime direction gets double displacement and collapses while XSum, at its normal single dose, is fine.</p></div>
+    </div>
+    <p class="chart-note"><b>So the question to ask before merging N adapters is not what N is, but how many of them point the same way.</b> task-arithmetic won the two-way sweep precisely because adding whole vectors preserves both skills &mdash; and that same property makes it fail the moment any direction repeats. TIES was 0.3 points behind at n = 2 and is the one that survives a third model.</p>
+    <p class="chart-note">Not tested: the <b>task-diversity</b> axis. Everything here holds task count at two, so repeated directions may be the whole explanation for the eight-task study&rsquo;s ~24 points of damage &mdash; or not. Distinguishing them needs new experts on new tasks.</p>
+  </div>
+</section>
+
 <section class="slide" id="s9b">
   <div class="slide-inner">
-    <div class="eyebrow">10 — Verification</div>
+    <div class="eyebrow">12 &mdash; Verification</div>
     <h2>Four checks caught defects. The one we lacked cost a week.</h2>
     <div class="bug-row">
       <span class="chip">Scale check</span>
@@ -393,7 +450,7 @@
 
 <section class="slide" id="s10">
   <div class="slide-inner">
-    <div class="eyebrow">11 — For stakeholders</div>
+    <div class="eyebrow">13 &mdash; For stakeholders</div>
     <h2>Practical implications</h2>
     <div class="takeaway">
       <div class="letter">1</div>
@@ -416,7 +473,7 @@
 
 <section class="slide" id="s11">
   <div class="slide-inner">
-    <div class="eyebrow">12 — Limits</div>
+    <div class="eyebrow">14 &mdash; Limits</div>
     <h2>What this does not establish</h2>
     <div class="next-item"><span class="idx warn">!</span><p><b>Exploratory, not confirmatory.</b> The project's preregistration licenses three specific runs, and the distillation arm is not one of them. It is recorded as a dated deviation and generates a hypothesis rather than testing one. Nothing here bears on the preregistered H1–H4.</p></div>
     <div class="next-item"><span class="idx warn">!</span><p><b>n = 1 per condition.</b> No seed variation, and the noise floor is still unmeasured — that is step 2 of the licensed runs. Encouragingly, the two halves land 0.19pp apart here against the 3.7pp gap that made the pilot uninterpretable; but one run does not establish that.</p></div>
@@ -431,7 +488,7 @@
 
 <section class="slide" id="s12">
   <div class="slide-inner">
-    <div class="eyebrow">13 — Recommendations</div>
+    <div class="eyebrow">15 &mdash; Recommendations</div>
     <h2>Future work, in priority order</h2>
     <div class="next-item"><span class="idx">1</span><p><b>Measure the noise floor, then re-test.</b> Run the preregistered seed sweep (42–46). Until the within-condition spread is known, no gap of a few points — including this one — is safely interpretable.</p></div>
     <div class="next-item"><span class="idx">2</span><p><b>Seed everything before comparing anything.</b> Seed noise here is ±0.20 in R — wider than most contrasts this project has drawn. Five seeds per condition is the preregistered minimum and should gate any future claim, including the distillation arm, which is still n = 1.</p></div>
@@ -445,9 +502,10 @@
 
 <section class="slide" id="s13">
   <div class="slide-inner">
-    <div class="eyebrow">14 — In one line</div>
+    <div class="eyebrow">16 &mdash; In one line</div>
     <h2>Merging costs. A one-epoch repair fixes it. The teacher makes it dependable.</h2>
     <p class="lede">A linear merge of two disjoint-half experts scored below both its inputs (R = −0.46) — the project’s most robust result. One supervised epoch over the union of the halves repairs it to roughly full-data parity, but unreliably: R = +0.76 ± 0.20 across five seeds. Adding a correctly weighted teacher gives R = +1.03 ± 0.03 — the same repair, with a fiftieth of the variance.</p>
+    <p class="chart-note"><b>And a second result, from merging different experts rather than halves.</b> One crime classifier merged with one XSum summariser retains 99.6% and 98.6% of each &mdash; merging different skills is close to free, where merging two halves of one task is not. What crowds is the direction, not the count: a third adapter pointing the same way as an existing one collapses that task to below the untuned base while leaving the other untouched.</p>
     <p class="chart-note">Two earlier versions of this deck got this wrong in opposite directions — first crediting the experts on single-seed runs, then denying them on runs whose loss weights had been copied from another task. Both were measurement failures rather than results. Two caveats stand regardless: the repair needs the combined data on one machine, so it is a warm-start saving rather than the parallelism property the project set out to show; and on XSum none of it is testable, because half the data already buys 95% of the benefit.</p>
     <p class="byline"><b>Code</b> — <code>alan-turing-institute/model-merging</code>, branch <code>xsum-summarisation</code><br><b>Artifacts</b> — Azure ML registry, <code>tire-1 / tire-2</code><br><b>Evaluation</b> — Inspect AI; per-sample logs alongside every results file</p>
   </div>
