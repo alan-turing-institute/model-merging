@@ -1,0 +1,128 @@
+# Self-distillation onto a merged XSum model: each half-expert teaches its own half.
+#
+# Student init is the LINEAR MERGE of the two half-data experts - the condition
+# that, on the pilot, lost to the better of its own two inputs. The question is
+# whether a cheap distillation pass over data the experts have already seen
+# recovers what merging destroyed.
+#
+# Teachers are the half-experts themselves, each supplying logprobs only for
+# its own half (precompute_logprobs.py). That keeps the procedure inside the
+# "poor man's parallelism" framing the project is testing: the logprob pass
+# shards exactly the way the training did, so nothing here requires a machine
+# to have seen all the data.
+#
+# Teacher logprobs are PRECOMPUTED. Axolotl's KD is offline - the trainer reads
+# them out of the dataset, it does not run a teacher.
+base_model: ../models/gemma3-xsum-merged-linear
+
+load_in_4bit: true
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+
+kd_trainer: true
+# Weighting set from the MEASURED loss magnitudes, not copied from another run.
+#
+# axolotl's published 0.9/0.1 assumes the two terms are on comparable scales.
+# They are not: cross-entropy converges near 1.4 here while the top-k KL sits
+# near 8, so 0.9/0.1 delivers roughly 50x more gradient from the teacher than
+# from the labels. The labels are what teach the model to emit <end_of_turn>,
+# and drowning them out is what produced the degeneracy: across 1000 test
+# summaries the 0.9/0.1 arms returned 40-64 empty outputs and 54-74 with a word
+# repeated three or more times consecutively, several running the full 64-token
+# budget on a single token ("Bes Bes Bes ..."). Every non-KD model - base,
+# either half, the merge, full-data, and the kd_alpha 0.0 control - produced
+# ZERO of both.
+#
+# Lowering the learning rate does not fix this, because it scales both terms
+# together and leaves the ratio untouched: at 1e-5 empty outputs fell 41 -> 8
+# but repetition only 55 -> 42.
+#
+# 0.2 / 1.0 puts the contributions within a factor of two of each other
+# (0.2 x 8 = 1.6 against 1.0 x 1.4). Still a distillation run - the teacher
+# remains the larger single term - but no longer one where the targets are
+# advisory.
+kd_ce_alpha: 1.0
+kd_alpha: 0.2
+kd_temperature: 1.0
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+# tokenizer_default, NOT the `gemma` alias: precompute_logprobs.py renders the
+# teacher's view with tokenizer.apply_chat_template, and if axolotl tokenizes
+# even slightly differently here the logprobs attach to the wrong tokens.
+chat_template: tokenizer_default
+# THE TURN TERMINATOR MUST BE TRAINED.
+#
+# Without this, axolotl warns "EOS token '<eos>' not found in chat_template; the
+# turn terminator won't be trained" and carries on. Gemma ends a turn with
+# <end_of_turn>, not <eos>, so the model never learns to stop: the first run
+# produced 51 words and 2.3 sentences against a 21-word reference, i.e. it ran
+# to the 64-token generation cap on most examples, and scored WORSE than the
+# untouched base model. A fine-tune that loses to no fine-tuning at all cannot
+# answer any question about merging.
+eot_tokens:
+  - "<end_of_turn>"
+train_on_eos: turn
+
+
+datasets:
+  - path: ../../datasets/xsum_kd_train
+    # A local shim (train/kd_strategies/legacy.py) that reaches axolotl's v1
+    # KD strategy. The bare module path resolves to v2, which wants a
+    # dataset carrying target_token_ids already; ours carries per-position
+    # top-k logprobs, which is v1's input. No type string reaches v1
+    # directly - see the shim's docstring for why.
+    type: kd_strategies.legacy
+    field_messages: messages
+    # Matches the loader's own default, so this key is not load-bearing.
+    logprobs_field: logprobs
+
+# No eval dataset, deliberately. KD trainer evaluation is reported broken
+# upstream (axolotl-ai-cloud/axolotl#3270), and a mid-run crash after the
+# logprob precompute would be expensive. Quality is measured after training by
+# evaluate.py on the held-out test set, which is the number this experiment is
+# actually about.
+val_set_size: 0.0
+
+# Tokenisation ran 24 workers by default (os.cpu_count()) and stalled at 99%
+# for over an hour. This KD dataset is the reason: ~8,000 examples x ~30 target
+# tokens x 64 top-k entries is roughly 30x the nested data of the crime arm's,
+# and sharding that across 24 processes costs more in serialisation and memory
+# than it saves. The crime arm completed fine at the default; only the
+# generation task is large enough to matter.
+#
+# top_k stays at 64 rather than being reduced, so the two arms remain
+# comparable - the fix belongs in how the data is processed, not in how much
+# teacher signal the experiment uses.
+dataset_num_proc: 4
+
+sequence_len: 2048
+
+train_on_inputs: false
+gradient_checkpointing: true
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+# One pass. This is a repair step over data the teachers already fit, not fresh
+# training - more epochs mostly re-learn the teachers' own idiosyncrasies.
+num_epochs: 1
+
+learning_rate: 1e-4
+
+output_dir: ../models/gemma3-xsum-kd-from-merge
