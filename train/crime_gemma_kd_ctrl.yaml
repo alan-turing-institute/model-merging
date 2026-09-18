@@ -1,0 +1,69 @@
+# CONTROL for the crime arms: the same pass with the distillation term OFF.
+#
+# Separates the two things every crime KD arm does at once. Each arm carries
+# kd_ce_alpha on hard labels over the UNION of both halves - data the merged
+# model has never trained on as a single model, so that term is genuine new
+# supervision, not a self-consistency pass. If this control recovers as much as
+# self-distillation did, then self-distillation's +0.39 was the cross-entropy
+# term and not the teacher.
+#
+# Settings match crime_gemma_kd_noeot.yaml (no turn terminator, lr 1e-4,
+# original handover artifacts) so the three arms differ only in the loss.
+base_model: ../models/gemma3-crime-merged-linear-2
+
+load_in_4bit: true
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+
+kd_trainer: true
+kd_ce_alpha: 1.0
+kd_alpha: 0.0
+kd_temperature: 1.0
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+chat_template: tokenizer_default
+
+
+datasets:
+  - path: ../../datasets/crime_kd_train
+    # A local shim (train/kd_strategies/legacy.py) that reaches axolotl's v1
+    # KD strategy. The bare module path resolves to v2, which wants a
+    # dataset carrying target_token_ids already; ours carries per-position
+    # top-k logprobs, which is v1's input. No type string reaches v1
+    # directly - see the shim's docstring for why.
+    type: kd_strategies.legacy
+    field_messages: messages
+    # Matches the loader's own default, so this key is not load-bearing.
+    logprobs_field: logprobs
+
+val_set_size: 0.0
+
+sequence_len: 2048
+
+train_on_inputs: false
+gradient_checkpointing: true
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+num_epochs: 1
+
+learning_rate: 1e-4
+
+output_dir: ../models/gemma3-crime-kd-from-merge
