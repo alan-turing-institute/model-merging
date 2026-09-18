@@ -458,14 +458,18 @@
     </div>
     <div class="takeaway">
       <div class="letter">2</div>
-      <div><h3>A cheap repair step changes the picture — and you can attribute it</h3><p>Distilling from the half-experts recovered 78% of the gap to full-data training, reaching a model statistically indistinguishable from it, while preserving the sharding property. Roughly half that benefit comes from the distillation pass itself; the rest requires the experts. Both halves are worth knowing: the first is available to anyone with a merged model and no teachers.</p></div>
+      <div><h3>A cheap repair reaches full-data parity &mdash; as a warm start, not sharding</h3><p>One epoch over the combined data brings the merge back to full-data parity. Across five seeds: a plain supervised pass recovers R = +0.76 &plusmn; 0.20, and adding a correctly weighted teacher gives <b>+1.03 &plusmn; 0.03</b>. <b>The teacher&rsquo;s contribution is reliability, not accuracy</b> &mdash; a 50-fold drop in seed variance, with every distilled run landing within 0.003 of the full-data model. But the repair trains on the <i>combined</i> data, so this is a compute saving from a warm start, not the property that no machine sees everything.</p></div>
     </div>
     <div class="takeaway">
       <div class="letter">3</div>
-      <div><h3>Cost is modest and predictable</h3><p>The teacher pass is the only new expense: ~5 minutes per half for single-token targets, scaling roughly with target length. No machine needs the whole dataset at any point.</p></div>
+      <div><h3>Cost is modest and predictable</h3><p>The teacher pass is the only new expense: ~5 minutes per half for single-token targets, scaling roughly with target length. Teacher logprobs shard cleanly &mdash; each expert scores only its own data. The <i>repair pass</i> does not: it trains on the union, and that is the step that breaks the sharding property.</p></div>
     </div>
     <div class="takeaway">
       <div class="letter">4</div>
+      <div><h3>Merging <i>different</i> experts is close to free &mdash; watch repeated directions</h3><p>A classifier merged with a summariser keeps 99.6% and 98.6% of each. The harm in the halves arms comes from merging two models trained on <i>the same</i> thing. So before merging N adapters, ask how many point the same way: with task-arithmetic at full weight one repeated direction collapsed that task to below the untuned base, while leaving the other untouched. TIES splits weight and degrades gracefully.</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">5</div>
       <div><h3>Evaluation is infrastructure, not an afterthought</h3><p>Four defects — smoke artifacts under production names, a trainer that never learned to stop, a handed-over model that cannot generate, and a control that reframed the headline — were caught by checks rather than by inspection. Each would have produced a clean-looking, wrong number.</p></div>
     </div>
   </div>
@@ -476,12 +480,13 @@
     <div class="eyebrow">14 &mdash; Limits</div>
     <h2>What this does not establish</h2>
     <div class="next-item"><span class="idx warn">!</span><p><b>Exploratory, not confirmatory.</b> The project's preregistration licenses three specific runs, and the distillation arm is not one of them. It is recorded as a dated deviation and generates a hypothesis rather than testing one. Nothing here bears on the preregistered H1–H4.</p></div>
-    <div class="next-item"><span class="idx warn">!</span><p><b>n = 1 per condition.</b> No seed variation, and the noise floor is still unmeasured — that is step 2 of the licensed runs. Encouragingly, the two halves land 0.19pp apart here against the 3.7pp gap that made the pilot uninterpretable; but one run does not establish that.</p></div>
-    <div class="next-item"><span class="idx warn">!</span><p><b><code>kd_alpha</code> is unswept</b> at 0.9. The result is a single point on an untraced trade-off between matching the teachers and matching the labels.</p></div>
-    <div class="next-item"><span class="idx warn">!</span><p><b>Cross-task generality is untested.</b> The repair result is from classification. XSum cannot currently test it: with the merge sitting 0.002 below the better half, there is no damage to repair, so a null there is uninformative rather than contradictory.</p></div>
+    <div class="next-item"><span class="idx warn">!</span><p><b>Seeds exist for two conditions only.</b> The no-teacher control and the balanced distillation arm have five seeds each on crime. Every other number &mdash; the on-policy arm, both XSum arms, every cross-task merge &mdash; is a single run against a measured noise floor of ~0.008 accuracy. Differences below roughly 0.015 in those rows are not resolvable.</p></div>
+    <div class="next-item"><span class="idx warn">!</span><p><b>Loss weights were set from measured magnitudes, not swept.</b> 0.9/0.1, copied from a published run on another task, cost 0.061 ROUGE-1 and produced degeneracy in one output in ten; 0.2/1.0, derived from cross-entropy near 1.4 against a top-k KL near 8, removed both. Two points on a trade-off, not a sweep &mdash; and the values do not transfer to a new task.</p></div>
+    <div class="next-item"><span class="idx warn">!</span><p><b>Task diversity is untested.</b> The cross-task work holds task count at <i>two</i> throughout. Repeated directions may fully explain the eight-task study&rsquo;s ~24 points of damage, or an independent effect from genuinely distinct tasks may exist. Nothing measured here separates them.</p></div>
+    <div class="next-item"><span class="idx warn">!</span><p><b>Two headline claims were withdrawn mid-study.</b> R = +0.78 for expert-taught distillation, and then its replacement, &ldquo;distillation contributes nothing&rdquo;. The first was one draw from a distribution 0.56 wide; the second was measured at loss weights that proved to be an artefact. Both are recorded as dated deviations in the preregistration.</p></div>
     <div class="next-item"><span class="idx warn">!</span><p><b>Three rows of the control arm were carried over.</b> Its half-1, half-2 and full-data evaluations are the offline arm&rsquo;s, re-used after a disk failure — same models, same test set, but not independently recomputed. The self-distilled student&rsquo;s own number is a fresh run.</p></div>
     <div class="pending">
-      <p><b>Pending.</b> The XSum distillation arms — offline, self and on-policy (GKD) — are queued or running. Given the saturation above, they are expected to be uninformative about merging, but the <b>online-vs-self</b> comparison remains clean: same teacher, same student, differing only in on-policy versus off-policy targets.</p>
+      <p><b>Since resolved.</b> All three XSum distillation arms have run. As predicted they are uninformative about merging &mdash; the task is saturated &mdash; but they diagnosed the loss-weighting fault above. The <b>on-policy</b> arm proved near-vacuous by construction: with the teacher equal to the student&rsquo;s own initialisation the divergence starts at zero, and it changed 5 of 1,077 examples.</p>
     </div>
   </div>
 </section>
