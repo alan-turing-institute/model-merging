@@ -1,0 +1,30 @@
+# Adapter-count curve, step n=4: all four half-experts
+#
+# Holds TASK COUNT at two and varies ADAPTER COUNT. The two-expert sweep found
+# cross-task merging near-lossless (task_arithmetic_w1 99.6%/98.6%, ties
+# 99.3%/98.6%), while the eight-task vision study measured ~24 points of damage.
+# If retention degrades as adapters accumulate even with task count fixed, the
+# crowding is interference in weight space rather than conflict between tasks.
+#
+# Note the construction: the half-expert pairs here are exactly the merges that
+# lose to their own better half in the disjoint-halves arms (R = -0.46 on crime).
+#
+# weight 1.0 each: the deltas ADD. Whether that survives more adapters is
+# precisely the question.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-1-of-2-lora"
+    parameters:
+      weight: 1.0
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-2-of-2-lora"
+    parameters:
+      weight: 1.0
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-1-of-2-lora"
+    parameters:
+      weight: 1.0
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-2-of-2-lora"
+    parameters:
+      weight: 1.0
+tokenizer_source: union
+dtype: float16
