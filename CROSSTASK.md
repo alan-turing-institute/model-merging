@@ -128,116 +128,119 @@ uv run --project evaluate python experiments/crosstask_table.py "$RESULTS_DIR"
   baselines, so it does not depend on the XSum arm's own evaluations having
   finished.
 
-## Proposed: distillation as a repair for cross-task interference
+## Proposed: distillation as an alternative to merging
 
 **Status: design only. Nothing below has been run.**
 
-### Why this arm and not the halves arm
+### The framing changed, and why
 
-On the halves design the teacher's contribution is small and hard to see. Both
-half-experts saw i.i.d. samples of one distribution, so the union of the halves
-*is* the original training set, and a plain supervised pass over it recovers
-most of what merging lost. Measured over five seeds per arm, distillation does
-beat that control - 0.9707 +/- 0.0011 against 0.9601 +/- 0.0078, p ~ 0.04 - but
-the sturdier effect is a 50-fold reduction in variance rather than the 0.011 of
-accuracy. The teacher is mostly making the repair *reliable*, not better. See
-[KD.md](KD.md).
+This section was first drafted as a repair arm - merge the two experts, then
+distil to recover what merging cost. That premise does not survive the evidence.
 
-Cross-task should give the teacher more to do. Where the halves experts are
-interchangeable, a classifier and a summariser encode different functions, and
-each expert's soft distribution over its own data carries structure that a
-one-hot label cannot express. If the teacher's contribution is ever a matter of
-magnitude rather than variance, this is where it should show.
+| setting | linear merge outcome |
+|---|---|
+| same task, disjoint halves (crime) | **loses to the better half**, R = -0.46 |
+| same task, disjoint halves (XSum) | loses slightly, R = -0.34 |
+| **different tasks** (crime + XSum) | retains 95-99% of both experts |
+| **different domains** (Llama-2 + Meditron, mergekit paper reproduction) | **beats both parents on all six benchmarks** |
 
-It is also a better instrument. XSum could not test anything because full-data
-beats the better half by 0.0059 (p = 0.06), and crime's recovery fraction
-carried +/-0.20 of seed noise because it divides by 0.0381. Cross-task
-interference is far larger - the MergeKit evaluation measured roughly 24 points
-of pooled damage merging eight task experts - so the denominator stops being the
-limiting factor.
+Merging two experts trained on *different* things composes well; merging two
+experts trained on *the same* thing from disjoint data does not. That is
+consistent across two model families and two evaluation stacks, and it has a
+plausible mechanism: disjoint-half experts are two conflicting solutions to one
+problem and averaging lands between them, where different-task vectors are
+closer to orthogonal and add.
 
-### The design decision that decides whether the result means anything
+So there is little cross-task damage to repair, and a repair arm would be
+measuring a gap that barely exists - the same dead end XSum turned out to be.
 
-**What does the repair pass train on?**
+### The question worth asking instead
 
-The crime arm's repair trained on the union of both halves, which is why its
-parallelism claim collapsed into a warm-start claim: a machine that can run the
-repair already holds all the data, and at that point full training is the
-obvious baseline. This arm inherits the problem. If the repair set is the whole
-multi-task corpus, the honest comparison is against multi-task training from
-scratch, and that will likely win.
+**Does distillation compose two skills better than weight averaging does?**
 
-So the budget is the experiment. Fix a **small per-task repair set** - a few
-hundred examples - where joint training is infeasible but a cheap repair is not,
-and report the budget as prominently as the metric. A recovery that needs the
-full corpus is not a finding; a recovery from 200 examples per task is.
+Rather than averaging weights, distil both experts into one student: crime
+examples carry crime-expert logprobs, XSum examples carry XSum-expert logprobs,
+concatenated into a single training set. `precompute_logprobs.py` already
+assigns a teacher per shard, so this needs no new machinery, and unlike the
+Llama-2/Meditron pair we hold both experts' actual training data.
+
+This is well-posed in a way the repair framing was not. There is a real baseline
+(the linear merge), a real ceiling (each expert's own score on its own task),
+and a clear alternative hypothesis (weight averaging is already near-optimal for
+orthogonal task vectors, and distillation adds nothing).
 
 ### Conditions
 
-Five seeds each. All share one base, one merge, one repair budget, and differ
-only where stated.
+Five seeds each. Same base, same two experts, same data, same budget.
 
 | # | Condition | Purpose |
 |---|---|---|
-| 1 | the merge, untouched | the deficit to be repaired |
-| 2 | merge + supervised repair (`kd_alpha: 0.0`, `kd_ce_alpha: 1.0`) | **the control that decides everything** |
-| 3 | merge + offline KD, each expert teaching its own task | the experiment |
-| 4 | each expert alone, on both test sets | ceiling for its task, cross-task floor for the other |
-| 5 | multi-task training at the same budget | the baseline a practitioner would reach for |
+| 1 | each expert alone, on both tasks | ceiling on its own task; cross-task floor on the other |
+| 2 | linear merge | the method being compared against |
+| 3 | **multi-teacher KD from the base** | distillation as an alternative to merging |
+| 4 | **multi-teacher KD from the merge** | merge-then-distil; the repair framing, kept because it is one config line |
+| 5 | supervised control, `kd_alpha: 0.0`, same data and budget | **the condition that decides whether the teachers matter** |
+| 6 | joint training on both tasks' data | what a practitioner would do instead |
 
-Condition 2 is not optional and not an afterthought. Its absence generated a
-week of wrong conclusions on the halves arms, and on this arm it remains the
-condition most likely to account for the bulk of any recovery.
+Conditions 3 and 4 differ only in `base_model`. Condition 5 is not optional:
+on crime it accounted for the large majority of the repair, and the teacher's
+measurable contribution turned out to be variance rather than mean. Condition 6
+keeps the claim honest - "distillation composes better than merging" is
+uninteresting if joint training beats both.
 
-**Report variance, not only means.** On crime the teacher's clearest effect was
-a 50-fold reduction in seed variance, which a table of means would have missed
-entirely. Five seeds per condition is the minimum that makes that visible.
+### What must be measured
 
-Condition 5 is new relative to the halves arms, and it is what keeps the claim
-honest: "repair beats the merge" is uninteresting if "just train on the repair
-set" beats both.
-
-### What must be measured alongside the metric
-
-- **Per task, never pooled.** The MergeKit evaluation's own finding was that
-  merging damage is uneven across tasks. Asymmetric repair - fixing the
-  classifier while degrading the summariser - would be invisible in a pooled
-  score and is a plausible outcome given that one task is generative.
-- **Degeneracy counts** (`experiments/degeneracy.py`): empty outputs, repeated
-  words, repeated trigrams, unique-word ratio. On XSum a tenth of outputs
-  collapsing looked identical to "worse summaries" in ROUGE and sent the
-  diagnosis in the wrong direction for a week.
-- **Generation length**, against the reference distribution. It is what exposed
-  the missing turn terminator when ROUGE alone read as a plausible result.
+- **Per task, never pooled.** The cross-task floor here is severe and
+  asymmetric: the XSum expert scores 0.45 on crime against the base model's
+  0.76, while the crime expert leaves XSum roughly unchanged. A pooled number
+  would average a catastrophe against a non-event.
+- **Variance across seeds, not only means.** On crime the teacher's clearest
+  effect was a 50-fold reduction in seed variance (sd 0.0011 against 0.0078)
+  that a table of means would have missed entirely.
+- **Degeneracy counts** (`experiments/degeneracy.py`) on the XSum side. A tenth
+  of outputs collapsing looks identical to "worse summaries" in ROUGE.
+- **Generation length** against the reference distribution.
 
 ### Hyperparameters do not carry over
 
 `kd_alpha` and `kd_ce_alpha` encode an assumption about the ratio of two loss
-magnitudes. Copying axolotl's published 0.9/0.1 cost 0.061 ROUGE-1 on XSum and
-0.028 accuracy on crime, and produced degeneracy in one output in ten. The
-working values here (0.2/1.0) were derived from cross-entropy near 1.4 against a
-top-k KL near 8 **on those tasks**.
+magnitudes. Copying axolotl's 0.9/0.1 cost 0.061 ROUGE-1 on XSum with one
+output in ten degenerate, and 0.028 accuracy on crime. The working values there
+(0.2/1.0) came from cross-entropy near 1.4 against a top-k KL near 8.
 
-This arm mixes a single-token classification target with a ~31-token generative
-one in one training set, so the two contribute to the loss at different scales
-within the same batch. **Measure both terms on this mixture before choosing
-weights**, and consider whether a single pair of weights can serve both - if not,
-that is itself a result worth reporting.
+This arm is harder than either: it mixes a single-token classification target
+with a ~31-token generative one **in the same batch**, so the two contribute at
+different scales within one loss. Measure both terms on the mixture before
+choosing weights, and if one pair cannot serve both targets, that is itself a
+result worth reporting.
 
-### What would count as a positive result
+### What would count as a result
 
-Condition 3 beating condition 2 on per-task metrics, at a repair budget small
-enough that condition 5 cannot match it - either in mean, or in variance across
-seeds, and the second is what crime actually delivered. A mean difference alone,
-at the ~0.01 scale crime produced, would need more than five seeds to separate
-from noise.
+Condition 3 or 4 beating condition 2 on **per-task** metrics by more than seed
+noise - in mean or in variance - while condition 6 does not beat them at the
+same budget. Given that the merge already retains 95-99% of both experts, the
+headroom is small: at the provisional n=100 pass the linear merge trailed by
+0.05 accuracy on crime and 0.014 ROUGE-1 on XSum. At full sample size those are
+roughly eight standard errors and a resolvable bootstrap difference
+respectively, so the gap is measurable - but it is a gap of a few points, not
+the 24 the eight-task setting produced.
 
-### Before building on this
+**If the full sweep shows the merge retaining more than it did at n=100, say
+so and stop.** A composition method cannot demonstrate value against a baseline
+that is already at the ceiling, and that judgement is cheaper to make now than
+after five seeds of four conditions.
 
-The cross-task arm's own results were not present on the compute instance when
-the results directories were inventoried on 2026-09-17. Confirm the merge
-sweep above has actually run and produced a measurable deficit before designing
-a repair for it.
+### Provisional numbers this design rests on
+
+From the `EVAL_LIMIT=100` timing pass, 2026-09-18. **Not yet confirmed at full
+sample size** - the full sweep supersedes these.
+
+| model | crime acc | XSum ROUGE-1 |
+|---|---|---|
+| base | 0.7600 | 0.2701 |
+| crime expert | 0.9700 | 0.2817 |
+| XSum expert | 0.4500 | 0.4088 |
+| linear merge | 0.9200 | 0.3948 |
 
 ## Files
 
