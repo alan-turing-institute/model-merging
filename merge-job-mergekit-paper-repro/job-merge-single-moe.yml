@@ -1,0 +1,36 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-merge-moe
+experiment_name: model-merge-experiments
+description: >-
+  Builds a top-1-of-2 sparse MoE from Llama-2-7B-Chat and Meditron-7B using
+  mergekit-moe, as a routing counterpart to the dense merges in this job set.
+  Needs A100 rather than the T4 the dense merges use: gate_mode hidden runs a
+  forward pass per layer over the routing prompts, and the output is roughly
+  11B parameters against a dense merge's 7B.
+
+code: .
+
+command: >-
+  bash moe_single.sh configs/moe-2way.yml ${{outputs.merged_model}} ${{inputs.hf_token}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 14400
+
+inputs:
+  hf_token:
+    type: string
+    default: ""
+
+outputs:
+  merged_model:
+    type: uri_folder
+    mode: rw_mount

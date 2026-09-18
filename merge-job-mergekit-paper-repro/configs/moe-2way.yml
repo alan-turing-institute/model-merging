@@ -1,0 +1,52 @@
+# Sparse MoE from the same two models the dense merges use.
+#
+# Every other config here collapses Llama-2-7B-Chat and Meditron-7B into one
+# set of weights. This one keeps both sets and adds a router that picks between
+# them per token, so the interference that weight averaging produces cannot
+# occur by construction. That is the point of running it: the gemma crowding
+# curve showed dense merging fails when two adapters push the same direction,
+# and an MoE has no shared weight space for directions to collide in.
+#
+# base_model is Llama-2-chat DELIBERATELY. The two models disagree on vocabulary
+# size - 32,000 against Meditron's 32,017 - and that mismatch is what corrupted
+# embed_tokens/lm_head in the LERP and DARE-TIES reproductions. mergekit-moe
+# takes embeddings and lm_head from the base and routes only the FFN blocks, so
+# anchoring on the 32,000-token model should keep the mismatch out of the
+# tensors that broke before. Verify the output config declares 32000.
+base_model: NousResearch/Llama-2-7b-chat-hf
+
+# top-1 of 2. With two experts, experts_per_token: 2 would activate both on
+# every token - a dense ensemble at double the FLOPs, not a sparse MoE, and not
+# a test of routing. One expert per token is the setting that actually asks
+# whether the router can tell the domains apart.
+experts_per_token: 1
+
+# "hidden" derives each layer's gate from hidden states over the prompts below,
+# which is the only mode that makes an untrained gate meaningful. "random" would
+# need --i-understand-this-is-not-useful-without-training and would tell us
+# nothing.
+gate_mode: hidden
+dtype: float16
+
+experts:
+  - source_model: NousResearch/Llama-2-7b-chat-hf
+    positive_prompts:
+      - "Answer the following multiple-choice question about science."
+      - "Complete this sentence in the most plausible way."
+      - "Explain your reasoning step by step."
+      - "What is the capital of France?"
+      - "Write a short summary of the passage below."
+    negative_prompts:
+      - "A 54-year-old man presents with crushing substernal chest pain."
+      - "Which antibiotic is first-line for community-acquired pneumonia?"
+
+  - source_model: epfl-llm/meditron-7b
+    positive_prompts:
+      - "A 54-year-old man presents with crushing substernal chest pain."
+      - "Which antibiotic is first-line for community-acquired pneumonia?"
+      - "Interpret the following arterial blood gas results."
+      - "What is the mechanism of action of metformin?"
+      - "Based on the abstract, does the evidence support the conclusion?"
+    negative_prompts:
+      - "Complete this sentence in the most plausible way."
+      - "What is the capital of France?"
