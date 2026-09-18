@@ -1,0 +1,51 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: qwen3-7way-show-merge-configs
+experiment_name: model-merge-experiments
+description: >-
+  Prints the mergekit_config.yml that mergekit wrote into each of the four
+  7-way merged models, to recover the weighting used. The merge configs are
+  not in this repository - only the eval job is - and the weights decide
+  whether the n=7 result contradicts the gemma n=3 crowding curve or merely
+  used a different convention (weight 1.0 per model accumulates displacement;
+  weights summing to 1 average it). CPU only: this reads four small text
+  files.
+
+code: .
+
+command: >-
+  bash -c '
+  for d in ${{inputs.linear}} ${{inputs.ties}} ${{inputs.dare_ties}} ${{inputs.task_arithmetic}}; do
+    echo "===================================================================";
+    echo "### $d";
+    cat "$d/mergekit_config.yml" 2>/dev/null || echo "  (no mergekit_config.yml in this output)";
+  done'
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:cpu-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 900
+
+inputs:
+  linear:
+    type: uri_folder
+    path: azureml:qwen3-merged-linear-7way@latest
+    mode: ro_mount
+  ties:
+    type: uri_folder
+    path: azureml:qwen3-merged-ties-7way@latest
+    mode: ro_mount
+  dare_ties:
+    type: uri_folder
+    path: azureml:qwen3-merged-dare-ties-7way@latest
+    mode: ro_mount
+  task_arithmetic:
+    type: uri_folder
+    path: azureml:qwen3-merged-task-arithmetic-7way@latest
+    mode: ro_mount
