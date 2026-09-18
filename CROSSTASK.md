@@ -73,6 +73,9 @@ evaluates everything on both tasks.
 
 ```bash
 MERGE_METHODS="task_arithmetic ties" ./run_crosstask_pipeline.sh
+# the full sweep, matching the eight methods the halves arm ran:
+MERGE_METHODS="linear task_arithmetic task_arithmetic_w1 ties dare_ties slerp arcee_fusion model_stock" \
+  ./run_crosstask_pipeline.sh
 CRIME_LORA_VERSION=1 XSUM_LORA_VERSION=3 ./run_crosstask_pipeline.sh
 EVAL_LIMIT=100 ./run_crosstask_pipeline.sh                      # quick first pass
 MERGE_CACHE_DIR=/tmp/lora-merge-cache-crosstask ./run_crosstask_pipeline.sh
@@ -125,6 +128,114 @@ uv run --project evaluate python experiments/crosstask_table.py "$RESULTS_DIR"
   baselines, so it does not depend on the XSum arm's own evaluations having
   finished.
 
+## Proposed: distillation as a repair for cross-task interference
+
+**Status: design only. Nothing below has been run.**
+
+### Why this arm and not the halves arm
+
+The halves design could never credit a teacher, and it took a week of controls
+to see why. Both half-experts saw i.i.d. samples of one distribution, so the
+union of the halves *is* the original training set: a plain supervised pass over
+it recovers whatever merging lost, and the teachers hold nothing the hard labels
+do not already carry. That is exactly what happened - a `kd_alpha: 0.0` control
+matched the distillation arm across five seeds (0.9601 +/- 0.0078 against a
+single distillation run at 0.9703), and the recovery figure the project had been
+reporting turned out to be an ordinary draw from the control's distribution.
+See [KD.md](KD.md).
+
+Cross-task breaks that symmetry. A classifier and a summariser encode different
+functions, and each expert's soft distribution over its own data carries
+calibration and a ranking over alternatives that a one-hot label cannot express.
+If distillation ever beats a supervised pass, this is the setting where it
+should, and it is the first setting in this project where a positive result
+would mean something.
+
+It is also a better instrument. XSum could not test anything because full-data
+beats the better half by 0.0059 (p = 0.06), and crime's recovery fraction
+carried +/-0.20 of seed noise because it divides by 0.0381. Cross-task
+interference is far larger - the MergeKit evaluation measured roughly 24 points
+of pooled damage merging eight task experts - so the denominator stops being the
+limiting factor.
+
+### The design decision that decides whether the result means anything
+
+**What does the repair pass train on?**
+
+The crime arm's repair trained on the union of both halves, which is why its
+parallelism claim collapsed into a warm-start claim: a machine that can run the
+repair already holds all the data, and at that point full training is the
+obvious baseline. This arm inherits the problem. If the repair set is the whole
+multi-task corpus, the honest comparison is against multi-task training from
+scratch, and that will likely win.
+
+So the budget is the experiment. Fix a **small per-task repair set** - a few
+hundred examples - where joint training is infeasible but a cheap repair is not,
+and report the budget as prominently as the metric. A recovery that needs the
+full corpus is not a finding; a recovery from 200 examples per task is.
+
+### Conditions
+
+Five seeds each. All share one base, one merge, one repair budget, and differ
+only where stated.
+
+| # | Condition | Purpose |
+|---|---|---|
+| 1 | the merge, untouched | the deficit to be repaired |
+| 2 | merge + supervised repair (`kd_alpha: 0.0`, `kd_ce_alpha: 1.0`) | **the control that decides everything** |
+| 3 | merge + offline KD, each expert teaching its own task | the experiment |
+| 4 | each expert alone, on both test sets | ceiling for its task, cross-task floor for the other |
+| 5 | multi-task training at the same budget | the baseline a practitioner would reach for |
+
+Condition 2 is not optional and not an afterthought. It is the condition whose
+absence generated a week of wrong conclusions, and on this arm it is also the
+condition most likely to win.
+
+Condition 5 is new relative to the halves arms, and it is what keeps the claim
+honest: "repair beats the merge" is uninteresting if "just train on the repair
+set" beats both.
+
+### What must be measured alongside the metric
+
+- **Per task, never pooled.** The MergeKit evaluation's own finding was that
+  merging damage is uneven across tasks. Asymmetric repair - fixing the
+  classifier while degrading the summariser - would be invisible in a pooled
+  score and is a plausible outcome given that one task is generative.
+- **Degeneracy counts** (`experiments/degeneracy.py`): empty outputs, repeated
+  words, repeated trigrams, unique-word ratio. On XSum a tenth of outputs
+  collapsing looked identical to "worse summaries" in ROUGE and sent the
+  diagnosis in the wrong direction for a week.
+- **Generation length**, against the reference distribution. It is what exposed
+  the missing turn terminator when ROUGE alone read as a plausible result.
+
+### Hyperparameters do not carry over
+
+`kd_alpha` and `kd_ce_alpha` encode an assumption about the ratio of two loss
+magnitudes. Copying axolotl's published 0.9/0.1 cost 0.061 ROUGE-1 on XSum and
+0.028 accuracy on crime, and produced degeneracy in one output in ten. The
+working values here (0.2/1.0) were derived from cross-entropy near 1.4 against a
+top-k KL near 8 **on those tasks**.
+
+This arm mixes a single-token classification target with a ~31-token generative
+one in one training set, so the two contribute to the loss at different scales
+within the same batch. **Measure both terms on this mixture before choosing
+weights**, and consider whether a single pair of weights can serve both - if not,
+that is itself a result worth reporting.
+
+### What would count as a positive result
+
+Condition 3 beating condition 2 by more than seed noise, on per-task metrics,
+at a repair budget small enough that condition 5 cannot match it. Anything less
+is a repair story about supervised fine-tuning, which is already the finding of
+the halves arms and does not need distillation to state.
+
+### Before building on this
+
+The cross-task arm's own results were not present on the compute instance when
+the results directories were inventoried on 2026-09-17. Confirm the merge
+sweep above has actually run and produced a measurable deficit before designing
+a repair for it.
+
 ## Files
 
 | Path | |
@@ -134,4 +245,8 @@ uv run --project evaluate python experiments/crosstask_table.py "$RESULTS_DIR"
 | `merge/merge_task_arithmetic_crosstask_config.yaml` | task vectors, 0.5/0.5 |
 | `merge/merge_task_arithmetic_w1_crosstask_config.yaml` | both deltas at full strength |
 | `merge/merge_ties_crosstask_config.yaml` | trim + sign-resolve — the method built for this case |
+| `merge/merge_dare_ties_crosstask_config.yaml` | random drop + rescale, then sign-resolve |
+| `merge/merge_slerp_crosstask_config.yaml` | spherical midpoint between the two experts |
+| `merge/merge_arcee_fusion_crosstask_config.yaml` | parameter-free importance thresholding |
+| `merge/merge_model_stock_crosstask_config.yaml` | parity with the halves sweep; assumption violated here |
 | `experiments/crosstask_table.py` | joint table with per-task retention |
