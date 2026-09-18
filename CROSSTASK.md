@@ -230,17 +230,68 @@ so and stop.** A composition method cannot demonstrate value against a baseline
 that is already at the ceiling, and that judgement is cheaper to make now than
 after five seeds of four conditions.
 
-### Provisional numbers this design rests on
+### Measured: the full sweep (2026-09-18)
 
-From the `EVAL_LIMIT=100` timing pass, 2026-09-18. **Not yet confirmed at full
-sample size** - the full sweep supersedes these.
+Full test sets - 1,077 crime, 1,000 XSum. Retention is against each expert's
+own-task score.
 
-| model | crime acc | XSum ROUGE-1 |
-|---|---|---|
-| base | 0.7600 | 0.2701 |
-| crime expert | 0.9700 | 0.2817 |
-| XSum expert | 0.4500 | 0.4088 |
-| linear merge | 0.9200 | 0.3948 |
+| model | crime | XSum R1 | words | retention (crime / XSum) |
+|---|---|---|---|---|
+| base | 0.7502 | 0.2814 | 31.6 | - |
+| crime expert | 0.9768 | 0.2878 | 31.5 | - |
+| XSum expert | 0.4596 | 0.4049 | 19.4 | - |
+| **task-arithmetic-w1** | **0.9731** | **0.3993** | 18.8 | **99.6% / 98.6%** |
+| **ties** | **0.9703** | **0.3994** | 19.1 | **99.3% / 98.6%** |
+| arcee-fusion | 0.9694 | 0.3581 | 25.2 | 99.2% / **88.4%** |
+| dare-ties | 0.9452 | 0.3951 | 20.6 | 96.8% / 97.6% |
+| linear | 0.9424 | 0.3941 | 20.5 | 96.5% / 97.3% |
+| task-arithmetic | 0.9415 | 0.3969 | 20.5 | 96.4% / 98.0% |
+| slerp | 0.9406 | 0.3937 | 20.5 | 96.3% / 97.2% |
+| model-stock | 0.7521 | 0.2812 | 31.5 | 77.0% / 69.4% |
+
+**Two tiers, with a mechanism.** Everything near 96% averages the two task
+vectors at weight 0.5, halving each one's magnitude and yielding a diluted
+version of both skills. The 99% tier either applies both deltas at full strength
+(`task_arithmetic_w1`) or trims conflicts and sign-resolves (`ties`). The task
+vectors are near-orthogonal, so adding them whole works where averaging does not.
+
+**`arcee-fusion` is a trap the averages hide.** Near-best on crime at 99.2%, but
+only 88.4% of the summariser and 25.2 words against the expert's 19.4 - it keeps
+classification by drifting back toward the base model's verbose generation. Only
+the length column shows it.
+
+**`model-stock` is a no-op**, returning the base model, as predicted for a
+two-model input whose geometric assumption it violates. Drop it from future
+two-expert sweeps.
+
+### This stops the composition arm
+
+The stop condition above is met. Against `task_arithmetic_w1` the headroom for a
+distilled student is 0.0037 accuracy on crime - under one standard error at
+n = 1,077 - and 0.0056 ROUGE-1. **Merging two different-task experts is
+free when the method is chosen properly**, and a composition method cannot
+demonstrate value against a baseline already at the ceiling.
+
+Comparing a distilled student against *linear* would have shown a 3.4-point
+gain. That would have been an artefact of the baseline: linear is joint-worst
+here, and the gap it leaves is closed for nothing by a merge method that takes
+two minutes and no training. Keeping linear for consistency with the halves arms
+was reasonable before this sweep and is not defensible after it.
+
+### What is actually open
+
+The pairwise question is answered, twice over: two gemma task experts compose at
+99%, and the Llama-2/Meditron reproduction has LERP and SLERP beating both
+parents on all six benchmarks. But the earlier eight-task vision study measured
+roughly 24 points of pooled damage. **Nobody has measured where between two and
+eight experts that breaks down** - and that crowding regime, not the pairwise
+one, is where a repair method would have something to repair.
+
+That is cheap to trace with what exists. Six adapters already share this base
+and LoRA configuration - the two cross-task experts plus the four half-experts
+from the crime and XSum arms - so merging three, four and six of them at a fixed
+method would give a retention curve against expert count with no new training.
+Run that before designing any distillation arm.
 
 ## Files
 
