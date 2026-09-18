@@ -313,6 +313,75 @@ Still unresolved: lr 1e-5 remains 0.0330 below the merge (p = 0.0002), so a
 tenfold reduction is not enough. The next points on the curve are lr 1e-6 and
 `kd_alpha` 0.3, and neither has been run.
 
+## The crime controls (2026-09-18): the repair is not distillation
+
+Re-run against the ORIGINAL handover artifacts, so every baseline matches the
+arm on record to four decimals. Only the loss and the config differ.
+
+| arm | accuracy | R | vs full-data |
+|---|---|---|---|
+| full data | 0.9694 | 1.00 | — |
+| **CE-only control (`kd_alpha: 0.0`)** | **0.9573** | **+0.68** | p = 0.072, not significant |
+| offline KD, no `eot_tokens`, lr 1e-4 | 0.9424 | +0.29 | p = 0.00026 |
+| offline KD, `eot_tokens`, lr 1e-5 | 0.9294 | -0.05 | — |
+| offline KD, `eot_tokens`, lr 1e-4 (current code) | 0.9118 | -0.51 | — |
+| better half | 0.9313 | — | — |
+| merge | 0.9136 | -0.46 | — |
+
+**Removing the teacher makes the student better.** 0.9573 without distillation
+against 0.9424 with it. The control beats the merge (p = 1.3e-08), beats the
+better half (p = 6.2e-05), and is indistinguishable from full-data training
+(p = 0.072). The distillation term does not merely fail to contribute at 0.9
+weight - it costs about 0.015 accuracy.
+
+So the repair is a cheap supervised pass over the union of both halves, and the
+teacher signal is not carrying it. The 0.9610 on record sits near this control's
+0.9573, which is consistent with the original arm's gain having been its
+0.1-weighted cross-entropy term all along.
+
+### Two things this does not show
+
+The control is **not a single-variable ablation**: it sets `kd_ce_alpha` to 1.0
+where the KD arm has 0.1, so it removes the teacher and strengthens the label
+term tenfold at once. It answers "would a plain supervised pass do better?" -
+yes - and not "does the teacher contribute exactly nothing at fixed CE weight?".
+The stricter ablation (`kd_alpha: 0.0`, `kd_ce_alpha: 0.1`) has not been run.
+
+And it **weakens the parallelism framing rather than supporting it**. The repair
+pass trains on the union. A machine that can run it has all the data already, so
+the property that no machine ever sees everything is gone. What survives is a
+warm-start argument - sharded experts plus one epoch over the union reaching
+parity with three epochs of full training - which may be a real compute saving
+but is a different claim from the one the project set out to test.
+
+### fc84af5 broke the crime arm for a week
+
+That commit added `eot_tokens` and `train_on_eos: turn` to the crime KD config,
+carrying across the XSum turn-terminator fix. On a single-token classification
+target it takes supervision from 1 position to 4, three of which teach the model
+to stop rather than to answer, and quadruples the distillation gradient at an
+unchanged learning rate. Cost: 0.031 accuracy and 29 unparsable outputs. The fix
+was right for XSum and wrong to propagate; the crime arm was never re-run
+afterwards, so nobody noticed until the reproduction attempt.
+
+Lowering the learning rate to 1e-5 was a partial remedy (0.9294, no unparsable
+outputs). Removing the terminator was the actual fix (0.9424).
+
+### Baselines are not interchangeable across generations
+
+The arm on record evaluated against models in a colleague's share directory; the
+registry's v3 generation scores differently on the same test set - half 2 at
+0.9619 against 0.9313, a three-point gap larger than the full-vs-half margin
+that R normalises by. Recovery fractions computed across the two generations are
+not comparable. Always record provenance, and always compare within one
+generation.
+
+### Everything here is a single run
+
+No seeds, no error bars. 0.9424 against the 0.9610 on record is about twenty
+test examples and could be seed noise as easily as a residual code difference.
+`PREREGISTRATION.md` specifies five seeds; none of this has more than one.
+
 ### What this means for the crime arm
 
 The crime arm improved (merge 0.9136 → 0.9610 offline, 0.9461 self, against
