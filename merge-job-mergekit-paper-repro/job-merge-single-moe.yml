@@ -12,7 +12,7 @@ description: >-
 code: .
 
 command: >-
-  bash moe_single.sh configs/moe-2way.yml ${{outputs.merged_model}} ${{inputs.hf_token}}
+  bash moe_single.sh configs/moe-2way.yml ${{outputs.merged_model}}
 
 environment:
   build:
@@ -24,11 +24,6 @@ resources:
 
 limits:
   timeout: 14400
-
-inputs:
-  hf_token:
-    type: string
-    default: ""
 
 outputs:
   merged_model:
