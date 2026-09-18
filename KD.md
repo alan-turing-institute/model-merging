@@ -244,11 +244,18 @@ is the whole trade-off between matching the teachers and matching the labels.
 
 ## What the XSum controls established (2026-09-14)
 
-The XSum arm does not work. Three separate students — offline with each half
+> **Superseded in part, 2026-09-18.** The controls below are sound and their
+> diagnosis was right: the damage came from the distillation term, and its
+> magnitude was the mechanism. The *conclusion* drawn from them — that
+> distillation degrades a merged summariser — was wrong. It was our loss
+> weighting, and correcting it removes the effect entirely. See
+> "The weighting was the whole of it" at the end of this section.
+
+The XSum arm did not work. Three separate students — offline with each half
 teaching its own half, self-distillation from the merge, and offline again on
-re-derived teacher data — all land at 0.332–0.338 ROUGE-1 against a merge that
-scores 0.3970, and all emit empty summaries (18, 23 and 34 of 1000) where the
-merge emits none. The degradation is large, reproducible, and significant at
+re-derived teacher data — all landed at 0.332–0.338 ROUGE-1 against a merge that
+scores 0.3970, and all emitted empty summaries (18, 23 and 34 of 1000) where the
+merge emits none. The degradation was large, reproducible, and significant at
 p = 0.0002 on a paired bootstrap over 1000 articles.
 
 Four controls narrow what causes it. Each holds everything fixed but one thing.
@@ -418,6 +425,53 @@ is quoted.
 Only the control above has been replicated. Every other number - the KD arms,
 the online arm, both XSum arms - is one draw from a distribution whose width we
 now know to be about ±0.008 accuracy on this task.
+
+### The weighting was the whole of it (2026-09-18)
+
+`kd_alpha: 0.2` / `kd_ce_alpha: 1.0`, chosen from the measured loss magnitudes
+rather than copied from axolotl's published run. Nothing else changed - same
+teachers, same data, same learning rate, same 500 steps.
+
+| model | ROUGE-1 | empty | word-run | trigram | low-uniq |
+|---|---|---|---|---|---|
+| full data | 0.4049 | 0 | 0 | 0 | 0 |
+| better half | 0.3990 | 0 | 0 | 0 | 0 |
+| **KD, 0.2 / 1.0** | **0.3987** | **0** | **0** | **0** | **0** |
+| `ce-ctrl` (no teacher) | 0.3983 | 0 | 0 | 0 | 0 |
+| merge | 0.3970 | 0 | 0 | 0 | 0 |
+| KD, 0.9 / 0.1 @ lr 1e-5 | 0.3641 | 8 | 42 | 60 | 60 |
+| KD, 0.9 / 0.1 | 0.3375 | 41 | 55 | 52 | 66 |
+
+Every degeneracy count goes to zero - the same as the merge, the halves, the
+full model and the no-teacher control. ROUGE recovers the entire 0.061 deficit
+(+0.0612 against the 0.9/0.1 arm, p = 0.0002) and the student becomes
+indistinguishable from the merge (p = 0.52) and from `ce-ctrl` (p = 0.89),
+landing on the better half (p = 0.90). Mean length returns to 19.4 words,
+matching the halves and the full model exactly.
+
+**The failure was never comprehension, it was termination.** Roughly one output
+in ten had collapsed - empty, a bare full stop, or one token repeated to the
+64-token cap - while the surviving summaries were competitive and occasionally
+better than the merge's. An empty output scores zero, so a tenth of the test set
+failing that way accounted for most of the gap. Cross-entropy on real labels is
+what places `<end_of_turn>`; at 0.9/0.1 against magnitudes of ~8 and ~1.4 it
+carried about a fiftieth of the gradient.
+
+**Why the learning rate could not fix it.** Lowering the rate scales both terms
+together and leaves the ratio untouched: 1e-5 cut empty outputs 41 -> 8 but
+repetition only 55 -> 42, and left 0.0330 of ROUGE on the table. The ratio was
+the problem, so only the ratio could fix it.
+
+**What XSum now shows: a null.** R = -0.05 - no repair and no damage. On a task
+where full-data beats the better half by 0.0059 at p = 0.06, that is the only
+result available. XSum can confirm that a correct configuration does no harm; it
+cannot test whether distillation helps.
+
+**The lesson worth carrying.** `kd_alpha` and `kd_ce_alpha` are not portable.
+They encode an assumption about the ratio of two loss magnitudes, and that ratio
+depends on the task, the target length and the tokenizer. Copying 0.9/0.1 from
+another project's run is how a week of "distillation degrades the model" got
+generated. Measure both terms, then set the weights.
 
 ### What this means for the crime arm
 
