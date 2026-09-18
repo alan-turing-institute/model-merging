@@ -278,20 +278,70 @@ here, and the gap it leaves is closed for nothing by a merge method that takes
 two minutes and no training. Keeping linear for consistency with the halves arms
 was reasonable before this sweep and is not defensible after it.
 
-### What is actually open
+### The crowding curve: it is displacement per direction, not adapter count
 
-The pairwise question is answered, twice over: two gemma task experts compose at
-99%, and the Llama-2/Meditron reproduction has LERP and SLERP beating both
-parents on all six benchmarks. But the earlier eight-task vision study measured
-roughly 24 points of pooled damage. **Nobody has measured where between two and
-eight experts that breaks down** - and that crowding regime, not the pairwise
-one, is where a repair method would have something to repair.
+Run 2026-09-18. Holds task count at two and varies adapter count, to separate
+weight-space crowding from conflict between tasks.
 
-That is cheap to trace with what exists. Six adapters already share this base
-and LoRA configuration - the two cross-task experts plus the four half-experts
-from the crime and XSum arms - so merging three, four and six of them at a fixed
-method would give a retention curve against expert count with no new training.
-Run that before designing any distillation arm.
+| n | adapters | method | crime | XSum R1 | words |
+|---|---|---|---|---|---|
+| 2 | crime-full + xsum-full | task-arith w=1.0 | 0.9731 | 0.3993 | 18.8 |
+| **3** | both crime halves + xsum-full | task-arith w=1.0 | **0.5348** | 0.3941 | 18.8 |
+| 2 | crime-full + xsum-full | ties | 0.9703 | 0.3994 | 19.1 |
+| **3** | both crime halves + xsum-full | ties | **0.9517** | 0.4038 | 19.7 |
+
+reference: base 0.7502 / 0.2814, crime expert 0.9768, XSum expert 0.4049.
+
+**Adding a third adapter destroys `task_arithmetic` at weight 1.0.** Crime falls
+0.9731 -> 0.5348, below the untuned base model, and below every component: the
+crime half-experts score 0.9294 and 0.9313 individually, and their own linear
+merge - the one the halves arm calls a failure at R = -0.46 - still manages
+0.9136. TIES, which splits weight across the adapters, loses 0.019.
+
+**The damage is directional, and that is the finding.** Summarisation is
+untouched in both merges (0.3941 and 0.4038, generation length unchanged). The
+three-adapter set applies *two* crime-pointing adapters at full weight and one
+XSum adapter, so the crime direction receives double displacement and collapses
+while XSum, at its normal single dose, is unaffected.
+
+So the governing quantity is **total displacement along each task direction**,
+not the number of models merged. `task_arithmetic` at weight 1.0 won the
+two-way sweep precisely because adding whole vectors preserves both skills - and
+that same property makes it fail as soon as any direction is represented twice.
+A practitioner merging N adapters should be asking how many of them point the
+same way, not what N is.
+
+This also qualifies the two-way sweep above: `task_arithmetic_w1` is its best
+method on a benchmark where every direction appears once. That is not a property
+to rely on. TIES was 0.3 points behind at n = 2 and degrades gracefully; it is
+the one that survives contact with a third model.
+
+**n = 4 was not run.** Four cached `base+adapter` materialisations need ~34GB of
+scratch plus ~8GB for output; the instance's temp disk offers ~29GB once you
+account for a 33.6GB swapfile, and the root disk had 23GB free. The 4-way merge
+(both directions doubled) would be confirmatory - both tasks should collapse
+under `task_arithmetic`, neither under TIES - rather than load-bearing, so it
+was skipped rather than worked around. Anyone repeating this should size the
+scratch disk at roughly 9GB per adapter before starting.
+
+### What is still open
+
+The **task-diversity** axis. Everything above holds task count at two. Two
+different tasks compose for free; the earlier eight-task vision study measured
+roughly 24 points of pooled damage. This curve shows that repeated *directions*
+crowd, which may be the whole explanation - but it cannot rule out an
+independent effect from genuinely distinct tasks, because it never varied them.
+
+Testing that needs new experts: three or four more tasks trained over the same
+base with the same LoRA configuration. Training is cheap (~30 minutes each under
+QLoRA); the cost is data preparation and an evaluation per task. Keeping them
+all classification tasks would let them reuse `crime_task.py` almost unchanged,
+which is the difference between a day and a week.
+
+Until that exists, the honest summary is: **merging different experts is free
+when each direction appears once, and degrades according to how much any one
+direction is over-represented.** No repair method is needed for the settings
+measured here, which is why the distillation arm above is stopped.
 
 ## Files
 
