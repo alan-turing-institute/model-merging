@@ -304,17 +304,43 @@ three-adapter set applies *two* crime-pointing adapters at full weight and one
 XSum adapter, so the crime direction receives double displacement and collapses
 while XSum, at its normal single dose, is unaffected.
 
-So the governing quantity is **total displacement along each task direction**,
-not the number of models merged. `task_arithmetic` at weight 1.0 won the
+So the governing quantity is **total displacement**, which is set by the weights
+rather than by the number of models. `task_arithmetic` at weight 1.0 won the
 two-way sweep precisely because adding whole vectors preserves both skills - and
-that same property makes it fail as soon as any direction is represented twice.
-A practitioner merging N adapters should be asking how many of them point the
-same way, not what N is.
+that same property makes it fail as soon as a direction is represented twice.
+
+**Normalisation is what controls this, and a separate study confirms it.** A
+seven-way merge of heterogeneous Qwen3-4B experts uses weight 0.142857 each -
+exactly 1/7, summing to 1 - and `task_arithmetic` holds there (mean 0.7047 over
+arc_easy/piqa/hellaswag/mmlu, above six of the seven experts and above the
+base). Seven averaged vectors are safe where three accumulated ones are not, so
+the rule is about the total, not the count:
+
+| study | weights | total displacement | task_arithmetic |
+|---|---|---|---|
+| gemma, n = 3 | 1.0 each | ~3x | collapses, 0.9731 -> 0.5348 |
+| Qwen3, n = 7 | 1/7 each | ~1x | holds, 0.7047 |
+
+A practitioner merging N adapters should therefore be asking what the weights
+sum to, and how many of the vectors point the same way - not what N is.
+
+**What that does not explain is TIES.** At n = 7 it collapses to 0.5147 and
+DARE-TIES to 0.4264, on the *same* 1/7 weights that leave linear and
+task_arithmetic intact, with `normalize: true` set. So the sparsification
+methods fail for a reason unrelated to displacement. One candidate is an outlier
+member: the pool includes a Chinese error-correction model scoring 0.4409 on
+these English benchmarks, and trim-and-sign-resolve gives every model a vote on
+which coordinates survive. Re-merging the seven without it would separate
+"TIES does not scale" from "TIES is fragile to a bad member" - one merge and one
+evaluation, on assets already registered.
 
 This also qualifies the two-way sweep above: `task_arithmetic_w1` is its best
-method on a benchmark where every direction appears once. That is not a property
-to rely on. TIES was 0.3 points behind at n = 2 and degrades gracefully; it is
-the one that survives contact with a third model.
+method on a benchmark where every direction appears once, at weights that
+accumulate. That is not a property to rely on. TIES was 0.3 points behind at
+n = 2 and survived a third model here - but the Qwen3 result above shows it
+failing badly at seven, so "TIES degrades gracefully" does not generalise
+either. Neither method is safe by default; the weights and the composition of
+the pool decide.
 
 **n = 4 was not run.** Four cached `base+adapter` materialisations need ~34GB of
 scratch plus ~8GB for output; the instance's temp disk offers ~29GB once you
