@@ -1,0 +1,70 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: qwen3-6way-no-cec-merge-ties
+experiment_name: model-merge-experiments
+description: >-
+  Merges the Qwen3-4B pool (ties, 6-way) without the Chinese error-correction model, in
+  both ties and linear, to separate "ties does not scale to seven models" from
+  "ties is fragile to one outlier member". At n=7 on identical 1/7 weights,
+  linear reached 0.7061 and task-arithmetic 0.7047 while ties collapsed to
+  0.5147 and dare-ties to 0.4264 - so the sparsification failure is not about
+  displacement. Linear is merged alongside as the control: dropping a member
+  scoring 0.4409 raises the mean for any method, so the attribution is in the
+  ties-vs-linear gap, 0.191 at n=7.
+
+  Mounts the already-registered checkpoints read-only; no HF downloads and no
+  token needed.
+
+code: .
+
+command: >-
+  bash merge_6way_single.sh ties ${{outputs.merged}}
+  ${{inputs.base}}
+  ${{inputs.jan_nano}} ${{inputs.abliterated}} ${{inputs.pythagoras_prover}}
+  ${{inputs.qvikhr_instruction}} ${{inputs.met_d}} ${{inputs.osim}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 10800
+
+inputs:
+  base:
+    type: uri_folder
+    path: azureml:qwen3-4b-base@latest
+    mode: ro_mount
+  jan_nano:
+    type: uri_folder
+    path: azureml:qwen3-4b-jan-nano@latest
+    mode: ro_mount
+  abliterated:
+    type: uri_folder
+    path: azureml:qwen3-4b-abliterated@latest
+    mode: ro_mount
+  pythagoras_prover:
+    type: uri_folder
+    path: azureml:qwen3-4b-pythagoras-prover@latest
+    mode: ro_mount
+  qvikhr_instruction:
+    type: uri_folder
+    path: azureml:qwen3-4b-qvikhr-instruction@latest
+    mode: ro_mount
+  met_d:
+    type: uri_folder
+    path: azureml:qwen3-4b-met-d@latest
+    mode: ro_mount
+  osim:
+    type: uri_folder
+    path: azureml:qwen3-4b-osim@latest
+    mode: ro_mount
+
+outputs:
+  merged:
+    type: uri_folder
+    mode: rw_mount

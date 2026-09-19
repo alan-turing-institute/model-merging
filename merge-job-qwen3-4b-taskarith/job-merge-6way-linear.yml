@@ -1,9 +1,9 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
 type: command
-display_name: qwen3-6way-no-cec-merge
+display_name: qwen3-6way-no-cec-merge-linear
 experiment_name: model-merge-experiments
 description: >-
-  Re-merges the Qwen3-4B pool without the Chinese error-correction model, in
+  Merges the Qwen3-4B pool (linear, 6-way) without the Chinese error-correction model, in
   both ties and linear, to separate "ties does not scale to seven models" from
   "ties is fragile to one outlier member". At n=7 on identical 1/7 weights,
   linear reached 0.7061 and task-arithmetic 0.7047 while ties collapsed to
@@ -18,8 +18,7 @@ description: >-
 code: .
 
 command: >-
-  bash merge_6way.sh
-  ${{outputs.ties_6way}} ${{outputs.linear_6way}}
+  bash merge_6way_single.sh linear ${{outputs.merged}}
   ${{inputs.base}}
   ${{inputs.jan_nano}} ${{inputs.abliterated}} ${{inputs.pythagoras_prover}}
   ${{inputs.qvikhr_instruction}} ${{inputs.met_d}} ${{inputs.osim}}
@@ -66,9 +65,6 @@ inputs:
     mode: ro_mount
 
 outputs:
-  ties_6way:
-    type: uri_folder
-    mode: rw_mount
-  linear_6way:
+  merged:
     type: uri_folder
     mode: rw_mount
