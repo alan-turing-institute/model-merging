@@ -67,4 +67,4 @@ inputs:
 outputs:
   merged:
     type: uri_folder
-    mode: rw_mount
+    mode: upload

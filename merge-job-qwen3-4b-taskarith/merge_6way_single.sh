@@ -8,7 +8,7 @@ METHOD="$1"; OUT="$2"; BASE="$3"; shift 3
 EXPERTS=("$@")
 W=$(python3 -c "print('%.6f' % (1.0/${#EXPERTS[@]}))")
 echo "=== $METHOD over ${#EXPERTS[@]} experts at weight $W each ==="
-df -h | grep -vE "tmpfs|overlay" | head -5
+df -h | head -12; echo "--- output filesystem ---"; df -h "$(dirname "$OUT")" 2>/dev/null || true
 
 CFG=/tmp/${METHOD}-6way.yml
 {
@@ -32,5 +32,5 @@ cat "$CFG"
 
 mergekit-yaml "$CFG" "$OUT" --cuda --lazy-unpickle --allow-crimes
 cp "$CFG" "$OUT/mergekit_config.yml" 2>/dev/null || true
-df -h | grep -vE "tmpfs|overlay" | head -5
+df -h | head -12; echo "--- output filesystem ---"; df -h "$(dirname "$OUT")" 2>/dev/null || true
 echo "MERGE_COMPLETE"
