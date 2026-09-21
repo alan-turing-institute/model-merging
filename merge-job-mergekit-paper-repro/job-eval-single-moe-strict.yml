@@ -1,0 +1,37 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-moe-strict
+experiment_name: model-merge-experiments
+description: >-
+  Re-evaluates the MoE without ignore_mismatched_sizes, to tell apart two
+  explanations for its scoring below both parents on all six benchmarks: a
+  genuinely broken untrained router, or the flag silently reinitialising a
+  tensor as it did on the LERP merge. A hard error here means the earlier
+  numbers were an artefact.
+
+code: .
+
+command: >-
+  bash eval_single_strict.sh ${{outputs.results}} merged-moe-strict ${{inputs.model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 10800
+
+inputs:
+  model:
+    type: uri_folder
+    path: azureml:mergekit-repro-moe@latest   # register the merge job's output under this name first
+    mode: ro_mount
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload
