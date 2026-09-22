@@ -418,9 +418,41 @@
   </div>
 </section>
 
+<section class="slide" id="s9e">
+  <div class="slide-inner">
+    <div class="eyebrow">12 &mdash; Expert routing</div>
+    <h2>The routed merge fell below both parents &mdash; and the pattern says it is broken, not mis-routed</h2>
+    <div class="chart-caption">Llama-2-7B-Chat + Meditron-7B &middot; mergekit-moe, gate_mode <b>hidden</b>, one expert per token &middot; lm-eval-harness, accuracy %</div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Benchmark</th><th>Llama-2</th><th>Meditron</th><th>LERP</th><th>TIES</th><th>MoE</th></tr></thead>
+        <tbody>
+          <tr><td>USMLE (MedQA)</td><td>39.28</td><td>27.26</td><td>41.71</td><td>35.35</td><td class="sig">30.95</td></tr>
+          <tr><td>MedMCQA</td><td>37.41</td><td>26.63</td><td>40.57</td><td>34.50</td><td class="sig">25.60</td></tr>
+          <tr><td>PubMedQA</td><td>73.40</td><td>70.60</td><td>75.60</td><td>76.00</td><td class="sig">65.00</td></tr>
+          <tr><td>ARC-Challenge</td><td>43.52</td><td>41.89</td><td>46.67</td><td>45.56</td><td class="sig">34.04</td></tr>
+          <tr class="worst"><td><b>HellaSwag</b></td><td>75.98</td><td>72.93</td><td>76.81</td><td>75.62</td><td class="sig"><b>45.63</b></td></tr>
+          <tr><td>MMLU</td><td>46.47</td><td>32.43</td><td>48.37</td><td>45.26</td><td class="sig">32.35</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-note">The router itself discriminates: probing top-1 expert choice over medical and general prompts gives a separation of <b>+0.215</b>, so tokens are not being assigned at random.</p>
+    <div class="takeaway">
+      <div class="letter">&rarr;</div>
+      <div><h3>Routing cannot produce these numbers</h3><p>A router&rsquo;s worst case is sending every token to the weaker expert &mdash; which would floor HellaSwag at Meditron&rsquo;s <b>72.93</b>. The MoE scores <b>45.63</b>, twenty-seven points below that floor, on a commonsense task where neither expert is weak and medical routing is irrelevant. A score beneath both parents on <i>all six</i> is a broken model, not a routing trade-off.</p></div>
+    </div>
+    <div class="takeaway">
+      <div class="letter">&rarr;</div>
+      <div><h3>The same two experts merge densely without difficulty</h3><p>LERP beats both parents on all six benchmarks with the identical pair. So the deficit belongs to the MoE construction, not to the choice of experts &mdash; which is what makes it worth diagnosing rather than abandoning.</p></div>
+    </div>
+    <p class="chart-note"><b>One evaluation outstanding.</b> These scores were produced with <code>ignore_mismatched_sizes</code>, the flag that already destroyed a 131-million-value embedding tensor on the LERP merge and drove MMLU to chance. Llama-2 (32,000 tokens) and Meditron (32,017) mismatch by construction, so a strict re-run without the flag is queued: a hard error means the table above is an artefact, and a clean reproduction means the merge really is this bad.</p>
+    <p class="chart-note"><b>Not composable with the rest of this deck.</b> mergekit-moe emits Mixtral, DeepSeek and Qwen architectures only &mdash; Gemma-3 is unsupported &mdash; so this arm had to change model family and cannot be compared directly against the crime and XSum results.</p>
+  </div>
+</section>
+
 <section class="slide" id="s9b">
   <div class="slide-inner">
-    <div class="eyebrow">12 &mdash; Verification</div>
+    <div class="eyebrow">13 &mdash; Verification</div>
     <h2>Four checks caught defects. The one we lacked cost a week.</h2>
     <div class="bug-row">
       <span class="chip">Scale check</span>
@@ -450,7 +482,7 @@
 
 <section class="slide" id="s10">
   <div class="slide-inner">
-    <div class="eyebrow">13 &mdash; For stakeholders</div>
+    <div class="eyebrow">14 &mdash; For stakeholders</div>
     <h2>Practical implications</h2>
     <div class="takeaway">
       <div class="letter">1</div>
@@ -477,7 +509,7 @@
 
 <section class="slide" id="s11">
   <div class="slide-inner">
-    <div class="eyebrow">14 &mdash; Limits</div>
+    <div class="eyebrow">15 &mdash; Limits</div>
     <h2>What this does not establish</h2>
     <div class="next-item"><span class="idx warn">!</span><p><b>Exploratory, not confirmatory.</b> The project's preregistration licenses three specific runs, and the distillation arm is not one of them. It is recorded as a dated deviation and generates a hypothesis rather than testing one. Nothing here bears on the preregistered H1–H4.</p></div>
     <div class="next-item"><span class="idx warn">!</span><p><b>Seeds exist for two conditions only.</b> The no-teacher control and the balanced distillation arm have five seeds each on crime. Every other number &mdash; the on-policy arm, both XSum arms, every cross-task merge &mdash; is a single run against a measured noise floor of ~0.008 accuracy. Differences below roughly 0.015 in those rows are not resolvable.</p></div>
@@ -493,7 +525,7 @@
 
 <section class="slide" id="s12">
   <div class="slide-inner">
-    <div class="eyebrow">15 &mdash; Recommendations</div>
+    <div class="eyebrow">16 &mdash; Recommendations</div>
     <h2>Future work, in priority order</h2>
     <div class="next-item"><span class="idx">1</span><p><b>Measure the noise floor, then re-test.</b> Run the preregistered seed sweep (42–46). Until the within-condition spread is known, no gap of a few points — including this one — is safely interpretable.</p></div>
     <div class="next-item"><span class="idx">2</span><p><b>Seed everything before comparing anything.</b> Seed noise here is ±0.20 in R — wider than most contrasts this project has drawn. Five seeds per condition is the preregistered minimum and should gate any future claim, including the distillation arm, which is still n = 1.</p></div>
@@ -507,7 +539,7 @@
 
 <section class="slide" id="s13">
   <div class="slide-inner">
-    <div class="eyebrow">16 &mdash; In one line</div>
+    <div class="eyebrow">17 &mdash; In one line</div>
     <h2>Merging costs. A one-epoch repair fixes it. The teacher makes it dependable.</h2>
     <p class="lede">A linear merge of two disjoint-half experts scored below both its inputs (R = −0.46) — the project’s most robust result. One supervised epoch over the union of the halves repairs it to roughly full-data parity, but unreliably: R = +0.76 ± 0.20 across five seeds. Adding a correctly weighted teacher gives R = +1.03 ± 0.03 — the same repair, with a fiftieth of the variance.</p>
     <p class="chart-note"><b>And a second result, from merging different experts rather than halves.</b> One crime classifier merged with one XSum summariser retains 99.6% and 98.6% of each &mdash; merging different skills is close to free, where merging two halves of one task is not. What crowds is the direction, not the count: a third adapter pointing the same way as an existing one collapses that task to below the untuned base while leaving the other untouched.</p>
