@@ -1,5 +1,19 @@
 # Readme for using Axolotl to train models
 
+Here we give details and code of how to train a model to be a classifier on crime data.
+
+## Data preparation
+
+First we use the `prepare_data.py` script to split the crime dataset into three parts, for training, validation and testing.  And also split the whole dataset in two halves before splitting into these three.
+
+```bash
+uv run python prepare_data.py
+```
+
+To run with other datasets etc, edit the python script.
+
+## Axolotl for training models
+
 The parameters for training using Axolotl are controlled via a [yaml file](crime_gemma.yaml).  For full details see the [online documentation](https://docs.axolotl.ai/docs/getting-started.html).
 
 The key parameters are:

@@ -1,0 +1,84 @@
+# Self-distillation of gemma-3-1b-it on XSum one-sentence summaries.
+# The student MUST be the same model as TEACHER_MODEL in
+# generate_teacher_logprobs_XSum.py: the KD loss gathers student logprobs at the
+# teacher's token ids, so a different tokeniser indexes out of bounds.
+base_model: google/gemma-3-1b-it
+# Use the tokeniser's own template so training tokenisation is byte-identical to
+# what the generation script assumed. (axolotl's built-in `gemma3` template is
+# equivalent, but tokenizer_default removes the chance of drift.)
+chat_template: tokenizer_default
+eot_tokens:
+  - "<end_of_turn>"
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+
+kd_trainer: true
+kd_ce_alpha: 0.5
+kd_alpha: 0.5
+kd_temperature: 1.0
+# Renormalises the student over the teacher's top-k. Needed for the sanity check
+# below: with student == teacher and correct alignment, step-0 KD loss ~= 0.
+kd_normalize_topk: true
+
+datasets:
+  - path: ../datasets/xsum_kd_data_long/train
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    # The temperature the teacher's *logprobs* are at, not the sampling
+    # temperature. vLLM's default logprobs_mode is raw_logprobs, i.e. computed
+    # from the unscaled logits, so this is 1.0 regardless of how we sampled.
+    temperature: 1.0
+
+test_datasets:
+  - path: ../datasets/xsum_kd_data_long/validation
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    temperature: 1.0
+
+val_set_size: 0.0
+# Axolotl defaults this to os.cpu_count(), which on an Isambard node reports all
+# 288 cores even though a 1-GPU job is allocated 72. 288 forked workers each
+# carry a ~1.2 GB Python+torch baseline, which OOM-killed the job at ~349 GB RSS.
+dataset_num_proc: 8
+dataset_prepared_path: ../datasets/last_run_prepared_long
+
+# Must match MAX_SEQ_LEN in generate_teacher_logprobs_XSum.py. Anything Axolotl
+# truncates here has its teacher logprobs silently mangled.
+sequence_len: 4096
+# Leave packing off until a run is known-good: it concatenates the KD tensors
+# across sub-sequences and is one more thing that can hide a misalignment.
+sample_packing: false
+# false: pad each micro-batch to its own longest sequence. With
+# sample_packing off and a median sequence of ~480 tokens, padding everything to
+# sequence_len (4096) wasted ~7x the compute.
+pad_to_sequence_len: false
+
+bf16: true
+tf32: true
+attn_implementation: eager  # recommended for Gemma 3
+
+micro_batch_size: 4
+gradient_accumulation_steps: 8
+gradient_checkpointing: true
+# 1 epoch to start: the previous 3-epoch curves were shaped by a KD term that
+# was pure noise (see KD_ALIGNMENT_BUG.md), so they say nothing about the right
+# schedule. Check the eval curve before increasing this.
+num_epochs: 1
+learning_rate: 1e-5
+optimizer: adamw_torch_fused
+lr_scheduler: cosine
+warmup_steps: 50
+
+logging_steps: 1  # so the step-0 KD loss is visible
+eval_strategy: steps
+eval_steps: 50
+save_strategy: steps
+save_steps: 200
+# skip AdamW optimiser state in checkpoints: 7.4 GB -> ~2 GB each
+save_only_model: true
+
+torch_compile: true
+output_dir: ../models/gemma3-xsum-self-dist-long

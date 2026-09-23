@@ -1,7 +1,7 @@
 models/
+datasets/
 .venv
 __pycache__/
 *.pyc
 .uv-cache/
-train/last_run_prepared/
 evaluate/.azureml_models/

@@ -21,11 +21,11 @@ lora_o_kernel: false
 chat_template: gemma
 
 datasets:
-  - path: ../../datasets/crime_dataset/train
+  - path: ../datasets/crime_dataset/train
     type: chat_template
 
 test_datasets:
-  - path: ../../datasets/crime_dataset/validation
+  - path: ../datasets/crime_dataset/validation
     type: chat_template
 
 sequence_len: 2048
