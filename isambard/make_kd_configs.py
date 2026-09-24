@@ -61,15 +61,22 @@ def main():
     out_dir = TEMPLATE.parent
     n = args.splits
 
+    # n == 2 is the original halves arm, and its artefacts predate the shard
+    # naming: the merge is `gemma3-xsum-merged-linear` and the teacher data is
+    # `xsum_kd_train`, with no suffix. Every number in KD.md was measured against
+    # those exact paths, so the sweep has to consume them rather than build a
+    # parallel `-2way` set that would differ by more than the weighting.
+    merge_name = ("gemma3-xsum-merged-linear" if n == 2
+                  else f"gemma3-xsum-merged-linear-{n}way")
+    kd_data = "xsum_kd_train" if n == 2 else f"xsum_kd{n}_train"
+
     for tag, (kd_alpha, kd_ce_alpha, why) in ARMS.items():
         body = text
-        # Student is the N-way merge, not the two-way one.
         body = re.sub(r"^base_model:.*$",
-                      f"base_model: ../models/gemma3-xsum-merged-linear-{n}way",
+                      f"base_model: ../models/{merge_name}",
                       body, flags=re.M)
-        # Teacher data is the N-shard concatenation.
         body = body.replace("../../datasets/xsum_kd_train",
-                            f"../../datasets/xsum_kd{n}_train")
+                            f"../../datasets/{kd_data}")
         body = re.sub(r"^output_dir:.*$",
                       f"output_dir: ../models/gemma3-xsum-kd{n}-{tag}",
                       body, flags=re.M)

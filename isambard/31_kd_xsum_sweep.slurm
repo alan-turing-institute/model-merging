@@ -1,0 +1,62 @@
+#!/bin/bash
+#SBATCH --job-name=xsum-kd2-sweep
+#SBATCH --array=1-2
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=16
+#SBATCH --time=03:00:00
+#SBATCH --output=logs/kd2-sweep-%A_%a.out
+#SBATCH --error=logs/kd2-sweep-%A_%a.out
+#SBATCH --account=brics.u6ui
+#SBATCH --partition=workq
+#
+# The kd_alpha sweep on the ORIGINAL two-way arm, in parallel.
+#
+# 30_kd_xsum.slurm re-runs 0.2/1.0, the one weighting KD.md still treats as
+# standing. This adds the other two points. The question they settle is the one
+# the alignment fix opened: the 0.9/0.1 arm degenerated badly - 41 empty and 55
+# repeating out of 1000 - but it did so with a teacher scoring the token AFTER
+# the one it described. Whether 0.9/0.1 damages a model when the teacher is
+# correct has never been measured.
+#
+# Array rather than one job: the arms share a student and a teacher dataset and
+# touch neither, so they are independent after the teacher pass. Two GPUs for an
+# hour beats one GPU for two.
+#
+# DEPENDENCY. Both arms read ../datasets/xsum_kd_train, which 30_kd_xsum.slurm
+# produces. Submit with:
+#   sbatch --dependency=afterok:<30_kd_xsum jobid> isambard/31_kd_xsum_sweep.slurm
+# Without it, three jobs race to write one dataset directory.
+set -euo pipefail
+cd "${SLURM_SUBMIT_DIR:-$PWD}"
+source isambard/config.sh
+mkdir -p logs "$RESULTS_DIR"
+
+case "$SLURM_ARRAY_TASK_ID" in
+  1) TAG=a09 ;;
+  2) TAG=a05 ;;
+  *) echo "unexpected array index $SLURM_ARRAY_TASK_ID" >&2; exit 1 ;;
+esac
+CONFIG="xsum_gemma_kd2_${TAG}.yaml"
+STUDENT="$MODELS_DIR/gemma3-xsum-kd2-${TAG}"
+
+echo "=== $TAG | $(hostname) | $(date -Is) ==="
+grep -E '^kd_alpha:|^kd_ce_alpha:' "$REPO_ROOT/train/$CONFIG"
+
+# The teacher data must exist AND carry the alignment marker. A directory
+# written before 6f923a1 trains happily and teaches noise, which is the whole
+# reason this sweep exists.
+[ -f "$DATASETS_DIR/xsum_kd_train/.kd_alignment_v2" ] || {
+  echo "teacher data missing or pre-fix at $DATASETS_DIR/xsum_kd_train" >&2
+  echo "run 30_kd_xsum.slurm first, or submit this with --dependency=afterok" >&2
+  exit 1
+}
+
+cd "$REPO_ROOT/train"
+uv run axolotl train "$CONFIG"
+cd "$REPO_ROOT/evaluate"
+uv run python evaluate_summarisation.py \
+  --model "$STUDENT" \
+  --dataset "$DATASETS_DIR/xsum_dataset/test" \
+  --output "$RESULTS_DIR/kd2-${TAG}.json"
+
+echo "=== $TAG done $(date -Is) ==="
