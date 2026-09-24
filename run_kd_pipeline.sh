@@ -321,9 +321,22 @@ precompute_if_needed() {
   # The sentinel also implies the column name the current code writes. A
   # dataset produced before the rename to "logprobs" carries the old column and
   # would fail deep inside axolotl, so it must not be reused.
-  if [ -f "$out/.precompute_complete" ]; then
-    log "Logprobs already at $out (verified), skipping"
+  # Two sentinels now. .precompute_complete says the run finished and passed
+  # its checks; .kd_alignment_v2 says it was written with the corrected row
+  # count (6f923a1). Every dataset produced before 2026-09-24 has the first and
+  # not the second, and training on one applies every teacher distribution to
+  # the following token - measured at 22.97 nats of KL where a correct
+  # alignment gives 0.0000. That is not a degradation, it is noise, so the
+  # pipeline refuses rather than warns.
+  if [ -f "$out/.precompute_complete" ] && [ -f "$out/.kd_alignment_v2" ]; then
+    log "Logprobs already at $out (verified, aligned), skipping"
     return
+  fi
+  if [ -d "$out" ] && [ -f "$out/.precompute_complete" ] && [ ! -f "$out/.kd_alignment_v2" ]; then
+    die "STALE LOGPROBS at $out - written before the alignment fix (6f923a1).
+       Every teacher distribution in it is one token out of place. Delete it and
+       let this pipeline regenerate:  rm -rf '$out'
+       Verify the producer first:  uv run --project evaluate python experiments/kd_alignment_smoke.py"
   fi
   if [ -d "$out" ]; then
     log "Discarding unverified logprobs at $out - no completion sentinel"

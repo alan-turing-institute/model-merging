@@ -553,3 +553,58 @@ them, and it should.
 **What it does not change.** The confirmatory design, the primary estimand, the
 five conditions, the seeds, and the licensed runs remain untouched. None of the
 three licensed runs has been executed.
+
+### 2026-09-24 — the teacher signal was misaligned in every distillation run to date
+
+Both entries above argue about *what the teacher contributed*. Neither is safe,
+because the teacher's distributions were attached to the wrong tokens
+throughout.
+
+Axolotl infers where teacher logprobs belong from their count alone
+(`input_padding_len = len(input_ids) - len(teacher_logprobs)`) and reads row `j`
+as the target for the prediction at index `input_padding_len + j` — the
+distribution over token `input_padding_len + j + 1`. `precompute_logprobs.py`
+emitted one row per assistant token, which made every row land one position
+short, so each teacher distribution was applied to the token *after* the one it
+described. Fixed in `6f923a1` by emitting one additional row.
+
+**The evidence is not marginal.** With `gemma-3-4b-it` as both teacher and
+student — where a correct alignment must give KL = 0 by construction — mean
+KL(teacher‖student) over 238 supervised positions is **0.0000 nats** corrected
+against **22.97 nats** under the old convention. The bug was found by jmcinroy
+on a separate self-distillation arm (`87d5331` on `main`) and confirmed here
+independently with `experiments/kd_alignment_smoke.py`.
+
+**Why the project's own controls did not catch it.** Control #2 varied the
+*content* of a fixed-length logprobs array, which cannot change the base offset
+the count implies. Control #4 observed the symptom directly — a KD term that
+stayed at 8–20 with identical teacher and student — and concluded the reported
+loss simply was not a per-token KL and could not diagnose a broken setup. It
+was, and it could. That conclusion is withdrawn.
+
+**Consequences for the record.**
+
+- Every precomputed KD dataset is invalid and must be regenerated.
+- The XSum 0.9/0.1 → 0.2/1.0 recovery stands as an observation; its stated
+  cause does not. "A misaligned teacher at ~50× the cross-entropy gradient
+  destroys termination" is what was measured. Whether a correctly aligned
+  teacher at 0.9/0.1 also damages the model is untested.
+- "With balanced weights the teacher does contribute" (crime: 0.9707 vs 0.9601,
+  variance ratio ≈ 50) is suspended pending a re-run. Crime targets are a single
+  token, so misalignment there leaves the only supervised position wrong.
+
+**What it does not change.** Nothing without a teacher term is affected: the
+merging results, the cross-task sweep, the crowding curve, the `kd_alpha: 0.0`
+controls and the five-seed control spread. The confirmatory design, the primary
+estimand, the five conditions and the seed count remain untouched, and none of
+the three licensed runs has been executed.
+
+**The methodological point, added to the two above.** The alignment assumption
+was documented as a known risk in `precompute_logprobs.py`'s own header
+("a silent off-by-one shifts every teacher distribution onto the wrong token and
+the run still trains, just on noise") and two checks were built for it. Both
+verified the producer against its own convention rather than against the
+consumer's. A teacher==student KL check — which costs seconds and cannot be
+satisfied by a self-consistent producer — should be a required gate before any
+distillation run, and is now available as
+`experiments/kd_alignment_smoke.py`.

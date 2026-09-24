@@ -29,6 +29,14 @@ did — so the procedure stays inside the poor-man's-parallelism framing the
 project is testing. A distillation that needed the whole dataset in one place
 would answer a different and much less interesting question.
 
+> **EVERY KD RESULT BELOW PREDATES A FIXED ALIGNMENT BUG (2026-09-24).**
+> The teacher logprobs were written one position out of place, so every
+> distribution was applied to its right-hand neighbour. Measured on this arm
+> with `gemma-3-4b-it` as both teacher and student: mean KL 22.97 nats under
+> the old convention, 0.0000 under the corrected one. Fixed in `6f923a1`;
+> `experiments/kd_alignment_smoke.py` is the check. Nothing below has been
+> re-run. See "The teacher was misaligned throughout" for what survives.
+
 ## Three regimes
 
 The distillation literature splits by how the teacher is defined. All three are
@@ -286,7 +294,9 @@ top-k covered little mass. Measured over 1651 target positions, the teacher's
 top-64 captures a mean of 0.983 (median 0.997); no position falls below 0.5 and
 only 0.8% fall below 0.8. The renormalisation is close to a no-op.
 
-**4. The reported KD loss is not a diagnostic.** Cross-entropy alone converges
+**4. The reported KD loss is not a diagnostic.** *(WRONG - see "Control #4 had
+this and threw it away". It is a per-token KL, and the 8-20 range recorded here
+was the alignment bug reporting itself.)* Cross-entropy alone converges
 at 1.36. The KD term sits at 8–20 and does not approach zero even when teacher
 and student are the same model — a self-distillation smoke test with the base
 model on both sides starts at ~20 and ends at ~18. Do not read the KD loss as a
@@ -527,6 +537,91 @@ Until that is tested, **the crime decomposition claim is not safe**. "Half the
 repair is the distillation pass and half is the experts' knowledge" assumes the
 KD term was contributing what it appeared to. The crime arm needs its own
 `kd_alpha: 0.0` control before that sentence goes anywhere.
+
+## The teacher was misaligned throughout (2026-09-24)
+
+Axolotl's KD strategy is never told where the teacher rows belong. It infers it
+from their count:
+
+    input_padding_len = len(input_ids) - len(teacher_logprobs)
+
+then uses row `j` as the target for the student's prediction at index
+`input_padding_len + j` - which, under the causal shift, is the distribution
+over the token at index `input_padding_len + j + 1`.
+
+`precompute_logprobs.py` emitted one row per assistant token. For sequence
+length `L` and prompt length `P` that is `L - P` rows, so `input_padding_len`
+came out at `P`, row `j` landed at index `P + j`, and was consumed as the
+distribution over token `P + j + 1`. It holds the distribution over token
+`P + j`. **Every teacher distribution was applied to the token after the one it
+described.** The fix, `6f923a1`, emits one extra row: `input_padding_len`
+becomes `P - 1`, each row lands on its own token, and the extra row sits at the
+final index whose next token does not exist, so it is masked out of the loss.
+
+Found by jmcinroy on the `self-distill` arm (`87d5331`, `main`) and confirmed
+here independently. With teacher and student the same model the teacher's
+distribution at every supervised position is the student's own, so a correct
+alignment must give KL = 0:
+
+| convention | rows | positions | mean KL (nats) |
+|---|---|---|---|
+| **one extra row** (`6f923a1`) | `L-P+1` | 238 | **0.0000** |
+| one row per assistant token | `L-P` | 230 | **22.9691** |
+
+### Control #4 had this and threw it away
+
+The control recorded above says the reported KD loss "sits at 8-20 and does not
+approach zero even when teacher and student are the same model", and concludes:
+*"Do not read the KD loss as a per-token KL, and do not use it to compare
+configurations; it cannot separate a working setup from a broken one."*
+
+That conclusion was wrong. It **is** a per-token KL, the 8-20 range is this
+misalignment, and it was separating a working setup from a broken one - the
+setup was broken. The one diagnostic that would have caught this was explicitly
+ruled out as uninformative, which is why it survived four other controls.
+
+### Why control #2 could not have caught it
+
+Control #2 shifted the *content* of the logprobs array by one position and
+found no significant difference (0.3321 vs 0.3375, p = 0.072). The row count,
+and therefore the base offset, was identical in both arms. Shifting content
+within a fixed-length array moves which distribution sits in which slot; it
+cannot move where the slots are placed. The two operations are not the same and
+only the second one was wrong.
+
+It came closer than it looks, though. Shifting content by +1 puts most rows on
+the right token, but leaves the first assistant token unsupervised and the last
+row scoring a token that does not exist. On XSum that is 1 position in ~31. On
+crime's single-token target it is the only supervised position, so the crime KD
+term would have been noise entirely.
+
+### What survives, and what does not
+
+**Probably intact: the XSum weighting result.** Down-weighting the distillation
+term from 0.9/0.1 to 0.2/1.0 recovered 0.0612 ROUGE-1 and took every degeneracy
+count to zero. That happened, and it happens whether the term was misaligned or
+not. What cannot stand is the *explanation* - "the weighting was the whole of
+it". The honest statement is now: a misaligned teacher, carrying ~50x the
+gradient of cross-entropy, destroys termination; reducing its weight removes the
+damage. Whether a *correctly aligned* teacher at 0.9/0.1 would also damage the
+model is untested.
+
+**At risk: "with balanced weights the teacher does contribute".** 0.9707 against
+a no-teacher control's 0.9601, with ~50x lower variance (F ~ 50, p ~ 0.001), on
+crime - the single-token arm where misalignment is total. A regularising effect
+from a noise signal is not impossible, but it is not the claim that was made.
+This one needs re-running before it is cited.
+
+**Unaffected:** everything with no teacher in it - the merging results, the
+cross-task sweep, the crowding curve, the `kd_alpha: 0.0` controls and the
+five-seed control spread. `kd_alpha: 0.0` zeroes the KD term, so a misaligned
+teacher contributes nothing to it.
+
+### What has to happen
+
+1. Regenerate every precomputed KD dataset with the corrected producer.
+2. Re-run the XSum 0.2/1.0 arm and the crime five-seed comparison.
+3. Only then re-state the two conclusions above.
 
 ## Files
 

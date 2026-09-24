@@ -57,6 +57,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 # config key belt-and-braces instead of load-bearing.
 LOGPROBS_FIELD = "logprobs"
 
+# Bumped whenever the row-count convention changes, so a stale dataset is
+# detectable rather than merely old. v2 is the corrected alignment (6f923a1).
+ALIGNMENT_MARKER = ".kd_alignment_v2"
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -237,6 +241,17 @@ def main():
     out = Dataset.from_list(kept)
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     out.save_to_disk(args.output)
+
+    # Stamp the row-count convention into the dataset. Datasets written before
+    # 6f923a1 carry one row per assistant token, which axolotl places one
+    # position short; they are indistinguishable from correct ones by
+    # inspection unless you know P for every example. The pipeline refuses any
+    # logprobs directory without this marker rather than trusting a directory
+    # that merely exists.
+    (Path(args.output) / ALIGNMENT_MARKER).write_text(
+        "teacher rows = assistant tokens + 1 trailing filler; "
+        "input_padding_len = P - 1 (see teacher_logprobs)\n"
+    )
 
     print(f"\nWrote {len(out)} examples to {args.output}")
     if skipped:
