@@ -9,17 +9,33 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "axolotl>=0.18.0",
+    # Pinned rather than floated: relaxing `axolotl` lets uv pick 0.19.0, which
+    # permits a different torch and would silently move off the tested stack.
+    # (jmcinroy, 87d5331.)
+    "axolotl==0.18.0",
     # axolotl 0.18.0 imports QATCallback -> torchao unconditionally in
-    # core/builders/causal.py, but its dependency marker excludes torchao on
+    # core/builders/causal.py, but its own dependency marker excludes torchao on
     # aarch64, so the trainer cannot start on Isambard. torchao ships a
     # py3-none-any wheel, which satisfies the import; QAT is never used.
-    # (Found by jmcinroy on main, 87d5331.)
-    "torchao>=0.17.0",
+    # (jmcinroy, 87d5331.)
+    "torchao==0.17.0",
     # Declared directly, though it arrives transitively anyway: [tool.uv.sources]
-    # only applies to a project's OWN dependencies, so without this line the
-    # cu128 index below is silently ignored and the resolve falls back to
-    # PyPI's cu130 wheels.
+    # applies only to a project's OWN dependencies, so without this line the
+    # cu128 index below is ignored and the resolve falls back to PyPI's cu130.
+    #
+    # TWO ROUTES EXIST HERE; this repo takes the second.
+    #   1. torch==2.11.0 from PyPI (cu130) plus the team's CUDA 13 forward-
+    #      compatibility driver, exporting
+    #      LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat
+    #      - see self-distill/README.md. Keeps the tested CUDA 13 stack.
+    #   2. torch from the cu128 index, matching the 12.7 driver directly through
+    #      CUDA minor-version compatibility. Measured on a GH200: 2.11.0+cu130
+    #      gives torch.cuda.is_available() False, 2.11.0+cu128 gives True.
+    #
+    # The second needs no environment variable. That matters because route 1
+    # requires LD_LIBRARY_PATH in every shell and every job script, and its own
+    # README warns that forgetting it falls back to CPU silently - which is the
+    # failure mode that has cost this project the most time.
     "torch",
 ]
 

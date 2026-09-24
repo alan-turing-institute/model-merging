@@ -115,7 +115,7 @@ case "$TASK" in
     LEGACY_TAKES_BATCH_SIZE=1
     ;;
   crime)
-    DATA_PREP=prepare_data.py
+    DATA_PREP=train/prepare_data.py
     DATASET=crime_dataset
     HALF1_NAME=gemma3-crime-1-of-2-lora
     HALF2_NAME=gemma3-crime-2-of-2-lora

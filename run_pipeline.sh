@@ -214,7 +214,7 @@ ensure_local() {
 
 if [ ! -d ../datasets/crime_dataset ]; then
   log "Preparing data"
-  uv run --project evaluate python prepare_data.py
+  uv run --project evaluate python train/prepare_data.py
 else
   log "Data already prepared, skipping"
 fi

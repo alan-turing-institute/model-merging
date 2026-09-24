@@ -8,7 +8,7 @@ ds = load_dataset("Binaryy/crime_posts_reddit")
 # Cast the label column to a ClassLabel type
 train_dataset = ds["train"].cast_column(
     "label",
-    ClassLabel(names=["non_crime", "crime"]),
+    ClassLabel(names=["non_crime", "crime"]), # change the labels 0,1 to non_crime, crime
 )
 
 # Split off training first

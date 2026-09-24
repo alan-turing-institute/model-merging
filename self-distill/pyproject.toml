@@ -1,0 +1,22 @@
+[project]
+name = "self-distill"
+version = "0.1.0"
+description = "Self-distillation of Gemma 3 on XSum one-sentence summarisation"
+readme = "README.md"
+authors = [
+    { name = "Justin McInroy", email = "jmcinroy@turing.ac.uk" },
+    { name = "Mariusz Pietrzyk", email = "mpietrzyk@turing.ac.uk" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "axolotl>=0.18.0",
+    "vllm>=0.23.0",
+    # axolotl 0.18.0 imports QATCallback -> torchao unconditionally in
+    # core/builders/causal.py, but its own dependency marker excludes torchao on
+    # aarch64, so the causal trainer cannot start on Isambard. torchao ships a
+    # py3-none-any wheel, which satisfies the import; we never use QAT.
+    "torchao==0.17.0",
+]
+
+[tool.uv]
+package = false
