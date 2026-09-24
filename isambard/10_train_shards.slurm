@@ -6,9 +6,8 @@
 #SBATCH --time=01:00:00
 #SBATCH --output=logs/shard-%A_%a.out
 #SBATCH --error=logs/shard-%A_%a.out
-# Account and partition come from config.sh via --export, or uncomment:
-##SBATCH --account=CHANGEME
-##SBATCH --partition=workq
+#SBATCH --account=brics.u6ui
+#SBATCH --partition=workq
 #
 # One shard expert per array task. At 8 shards each sees 1,000 examples, about
 # 125 steps - roughly 15 minutes on a GH200 - so the array finishes in the time

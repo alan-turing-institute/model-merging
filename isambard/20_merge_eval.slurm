@@ -5,8 +5,8 @@
 #SBATCH --time=03:00:00
 #SBATCH --output=logs/merge-eval-%j.out
 #SBATCH --error=logs/merge-eval-%j.out
-##SBATCH --account=CHANGEME
-##SBATCH --partition=workq
+#SBATCH --account=brics.u6ui
+#SBATCH --partition=workq
 #
 # Submit with a dependency so it starts only if every shard trained:
 #   sbatch --dependency=afterok:<array-job-id> isambard/20_merge_eval.slurm

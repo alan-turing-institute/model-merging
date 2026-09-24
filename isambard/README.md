@@ -13,12 +13,13 @@ roughly 0.04 — about seven times the current denominator.
 
 ## Before anything runs
 
-Two values are site-specific and nothing works until they are right. Put them in
-your environment or edit `config.sh`:
+Account `brics.u6ui`, partition `workq` (the only one, and the default). Both are
+now set in `config.sh` and in the `#SBATCH` directives, so nothing needs editing.
+Re-derive them on a different allocation with:
 
 ```bash
-sacctmgr show assoc user=$USER format=account   # -> SLURM_ACCOUNT
-sinfo -s                                        # -> SLURM_PARTITION
+sacctmgr show assoc user=$USER format=account
+sinfo -s
 ```
 
 ## The architecture risk, which is the real gate
@@ -51,6 +52,8 @@ Azure.
 
 ```bash
 # login node, once
+git clone https://github.com/alan-turing-institute/model-merging.git
+cd model-merging && git checkout xsum-summarisation
 bash isambard/00_setup_env.sh
 bash isambard/01_prefetch.sh
 

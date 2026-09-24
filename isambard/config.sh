@@ -2,8 +2,8 @@
 #
 # FILL THESE IN - they are the only site-specific values, and nothing runs
 # until they are right.
-SLURM_ACCOUNT="${SLURM_ACCOUNT:-CHANGEME}"      # sacctmgr show assoc user=$USER format=account
-SLURM_PARTITION="${SLURM_PARTITION:-workq}"     # sinfo -s
+SLURM_ACCOUNT="${SLURM_ACCOUNT:-brics.u6ui}"    # sacctmgr show assoc user=$USER format=account
+SLURM_PARTITION="${SLURM_PARTITION:-workq}"     # sinfo -s (workq is the only one, and default)
 GPUS_PER_JOB="${GPUS_PER_JOB:-1}"               # a GH200 node exposes 4
 
 # Everything below derives from those, or from where you cloned the repo.
