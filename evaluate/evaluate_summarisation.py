@@ -22,6 +22,8 @@ import torch
 from datasets import load_from_disk
 from peft import PeftModel
 from rouge_score import rouge_scorer
+
+from semantic_metrics import score_all
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -104,7 +106,7 @@ def count_sentences(text):
     return sum(text.count(mark) for mark in ".!?") or (1 if text else 0)
 
 
-def score_summaries(predictions, references):
+def score_summaries(predictions, references, documents=None):
     scorer = rouge_scorer.RougeScorer(ROUGE_TYPES, use_stemmer=True)
     per_example = []
     for prediction, reference in zip(predictions, references):
@@ -119,6 +121,16 @@ def score_summaries(predictions, references):
     }
     prediction_words = [len(p.split()) for p in predictions]
     reference_words = [len(r.split()) for r in references]
+    # Semantic similarity and entity grounding, when the dataset carries the
+    # source article. Optional so a results file built from a dataset without a
+    # `document` column still scores - but XSum always has one, so in practice
+    # this always runs.
+    if documents is not None:
+        semantic_metrics, semantic_rows = score_all(predictions, references, documents)
+        metrics.update(semantic_metrics)
+        for row, extra in zip(per_example, semantic_rows):
+            row.update(extra)
+
     metrics.update(
         {
             "num_examples": len(predictions),
@@ -249,13 +261,21 @@ def main():
     predictions = generate_summaries(
         model, tokenizer, prompts, args.max_new_tokens, args.batch_size
     )
-    metrics, per_example = score_summaries(predictions, references)
+    # The article, for entity grounding. Absent only if someone points this at a
+    # dataset built before prepare_xsum_data.py stored it.
+    documents = (list(dataset["document"])
+                 if "document" in dataset.column_names else None)
+    metrics, per_example = score_summaries(predictions, references, documents)
 
     print("Model      :", args.model)
     print("Adapter    :", args.adapter)
     print("Dataset    :", args.dataset)
     for rouge_type in ROUGE_TYPES:
         print(f"{rouge_type:11s}:", round(metrics[rouge_type], 4))
+    if "semantic" in metrics:
+        print("semantic   :", round(metrics["semantic"], 4))
+        print("entity_supp:", round(metrics["entity_support"], 4),
+              f"({metrics['num_hallucinating']} summaries with an unsupported entity)")
     print("Examples   :", metrics["num_examples"], f"({metrics['num_empty']} empty)")
     print(
         "Length     :",
