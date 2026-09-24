@@ -105,7 +105,7 @@ generated.
 
 ```bash
 # from the laptop, once: ~230 MB of adapters
-ISAMBARD_HOST=drmario.u6ui@login.isambard.ac.uk bash isambard/02_push_adapters.sh
+ISAMBARD_HOST=drmario.u6ui@ai.login.isambard.ac.uk bash isambard/02_push_adapters.sh
 
 # on the cluster
 sbatch isambard/30_kd_xsum.slurm

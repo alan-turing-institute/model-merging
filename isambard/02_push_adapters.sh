@@ -14,7 +14,7 @@
 # adapter of it - and nothing downstream reads them.
 set -euo pipefail
 
-: "${ISAMBARD_HOST:?set ISAMBARD_HOST, e.g. ISAMBARD_HOST=drmario.u6ui@login.isambard.ac.uk}"
+: "${ISAMBARD_HOST:?set ISAMBARD_HOST, e.g. ISAMBARD_HOST=<user>@ai.login.isambard.ac.uk}"
 REMOTE_ROOT="${REMOTE_ROOT:-model-merging/models}"
 LOCAL_ROOT="${LOCAL_ROOT:-$HOME/model-merging/models}"
 
