@@ -17,6 +17,9 @@ package = false
 
 [tool.uv.sources]
 mergekit = { git = "https://github.com/Zelys-DFKH/mergekit.git", rev = "fix/pydantic-schema-transformers5" }
+torch = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'aarch64'" },
+]
 
 # Isambard-AI (GH200, aarch64) runs driver 565.57.01, i.e. CUDA 12.7. PyPI's
 # aarch64 torch wheels are built for CUDA 13.0 at every version we can use, so
@@ -36,8 +39,3 @@ mergekit = { git = "https://github.com/Zelys-DFKH/mergekit.git", rev = "fix/pyda
 name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
 explicit = true
-
-[tool.uv.sources]
-torch = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'aarch64'" },
-]
