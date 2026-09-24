@@ -144,14 +144,52 @@ def assistant_span(tokenizer, messages, max_length):
 
 @torch.no_grad()
 def teacher_logprobs(model, full_ids, start, top_k, device):
-    """Top-k logprobs for each assistant token, in order."""
+    """Top-k logprobs for each assistant token, plus ONE trailing filler row.
+
+    The trailing row is the off-by-one correction, and it is not optional.
+
+    Axolotl never receives an explicit offset. Its KD strategy infers where the
+    teacher rows belong from their count alone:
+
+        input_padding_len = len(input_ids) - len(teacher_logprobs)
+
+    and then reads row j as the target for the student's prediction AT index
+    input_padding_len + j - which, under the usual causal shift, is the
+    distribution over the token at index input_padding_len + j + 1.
+
+    Emitting one row per assistant token gives a count of L - P (for sequence
+    length L and prompt length P), hence input_padding_len = P, hence row j
+    lands at index P + j and is consumed as the distribution over token P+j+1.
+    Our row j holds the distribution over token P+j. Every teacher distribution
+    is therefore applied to its right-hand neighbour, and the run trains
+    happily on noise.
+
+    Emitting one EXTRA row makes input_padding_len = P - 1, so row j lands at
+    index P + j - 1 and is consumed as the distribution over token P+j - which
+    is what it is. The extra row sits at the final index, whose next token does
+    not exist, so it is masked out of the loss and never contributes; it is
+    there to shift the base offset, not to teach anything.
+
+    Confirmed by jmcinroy against a teacher==student self-distillation check:
+    KL(teacher||student) is 0.02 nats at this alignment against 17.6 nats at
+    axolotl's default. KD.md's control #4 saw the same signal from the other
+    side - a KD term that stayed at 8-20 even with identical teacher and
+    student - and wrongly concluded the reported loss was not a per-token KL.
+    It was; it was reporting this.
+
+    Note that KD.md's control #2 could not have caught this. It shifted the
+    CONTENT of a fixed-length array, which leaves the row count - and so the
+    base offset - untouched.
+    """
     input_ids = torch.tensor([full_ids], device=device)
     logits = model(input_ids=input_ids).logits[0].float()
 
     # Position p is predicted by the logits at p-1. The assistant span begins at
-    # `start`, so the first distribution of interest is at start-1.
+    # `start`, so the first distribution of interest is at start-1. The range
+    # runs one past the end: at position len(full_ids) the logits index is
+    # len(full_ids)-1, which exists, and yields the filler row described above.
     rows = []
-    for position in range(start, len(full_ids)):
+    for position in range(start, len(full_ids) + 1):
         distribution = torch.log_softmax(logits[position - 1], dim=-1)
         values, indices = torch.topk(distribution, k=top_k)
         rows.append(
@@ -187,7 +225,8 @@ def main():
             continue
         record = {key: row[key] for key in row}
         record[args.logprobs_field] = rows
-        record["num_assistant_tokens"] = len(rows)
+        # len(rows) - 1: the last row is the alignment filler, not a token.
+        record["num_assistant_tokens"] = len(rows) - 1
         kept.append(record)
 
     if not kept:
@@ -226,10 +265,15 @@ def main():
             expected = len(encode_chat(tokenizer, messages, False)) - len(
                 encode_chat(tokenizer, messages[:-1], True)
             )
+            # +1 for the trailing alignment filler - see teacher_logprobs.
+            # This check exists to catch a count mismatch, so it has to encode
+            # the convention exactly; an "expected == actual" here would now be
+            # the bug rather than the check.
             actual = len(row[args.logprobs_field])
-            if expected != actual:
+            if expected + 1 != actual:
                 bad += 1
-                print(f"  MISALIGNED: expected {expected} assistant tokens, wrote {actual}")
+                print(f"  MISALIGNED: expected {expected} assistant tokens "
+                      f"+ 1 filler, wrote {actual}")
         print(f"Token-count check: {len(sample) - bad} ok, {bad} mismatched")
         if bad:
             raise SystemExit("Token-count check failed - do not train on this dataset.")
