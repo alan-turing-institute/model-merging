@@ -14,7 +14,14 @@
 # adapter of it - and nothing downstream reads them.
 set -euo pipefail
 
-: "${ISAMBARD_HOST:?set ISAMBARD_HOST, e.g. ISAMBARD_HOST=<user>@ai.login.isambard.ac.uk}"
+# Use the clifton-managed alias, not a bare user@host. Isambard authenticates
+# with a short-lived certificate through a ProxyJump - ~/.ssh/config_clifton
+# sets the User, the jump host and the CertificateFile for this alias, and a
+# direct user@ai.login.isambard.ac.uk gets "Permission denied (publickey)"
+# because it uses none of them. The certificate lasts 12 hours; renew with
+# clifton (check it with:
+#   ssh-keygen -L -f ~/Library/Caches/clifton/u6ui.aip2.isambard-cert.pub)
+ISAMBARD_HOST="${ISAMBARD_HOST:-u6ui.aip2.isambard}"
 REMOTE_ROOT="${REMOTE_ROOT:-model-merging/models}"
 LOCAL_ROOT="${LOCAL_ROOT:-$HOME/model-merging/models}"
 
