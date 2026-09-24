@@ -22,6 +22,18 @@ base_model: ../models/gemma3-xsum-merged-linear
 
 load_in_4bit: true
 
+# Gemma-3 uses attention soft-capping, which the sdpa kernel does not implement
+# correctly - it yields NaN logits. axolotl picks flash-attn when it is present
+# and sdpa otherwise, and flash-attn has no aarch64 wheel, so on Isambard the
+# fallback silently produced a dead model: training loss went 12.81 -> 0 with
+# NaNs throughout, and the resulting adapter emitted an empty string for all
+# 1000 test articles. On A100 (x86, flash-attn available) the same config
+# trained fine, which is why this never appeared before.
+#
+# This is a correctness setting, not a hyperparameter: eager attention computes
+# the same function flash-attn does, only slower.
+eager_attention: true
+
 plugins:
   - axolotl.integrations.kd.KDPlugin
 
