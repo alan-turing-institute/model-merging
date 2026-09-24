@@ -31,7 +31,9 @@ fi
 cd "$(dirname "$0")/.."
 source isambard/config.sh
 
-module load cuda 2>/dev/null || echo "no cuda module - check 'module avail cuda'"
+# cuda/12.6 against cuda/11.8; torch wheels for aarch64 are built for cu12.
+module load cuda/12.6 2>/dev/null || module load cuda 2>/dev/null \
+  || echo "no cuda module loaded - check 'module avail cuda'"
 # uv installs to ~/.local/bin, which is not on PATH in a fresh login shell -
 # so a first-run install succeeds and then "uv: command not found" on the very
 # next line. Put it on PATH here rather than telling the user to re-run.
@@ -56,10 +58,15 @@ uv run --project train python - <<'PY'
 import torch, platform
 print("arch          ", platform.machine())
 print("torch         ", torch.__version__)
-print("cuda available", torch.cuda.is_available())
+# Login nodes have no GPU, so False here is expected and says nothing about the
+# compute nodes - it is only a failure if this is running inside an allocation.
+print("cuda available", torch.cuda.is_available(),
+      "" if torch.cuda.is_available() else "(expected on a login node)")
 if torch.cuda.is_available():
     print("device        ", torch.cuda.get_device_name(0))
     print("capability    ", torch.cuda.get_device_capability(0))
+# These two are the whole question on aarch64. bitsandbytes gates load_in_4bit;
+# flash_attn only costs speed, since axolotl falls back to eager attention.
 for mod in ("bitsandbytes", "flash_attn"):
     try:
         __import__(mod); print(f"{mod:<14} ok")
