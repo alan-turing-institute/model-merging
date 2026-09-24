@@ -14,6 +14,7 @@ import argparse
 from datasets import concatenate_datasets, load_from_disk
 
 
+from pathlib import Path  # noqa: E402
 from precompute_logprobs import ALIGNMENT_MARKER  # noqa: E402
 
 
