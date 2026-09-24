@@ -24,6 +24,7 @@
 # the top anyway - this is much less lossy than it would be on a dataset with
 # a genuinely dispersed summary.
 import os
+from pathlib import Path
 
 from datasets import DatasetDict, load_dataset
 
@@ -123,13 +124,35 @@ else:
         return split.shard(num_shards=SPLITS, index=index, contiguous=True)
 
 
+# The shard directories are named xsum_dataset1..N for every N, so a run at a
+# different SPLITS overwrites the previous one in place. That is not a cosmetic
+# collision: xsum_dataset1 and xsum_dataset2 hold the two-way halves that every
+# adapter, merge and KD number on record was trained against, and an
+# XSUM_SPLITS=8 run would replace half 1 with a 1/8 shard under the same path,
+# leaving nothing to notice. Each directory records the SPLITS it was built
+# with; a run that would change that refuses unless XSUM_OVERWRITE=1.
 for i in range(SPLITS):
+    out = Path(f"../datasets/xsum_dataset{i + 1}")
+    stamp = out / ".xsum_splits"
+    if out.is_dir() and os.environ.get("XSUM_OVERWRITE") != "1":
+        previous = stamp.read_text().strip() if stamp.is_file() else None
+        if previous != str(SPLITS):
+            built = f"XSUM_SPLITS={previous}" if previous else "an unrecorded XSUM_SPLITS"
+            raise SystemExit(
+                f"{out} already exists and was built with {built}; this run is "
+                f"XSUM_SPLITS={SPLITS}. Overwriting it would silently change what "
+                f"every artefact trained on that path was trained on - the halves "
+                f"at xsum_dataset1/2 are what every adapter, merge and KD number "
+                f"on record used. Move the old datasets aside, or set "
+                f"XSUM_OVERWRITE=1 if you really mean to replace them."
+            )
     DatasetDict(
         {
             "train": shard(dataset["train"], i),
             "validation": shard(dataset["validation"], i),
         }
-    ).save_to_disk(f"../datasets/xsum_dataset{i + 1}")
+    ).save_to_disk(str(out))
+    stamp.write_text(f"{SPLITS}\n")
 
 print(
     f"full   train={len(dataset['train'])} "

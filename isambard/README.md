@@ -60,11 +60,76 @@ bash isambard/01_prefetch.sh
 # build the 8-way split and the configs it needs
 XSUM_SPLITS=8 uv run --project evaluate python prepare_xsum_data.py
 python isambard/make_shard_configs.py --splits 8     # add --no-4bit if needed
-python isambard/make_shard_merge.py --splits 8
+python isambard/make_shard_merge.py --splits 8       # the 8-way merge
+python isambard/make_pair_merges.py --splits 8       # the four disjoint pairs
+python isambard/make_kd_configs.py  --splits 8       # the three KD alpha arms
 
-# train the eight experts, then merge and evaluate when they all succeed
-JOB=$(sbatch --parsable isambard/10_train_shards.slurm)
-sbatch --dependency=afterok:$JOB isambard/20_merge_eval.slurm
+# the whole chain, each stage gated on the one before
+TRAIN=$(sbatch --parsable isambard/10_train_shards.slurm)
+MERGE=$(sbatch --parsable --dependency=afterok:$TRAIN isambard/20_merge.slurm)
+sbatch --dependency=afterok:$MERGE isambard/21_eval.slurm
+
+# the KD arm; teachers need only the shard experts, so it forks off $TRAIN
+TEACH=$(sbatch --parsable --dependency=afterok:$TRAIN isambard/40_kd8_teachers.slurm)
+CONCAT=$(sbatch --parsable --dependency=afterok:$TEACH isambard/41_kd8_concat.slurm)
+sbatch --dependency=afterok:$CONCAT,afterok:$MERGE isambard/42_kd8_sweep.slurm
+```
+
+`prepare_xsum_data.py` writes `xsum_dataset1..N` for every N, so a run at a
+different `XSUM_SPLITS` overwrites the previous one in place. It now records the
+split count in each directory and refuses to overwrite one built differently
+(`XSUM_OVERWRITE=1` to mean it). That matters on a machine that already holds
+the two-way halves: without the guard, `XSUM_SPLITS=8` replaces half 1 with a
+1/8 shard under the same path, and every adapter and KD number measured against
+that path silently changes meaning.
+
+## What the stages are, and why they are split this way
+
+| stage | shape | what it is |
+| --- | --- | --- |
+| `10_train_shards` | array 1-8 | one shard expert per task, ~1,000 examples each |
+| `20_merge` | array 1-5 | the 8-way merge, then the four disjoint pair merges |
+| `21_eval` | array 1-14 | 8-way merge, 4 pairs, 8 shards, full - one per task |
+| `40_kd8_teachers` | array 1-8 | teacher logprobs, expert i over shard i |
+| `41_kd8_concat` | single | combines the eight into the KD training set |
+| `42_kd8_sweep` | array 1-3 | 0.9/0.1, 0.5/0.5, 0.2/1.0 on one student |
+
+Two of those splits are the point rather than tidiness. **The teacher pass is
+produced once and consumed by all three alpha arms** - it is the most expensive
+step in the chain, and the three arms are supposed to differ in two scalars, so
+recomputing it per arm would both waste the GPU-hours and let the arms drift.
+**Evaluation is an array rather than a loop**: fourteen evaluations back to back
+inside one allocation is the same GPU-hours on a critical path fourteen times
+longer, and a failure in the twelfth used to discard the eleven before it.
+
+The concat is its own job because three sweep tasks start at once and would
+otherwise race to write the same directory.
+
+## The pair merges
+
+Between one shard (1/8 of the data) and the 8-way merge there is a rung nobody
+has measured: two shards merged, i.e. 1/4 of the data reached by averaging
+rather than by training on it. The pairs are disjoint - (1,2), (3,4), (5,6),
+(7,8) - so they partition the training set exactly once and read as four
+independent draws of the same quantity. All 28 pairs would give a variance
+estimate at seven times the cost and without that independence.
+
+## The KD alpha sweep
+
+`KD.md`'s 2026-09-24 section closes with what the alignment fix leaves open. The
+0.9/0.1 -> 0.2/1.0 improvement was real, but the explanation on record - "the
+weighting was the whole of it" - was written about a teacher that was scoring
+the token after the one it described. Whether a *correctly aligned* teacher at
+0.9/0.1 still destroys termination is untested, and it is the one thing three
+arms on a shared student and shared teacher data can settle.
+
+Read the result against the degeneracy counters, not only ROUGE: the pre-fix
+0.9/0.1 arms returned 40-64 empty outputs and 54-74 with a token repeated three
+or more times out of 1000, where every non-KD model produced zero of both.
+
+```bash
+uv run --project evaluate python experiments/bootstrap_rouge.py $RESULTS_DIR
+uv run --project evaluate python experiments/degeneracy.py $RESULTS_DIR
 ```
 
 `prepare_xsum_data.py` keeps `XSUM_SPLITS=2` on the original `train_test_split`
