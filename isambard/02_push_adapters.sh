@@ -31,9 +31,16 @@ ADAPTERS=(
   gemma3-xsum-full-lora
 )
 
+# rsync will not create nested parents, and `models/` is not in the repo, so the
+# destination tree has to exist first. --mkpath would do it in one call but needs
+# rsync >= 3.2.3 at BOTH ends, and macOS ships openrsync, which does not have it.
+echo "=== creating $REMOTE_ROOT on $ISAMBARD_HOST ==="
+ssh "$ISAMBARD_HOST" "mkdir -p '$REMOTE_ROOT'"
+
 for adapter in "${ADAPTERS[@]}"; do
   [ -d "$LOCAL_ROOT/$adapter" ] || { echo "missing: $LOCAL_ROOT/$adapter" >&2; exit 1; }
   echo "=== $adapter ==="
+  ssh "$ISAMBARD_HOST" "mkdir -p '$REMOTE_ROOT/$adapter'"
   rsync -avh --progress \
     --include='adapter_config.json' \
     --include='adapter_model.safetensors' \
