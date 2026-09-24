@@ -16,6 +16,18 @@
 # capacity here. That changes the numbers slightly, so it must be recorded as a
 # deviation rather than swapped in silently.
 set -euo pipefail
+
+# Refuse to run anywhere but a cluster login node. This has been run on a laptop
+# twice: it succeeds, prints arch arm64 and "cuda available False", and none of
+# that says anything about the GH200s. macOS reports arm64 where Linux reports
+# aarch64, which is the tell.
+if [ "$(uname -s)" != "Linux" ] || ! command -v sinfo >/dev/null 2>&1; then
+  echo "This runs on an Isambard LOGIN NODE, not here." >&2
+  echo "  host: $(hostname)   kernel: $(uname -s)   arch: $(uname -m)" >&2
+  echo "  ssh in first, clone the repo there, then run this from the clone." >&2
+  exit 1
+fi
+
 cd "$(dirname "$0")/.."
 source isambard/config.sh
 

@@ -3,6 +3,12 @@
 # have no outbound network, and a job that discovers this mid-run fails after
 # it has already queued and started.
 set -euo pipefail
+
+if [ "$(uname -s)" != "Linux" ] || ! command -v sinfo >/dev/null 2>&1; then
+  echo "This runs on an Isambard LOGIN NODE, not here ($(hostname), $(uname -m))." >&2
+  exit 1
+fi
+
 cd "$(dirname "$0")/.."
 source isambard/config.sh
 export HF_HUB_OFFLINE=0
