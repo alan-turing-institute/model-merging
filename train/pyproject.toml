@@ -10,7 +10,37 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "axolotl>=0.18.0",
+    # axolotl 0.18.0 imports QATCallback -> torchao unconditionally in
+    # core/builders/causal.py, but its dependency marker excludes torchao on
+    # aarch64, so the trainer cannot start on Isambard. torchao ships a
+    # py3-none-any wheel, which satisfies the import; QAT is never used.
+    # (Found by jmcinroy on main, 87d5331.)
+    "torchao>=0.17.0",
 ]
 
 [tool.uv]
 package = false
+
+# Isambard-AI (GH200, aarch64) runs driver 565.57.01, i.e. CUDA 12.7. PyPI's
+# aarch64 torch wheels are built for CUDA 13.0 at every version we can use, so
+# a default resolve gives torch+cu130 and torch.cuda.is_available() is False -
+# inside a GPU allocation, with a "driver is too old" warning and no other
+# symptom. Measured: 2.11.0+cu130 -> False, 2.11.0+cu128 -> True on a GH200.
+#
+# CUDA 12.x minor-version compatibility means any 12.x runtime works against a
+# 12.7 driver, so the cu128 index is the fix. The hpc_sdk ships compat libs at
+# .../cuda/12.6/compat, but they are 560.28.03 - OLDER than the installed
+# driver - so LD_LIBRARY_PATH cannot rescue a cu130 build.
+#
+# Scoped by marker: this repo is also used on an x86 Azure instance and on a
+# macOS laptop, where the cu128 index has no wheels at all. Unscoped, this
+# pin makes `uv sync` fail on both.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'aarch64'" },
+]
