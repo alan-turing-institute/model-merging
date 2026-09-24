@@ -14,6 +14,9 @@ import argparse
 from datasets import concatenate_datasets, load_from_disk
 
 
+from precompute_logprobs import ALIGNMENT_MARKER  # noqa: E402
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("inputs", nargs="+", help="Dataset directories to concatenate.")
@@ -34,6 +37,22 @@ def main():
         combined = combined.shuffle(seed=args.shuffle_seed)
 
     combined.save_to_disk(args.output)
+
+    # Carry the alignment marker forward, but only if EVERY input has it. The
+    # downstream guard refuses a logprobs directory without it, and a
+    # concatenation is exactly as trustworthy as its least trustworthy part: one
+    # pre-fix half mixed into the union is still a run trained half on noise.
+    markers = [Path(d) / ALIGNMENT_MARKER for d in args.inputs]
+    if markers and all(m.is_file() for m in markers):
+        (Path(args.output) / ALIGNMENT_MARKER).write_text(
+            "propagated by concat_datasets.py from: "
+            + ", ".join(str(d) for d in args.inputs) + "\n"
+        )
+        print(f"Alignment marker propagated ({ALIGNMENT_MARKER})")
+    else:
+        missing = [str(m.parent) for m in markers if not m.is_file()]
+        print(f"NO alignment marker written - these inputs lack one: {missing}")
+
     print(f"\nWrote {len(combined)} examples to {args.output}")
 
 
