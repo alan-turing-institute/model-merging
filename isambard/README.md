@@ -84,14 +84,41 @@ untuned base model. Averaging holds displacement at roughly one expert's worth.
 maximum of eight noisy estimates is biased upward — a winner's curse that deflates
 *R*. Use shard 1, or the mean of the eight, and state which before looking.
 
-## What is not ported
+## The KD re-run (`30_kd_xsum.slurm`)
 
-The KD arm. `run_kd_pipeline.sh` resolves artefacts through the Azure ML registry
-and writes to `~/cloudfiles`; on Isambard there is no registry and every artefact
-is a path. Porting it means replacing `pipeline_resolve_results_dir` and the
-`recorded_version` bookkeeping with directory-name pinning. Worth doing only once
-the shard design is shown to open a usable gap — otherwise it ports a pipeline for
-an experiment that still cannot answer anything.
+Now the priority, because a0d3 — the Azure instance — is unavailable and because
+every KD number on record was produced with a misaligned teacher (see the
+2026-09-24 section of `KD.md`). This job re-runs the XSum arm with the corrected
+producer.
+
+It deliberately does **not** use `run_kd_pipeline.sh`: that script resolves every
+artefact through the Azure ML registry and writes to `~/cloudfiles`, neither of
+which exists here, so the registry bookkeeping would have to be stubbed rather
+than ported. The four steps are written out directly — merge, teacher logprobs
+per half, distil, evaluate — which is also easier to audit, and auditing is the
+point of this run.
+
+The first thing it does is run the teacher==student KL check and **exit non-zero
+unless it reads 0.0000**. Everything after that point trains silently on noise if
+the alignment is wrong, which is exactly how the last month of numbers were
+generated.
+
+```bash
+# from the laptop, once: ~230 MB of adapters
+ISAMBARD_HOST=drmario.u6ui@login.isambard.ac.uk bash isambard/02_push_adapters.sh
+
+# on the cluster
+sbatch isambard/30_kd_xsum.slurm
+```
+
+The adapters are copied rather than retrained on purpose. They are the exact
+artefacts every number in `KD.md` was measured against; retraining them here would
+change the experts as well as the alignment, and the re-run has to isolate one
+variable. Only the adapter payload moves — `optimizer.pt` and the nested
+checkpoint directory are ~290 MB each of training state that nothing reads.
+
+Pre-fix baselines to compare against: KD 0.3987, merge 0.3970, better half 0.3990,
+full-data 0.4049, and zero on all four degeneracy counters.
 
 ## Untested
 
