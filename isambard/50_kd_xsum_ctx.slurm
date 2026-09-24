@@ -36,6 +36,18 @@ STUDENT="$MODELS_DIR/gemma3-xsum-ctxkd"
 echo "=== $(hostname) | $(date -Is) ==="
 [ -d "$MERGE" ] || { echo "merge missing at $MERGE - run 30_kd_xsum.slurm first" >&2; exit 1; }
 
+# gemma-3-4b-it is multimodal, so axolotl loads an image processor alongside the
+# tokenizer. mergekit writes weights and tokenizer files but not
+# preprocessor_config.json, and training dies with "Can't load image processor"
+# AFTER the teacher pass - 33 minutes in. stage_model_dir.py symlinks the merge
+# and fills only the missing JSON from the base model.
+if [ ! -f "$MERGE/preprocessor_config.json" ]; then
+  echo "=== staging processor files into the merge ==="
+  mv "$MERGE" "$MERGE.raw"
+  uv run --project evaluate python stage_model_dir.py \
+    --source "$MERGE.raw" --dest "$MERGE" --base-model google/gemma-3-4b-it
+fi
+
 # --- 1. the ctx dataset tree -----------------------------------------------
 if [ ! -d "$DATASETS_DIR/xsum_ctx_dataset" ]; then
   echo "=== building the ctx datasets ==="

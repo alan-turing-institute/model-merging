@@ -1,13 +1,17 @@
-# CONTEXT-DISTILLATION arm at kd_alpha 0.9 / kd_ce_alpha 1.0.
+# CONTEXT-DISTILLATION arm at kd_alpha 0.9 / kd_ce_alpha 0.1.
 #
-# NOT 0.9/0.1. That setting raises the teacher AND starves cross-entropy at
-# the same time, which is why its damage could never be attributed to either:
-# CE converges near 1.4 against a KL near 8, so 0.9/0.1 gave the teacher some
-# fifty times the gradient and left the term that teaches the model to STOP
-# with a fiftieth of a vote. Holding kd_ce_alpha at 1.0 and moving kd_alpha
-# alone isolates the teacher's weight: roughly 4.5x the teacher gradient of
-# the 0.2/1.0 arm, with cross-entropy untouched. If termination survives here
-# and not at 0.9/0.1, the culprit was the CE weight rather than the KL weight.
+# axolotl's published default, and the setting that produced the degeneracy on
+# the shared-prompt arm: 41 empty outputs and 55 with a token repeated three or
+# more times, out of 1000. Cross-entropy converges near 1.4 against a KL near 8,
+# so 0.9/0.1 gives the teacher on the order of fifty times the gradient and
+# leaves the term that teaches the model to emit <end_of_turn> with a fiftieth
+# of a vote.
+#
+# It is worth re-running because that measurement is no longer interpretable.
+# The teacher was misaligned by one position throughout (KD.md, 2026-09-24), so
+# the arm answered "what does a heavily-weighted WRONG teacher do", not "what
+# does a heavily-weighted teacher do". Here the teacher is correct and, in this
+# arm, also better prompted.
 #
 # The teacher here is conditioned on a strict system prompt (20-25 words, present
 # tense, third person, no preamble) while the student sees only "Summarise this
@@ -62,7 +66,7 @@ kd_trainer: true
 # (0.2 x 8 = 1.6 against 1.0 x 1.4). Still a distillation run - the teacher
 # remains the larger single term - but no longer one where the targets are
 # advisory.
-kd_ce_alpha: 1.0
+kd_ce_alpha: 0.1
 kd_alpha: 0.9
 kd_temperature: 1.0
 
