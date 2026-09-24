@@ -51,7 +51,10 @@ load_in_4bit: true
 #
 # This is a correctness setting, not a hyperparameter: eager attention computes
 # the same function flash-attn does, only slower.
-eager_attention: true
+# attn_implementation rather than axolotl's eager_attention boolean: both
+# are valid keys, but this is the spelling jmcinroy's self-distill configs
+# use and have actually run with Gemma-3 on this cluster (87d5331, main).
+attn_implementation: eager
 
 plugins:
   - axolotl.integrations.kd.KDPlugin
