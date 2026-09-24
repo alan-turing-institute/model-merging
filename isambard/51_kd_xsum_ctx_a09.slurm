@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=xsum-ctxkd-a09
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=72
+#SBATCH --mem=115000M
 #SBATCH --time=03:00:00
 #SBATCH --output=logs/ctxkd-a09-%j.out
 #SBATCH --error=logs/ctxkd-a09-%j.out

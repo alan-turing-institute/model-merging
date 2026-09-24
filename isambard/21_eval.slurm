@@ -2,7 +2,8 @@
 #SBATCH --job-name=xsum-eval
 #SBATCH --array=1-14
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=72
+#SBATCH --mem=115000M
 #SBATCH --time=01:00:00
 #SBATCH --output=logs/eval-%A_%a.out
 #SBATCH --error=logs/eval-%A_%a.out

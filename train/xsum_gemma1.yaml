@@ -62,6 +62,12 @@ test_datasets:
 # axolotl, so the two numbers have to be chosen together.
 sequence_len: 2048
 
+# axolotl defaults this to os.cpu_count(), which on a GH200 node reports all 288
+# cores regardless of what Slurm allocated. 288 tokenisation workers inside a
+# 16-core cgroup OOM-killed all three expert runs at 12-34 minutes. 8 matches
+# what the self-distill arm uses and what a single-GPU allocation can hold.
+dataset_num_proc: 8
+
 # Loss on the assistant turn only. The chat_template strategy already defaults
 # to roles_to_train: ["assistant"], but state it explicitly: training on the
 # input would mean spending most of the gradient on reproducing BBC article

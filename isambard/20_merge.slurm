@@ -2,7 +2,8 @@
 #SBATCH --job-name=xsum-merge
 #SBATCH --array=1-5
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=72
+#SBATCH --mem=115000M
 #SBATCH --time=01:00:00
 #SBATCH --output=logs/merge-%A_%a.out
 #SBATCH --error=logs/merge-%A_%a.out

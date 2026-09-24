@@ -2,7 +2,8 @@
 #SBATCH --job-name=xsum-experts
 #SBATCH --array=1-3
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=72
+#SBATCH --mem=115000M
 #SBATCH --time=03:00:00
 #SBATCH --output=logs/expert-%A_%a.out
 #SBATCH --error=logs/expert-%A_%a.out

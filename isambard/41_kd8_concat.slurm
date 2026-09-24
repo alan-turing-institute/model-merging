@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=xsum-kd8-concat
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=72
+#SBATCH --mem=115000M
 #SBATCH --time=00:30:00
 #SBATCH --output=logs/kd8-concat-%j.out
 #SBATCH --error=logs/kd8-concat-%j.out

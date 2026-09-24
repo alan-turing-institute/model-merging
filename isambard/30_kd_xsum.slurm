@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=xsum-kd-aligned
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=72
+#SBATCH --mem=115000M
 #SBATCH --time=06:00:00
 #SBATCH --output=logs/kd-xsum-%j.out
 #SBATCH --error=logs/kd-xsum-%j.out
