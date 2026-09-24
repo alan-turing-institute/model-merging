@@ -76,9 +76,16 @@ fi
 
 # --- 3. distil --------------------------------------------------------------
 echo "=== training (0.2 / 1.0, strict teacher / terse student) ==="
-cd "$REPO_ROOT/train"
-uv run axolotl train xsum_gemma_ctxkd.yaml
-cd "$REPO_ROOT"
+# axolotl writes a LoRA adapter, so a rerun that retrains is pure waste - and
+# these jobs have already been resubmitted twice for failures downstream of
+# training.
+if [ -f "$STUDENT/adapter_model.safetensors" ]; then
+  echo "=== student already trained at $STUDENT, skipping ==="
+else
+  cd "$REPO_ROOT/train"
+  uv run axolotl train xsum_gemma_ctxkd.yaml
+  cd "$REPO_ROOT"
+fi
 
 # --- 4. evaluate, all of it on the STUDENT prompt ---------------------------
 # The baselines are re-measured here rather than carried over. A model asked
@@ -95,7 +102,8 @@ evaluate () {
   uv run python evaluate_summarisation.py "${args[@]}"
 }
 
-evaluate ctx-kd     "$STUDENT"
+# The student is an adapter on the merge - see 30_kd_xsum.slurm.
+evaluate ctx-kd     "$MERGE" "$STUDENT"
 evaluate ctx-merge  "$MERGE"
 evaluate ctx-half1  google/gemma-3-4b-it "$MODELS_DIR/gemma3-xsum-1-of-2-lora"
 evaluate ctx-half2  google/gemma-3-4b-it "$MODELS_DIR/gemma3-xsum-2-of-2-lora"

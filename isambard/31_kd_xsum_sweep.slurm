@@ -52,10 +52,19 @@ grep -E '^kd_alpha:|^kd_ce_alpha:' "$REPO_ROOT/train/$CONFIG"
 }
 
 cd "$REPO_ROOT/train"
-uv run axolotl train "$CONFIG"
+# axolotl writes a LoRA adapter, so a rerun that retrains is pure waste - and
+# these jobs have already been resubmitted twice for failures downstream of
+# training.
+if [ -f "$STUDENT/adapter_model.safetensors" ]; then
+  echo "=== student already trained at $STUDENT, skipping ==="
+else
+  uv run axolotl train "$CONFIG"
+fi
 cd "$REPO_ROOT/evaluate"
+# The student is a LoRA adapter on the merge, not a standalone model.
 uv run python evaluate_summarisation.py \
-  --model "$STUDENT" \
+  --model "$MODELS_DIR/gemma3-xsum-merged-linear" \
+  --adapter "$STUDENT" \
   --dataset "$DATASETS_DIR/xsum_dataset/test" \
   --output "$RESULTS_DIR/kd2-${TAG}.json"
 

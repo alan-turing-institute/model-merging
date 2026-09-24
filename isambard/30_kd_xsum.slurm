@@ -90,9 +90,16 @@ fi
 
 # --- 3. distil -------------------------------------------------------------
 echo "=== training the student (kd_alpha 0.2 / kd_ce_alpha 1.0) ==="
-cd "$REPO_ROOT/train"
-uv run axolotl train xsum_gemma_kd_balanced.yaml
-cd "$REPO_ROOT"
+# axolotl writes a LoRA adapter, so a rerun that retrains is pure waste - and
+# these jobs have already been resubmitted twice for failures downstream of
+# training.
+if [ -f "$STUDENT/adapter_model.safetensors" ]; then
+  echo "=== student already trained at $STUDENT, skipping ==="
+else
+  cd "$REPO_ROOT/train"
+  uv run axolotl train xsum_gemma_kd_balanced.yaml
+  cd "$REPO_ROOT"
+fi
 
 # --- 4. evaluate -----------------------------------------------------------
 echo "=== evaluating ==="
@@ -105,7 +112,11 @@ evaluate () {
   uv run python evaluate_summarisation.py "${args[@]}"
 }
 
-evaluate kd-aligned "$STUDENT"
+# The student is an ADAPTER on the merge, not a standalone model: axolotl
+# trains with `adapter: lora`, so its output_dir holds adapter_model.safetensors
+# and no full weights. Passing it as --model fails with "no file named
+# model.safetensors" AFTER the training it just spent twenty minutes on.
+evaluate kd-aligned "$MERGE" "$STUDENT"
 evaluate merge      "$MERGE"
 evaluate half1      google/gemma-3-4b-it "$MODELS_DIR/gemma3-xsum-1-of-2-lora"
 evaluate half2      google/gemma-3-4b-it "$MODELS_DIR/gemma3-xsum-2-of-2-lora"
