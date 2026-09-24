@@ -40,6 +40,40 @@ SEED = int(os.environ.get("XSUM_SEED", 42))
 # n = 1000. Smaller shards make weaker experts and so a larger gap for the
 # recovery fraction to normalise by.
 SPLITS = int(os.environ.get("XSUM_SPLITS", 2))
+# "plain" (default) reproduces the arm every number on record was measured on:
+# one prompt, used by the teacher, the student and the evaluator alike. "ctx"
+# builds the context-distillation variant, where the teacher is conditioned on a
+# strict system prompt and the student sees a terse one - the teacher's edge is
+# then partly context rather than only weights. It writes to its own tree so the
+# two arms cannot contaminate each other.
+VARIANT = os.environ.get("XSUM_VARIANT", "plain")
+if VARIANT not in ("plain", "ctx"):
+    raise SystemExit(f"XSUM_VARIANT must be plain or ctx, got {VARIANT!r}")
+PREFIX = "xsum_dataset" if VARIANT == "plain" else "xsum_ctx_dataset"
+
+# --- the context-distillation prompts (XSUM_VARIANT=ctx) ---
+#
+# Adapted from jmcinroy's self-distill arm on `main`, where a four-way bake-off
+# scored this system prompt at 92.5% clean output - no preamble, no markdown,
+# one sentence of 20-25 words - against 59.5% for an instruction carried in the
+# user turn, which is the shape INSTRUCTION below uses. Few-shot variants scored
+# worse and cost 2.3x the context, so there are deliberately no exemplars.
+#
+# Constraints are prose, not a bulleted "Rules:" block: an earlier version of
+# theirs echoed the literal label into ~6% of outputs.
+TEACHER_SYSTEM = (
+    "You are a BBC News sub-editor. You reply with exactly one sentence of 20 to 25 "
+    "words, written in the present tense and the third person, in plain text with no "
+    "markdown, no asterisks and no quotation marks. You never introduce, label or "
+    "explain the sentence, and you never restate the request. Your entire reply is "
+    "the sentence itself."
+)
+# The ask goes AFTER the article, so the most recent tokens are the instruction
+# rather than several hundred words of news copy.
+TEACHER_ASK = "Summarise the article above in one sentence of 20 to 25 words."
+# What the student sees. Terse by design: the point of the arm is that the
+# format has to end up in the weights rather than be re-read every time.
+STUDENT_INSTRUCTION = "Summarise this BBC News article in one sentence:\n\n"
 
 INSTRUCTION = (
     "Summarise the following BBC News article in a single short sentence. "
@@ -69,8 +103,8 @@ def convert(example):
     """
     document = " ".join(example["document"].split()[:MAX_DOC_WORDS])
     summary = example["summary"].strip()
-    prompt = INSTRUCTION + document
-    return {
+    prompt = (STUDENT_INSTRUCTION if VARIANT == "ctx" else INSTRUCTION) + document
+    record = {
         "document": document,
         "summary": summary,
         "prompt": prompt,
@@ -79,6 +113,16 @@ def convert(example):
             {"role": "assistant", "content": summary},
         ],
     }
+    if VARIANT == "ctx":
+        # The teacher's view. Same assistant target - that is what makes the
+        # teacher's distributions transplantable onto the student's sequence -
+        # but a different context, which is the whole point of the arm.
+        record["teacher_messages"] = [
+            {"role": "system", "content": TEACHER_SYSTEM},
+            {"role": "user", "content": f"Article:\n\n{document}\n\n{TEACHER_ASK}"},
+            {"role": "assistant", "content": summary},
+        ]
+    return record
 
 
 dataset = DatasetDict(
@@ -89,7 +133,7 @@ dataset = DatasetDict(
     }
 ).map(convert)
 
-dataset.save_to_disk("../datasets/xsum_dataset")
+dataset.save_to_disk(f"../datasets/{PREFIX}")
 
 # --- the two disjoint halves ---
 #
@@ -132,7 +176,7 @@ else:
 # leaving nothing to notice. Each directory records the SPLITS it was built
 # with; a run that would change that refuses unless XSUM_OVERWRITE=1.
 for i in range(SPLITS):
-    out = Path(f"../datasets/xsum_dataset{i + 1}")
+    out = Path(f"../datasets/{PREFIX}{i + 1}")
     stamp = out / ".xsum_splits"
     if out.is_dir() and os.environ.get("XSUM_OVERWRITE") != "1":
         previous = stamp.read_text().strip() if stamp.is_file() else None
