@@ -16,6 +16,11 @@ dependencies = [
     # py3-none-any wheel, which satisfies the import; QAT is never used.
     # (Found by jmcinroy on main, 87d5331.)
     "torchao>=0.17.0",
+    # Declared directly, though it arrives transitively anyway: [tool.uv.sources]
+    # only applies to a project's OWN dependencies, so without this line the
+    # cu128 index below is silently ignored and the resolve falls back to
+    # PyPI's cu130 wheels.
+    "torch",
 ]
 
 [tool.uv]

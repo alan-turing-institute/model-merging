@@ -54,22 +54,39 @@ done
 
 echo
 echo "=== verifying the GPU stack ==="
-uv run --project train python - <<'PY'
-import torch, platform
+# All three projects, not just train: each resolves torch independently, and a
+# cu130 build in any one of them is a silent CPU fallback in whichever step uses
+# it - the merge and the evaluation are as GPU-bound as the training.
+for project in train evaluate merge; do
+  echo "--- $project ---"
+  uv run --project "$project" python - <<'PYCHECK'
+import platform
+import torch
+
 print("arch          ", platform.machine())
 print("torch         ", torch.__version__)
-# Login nodes have no GPU, so False here is expected and says nothing about the
-# compute nodes - it is only a failure if this is running inside an allocation.
+# A cu130 build cannot initialise against this cluster's 12.7 driver. That shows
+# up as cuda available False with a "driver is too old" warning - which on a
+# login node is indistinguishable from simply having no GPU, so check the build.
+if "cu130" in torch.__version__:
+    print("BUILD          WRONG - cu130 will not run here; expected +cu128")
+# Login nodes have no GPU, so False is expected here and says nothing about the
+# compute nodes. Only the build tag above is conclusive from a login node.
 print("cuda available", torch.cuda.is_available(),
       "" if torch.cuda.is_available() else "(expected on a login node)")
 if torch.cuda.is_available():
     print("device        ", torch.cuda.get_device_name(0))
-    print("capability    ", torch.cuda.get_device_capability(0))
+PYCHECK
+done
+
+echo "--- train extras ---"
 # These two are the whole question on aarch64. bitsandbytes gates load_in_4bit;
 # flash_attn only costs speed, since axolotl falls back to eager attention.
+uv run --project train python - <<'PYEXTRA'
 for mod in ("bitsandbytes", "flash_attn"):
     try:
-        __import__(mod); print(f"{mod:<14} ok")
+        __import__(mod)
+        print(f"{mod:<14} ok")
     except Exception as exc:
         print(f"{mod:<14} MISSING ({type(exc).__name__})")
-PY
+PYEXTRA

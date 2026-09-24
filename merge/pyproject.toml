@@ -10,6 +10,11 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "mergekit",
+    # Declared directly, though mergekit pulls it anyway: [tool.uv.sources]
+    # applies only to a project's OWN dependencies, so without this line the
+    # cu128 index below is silently ignored and the resolve falls back to
+    # PyPI's cu130 wheels.
+    "torch",
 ]
 
 [tool.uv]
