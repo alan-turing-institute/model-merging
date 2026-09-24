@@ -1,6 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=xsum-kd2-sweep
-#SBATCH --array=1-2
+# 0.9/0.1 only. 0.5/0.5 was the midpoint that would separate a monotone
+# trend from a threshold, and that question is only worth asking once the
+# two endpoints are known to differ - it has been cancelled by hand three
+# times. Re-enable with --array=1-2 when the endpoints are in.
+#SBATCH --array=1
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=72
 #SBATCH --mem=115000M
