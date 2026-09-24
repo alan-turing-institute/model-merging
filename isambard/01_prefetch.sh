@@ -17,6 +17,7 @@ uv run --project evaluate python - <<'PY'
 from huggingface_hub import snapshot_download
 from datasets import load_dataset
 snapshot_download("google/gemma-3-4b-it")   # needs `hf auth login` first; it is gated
+snapshot_download("sentence-transformers/all-MiniLM-L6-v2")  # xsum_task semantic scorer
 load_dataset("EdinburghNLP/xsum")
 print("cached")
 PY

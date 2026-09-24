@@ -24,6 +24,7 @@ evaluate_summarisation.py sends it, and neither script re-derives the wording.
 """
 
 import os
+import re
 import statistics
 
 from datasets import load_from_disk
@@ -57,6 +58,10 @@ def xsum_samples(dataset_path, limit=None, prompt_column="prompt",
             input=row[prompt_column],
             target=row[reference_column],
             id=row.get("id", index),
+            # The source article, for entity_support. A reference-only scorer
+            # cannot tell an invented name from a correct one - both are simply
+            # absent from a 21-word reference - so grounding needs the document.
+            metadata={"document": row.get("document", "")},
         )
         for index, row in enumerate(dataset)
     ]
@@ -96,6 +101,115 @@ def rouge():
     return score
 
 
+# --- semantic scoring -------------------------------------------------------
+#
+# ROUGE is lexical overlap, and on XSum that is a poor proxy twice over.
+#
+# It misses correct paraphrase. A 21-word reference and a faithful summary that
+# chooses different words score near zero on ROUGE-2 while meaning the same
+# thing, so a model rewarded by ROUGE is partly being rewarded for word choice.
+# Embedding cosine measures the thing we actually care about.
+#
+# And it is far too kind to hallucination, which is XSum's characteristic
+# failure. Our own measured example: the reference says "Mick Lally ... aged 64",
+# the merge produced "Sean Lally ... at the age of 73" and the distilled student
+# "Liam Lally ... aged 69". Fluent, on-topic, wrong about the person and the
+# number. ROUGE scores those around 0.4; embedding similarity scores them HIGHER
+# still, because they are near-identical sentences. Neither notices that the name
+# was invented.
+#
+# entity_support is the metric that does: of the capitalised names and numbers in
+# the summary, what fraction appear in the source article? It is a crude proxy
+# for faithfulness - string matching, not entity linking, so a correct
+# abbreviation or inflection counts as unsupported - which makes it useful for
+# COMPARING models on a fixed test set and not as an absolute score.
+
+_EMBEDDER = None
+
+
+def _embedder():
+    """Load the sentence encoder once, or return None if it is unavailable.
+
+    Deliberately non-fatal. Compute nodes have no outbound network, so a missing
+    cache must degrade to "no semantic score" rather than fail a run that has
+    already spent an hour generating.
+    """
+    global _EMBEDDER
+    if _EMBEDDER is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+
+            _EMBEDDER = SentenceTransformer(
+                os.environ.get("XSUM_EMBEDDER", "sentence-transformers/all-MiniLM-L6-v2")
+            )
+        except Exception as exc:  # noqa: BLE001 - any failure means "skip it"
+            print(f"semantic scorer: embedder unavailable ({type(exc).__name__}), "
+                  f"reporting similarity as 0.0")
+            _EMBEDDER = False
+    return _EMBEDDER or None
+
+
+# Sentence-initial words are capitalised by grammar, not by being names, so the
+# first token of each sentence is excluded. Numbers count regardless of position:
+# "64" against "73" is the error this is here to catch.
+_ENTITY = re.compile(r"\b([A-Z][a-zA-Z'’-]+|\d[\d,.]*)\b")
+
+
+def entities(text: str) -> list[str]:
+    found = []
+    for sentence in re.split(r"(?<=[.!?])\s+", text.strip()):
+        tokens = _ENTITY.findall(sentence)
+        if tokens and sentence.startswith(tokens[0]):
+            tokens = tokens[1:]  # grammatical capitalisation, not a name
+        found.extend(tokens)
+    return found
+
+
+@scorer(
+    metrics={
+        "semantic": [mean(), stderr()],
+        "entity_support": [mean(), stderr()],
+        "entities_unsupported": [mean()],
+    }
+)
+def semantic():
+    """Embedding similarity to the reference, and entity grounding in the source."""
+
+    async def score(state: TaskState, target: Target) -> Score:
+        prediction = state.output.completion.strip()
+        reference = target.text
+        document = (state.metadata or {}).get("document", "")
+
+        similarity = 0.0
+        model = _embedder()
+        if model is not None and prediction:
+            vectors = model.encode([prediction, reference], normalize_embeddings=True)
+            similarity = float(vectors[0] @ vectors[1])
+
+        found = entities(prediction)
+        # Case-insensitive substring against the article: the summary may
+        # re-inflect a name, and demanding an exact token match would score
+        # correct summaries as hallucinated.
+        haystack = document.lower()
+        unsupported = [e for e in found if e.lower() not in haystack]
+        support = 1.0 if not found else (len(found) - len(unsupported)) / len(found)
+
+        return Score(
+            value={
+                "semantic": similarity,
+                "entity_support": support,
+                "entities_unsupported": float(len(unsupported)),
+            },
+            answer=prediction,
+            explanation=(
+                f"reference: {reference}"
+                + (f" | unsupported: {', '.join(unsupported)}" if unsupported else "")
+            ),
+        )
+
+    return score
+
+
 @task
 def xsum(
     dataset_path: str = DEFAULT_DATASET,
@@ -116,5 +230,5 @@ def xsum(
             name="xsum",
         ),
         solver=generate(),
-        scorer=rouge(),
+        scorer=[rouge(), semantic()],
     )
