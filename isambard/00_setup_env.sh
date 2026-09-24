@@ -32,7 +32,14 @@ cd "$(dirname "$0")/.."
 source isambard/config.sh
 
 module load cuda 2>/dev/null || echo "no cuda module - check 'module avail cuda'"
-command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
+# uv installs to ~/.local/bin, which is not on PATH in a fresh login shell -
+# so a first-run install succeeds and then "uv: command not found" on the very
+# next line. Put it on PATH here rather than telling the user to re-run.
+if ! command -v uv >/dev/null; then
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+command -v uv >/dev/null || { echo "uv still not on PATH - source ~/.local/bin/env" >&2; exit 1; }
 
 export HF_HUB_OFFLINE=0
 for project in train merge evaluate; do
