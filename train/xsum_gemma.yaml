@@ -6,6 +6,13 @@ base_model: google/gemma-3-4b-it
 
 load_in_4bit: true
 
+# Gemma-3 soft-capping NaNs under sdpa, and axolotl falls back to sdpa when
+# flash-attn is absent - which it is on aarch64. On Isambard that silently
+# produced loss 12.81 -> 0 with NaNs and an adapter that emitted an empty
+# string for every test article. A correctness setting, not a hyperparameter:
+# eager computes the same function, only slower.
+eager_attention: true
+
 adapter: lora
 
 lora_r: 16
