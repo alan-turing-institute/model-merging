@@ -32,6 +32,13 @@ VAL_N = int(os.environ.get("XSUM_VAL_N", 500))
 TEST_N = int(os.environ.get("XSUM_TEST_N", 1000))
 MAX_DOC_WORDS = int(os.environ.get("XSUM_MAX_DOC_WORDS", 512))
 SEED = int(os.environ.get("XSUM_SEED", 42))
+# Number of disjoint shards the training set is split into. 2 reproduces the
+# halves design; 8 is the small-shard variant, which exists because the halves
+# arm saturated - 4,000 XSum examples already reach 0.3990 against full-data's
+# 0.4049, leaving a 0.0059 gap that a paired bootstrap cannot resolve at
+# n = 1000. Smaller shards make weaker experts and so a larger gap for the
+# recovery fraction to normalise by.
+SPLITS = int(os.environ.get("XSUM_SPLITS", 2))
 
 INSTRUCTION = (
     "Summarise the following BBC News article in a single short sentence. "
@@ -90,26 +97,47 @@ dataset.save_to_disk("../datasets/xsum_dataset")
 # which makes them exchangeable draws from the same distribution - which is
 # exactly the assumption the experiment tests.
 
-train_split = dataset["train"].train_test_split(test_size=0.5, seed=SEED)
-val_split = dataset["validation"].train_test_split(test_size=0.5, seed=SEED)
+# SPLITS == 2 MUST keep the original construction. train_test_split shuffles
+# again with its own seed before cutting, so a contiguous shard assigns
+# different examples to half 1 than the call below does - and every half-expert
+# adapter, merge and result on record was trained against the train_test_split
+# membership. Reproducing it is not a style preference; a contiguous rewrite
+# would silently make new halves incomparable with every existing number.
+if SPLITS == 2:
+    _train = dataset["train"].train_test_split(test_size=0.5, seed=SEED)
+    _val = dataset["validation"].train_test_split(test_size=0.5, seed=SEED)
+    _members = [
+        ({"train": _train["train"], "validation": _val["train"]}),
+        ({"train": _train["test"], "validation": _val["test"]}),
+    ]
 
-DatasetDict(
-    {"train": train_split["train"], "validation": val_split["train"]}
-).save_to_disk("../datasets/xsum_dataset1")
+    def shard(split, index):
+        key = "train" if split is dataset["train"] else "validation"
+        return _members[index][key]
+else:
+    # The subsample above is already shuffled with SEED, so contiguous slices
+    # are exchangeable draws, and a plain slice makes the disjointness obvious
+    # by construction: shard i and shard j share no index, and the union is the
+    # whole split.
+    def shard(split, index):
+        return split.shard(num_shards=SPLITS, index=index, contiguous=True)
 
-DatasetDict(
-    {"train": train_split["test"], "validation": val_split["test"]}
-).save_to_disk("../datasets/xsum_dataset2")
+
+for i in range(SPLITS):
+    DatasetDict(
+        {
+            "train": shard(dataset["train"], i),
+            "validation": shard(dataset["validation"], i),
+        }
+    ).save_to_disk(f"../datasets/xsum_dataset{i + 1}")
 
 print(
     f"full   train={len(dataset['train'])} "
     f"validation={len(dataset['validation'])} test={len(dataset['test'])}"
 )
-print(
-    f"half 1 train={len(train_split['train'])} "
-    f"validation={len(val_split['train'])}"
-)
-print(
-    f"half 2 train={len(train_split['test'])} "
-    f"validation={len(val_split['test'])}"
-)
+for i in range(SPLITS):
+    print(
+        f"shard {i + 1}/{SPLITS} "
+        f"train={len(shard(dataset['train'], i))} "
+        f"validation={len(shard(dataset['validation'], i))}"
+    )
