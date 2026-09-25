@@ -294,9 +294,11 @@ top-k covered little mass. Measured over 1651 target positions, the teacher's
 top-64 captures a mean of 0.983 (median 0.997); no position falls below 0.5 and
 only 0.8% fall below 0.8. The renormalisation is close to a no-op.
 
-**4. The reported KD loss is not a diagnostic.** *(WRONG - see "Control #4 had
-this and threw it away". It is a per-token KL, and the 8-20 range recorded here
-was the alignment bug reporting itself.)* Cross-entropy alone converges
+**4. The reported KD loss is not a diagnostic.** *(This was RIGHT. It was
+marked WRONG on 2026-09-24 and that marking is itself withdrawn - see "The KD
+term is a sum and cross-entropy is a mean". The reported term is a SUM over
+every target token in the batch, so it is not a per-token KL and cannot be
+compared across configurations, target lengths or batch sizes.)* Cross-entropy alone converges
 at 1.36. The KD term sits at 8–20 and does not approach zero even when teacher
 and student are the same model — a self-distillation smoke test with the base
 model on both sides starts at ~20 and ends at ~18. Do not read the KD loss as a
@@ -568,17 +570,21 @@ alignment must give KL = 0:
 | **one extra row** (`6f923a1`) | `L-P+1` | 238 | **0.0000** |
 | one row per assistant token | `L-P` | 230 | **22.9691** |
 
-### Control #4 had this and threw it away
+### Control #4 and the alignment bug (this subsection is partly withdrawn)
 
 The control recorded above says the reported KD loss "sits at 8-20 and does not
 approach zero even when teacher and student are the same model", and concludes:
 *"Do not read the KD loss as a per-token KL, and do not use it to compare
 configurations; it cannot separate a working setup from a broken one."*
 
-That conclusion was wrong. It **is** a per-token KL, the 8-20 range is this
-misalignment, and it was separating a working setup from a broken one - the
-setup was broken. The one diagnostic that would have caught this was explicitly
-ruled out as uninformative, which is why it survived four other controls.
+**Withdrawn, 2026-09-25.** The conclusion was right. The reported term is a
+sum over target tokens, so it is not a per-token KL and the 8-20 range is mostly
+token count, not divergence. What the control could fairly be criticised for is
+something narrower: it treated a quantity it had not characterised as
+uninformative rather than working out what it was. A teacher==student check
+would still have caught the misalignment, and remains the right gate - but it
+does so by comparing a measured KL against zero, not by reading the trainer's
+reported loss.
 
 ### Why control #2 could not have caught it
 
@@ -701,6 +707,92 @@ outputs "Sean Lally ... 73" and "Liam Lally ... 69", which ROUGE scores around
 0.4 and embedding similarity scores HIGHER, because as sentences they are nearly
 identical. The figure will rise: it was measured before sentence-initial names
 were counted, and XSum summaries habitually open with the name.
+
+## The KD term is a sum and cross-entropy is a mean (2026-09-25)
+
+`integrations/kd/kernels/liger.py:93`:
+
+```python
+fwd_kl_per_token = teacher_probs_valid * (
+    teacher_logprobs_valid - student_logprobs_topk_valid
+)
+kd_loss = fwd_kl_per_token.sum()
+```
+
+The distillation term is summed over **every target token in the batch**.
+Cross-entropy is a mean. The kernel's own comment justifies it - "since this is
+packed, there is simply a single batch, so batchmean reduction of kl-div is
+simply the accumulated sum" - which is a defensible `batchmean` convention and
+makes the two terms incommensurable anyway.
+
+### It reconciles every number we had
+
+Measured directly, by forward passes with the merge as student and a half-expert
+as teacher on that half's own data (`experiments/loss_magnitudes.py`):
+
+| quantity | value |
+|---|---|
+| cross-entropy on gold tokens | 1.66 |
+| KL(teacher\|\|student) per token, top-64 | **0.0434** |
+| ratio KD:CE per token | 0.03 : 1 |
+
+At roughly 165 valid target positions per optimiser step, the summed term is
+~6.6 - which is exactly the value that makes both arms' reported training losses
+consistent at once:
+
+| arm | 0.9 x 6.6 + 0.1 x 1.66 | reported |
+|---|---|---|
+| 0.9 / 0.1 | 6.11 | ~6.1 |
+| 0.2 / 1.0 | 2.98 | ~2.77 |
+
+Nothing was mismeasured. The two figures the weighting was chosen from - "CE
+near 1.4, KD term near 8" - were a mean and a sum.
+
+### It explains the collapse, which the loss values alone did not
+
+What reaches a single token's logits:
+
+| term | per-token gradient weight |
+|---|---|
+| teacher (summed) | `kd_alpha` |
+| cross-entropy (meaned) | `kd_ce_alpha / N`, N ~ 165 |
+
+| weighting | teacher : CE per token | outcome |
+|---|---|---|
+| 0.9 / 0.1 | ~1500 : 1 | **collapse** - ROUGE-1 0.0155, 1.5 words, 463 empty of 1000 |
+| 0.2 / 1.0 | ~33 : 1 | survives - 0.3899, 18.7 words, 0 empty |
+| 0.006 / 1.0 | ~1 : 1 | untested; this is what parity actually requires |
+
+At 0.9/0.1 the signal that teaches `<end_of_turn>` is effectively absent, and
+463 empty outputs is what that predicts. The 0.2/1.0 arm survived not because it
+is balanced - it is not - but because the teacher is itself a competent
+summariser, so following it is unhelpful rather than destructive. That also
+explains why it landed *below* the merge it started from.
+
+### Three things this makes portable, or rather shows are not
+
+**`kd_alpha` does not transfer across target length.** On crime's single-token
+targets the sum equals the per-token value; on XSum's ~19 it is ~19x larger for
+the same divergence. That is why 0.9/0.1 is benign on crime and catastrophic on
+XSum. The effect was attributed to target length correctly; the mechanism is
+now identified.
+
+**It does not transfer across batch size or packing either**, for the same
+reason. Doubling the micro-batch doubles the teacher's share.
+
+**And the "balanced" weighting is not balanced.** If parity is what was wanted,
+`kd_alpha` should be about `kd_ce_alpha / N` - on XSum roughly 0.006, not 0.2.
+`train/xsum_gemma_kd_parity.yaml` runs that point.
+
+### How to set these weights
+
+Not by comparing reported losses. Measure the per-token KL and cross-entropy
+with `experiments/loss_magnitudes.py`, count the target tokens per optimiser
+step, and choose `kd_alpha` for the gradient ratio you want:
+
+    kd_alpha = desired_ratio * kd_ce_alpha / N_target_tokens_per_step
+
+Report the ratio, not the alpha. The alpha is meaningless without N.
 
 ## Files
 
