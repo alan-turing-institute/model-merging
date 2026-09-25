@@ -1,0 +1,61 @@
+# crime_qwen32.yaml
+#
+# QWEN3 PORT. mergekit-moe emits Mixtral, DeepSeek, Qwen and Qwen3 output
+# architectures and has no Gemma path, so a real sparse-MoE merge of these
+# experts is only possible on a supported base. Qwen3-4B matches gemma-3-4b-it
+# in scale, which keeps the comparison honest within this port.
+#
+# NOT comparable with any Gemma-3 number. Different base, different tokenizer,
+# different pretraining - every baseline has to be re-established here, which is
+# why the full-data and half-data experts are trained alongside rather than
+# carried over.
+#
+# No attn_implementation override: the eager setting on the Gemma configs exists
+# because Gemma-3 soft-capping NaNs under sdpa. Qwen3 has no soft-capping, so
+# sdpa is correct and faster. dataset_num_proc is still capped - that one is a
+# property of the node, not the model.
+base_model: Qwen/Qwen3-4B
+
+load_in_4bit: true
+
+# Isambard: Gemma-3 soft-capping NaNs under sdpa (axolotl falls back to sdpa
+# without flash-attn, which has no aarch64 wheel), and dataset_num_proc defaults
+# to os.cpu_count() = 288 on a GH200 node, which OOM-kills the job.
+dataset_num_proc: 8
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+chat_template: gemma
+
+datasets:
+  - path: ../../datasets/crime_dataset2/train
+    type: chat_template
+
+test_datasets:
+  - path: ../../datasets/crime_dataset2/validation
+    type: chat_template
+
+sequence_len: 2048
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+num_epochs: 3
+
+learning_rate: 2e-4
+
+output_dir: ../models/qwen3-crime-2-of-2-lora
