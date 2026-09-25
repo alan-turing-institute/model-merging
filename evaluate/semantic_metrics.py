@@ -65,11 +65,29 @@ def embedder():
 _ENTITY = re.compile(r"\b([A-Z][a-zA-Z'’-]+|\d[\d,.]*)\b")
 
 
+# Words that start a sentence because of grammar rather than because they name
+# anything. Dropping EVERY sentence-initial token was the first approach and it
+# was too blunt: XSum summaries habitually open with the subject's name, so
+# "Sean Lally, the Glenroe actor, has died aged 73" had its one invented name
+# skipped and scored 2/3 supported. Anything outside this list is kept - a
+# common noun like "Police" is then checked against the article like any other
+# token, and passes if it appears there, so the cost of keeping it is nil.
+_SENTENCE_STARTERS = {
+    "a", "an", "the", "this", "that", "these", "those", "it", "its", "he",
+    "she", "they", "his", "her", "their", "there", "here", "we", "our", "you",
+    "i", "but", "and", "or", "if", "as", "at", "in", "on", "by", "for", "from",
+    "with", "when", "while", "after", "before", "more", "most", "no", "not",
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    "ten", "some", "many", "several", "both", "all", "up", "down", "over",
+}
+
+
 def entities(text):
     found = []
     for sentence in re.split(r"(?<=[.!?])\s+", (text or "").strip()):
         tokens = _ENTITY.findall(sentence)
-        if tokens and sentence.startswith(tokens[0]):
+        if tokens and sentence.startswith(tokens[0]) \
+                and tokens[0].lower() in _SENTENCE_STARTERS:
             tokens = tokens[1:]
         found.extend(tokens)
     return found
