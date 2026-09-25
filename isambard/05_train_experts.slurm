@@ -54,7 +54,16 @@ uv run axolotl train "$CONFIG"
 # The failure this job exists to avoid is silent: a NaN run still saves an
 # adapter, and the only symptom is an evaluation of nothing an hour later. Fail
 # here instead, where the log still says why.
-if grep -qiE "\bnan\b" "$REPO_ROOT/train/.axolotl-${CONFIG%.yaml}.log" 2>/dev/null; then
+# This job runs axolotl directly, so its output goes to the Slurm log, not to
+# the .axolotl-*.log that run_kd_pipeline.sh's wrapper tees. The first version
+# of this check read that non-existent file: grep failed, the condition was
+# false, and the guard passed every time - a silent check for a silent failure.
+TRAIN_LOG="${SLURM_SUBMIT_DIR:-$PWD}/logs/expert-${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}.out"
+if [ ! -f "$TRAIN_LOG" ]; then
+  echo "cannot find my own Slurm log at $TRAIN_LOG - refusing to claim success" >&2
+  exit 1
+fi
+if grep -qiE "\bnan\b" "$TRAIN_LOG"; then
   echo "NaN seen in training - eager attention did not take. Refusing to mark complete." >&2
   exit 1
 fi
