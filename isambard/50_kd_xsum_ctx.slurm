@@ -106,8 +106,14 @@ echo "=== training (0.2 / 1.0, strict teacher / terse student) ==="
 # axolotl writes a LoRA adapter, so a rerun that retrains is pure waste - and
 # these jobs have already been resubmitted twice for failures downstream of
 # training.
-if [ -f "$STUDENT/adapter_model.safetensors" ]; then
-  echo "=== student already trained at $STUDENT, skipping ==="
+# Newer than the merge, not merely present. A stale adapter trained against a
+# PREVIOUS merge is silently reusable otherwise: the ctx arm skipped training on
+# an adapter from the day before and evaluated it attached to a merge it had
+# never seen. Existence is not freshness - the same mistake as testing for the
+# concat directory instead of its alignment marker.
+if [ -f "$STUDENT/adapter_model.safetensors" ] \
+   && [ "$STUDENT/adapter_model.safetensors" -nt "$MERGE/config.json" ]; then
+  echo "=== student already trained against this merge at $STUDENT, skipping ==="
 else
   cd "$REPO_ROOT/train"
   uv run axolotl train xsum_gemma_ctxkd.yaml
