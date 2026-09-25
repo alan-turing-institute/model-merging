@@ -80,6 +80,27 @@ if [ ! -f "$DATASETS_DIR/xsum_ctxkd_train/.kd_alignment_v2" ]; then
     --output "$DATASETS_DIR/xsum_ctxkd_train"
 fi
 
+# --- 2b. what the teacher actually contributes -----------------------------
+# Test-set ROUGE says how good a summariser each half-expert is. It does not say
+# whether its distribution over the gold tokens it SUPERVISES carries anything
+# the student does not already believe - and that, not its ROUGE, is the
+# learning signal. KL(teacher||student-at-init) measured here is the quantity
+# kd_alpha weights; if it is small, the arm is closer to a no-teacher control
+# than the weighting intends, which would explain a null far better than
+# saturation does.
+#
+# Cheap: two forward passes per example, no training. Recorded per arm so the
+# weighting is justified by measurement on this task rather than inherited.
+echo "=== teacher contribution (KL against the merge at init) ==="
+for i in 1 2; do
+  echo "--- half $i ---"
+  uv run --project evaluate python experiments/loss_magnitudes.py \
+    --student "$MERGE" \
+    --teacher google/gemma-3-4b-it --teacher-adapter "$MODELS_DIR/gemma3-xsum-$i-of-2-lora" \
+    --dataset "$DATASETS_DIR/xsum_ctx_dataset$i/train" --limit 24 --teacher-messages-column teacher_messages \
+    
+done 2>&1 | tee "$RESULTS_DIR/loss_magnitudes_ctx.txt"
+
 # --- 3. distil --------------------------------------------------------------
 echo "=== training (0.2 / 1.0, strict teacher / terse student) ==="
 # axolotl writes a LoRA adapter, so a rerun that retrains is pure waste - and

@@ -53,6 +53,12 @@ def main():
     ap.add_argument("--top-k", type=int, default=64)
     ap.add_argument("--temperature", type=float, default=1.0)
     ap.add_argument("--max-length", type=int, default=2048)
+    ap.add_argument("--teacher-messages-column", default=None,
+                    help="separate context for the teacher (the ctx arm). The "
+                         "assistant turn must be identical on both sides - the "
+                         "targets are asserted equal and an example is skipped "
+                         "otherwise, since the comparison is meaningless if the "
+                         "two are scoring different tokens.")
     ap.add_argument("--device", default=None)
     args = ap.parse_args()
 
@@ -69,23 +75,37 @@ def main():
     dataset = load_from_disk(args.dataset).select(range(args.limit))
     ce_all, kl_all, positions = [], [], 0
 
+    skipped = 0
     for row in dataset:
         full_ids, start = assistant_span(tokenizer, row["messages"], args.max_length)
         if full_ids is None:
             continue
-        ids = torch.tensor([full_ids], device=device)
-        with torch.no_grad():
-            s_logits = student(input_ids=ids).logits[0].float()
-            t_logits = teacher(input_ids=ids).logits[0].float()
+        # The teacher may see a different context (the ctx arm). Its logits then
+        # come from its own sequence, and are read at its own offset - but only
+        # if both sides are predicting the same tokens.
+        if args.teacher_messages_column:
+            t_ids, t_start = assistant_span(
+                tokenizer, row[args.teacher_messages_column], args.max_length)
+            if t_ids is None or t_ids[t_start:] != full_ids[start:]:
+                skipped += 1
+                continue
+        else:
+            t_ids, t_start = full_ids, start
 
-        for position in range(start, len(full_ids)):
+        with torch.no_grad():
+            s_logits = student(input_ids=torch.tensor([full_ids], device=device)).logits[0].float()
+            t_logits = teacher(input_ids=torch.tensor([t_ids], device=device)).logits[0].float()
+
+        for offset in range(len(full_ids) - start):
+            position = start + offset
+            t_position = t_start + offset
             gold = full_ids[position]
             # Position p is predicted by the logits at p-1 - the same frame the
             # producer uses, so this measures what training actually sees.
             s_log = torch.log_softmax(s_logits[position - 1], dim=-1)
             ce_all.append(float(-s_log[gold]))
 
-            t_log = torch.log_softmax(t_logits[position - 1] / args.temperature, dim=-1)
+            t_log = torch.log_softmax(t_logits[t_position - 1] / args.temperature, dim=-1)
             t_top, idx = torch.topk(t_log, k=args.top_k)
             # Renormalise both sides over the teacher's top-k support, which is
             # what the kernel does with a truncated teacher.
@@ -98,6 +118,8 @@ def main():
     kl = statistics.fmean(kl_all)
     # The kernel scales the KD term by T^2 before weighting.
     kd_term = kl * args.temperature ** 2
+    if skipped:
+        print(f"skipped {skipped} examples whose teacher/student targets differed\n")
     print(f"{'positions':<26}{positions}")
     print(f"{'cross-entropy (gold)':<26}{ce:.4f}")
     print(f"{'KL(teacher||student)':<26}{kl:.4f}")
