@@ -59,6 +59,12 @@ def main():
                          "targets are asserted equal and an example is skipped "
                          "otherwise, since the comparison is meaningless if the "
                          "two are scoring different tokens.")
+    ap.add_argument("--tokens-per-step", type=int, default=165,
+                    help="target tokens per optimiser step - micro_batch x "
+                         "grad_accum x mean target length. ~165 for XSum, ~16 "
+                         "for crime's single-token targets. The teacher term is "
+                         "summed over these while cross-entropy is meaned, so "
+                         "this is what the weighting actually trades off.")
     ap.add_argument("--device", default=None)
     args = ap.parse_args()
 
@@ -125,11 +131,23 @@ def main():
     print(f"{'KL(teacher||student)':<26}{kl:.4f}")
     print(f"{'KD term (KL x T^2)':<26}{kd_term:.4f}")
     print(f"{'magnitude ratio KD:CE':<26}{kd_term / ce:.2f} : 1\n")
-    print("Gradient contribution at the weightings on record:")
-    for a, c in ((0.9, 0.1), (0.5, 0.5), (0.2, 1.0), (0.9, 1.0)):
-        share = (a * kd_term) / (a * kd_term + c * ce)
-        print(f"  kd_alpha {a} / kd_ce_alpha {c:<4} -> teacher carries "
-              f"{100 * share:5.1f}% of the loss  ({a * kd_term:.3f} vs {c * ce:.3f})")
+    # The teacher term is SUMMED over target tokens and cross-entropy is MEANED
+    # (kernels/liger.py:93), so comparing the two per-token means - which an
+    # earlier version of this printout did - understates the teacher by a factor
+    # of N and reproduces exactly the error that set kd_alpha to 0.2 in the
+    # first place. What reaches a token's logits is kd_alpha from the teacher
+    # against kd_ce_alpha / N from cross-entropy.
+    n = args.tokens_per_step
+    print(f"Per-token gradient weight, at N = {n} target tokens per optimiser step")
+    print("(the teacher term is summed, cross-entropy is meaned - see liger.py:93)\n")
+    print(f"  {'weighting':<26}{'teacher : CE':>16}")
+    for a, c in ((0.9, 0.1), (0.5, 0.5), (0.2, 1.0), (0.9, 1.0), (round(1.0 / n, 4), 1.0)):
+        ratio = a / (c / n)
+        label = f"kd_alpha {a} / ce {c}"
+        note = "   <- parity" if abs(ratio - 1.0) < 0.05 else ""
+        print(f"  {label:<26}{ratio:>13.1f} : 1{note}")
+    print(f"\n  parity needs kd_alpha = kd_ce_alpha / N = {1.0 / n:.4f}")
+    print("  Report the RATIO, not the alpha: the alpha is meaningless without N.")
 
 
 if __name__ == "__main__":

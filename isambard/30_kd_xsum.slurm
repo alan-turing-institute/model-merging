@@ -129,7 +129,7 @@ for i in 1 2; do
   uv run --project evaluate python experiments/loss_magnitudes.py \
     --student "$MERGE" \
     --teacher google/gemma-3-4b-it --teacher-adapter "$MODELS_DIR/gemma3-xsum-$i-of-2-lora" \
-    --dataset "$DATASETS_DIR/xsum_dataset$i/train" --limit 24 
+    --dataset "$DATASETS_DIR/xsum_dataset$i/train" --limit 24 --tokens-per-step 165 
 done 2>&1 | tee "$RESULTS_DIR/loss_magnitudes.txt"
 
 # --- 3. distil -------------------------------------------------------------
