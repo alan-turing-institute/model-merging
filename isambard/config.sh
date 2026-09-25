@@ -37,3 +37,15 @@ export DATASETS_DIR="${DATASETS_DIR:-$REPO_ROOT/../datasets}"
 export DO_NOT_TRACK=1
 export AXOLOTL_DO_NOT_TRACK=1
 export HF_HUB_DISABLE_TELEMETRY=1
+
+# Never let a job mutate the shared venv. `uv run` re-resolves and syncs on every
+# invocation - the logs show it toggling nvidia-cusparselt-cu12 on each start -
+# and the three project venvs are shared by every job on every node. At three or
+# four concurrent jobs that was survivable; at ten, one job uninstalls a package
+# while another is importing torch and the importer dies at startup. That is
+# what killed four of six Qwen3 experts and the crime chain within two minutes
+# of each other, while the two that started later succeeded.
+#
+# Sync deliberately on the login node (00_setup_env.sh); jobs only ever read.
+export UV_NO_SYNC=1
+export UV_FROZEN=1
