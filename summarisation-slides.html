@@ -309,6 +309,7 @@
       <div class="letter">&sect;</div>
       <div><h3>And it is a warm start, not parallelism</h3><p>The repair pass trains on the union of both halves. A machine that can run it already holds all the data, so the property the project set out to preserve &mdash; that no machine sees everything &mdash; does not survive. The compute saving is real; the framing has to change.</p></div>
     </div>
+  <p class="chart-note"><b>See slide 13.</b> The teacher signal behind these numbers was misaligned by one position; the reliability claim is suspended pending a re-run.</p>
   </div>
 </section>
 
@@ -332,6 +333,7 @@
     </div>
     <p class="chart-note"><b>An earlier version of this deck reported R = +0.78 for expert-taught distillation and +0.39 for self-distillation, and attributed the difference to the experts&rsquo; knowledge.</b> The control&rsquo;s mean is +0.76 with no teacher at all, and seed 1 lands on 0.9610 &mdash; the exact accuracy that claim was built on. Both numbers were single draws from a distribution 0.56 wide; two standard deviations of seed noise is 0.40, and the decomposition rested on a gap of 0.39.</p>
     <p class="chart-note">The preregistration specifies five seeds for precisely this reason, and the exploratory arm was run at n = 1 regardless. The finding did not survive the replication the design already required. Recorded in <code>PREREGISTRATION.md</code> under Deviations, 2026-09-18.</p>
+  <p class="chart-note"><b>See slide 13.</b> The seed spread stands &mdash; it has no teacher term. The distillation arm it is compared against does, and is suspended.</p>
   </div>
 </section>
 
@@ -450,9 +452,32 @@
   </div>
 </section>
 
+<section class="slide" id="s9f">
+  <div class="slide-inner">
+    <div class="eyebrow">13 &mdash; Correction</div>
+    <h2>The teacher was misaligned in every distillation run behind these slides</h2>
+    <p class="chart-note">Axolotl infers where teacher distributions belong from their <b>count</b> alone. Ours were one row short, so every distribution was applied to the token <i>after</i> the one it described. With teacher and student the same model &mdash; where a correct alignment must give zero &mdash; mean KL was <b>22.97 nats</b>; corrected, <b>0.0000</b>.</p>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Claim</th><th>Status</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr class="worst"><td><b>Crime: the teacher contributes</b><br>0.9707 vs 0.9601, variance &divide;50</td><td><b>SUSPENDED</b></td><td>Crime targets are a single token, so a one-position error leaves the only supervised position wrong. Needs a re-run before it is cited.</td></tr>
+          <tr><td><b>XSum: the weighting was the whole of it</b><br>0.3375 &rarr; 0.3987</td><td><b>OBSERVATION STANDS,<br>EXPLANATION WITHDRAWN</b></td><td>The recovery happened. But it was measured on a teacher scoring the wrong token, so what it shows is that a <i>misaligned</i> teacher at ~50&times; the cross-entropy gradient destroys termination.</td></tr>
+          <tr class="best"><td>Everything with no teacher term<br><span class="mono">kd_alpha: 0.0</span>, merging, cross-task, crowding</td><td><b>UNAFFECTED</b></td><td>A misaligned teacher contributes nothing to a term weighted at zero.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="takeaway">
+      <div class="letter">&rarr;</div>
+      <div><h3>The project&rsquo;s own controls could not have caught it</h3><p>One control shifted the <i>content</i> of a fixed-length array, which cannot move the offset its length implies. Another saw the symptom directly &mdash; a distillation loss stuck at 8&ndash;20 with identical teacher and student &mdash; and concluded the reported loss simply was not a per-token KL. It was, and it was reporting this. A teacher-equals-student check costs seconds, cannot be satisfied by a self-consistent producer, and is now a required gate before any distillation run.</p></div>
+    </div>
+    <p class="chart-note"><b>Re-runs are under way on a different machine.</b> The Azure subscription is read-only, so the arms moved to Isambard-AI and the experts had to be retrained &mdash; the registry artefacts cannot be fetched. Absolute figures on these slides will not carry across; the re-run is internally consistent and is what the recovery fraction needs.</p>
+  </div>
+</section>
+
 <section class="slide" id="s9b">
   <div class="slide-inner">
-    <div class="eyebrow">13 &mdash; Verification</div>
+    <div class="eyebrow">14 &mdash; Verification</div>
     <h2>Four checks caught defects. The one we lacked cost a week.</h2>
     <div class="bug-row">
       <span class="chip">Scale check</span>
@@ -482,7 +507,7 @@
 
 <section class="slide" id="s10">
   <div class="slide-inner">
-    <div class="eyebrow">14 &mdash; For stakeholders</div>
+    <div class="eyebrow">15 &mdash; For stakeholders</div>
     <h2>Practical implications</h2>
     <div class="takeaway">
       <div class="letter">1</div>
@@ -509,7 +534,7 @@
 
 <section class="slide" id="s11">
   <div class="slide-inner">
-    <div class="eyebrow">15 &mdash; Limits</div>
+    <div class="eyebrow">16 &mdash; Limits</div>
     <h2>What this does not establish</h2>
     <div class="next-item"><span class="idx warn">!</span><p><b>Exploratory, not confirmatory.</b> The project's preregistration licenses three specific runs, and the distillation arm is not one of them. It is recorded as a dated deviation and generates a hypothesis rather than testing one. Nothing here bears on the preregistered H1–H4.</p></div>
     <div class="next-item"><span class="idx warn">!</span><p><b>Seeds exist for two conditions only.</b> The no-teacher control and the balanced distillation arm have five seeds each on crime. Every other number &mdash; the on-policy arm, both XSum arms, every cross-task merge &mdash; is a single run against a measured noise floor of ~0.008 accuracy. Differences below roughly 0.015 in those rows are not resolvable.</p></div>
@@ -525,7 +550,7 @@
 
 <section class="slide" id="s12">
   <div class="slide-inner">
-    <div class="eyebrow">16 &mdash; Recommendations</div>
+    <div class="eyebrow">17 &mdash; Recommendations</div>
     <h2>Future work, in priority order</h2>
     <div class="next-item"><span class="idx">1</span><p><b>Measure the noise floor, then re-test.</b> Run the preregistered seed sweep (42–46). Until the within-condition spread is known, no gap of a few points — including this one — is safely interpretable.</p></div>
     <div class="next-item"><span class="idx">2</span><p><b>Seed everything before comparing anything.</b> Seed noise here is ±0.20 in R — wider than most contrasts this project has drawn. Five seeds per condition is the preregistered minimum and should gate any future claim, including the distillation arm, which is still n = 1.</p></div>
@@ -539,7 +564,7 @@
 
 <section class="slide" id="s13">
   <div class="slide-inner">
-    <div class="eyebrow">17 &mdash; In one line</div>
+    <div class="eyebrow">18 &mdash; In one line</div>
     <h2>Merging costs. A one-epoch repair fixes it. The teacher makes it dependable.</h2>
     <p class="lede">A linear merge of two disjoint-half experts scored below both its inputs (R = −0.46) — the project’s most robust result. One supervised epoch over the union of the halves repairs it to roughly full-data parity, but unreliably: R = +0.76 ± 0.20 across five seeds. Adding a correctly weighted teacher gives R = +1.03 ± 0.03 — the same repair, with a fiftieth of the variance.</p>
     <p class="chart-note"><b>And a second result, from merging different experts rather than halves.</b> One crime classifier merged with one XSum summariser retains 99.6% and 98.6% of each &mdash; merging different skills is close to free, where merging two halves of one task is not. What crowds is the direction, not the count: a third adapter pointing the same way as an existing one collapses that task to below the untuned base while leaving the other untouched.</p>

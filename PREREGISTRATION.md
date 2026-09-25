@@ -608,3 +608,48 @@ consumer's. A teacher==student KL check — which costs seconds and cannot be
 satisfied by a self-consistent producer — should be a required gate before any
 distillation run, and is now available as
 `experiments/kd_alignment_smoke.py`.
+
+### 2026-09-25 — the XSum experts were retrained, and the Azure artefacts are gone
+
+The Azure subscription is read-only. The compute instance, the workspace file
+share and the model registry are all unreachable for writes, and the registry's
+model download is itself a write action, so the adapters that produced every
+XSum number in `KD.md` cannot be fetched. They can be listed but not retrieved.
+
+**The local copies turned out not to be those adapters.** The three XSum
+adapters on the laptop are a version-1-era generation. Applied to the base
+model they make it *worse* — 0.2538 against the base's own 0.2706 — and produce
+51 words over 2.3 sentences against a 19.4-word, one-sentence reference. That is
+the non-terminating signature of the pre-`eot` generation, and it reproduces
+identically on two machines, so it is the artefact and not the platform. The
+registry holds five versions of the full adapter and four of each half; the
+numbers on record were measured against the batch registered on 14 September,
+and the laptop holds version 1.
+
+**Deviation.** All three XSum experts have been retrained on Isambard-AI from
+the same deterministic data preparation — same seed, same 8,000/500/1,000
+split, and the test set's id-set md5 verified identical to the Azure one, so the
+evaluation target is unchanged. Verified at ROUGE-1 0.4166, 19.3 words, 1.03
+sentences on 100 examples, against Azure's 0.4049 at 19.4 words.
+
+**What this costs.** The retrained experts are not bit-identical to the Azure
+ones, so absolute figures do not carry across platforms. `0.4049`, `0.3990` and
+`0.3970` are no longer the comparison for anything measured on Isambard, and
+any table mixing the two would be comparing different experts. What survives is
+*within-platform* comparison: one generation of experts, one merge, one test
+set, every arm measured against the others. The primary estimand is a recovery
+fraction — a ratio of differences measured on the same platform — so it is
+unaffected in principle, and every arm it is computed from must now come from
+the same platform in practice.
+
+**What it does not change.** The confirmatory design, the primary estimand, the
+five conditions, the seed count and the licensed runs are untouched. None of the
+three licensed runs has been executed.
+
+**The methodological point.** The transfer of those adapters was verified
+md5-identical end to end and reported as "the exact artefacts every number was
+measured against". A checksum establishes that a copy is faithful to its source;
+it establishes nothing about whether the source is the right one. This project
+had already recorded that baselines are not interchangeable across generations —
+the same failure, in the crime arm, in September — and the check that would have
+caught it was a two-minute evaluation of one adapter, not a checksum.

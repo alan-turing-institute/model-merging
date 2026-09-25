@@ -623,6 +623,85 @@ teacher contributes nothing to it.
 2. Re-run the XSum 0.2/1.0 arm and the crime five-seed comparison.
 3. Only then re-state the two conclusions above.
 
+## The Isambard port (2026-09-24/25)
+
+The Azure subscription went read-only, taking a100d and the model registry with
+it, so the XSum arm moved to Isambard-AI (GH200, aarch64). Nothing here is a
+result about distillation; it is all infrastructure. It is recorded because two
+of the failures were silent, and silent failures are what this project keeps
+losing weeks to.
+
+### The artefacts on the laptop were the wrong generation
+
+The three XSum adapters in `models/` were copied to Isambard and every baseline
+came out ~0.10 ROUGE-1 below the numbers on record. The base model reproduced
+(0.2706 against Azure's 0.2814), so the platform was fine. What was not fine was
+the adapters: applying `gemma3-xsum-full-lora` made the base model WORSE
+(0.2538 against 0.2706) and nearly doubled its output length, to 51 words and
+2.3 sentences against a 19.4-word, one-sentence reference. The same adapter
+behaves identically on a laptop, so it is the artefact, not the machine.
+
+That is the non-terminating signature of the pre-`eot` generation. The registry
+holds five versions of `gemma3-xsum-full-lora` and four of each half;
+`.pipeline_versions_xsum` on the laptop records **version 1** for all three,
+while the numbers in this file were measured against the batch registered on
+14 September (full v5, halves v4, within 25 seconds of each other). The laptop
+copies were never the artefacts these results came from.
+
+**What made this expensive was believing a checksum.** The transfer was verified
+md5-identical end to end, and that was reported as "the exact artefacts every
+number in KD.md was measured against". A checksum proves the copy is faithful.
+It says nothing about whether the source is the right generation, and that
+distinction cost most of a day.
+
+### The experts were retrained, so absolute numbers no longer carry across
+
+The correct versions are visible in the registry and unfetchable: model download
+is a write action and refused, and blob access is denied by RBAC. So all three
+experts were retrained on Isambard from the same deterministic data prep. The
+test set's id-set md5 was verified identical to the Azure one, so the evaluation
+target is unchanged.
+
+Verified on 100 examples: ROUGE-1 **0.4166** at **19.3 words, 1.03 sentences**,
+against Azure's 0.4049 at 19.4. It terminates, which is the property the old
+artefacts lacked.
+
+**These are not bit-identical to the Azure experts.** Absolute numbers in this
+file - 0.4049, 0.3990, 0.3970 - are no longer the comparison for anything
+measured on Isambard. What the platform gives instead is internal consistency:
+one generation of experts, one merge, one test set, every arm measured against
+the others. That is the property the recovery fraction actually needs.
+
+### Four infrastructure faults, three of them already solved elsewhere
+
+| fault | symptom | cost |
+|---|---|---|
+| sdpa on Gemma-3 soft-capping | loss 12.81 -> 0 with NaNs; student emitted an empty string for all 1000 articles | one full arm |
+| `dataset_num_proc` defaulting to `os.cpu_count()` | 288 tokenisation workers in a 16-core cgroup; OUT_OF_MEMORY | three expert runs, 12-34 min each |
+| student evaluated as `--model` rather than as an adapter on the merge | `no file named model.safetensors`, after training completed | 20 min |
+| `torch` resolving to `+cu130` against a 12.7 driver | `cuda available False` inside a GPU allocation | caught before it cost anything |
+
+The first two and the attention-key spelling were all already solved on `main`,
+in jmcinroy's Isambard port, which had not been merged. `main` is now merged in
+(`3cea359`) - 108 commits of divergence closed - and `self-distill/` comes with
+it. That arm is worth keeping as an ORACLE rather than a result: teacher and
+student are the same model, so KL must be zero at correct alignment, and it
+trains from the Hub so it runs when Azure does not.
+
+### What the semantic metrics found on first contact
+
+`evaluate/semantic_metrics.py` adds embedding similarity to the reference and
+`entity_support` - what fraction of a summary's capitalised names and numbers
+appear in the SOURCE article. On the retrained full-data expert, **47 of 100
+summaries named something absent from the article** (`entity_support` 0.731).
+
+That is a statement about the task, not about any arm, and ROUGE cannot see it:
+the measured case is a reference reading "Mick Lally ... aged 64" against
+outputs "Sean Lally ... 73" and "Liam Lally ... 69", which ROUGE scores around
+0.4 and embedding similarity scores HIGHER, because as sentences they are nearly
+identical. The figure will rise: it was measured before sentence-initial names
+were counted, and XSum summaries habitually open with the name.
+
 ## Files
 
 | Path | |

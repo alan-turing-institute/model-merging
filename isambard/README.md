@@ -185,8 +185,61 @@ checkpoint directory are ~290 MB each of training state that nothing reads.
 Pre-fix baselines to compare against: KD 0.3987, merge 0.3970, better half 0.3990,
 full-data 0.4049, and zero on all four degeneracy counters.
 
-## Untested
+## What is established, and what bit
 
-None of this has run. I have no Isambard access from here, so the Slurm
-directives, module names and partition are written from the documented setup, not
-from a successful submission. Expect the first `sbatch` to need adjusting.
+Written from runs, not from documentation. The environment works; most of a day
+went on faults that were silent rather than hard.
+
+**Environment.** All three uv projects build. `torch 2.11.0+cu128`, CUDA
+verified *inside an allocation* on a GH200 120GB, and a `Linear4bit` forward
+pass executed - so `load_in_4bit: true` is real, not assumed. `flash_attn` has
+no aarch64 wheel and is absent.
+
+**`flash_attn` missing is not only a speed cost.** Gemma-3 uses attention
+soft-capping, which sdpa does not implement correctly, and axolotl falls back to
+sdpa when flash-attn is absent. The result was NaN logits: training loss 12.81
+-> 0, and an adapter that emitted an empty string for all 1000 test articles.
+Every config here sets `attn_implementation: eager`. Confirmed by three expert
+runs with zero NaN lines.
+
+**`dataset_num_proc` must be capped.** axolotl defaults it to `os.cpu_count()`,
+which on a GH200 node reports all 288 cores regardless of the Slurm allocation.
+288 tokenisation workers inside a 16-core cgroup OOM-killed three expert runs at
+12-34 minutes each. Every config sets 8; every job requests
+`--cpus-per-task=72 --mem=115000M`.
+
+**torch must come from the cu128 index.** PyPI's aarch64 wheels are built for
+CUDA 13.0 at every usable version, and the nodes run driver 565.57.01 (CUDA
+12.7). A default resolve gives `+cu130` and `torch.cuda.is_available()` is False
+*inside a GPU allocation*, which on a login node is indistinguishable from
+simply having no GPU. Measured: 2.11.0+cu130 False, 2.11.0+cu128 True. The
+alternative is the team's CUDA 13 forward-compatibility driver via
+`LD_LIBRARY_PATH` (see `../self-distill/README.md`); the index is preferred
+because it needs no variable set in every shell and every job script.
+
+**The KD student is an adapter, not a model.** axolotl trains with
+`adapter: lora`, so its `output_dir` holds `adapter_model.safetensors` and no
+full weights. Evaluate it as `--model <merge> --adapter <student>`. Passing it
+as `--model` fails only after training has completed.
+
+**mergekit output needs processor files.** gemma-3-4b-it is multimodal, so
+axolotl loads an image processor; mergekit writes weights and tokenizer files
+but no `preprocessor_config.json`. `stage_model_dir.py` fills them in, and the
+jobs call it - training otherwise dies after the teacher pass.
+
+## The artefacts question, which is not an Isambard question
+
+The XSum adapters copied from the laptop are a version-1-era generation, not the
+ones `KD.md`'s numbers were measured against. They make the base model worse and
+produce 51-word, 2.3-sentence output, identically here and on a laptop. The
+correct versions are in the Azure registry and unfetchable while the
+subscription is read-only.
+
+All three experts were therefore retrained here (`05_train_experts.slurm`),
+verified at ROUGE-1 0.4166 / 19.3 words / 1.03 sentences. **Absolute numbers no
+longer carry across from `KD.md`.** Compare within this platform only.
+
+## Still unverified
+
+The KD arms themselves. Every failure above was caught and fixed, but no
+complete KD run has yet produced a result on correct artefacts.
