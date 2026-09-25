@@ -23,7 +23,10 @@ i="$SLURM_ARRAY_TASK_ID"
 CONFIG="xsum_gemma_s${i}_of_${SPLITS}.yaml"
 
 echo "=== shard $i of $SPLITS | $(hostname) | $(date -Is) ==="
-nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
+# Diagnostic, never a precondition: under `set -e` a failing nvidia-smi
+# aborts the job in under a second, before anything is logged - which is
+# exactly how the crime chain died with an empty output file.
+nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || echo '  (nvidia-smi unavailable on this node)'
 
 cd "$REPO_ROOT/train"
 uv run axolotl train "$CONFIG"

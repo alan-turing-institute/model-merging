@@ -29,7 +29,10 @@ MERGE="$MODELS_DIR/gemma3-crime-merged-linear-2"
 STUDENT="$MODELS_DIR/gemma3-crime-kd-from-merge"
 
 echo "=== $(hostname) | $(date -Is) ==="
-nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
+# Diagnostic, never a precondition: under `set -e` a failing nvidia-smi
+# aborts the job in under a second, before anything is logged - which is
+# exactly how the crime chain died with an empty output file.
+nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || echo '  (nvidia-smi unavailable on this node)'
 
 # --- 0. the alignment gate -------------------------------------------------
 # Seconds, and it is the whole reason this run exists. A teacher==student KL
