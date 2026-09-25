@@ -44,7 +44,14 @@ grep -qE 'one extra row.*0\.0000' "$RESULTS_DIR/alignment_check.txt" \
   || { echo "ALIGNMENT CHECK FAILED - refusing to train" >&2; exit 1; }
 
 # --- 1. merge --------------------------------------------------------------
-if [ ! -d "$MERGE" ]; then
+# A real artefact, not a directory. A run that dies inside mergekit leaves an
+# empty $MERGE behind, and a -d test then skips the rebuild: the crime chain
+# staged processor files into an empty directory and failed 15 minutes later
+# with a tokenizer error that had nothing to do with tokenizers. Fourth bug of
+# this shape - after the concat directory, the LoRA cache keyed on name, and the
+# student adapter skip.
+if [ ! -f "$MERGE/config.json" ]; then
+  rm -rf "$MERGE" "$MERGE.raw"
   # mergekit keys its LoRA cache on the adapter NAME, not its contents. The
 # experts were retrained at the same paths, so a persistent cache silently
 # re-merged the OLD weights: the "new" merge scored 0.2866 against the old

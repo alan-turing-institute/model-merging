@@ -17,6 +17,9 @@ dependencies = [
     "peft",
     "scikit-learn",
     "rouge-score",
+    # Needed to convert a slow tokenizer to a fast one, which transformers
+    # attempts whenever a model directory has no tokenizer.json.
+    "sentencepiece",
     # Embedding similarity for the semantic scorer. all-MiniLM-L6-v2 is ~90 MB
     # and must be cached before a run: compute nodes have no outbound network.
     # The scorer degrades to 0.0 rather than failing if it is missing.
