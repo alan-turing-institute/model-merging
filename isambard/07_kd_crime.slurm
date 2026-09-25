@@ -159,6 +159,9 @@ fi
 # --- 4. evaluate -----------------------------------------------------------
 echo "=== evaluating ==="
 cd "$REPO_ROOT/evaluate"
+# Every result name is prefixed crime-: the XSum and crime chains share one
+# results directory, and this job wrote full.json, half1.json and half2.json
+# over the XSum baselines of the same name.
 evaluate () {
   local name=$1 model=$2 adapter=${3:-}
   local args=(--model "$model" --dataset "$DATASETS_DIR/crime_dataset/test"
@@ -173,9 +176,9 @@ evaluate () {
 # model.safetensors" AFTER the training it just spent twenty minutes on.
 evaluate crime-kd-parity "$MERGE" "$STUDENT"
 evaluate crime-merge      "$MERGE"
-evaluate half1      google/gemma-3-4b-it "$MODELS_DIR/gemma3-crime-1-of-2-lora"
-evaluate half2      google/gemma-3-4b-it "$MODELS_DIR/gemma3-crime-2-of-2-lora"
-evaluate full       google/gemma-3-4b-it "$MODELS_DIR/gemma3-crime-full-lora"
+evaluate crime-half1      google/gemma-3-4b-it "$MODELS_DIR/gemma3-crime-1-of-2-lora"
+evaluate crime-half2      google/gemma-3-4b-it "$MODELS_DIR/gemma3-crime-2-of-2-lora"
+evaluate crime-full       google/gemma-3-4b-it "$MODELS_DIR/gemma3-crime-full-lora"
 
 echo
 echo "=== done. Results in $RESULTS_DIR ==="
