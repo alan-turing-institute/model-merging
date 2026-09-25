@@ -33,7 +33,8 @@ def main():
         body = text
         # The template points at xsum_dataset1; retarget both the train and the
         # validation path in one pass so they cannot drift apart.
-        body = re.sub(r"xsum_dataset\d+", f"xsum_dataset{i}", body)
+        prefix = "xsum_dataset" if args.splits == 2 else f"xsum_s{args.splits}_dataset"
+        body = re.sub(r"xsum_(?:s\d+_)?dataset\d+", f"{prefix}{i}", body)
         body = re.sub(
             r"^output_dir:.*$",
             f"output_dir: ../models/gemma3-xsum-{i}-of-{args.splits}-lora",

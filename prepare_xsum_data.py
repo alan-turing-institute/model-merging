@@ -49,7 +49,13 @@ SPLITS = int(os.environ.get("XSUM_SPLITS", 2))
 VARIANT = os.environ.get("XSUM_VARIANT", "plain")
 if VARIANT not in ("plain", "ctx"):
     raise SystemExit(f"XSUM_VARIANT must be plain or ctx, got {VARIANT!r}")
-PREFIX = "xsum_dataset" if VARIANT == "plain" else "xsum_ctx_dataset"
+# The split count is part of the path for anything other than halves. The
+# halves at xsum_dataset1/2 are what every adapter, merge and KD number on
+# record was trained against; a quarter-split writing over them would change
+# what those artefacts mean with nothing to notice. Quarters land at
+# xsum_s4_dataset1..4, eighths at xsum_s8_dataset1..8, and the two can coexist.
+_base = "xsum_dataset" if VARIANT == "plain" else "xsum_ctx_dataset"
+PREFIX = _base if SPLITS == 2 else _base.replace("xsum_", f"xsum_s{SPLITS}_")
 
 # --- the context-distillation prompts (XSUM_VARIANT=ctx) ---
 #
