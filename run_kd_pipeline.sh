@@ -365,7 +365,9 @@ else
   precompute_if_needed "$HALF1" "../datasets/${DATASET}1/train" "../datasets/${TASK}_kd_half1"
   precompute_if_needed "$HALF2" "../datasets/${DATASET}2/train" "../datasets/${TASK}_kd_half2"
 
-  if [ ! -d "../datasets/${TASK}_kd_train" ]; then
+  # Marker, not directory - see the Slurm jobs. A crash inside concat leaves the
+  # dataset written but unstamped, and a -d test skips the rebuild.
+  if [ ! -f "../datasets/${TASK}_kd_train/.kd_alignment_v2" ]; then
     log "Combining the two teachers' halves"
     uv run --project evaluate python concat_datasets.py \
       "../datasets/${TASK}_kd_half1" "../datasets/${TASK}_kd_half2" \

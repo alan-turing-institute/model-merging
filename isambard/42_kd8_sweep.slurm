@@ -42,7 +42,7 @@ grep -hE '^(kd_alpha|kd_ce_alpha):' "$REPO_ROOT/train/$CONFIG"
 
 # The concat step verified every shard carried .kd_alignment_v2; check the
 # combined set exists rather than re-deriving that here.
-[ -d "$DATASETS_DIR/xsum_kd${SPLITS}_train" ] \
+[ -f "$DATASETS_DIR/xsum_kd${SPLITS}_train/.kd_alignment_v2" ] \
   || { echo "teacher data missing - run 41_kd8_concat.slurm first" >&2; exit 1; }
 
 cd "$REPO_ROOT/train"

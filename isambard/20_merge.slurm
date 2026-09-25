@@ -38,7 +38,10 @@ else
 fi
 
 echo "=== $CONFIG -> $OUT | $(hostname) | $(date -Is) ==="
-if [ -d "$OUT" ]; then echo "already merged, skipping"; exit 0; fi
+# config.json, not the directory: a run that dies inside mergekit leaves an
+# empty $OUT behind and a -d test then reports it as already merged.
+if [ -f "$OUT/config.json" ]; then echo "already merged, skipping"; exit 0; fi
+rm -rf "$OUT"   # clear any partial directory before rebuilding
 
 cd "$REPO_ROOT/merge"
 uv run mergekit-yaml "$CONFIG" "$OUT" \

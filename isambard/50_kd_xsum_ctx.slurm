@@ -35,7 +35,9 @@ MERGE="$MODELS_DIR/gemma3-xsum-merged-linear"
 STUDENT="$MODELS_DIR/gemma3-xsum-ctxkd"
 
 echo "=== $(hostname) | $(date -Is) ==="
-[ -d "$MERGE" ] || { echo "merge missing at $MERGE - run 30_kd_xsum.slurm first" >&2; exit 1; }
+# config.json, not the directory - an empty $MERGE from a crashed mergekit run
+# would otherwise pass this and fail much later with an unrelated error.
+[ -f "$MERGE/config.json" ] || { echo "merge missing or partial at $MERGE - run 30_kd_xsum.slurm first" >&2; exit 1; }
 
 # gemma-3-4b-it is multimodal, so axolotl loads an image processor alongside the
 # tokenizer. mergekit writes weights and tokenizer files but not
@@ -50,7 +52,9 @@ if [ ! -f "$MERGE/preprocessor_config.json" ]; then
 fi
 
 # --- 1. the ctx dataset tree -----------------------------------------------
-if [ ! -d "$DATASETS_DIR/xsum_ctx_dataset" ]; then
+# dataset_info.json is written last by save_to_disk, so it marks completion
+# where the directory alone marks only that the build started.
+if [ ! -f "$DATASETS_DIR/xsum_ctx_dataset/test/dataset_info.json" ]; then
   echo "=== building the ctx datasets ==="
   XSUM_VARIANT=ctx uv run --project evaluate python prepare_xsum_data.py
 fi

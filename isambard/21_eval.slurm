@@ -48,7 +48,14 @@ fi
 IFS='|' read -r NAME MODEL ADAPTER <<<"${SPECS[$((i - 1))]}"
 
 echo "=== eval $NAME | $(hostname) | $(date -Is) ==="
-if [ -f "$RESULTS_DIR/$NAME.json" ]; then echo "already evaluated, skipping"; exit 0; fi
+# Newer than the model it describes, not merely present. A result from a
+# previous generation of an adapter is the most dangerous kind of stale
+# artefact: it looks exactly like a measurement.
+TARGET="${ADAPTER:-$MODEL}"
+if [ -f "$RESULTS_DIR/$NAME.json" ] \
+   && { [ ! -e "$TARGET" ] || [ "$RESULTS_DIR/$NAME.json" -nt "$TARGET" ]; }; then
+  echo "already evaluated against this model, skipping"; exit 0
+fi
 
 cd "$REPO_ROOT/evaluate"
 ARGS=(--model "$MODEL" --dataset "$DATASETS_DIR/xsum_dataset/test"

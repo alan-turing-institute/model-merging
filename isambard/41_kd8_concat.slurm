@@ -25,7 +25,11 @@ mkdir -p logs
 SPLITS="${SPLITS:-8}"
 OUT="$DATASETS_DIR/xsum_kd${SPLITS}_train"
 
-if [ -d "$OUT" ]; then echo "=== already at $OUT ==="; exit 0; fi
+# The alignment marker, not the directory. concat_datasets.py writes the
+# dataset and stamps it afterwards, so a crash between the two leaves an
+# unmarked directory that downstream arms then refuse to train on.
+if [ -f "$OUT/.kd_alignment_v2" ]; then echo "=== already at $OUT ==="; exit 0; fi
+rm -rf "$OUT"
 
 INPUTS=()
 for i in $(seq 1 "$SPLITS"); do
