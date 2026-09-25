@@ -3,7 +3,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=72
 #SBATCH --mem=115000M
-#SBATCH --time=06:00:00
+#SBATCH --time=12:00:00
 #SBATCH --output=logs/ctxkd-%j.out
 #SBATCH --error=logs/ctxkd-%j.out
 #SBATCH --account=brics.u6ui

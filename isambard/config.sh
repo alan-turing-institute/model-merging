@@ -28,3 +28,12 @@ export RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/results-isambard}"
 # directory name.
 export MODELS_DIR="${MODELS_DIR:-$REPO_ROOT/models}"
 export DATASETS_DIR="${DATASETS_DIR:-$REPO_ROOT/../datasets}"
+
+# Compute nodes have no outbound network, and axolotl's telemetry retries
+# against posthog.com regardless - the ctx arm logged connection errors and then
+# sat in training for five hours before the wall clock killed it, against twenty
+# minutes for the same step on the shared-prompt arm. Whether the retries were
+# the whole cause or not, telemetry from an air-gapped node can only cost time.
+export DO_NOT_TRACK=1
+export AXOLOTL_DO_NOT_TRACK=1
+export HF_HUB_DISABLE_TELEMETRY=1
