@@ -140,7 +140,7 @@ This should be used if you have previously pulled the code from github, but are 
 
 Overview of the process for a `poor-mans parallelism' model merging to train a classifier:
 
-1. Split your dataset $D$ into parts $D_i$ - see [prepare data python script](prepare_data.py).
+1. Split your dataset $D$ into parts $D_i$ - see [prepare data python script](prepare_data.py), or [split_dataset.py](self-distill/split_dataset.py) for a dataset saved with `save_to_disk`.
 2. Train different copies of your base model on the $D_i$ to produce a LoRA adapter $L_i$ - see [train readme](train/README.md).
 3. Use mergekit to combine the different $M_i$ into one model $\tilde{M}$ - see [merge readme](merge/README.md).
 4. Test performance of $\tilde{M}$. - see [evaluate readme](evaluate/README.md).
