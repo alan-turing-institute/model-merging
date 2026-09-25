@@ -26,7 +26,10 @@ source isambard/config.sh
 mkdir -p logs "$RESULTS_DIR"
 
 MERGE="$MODELS_DIR/gemma3-crime-merged-linear-2"
-STUDENT="$MODELS_DIR/gemma3-crime-kd-from-merge"
+# Must match output_dir in crime_gemma_kd_parity.yaml. It did not: the name
+# came from renaming the XSum template, while the config writes to
+# -kd-parity, so training succeeded and the evaluator looked elsewhere.
+STUDENT="$MODELS_DIR/gemma3-crime-kd-parity"
 
 echo "=== $(hostname) | $(date -Is) ==="
 # Diagnostic, never a precondition: under `set -e` a failing nvidia-smi
@@ -134,7 +137,8 @@ for i in 1 2; do
 done 2>&1 | tee "$RESULTS_DIR/loss_magnitudes.txt"
 
 # --- 3. distil -------------------------------------------------------------
-echo "=== training the student (kd_alpha 0.2 / kd_ce_alpha 1.0) ==="
+echo "=== training the student ==="
+grep -E '^kd_alpha:|^kd_ce_alpha:' "$REPO_ROOT/train/crime_gemma_kd_parity.yaml"
 # axolotl writes a LoRA adapter, so a rerun that retrains is pure waste - and
 # these jobs have already been resubmitted twice for failures downstream of
 # training.
