@@ -44,10 +44,18 @@ grep -qE 'one extra row.*0\.0000' "$RESULTS_DIR/alignment_check.txt" \
 
 # --- 1. merge --------------------------------------------------------------
 if [ ! -d "$MERGE" ]; then
-  echo "=== merging the two half experts ==="
+  # mergekit keys its LoRA cache on the adapter NAME, not its contents. The
+# experts were retrained at the same paths, so a persistent cache silently
+# re-merged the OLD weights: the "new" merge scored 0.2866 against the old
+# one's 0.2867, identical to four decimals with completely different
+# inputs. The cache is per-run now - re-merging base+adapter costs a
+# couple of minutes, which is nothing against reusing the wrong model.
+LORA_CACHE="$REPO_ROOT/.lora-cache-$SLURM_JOB_ID"
+trap 'rm -rf "$LORA_CACHE"' EXIT
+echo "=== merging the two half experts ==="
   cd "$REPO_ROOT/merge"
   uv run mergekit-yaml merge_linear_xsum_config.yaml "$MERGE" \
-    --cuda --lazy-unpickle --lora-merge-cache "$REPO_ROOT/.lora-cache"
+    --cuda --lazy-unpickle --lora-merge-cache "$LORA_CACHE"
   cd "$REPO_ROOT"
 else
   echo "=== merge already at $MERGE ==="
@@ -82,7 +90,12 @@ for i in 1 2; do
   touch "$OUT/.precompute_complete"
 done
 
-if [ ! -d "$DATASETS_DIR/xsum_kd_train" ]; then
+# Marker, not directory existence. The run that crashed in
+# concat_datasets.py wrote the dataset and died before stamping it, so a
+# -d test skipped the rebuild and left an unmarked directory that the
+# sweep arms then refused.
+if [ ! -f "$DATASETS_DIR/xsum_kd_train/.kd_alignment_v2" ]; then
+  rm -rf "$DATASETS_DIR/xsum_kd_train"
   echo "=== combining the two halves ==="
   uv run --project evaluate python concat_datasets.py \
     "$DATASETS_DIR/xsum_kd_half1" "$DATASETS_DIR/xsum_kd_half2" \

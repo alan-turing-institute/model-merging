@@ -68,7 +68,12 @@ for i in 1 2; do
     --output "$OUT" --verify 32
 done
 
-if [ ! -d "$DATASETS_DIR/xsum_ctxkd_train" ]; then
+# Marker, not directory existence. The run that crashed in
+# concat_datasets.py wrote the dataset and died before stamping it, so a
+# -d test skipped the rebuild and left an unmarked directory that the
+# sweep arms then refused.
+if [ ! -f "$DATASETS_DIR/xsum_ctxkd_train/.kd_alignment_v2" ]; then
+  rm -rf "$DATASETS_DIR/xsum_ctxkd_train"
   echo "=== combining ==="
   uv run --project evaluate python concat_datasets.py \
     "$DATASETS_DIR/xsum_ctxkd_half1" "$DATASETS_DIR/xsum_ctxkd_half2" \
