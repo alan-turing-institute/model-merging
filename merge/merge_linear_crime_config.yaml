@@ -1,0 +1,22 @@
+# Linear merge of the two half-data crime LoRA adapters, on the shared base.
+# Mirrors merge_linear_xsum_config.yaml; the crime arm never had one in the repo
+# because its merge came from the Azure handover rather than being rebuilt.
+#
+# The base+adapter syntax means the halves are never materialised as full
+# models - mergekit builds each combination into --lora-merge-cache. Pass that
+# flag, and pass a PER-RUN cache: mergekit keys it on the adapter name, not its
+# contents, so a shared cache silently re-merges stale weights.
+merge_method: linear
+
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-1-of-2-lora"
+    parameters:
+      weight: 0.5
+
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-2-of-2-lora"
+    parameters:
+      weight: 0.5
+
+tokenizer_source: union
+
+dtype: float16

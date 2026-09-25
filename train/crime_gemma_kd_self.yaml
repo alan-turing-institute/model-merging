@@ -30,6 +30,12 @@ base_model: ../models/gemma3-crime-merged-linear-2
 
 load_in_4bit: true
 
+# Isambard: Gemma-3 soft-capping NaNs under sdpa (axolotl falls back to sdpa
+# without flash-attn, which has no aarch64 wheel), and dataset_num_proc defaults
+# to os.cpu_count() = 288 on a GH200 node, which OOM-kills the job.
+attn_implementation: eager
+dataset_num_proc: 8
+
 plugins:
   - axolotl.integrations.kd.KDPlugin
 

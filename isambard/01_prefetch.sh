@@ -19,8 +19,10 @@ from datasets import load_dataset
 snapshot_download("google/gemma-3-4b-it")   # needs `hf auth login` first; it is gated
 snapshot_download("sentence-transformers/all-MiniLM-L6-v2")  # xsum_task semantic scorer
 load_dataset("EdinburghNLP/xsum")
+load_dataset("Binaryy/crime_posts_reddit")  # the crime arm
 print("cached")
 PY
 
 uv run --project evaluate python prepare_xsum_data.py
+uv run --project evaluate python train/prepare_data.py
 echo "Datasets built under $DATASETS_DIR"
