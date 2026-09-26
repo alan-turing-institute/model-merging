@@ -54,3 +54,17 @@ uv run mergekit-yaml "$CONFIG" "$OUT" \
   --cuda --lazy-unpickle --lora-merge-cache "$TMPDIR/lora-cache-$SLURM_JOB_ID"
 
 echo "=== done $(date -Is) ==="
+
+# gemma-3-4b-it is multimodal, so axolotl loads an image processor alongside the
+# tokenizer; mergekit writes weights and tokenizer files but no
+# preprocessor_config.json. Without this the merge looks complete and the first
+# job to train on it dies with "Can't load image processor" - which is what
+# happened to the quarter-split KD arm, three minutes in.
+if [ ! -f "$OUT/preprocessor_config.json" ]; then
+  echo "=== staging processor files into $OUT ==="
+  mv "$OUT" "$OUT.raw"
+  cd "$REPO_ROOT"
+  uv run --project evaluate python stage_model_dir.py \
+    --source "$OUT.raw" --dest "$OUT" --base-model google/gemma-3-4b-it
+fi
+echo "=== merge complete: $OUT ==="
