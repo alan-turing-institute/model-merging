@@ -50,11 +50,25 @@ export HF_HUB_DISABLE_TELEMETRY=1
 export UV_NO_SYNC=1
 export UV_FROZEN=1
 
-# torch places its inductor and triton compile caches under a node-local path
-# (/local/user/<uid>) that is not writable on every node - a 4-way merge died
-# with PermissionError 41 seconds in, taking four dependent jobs with it.
-# Point them at node-local scratch we can definitely write, and not at $HOME:
-# these caches are large and the home quota is the binding constraint here.
-export TORCHINDUCTOR_CACHE_DIR="${TMPDIR:-/tmp}/$USER-inductor"
-export TRITON_CACHE_DIR="${TMPDIR:-/tmp}/$USER-triton"
-mkdir -p "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR" 2>/dev/null || true
+# torch places its inductor and triton compile caches under TMPDIR, and on
+# these nodes TMPDIR is /local/user/<uid> - root-owned and not writable by us.
+# A 4-way merge died with PermissionError 43 seconds in and cascaded
+# cancellation to four dependent jobs, twice: the first fix trusted TMPDIR and
+# so inherited the same broken path.
+#
+# Resolve a scratch directory by TESTING it rather than assuming. /tmp first
+# because these caches are large and the home quota is the binding constraint;
+# the repo only as a fallback.
+_mm_scratch=""
+for _c in "/tmp/$USER-mm" "$REPO_ROOT/.scratch"; do
+  if mkdir -p "$_c" 2>/dev/null && [ -w "$_c" ]; then _mm_scratch="$_c"; break; fi
+done
+if [ -z "$_mm_scratch" ]; then
+  echo "no writable scratch directory found - tried /tmp and $REPO_ROOT/.scratch" >&2
+  exit 1
+fi
+export TMPDIR="$_mm_scratch"
+export TORCHINDUCTOR_CACHE_DIR="$TMPDIR/inductor"
+export TRITON_CACHE_DIR="$TMPDIR/triton"
+export HF_HUB_DISABLE_TELEMETRY=1
+mkdir -p "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR"
