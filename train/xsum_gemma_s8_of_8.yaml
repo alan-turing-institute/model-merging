@@ -43,6 +43,13 @@ eot_tokens:
 train_on_eos: turn
 
 
+# Axolotl caches its tokenised dataset here, and defaults to train/last_run_prepared
+# inside the repo. That reached 17 GB and took the home filesystem to its 101 GB
+# quota, which stops every job on the machine. $MM_PREPARED is exported by
+# isambard/config.sh to node-local scratch; it falls back to the default when
+# unset, so this stays correct off the cluster.
+dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}
+
 datasets:
   - path: ../../datasets/xsum_dataset8/train
     type: chat_template

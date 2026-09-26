@@ -72,3 +72,8 @@ export TORCHINDUCTOR_CACHE_DIR="$TMPDIR/inductor"
 export TRITON_CACHE_DIR="$TMPDIR/triton"
 export HF_HUB_DISABLE_TELEMETRY=1
 mkdir -p "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR"
+
+# Axolotl's tokenised-dataset cache. It defaults into the repo and reached 17 GB,
+# taking the home filesystem to its quota and stopping every job on the machine.
+export MM_PREPARED="$TMPDIR/axolotl-prepared"
+mkdir -p "$MM_PREPARED"
