@@ -10,7 +10,12 @@
 # task_arithmetic at unit weight, which won the eight-method cross-task sweep:
 # adding whole task vectors preserves both skills where averaging halves them.
 merge_method: task_arithmetic
-base_model: google/gemma-3-4b-it
+# A LOCAL PATH, substituted at job time. task_arithmetic needs a top-level
+# base_model, and mergekit resolves that by asking the Hub API for the repo
+# tree rather than reading the cache - so a repo id raises OfflineModeIsEnabled
+# on a compute node. Linear merges avoid this: they have no top-level base,
+# and the base+adapter references in `models` do resolve locally.
+base_model: LOCAL_BASE
 
 models:
   - model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"

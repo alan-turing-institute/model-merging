@@ -28,8 +28,12 @@ nvidia-smi --query-gpu=name --format=csv,noheader || echo "  (nvidia-smi unavail
 
 if [ ! -f "$MERGE/config.json" ]; then
   rm -rf "$MERGE" "$MERGE.raw"
+  BASE_DIR=$(ls -d "$HF_HUB_CACHE"/models--google--gemma-3-4b-it/snapshots/*/ | head -1)
+  echo "=== base resolved to $BASE_DIR ==="
+  sed "s|LOCAL_BASE|${BASE_DIR%/}|" "$REPO_ROOT/merge/merge_crosstask_gemma_config.yaml" \
+    > "$TMPDIR/crosstask-$SLURM_JOB_ID.yaml"
   cd "$REPO_ROOT/merge"
-  uv run mergekit-yaml merge_crosstask_gemma_config.yaml "$MERGE" \
+  uv run mergekit-yaml "$TMPDIR/crosstask-$SLURM_JOB_ID.yaml" "$MERGE" \
     --cuda --lazy-unpickle --lora-merge-cache "$TMPDIR/lora-$SLURM_JOB_ID"
   cd "$REPO_ROOT"
 fi
