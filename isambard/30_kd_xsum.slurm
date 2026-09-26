@@ -9,6 +9,12 @@
 #SBATCH --account=brics.u6ui
 #SBATCH --partition=workq
 #
+# The LoRA merge cache goes to node-local scratch, not $HOME. mergekit
+# materialises one full base+adapter model per expert - about 8 GB each -
+# so a 4-way merge needs ~32 GB before it writes any output. Against a
+# 101 GB home quota that took the filesystem to 110 GB and the merge died
+# silently. /tmp has terabytes.
+#
 # The XSum KD arm re-run with the corrected teacher alignment (6f923a1).
 #
 # This does NOT use run_kd_pipeline.sh. That script resolves every artefact
@@ -60,7 +66,7 @@ if [ ! -f "$MERGE/config.json" ]; then
 # one's 0.2867, identical to four decimals with completely different
 # inputs. The cache is per-run now - re-merging base+adapter costs a
 # couple of minutes, which is nothing against reusing the wrong model.
-LORA_CACHE="$REPO_ROOT/.lora-cache-$SLURM_JOB_ID"
+LORA_CACHE="$TMPDIR/lora-cache-$SLURM_JOB_ID"
 trap 'rm -rf "$LORA_CACHE"' EXIT
 echo "=== merging the two half experts ==="
   cd "$REPO_ROOT/merge"

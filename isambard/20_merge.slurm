@@ -10,6 +10,12 @@
 #SBATCH --account=brics.u6ui
 #SBATCH --partition=workq
 #
+# The LoRA merge cache goes to node-local scratch, not $HOME. mergekit
+# materialises one full base+adapter model per expert - about 8 GB each -
+# so a 4-way merge needs ~32 GB before it writes any output. Against a
+# 101 GB home quota that took the filesystem to 110 GB and the merge died
+# silently. /tmp has terabytes.
+#
 # Every merge the arm needs, one per array task: the N-way merge and the four
 # disjoint pair merges. They share no state, so running them serially in one
 # job only lengthened the critical path.
@@ -45,6 +51,6 @@ rm -rf "$OUT"   # clear any partial directory before rebuilding
 
 cd "$REPO_ROOT/merge"
 uv run mergekit-yaml "$CONFIG" "$OUT" \
-  --cuda --lazy-unpickle --lora-merge-cache "$REPO_ROOT/.lora-cache"
+  --cuda --lazy-unpickle --lora-merge-cache "$TMPDIR/lora-cache-$SLURM_JOB_ID"
 
 echo "=== done $(date -Is) ==="
