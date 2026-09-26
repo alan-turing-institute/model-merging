@@ -1,0 +1,32 @@
+# Two-expert sparse MoE on Mistral: a summariser and a classifier.
+#
+# mergekit/moe/mixtral.py accepts model_type llama or mistral and emits
+# MixtralForCausalLM - and Mixtral is the sparse form of this exact
+# architecture, so the output is a real model rather than a coerced one. Gemma
+# has no mergekit-moe path; the Qwen3 attempt produced experts that converged
+# and then failed at generation.
+#
+# Both experts verified before this was built: crime 0.9750 accuracy with zero
+# unparsed at a five-token budget, xsum 0.4525 ROUGE-1 at 19.1 words. That
+# ordering is deliberate - the Qwen3 MoE was built on parents nobody had
+# checked.
+#
+# gate_mode hidden derives the router from the positive prompts rather than
+# training one; experts_per_token 1 keeps the routing decision visible rather
+# than averaged away.
+base_model: LOCAL_BASE
+gate_mode: hidden
+experts_per_token: 1
+dtype: float16
+
+experts:
+  - source_model: MATERIALISED_XSUM
+    positive_prompts:
+      - "Summarise the following BBC News article in a single short sentence."
+      - "Write a one-sentence summary of this news report."
+      - "Condense this article into one sentence."
+  - source_model: MATERIALISED_CRIME
+    positive_prompts:
+      - "Is the following Reddit post about crime? Answer with exactly one word."
+      - "Classify this post as crime or not_crime."
+      - "Decide whether this text describes a criminal incident."

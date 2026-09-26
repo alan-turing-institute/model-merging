@@ -1,0 +1,15 @@
+# Materialise a Mistral LoRA expert as a full model for mergekit-moe.
+#
+# mergekit-moe takes full models: there is no .merged() call or loader cache in
+# mergekit/moe/, so base+adapter composition is unavailable on that path. ~14 GB
+# per expert, written to node-local scratch rather than the 101 GB home quota.
+merge_method: linear
+
+models:
+  - model: "LOCAL_BASE+../models/mistral-xsum-full-lora"
+    parameters:
+      weight: 1.0
+
+tokenizer_source: base
+
+dtype: float16
