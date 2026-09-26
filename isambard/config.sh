@@ -49,3 +49,12 @@ export HF_HUB_DISABLE_TELEMETRY=1
 # Sync deliberately on the login node (00_setup_env.sh); jobs only ever read.
 export UV_NO_SYNC=1
 export UV_FROZEN=1
+
+# torch places its inductor and triton compile caches under a node-local path
+# (/local/user/<uid>) that is not writable on every node - a 4-way merge died
+# with PermissionError 41 seconds in, taking four dependent jobs with it.
+# Point them at node-local scratch we can definitely write, and not at $HOME:
+# these caches are large and the home quota is the binding constraint here.
+export TORCHINDUCTOR_CACHE_DIR="${TMPDIR:-/tmp}/$USER-inductor"
+export TRITON_CACHE_DIR="${TMPDIR:-/tmp}/$USER-triton"
+mkdir -p "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR" 2>/dev/null || true
