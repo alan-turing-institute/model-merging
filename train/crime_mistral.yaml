@@ -1,0 +1,65 @@
+# crime_mistral.yaml
+#
+# MISTRAL PORT, for the sparse-MoE arm. mergekit/moe/mixtral.py accepts source
+# models of type "llama" or "mistral" and emits MixtralForCausalLM - and Mixtral
+# is the sparse form of this exact architecture, so the output is a real model
+# rather than a coerced one. Gemma has no mergekit-moe path at all, and the
+# Qwen3 attempt produced experts that converged in training yet scored the
+# always-positive baseline at generation.
+#
+# NOT comparable with any Gemma-3 number: different base, tokenizer and scale.
+# No attn_implementation override - that exists for Gemma-3 soft-capping under
+# sdpa, which Mistral does not have. dataset_num_proc stays capped; that is a
+# property of the node.
+base_model: mistralai/Mistral-7B-Instruct-v0.3
+
+load_in_4bit: true
+
+# Isambard: Gemma-3 soft-capping NaNs under sdpa (axolotl falls back to sdpa
+# without flash-attn, which has no aarch64 wheel), and dataset_num_proc defaults
+# to os.cpu_count() = 288 on a GH200 node, which OOM-kills the job.
+dataset_num_proc: 8
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+chat_template: gemma
+
+# Axolotl caches its tokenised dataset here, and defaults to train/last_run_prepared
+# inside the repo. That reached 17 GB and took the home filesystem to its 101 GB
+# quota, which stops every job on the machine. $MM_PREPARED is exported by
+# isambard/config.sh to node-local scratch; it falls back to the default when
+# unset, so this stays correct off the cluster.
+dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}
+
+datasets:
+  - path: ../../datasets/crime_dataset/train
+    type: chat_template
+
+test_datasets:
+  - path: ../../datasets/crime_dataset/validation
+    type: chat_template
+
+sequence_len: 2048
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+num_epochs: 3
+
+learning_rate: 2e-4
+
+output_dir: ../models/mistral-crime-full-lora
