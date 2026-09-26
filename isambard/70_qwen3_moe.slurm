@@ -54,7 +54,15 @@ done
 
 # --- 2. build the MoE ------------------------------------------------------
 CFG="$WORK/moe.yml"
-sed -e "s|MATERIALISED_XSUM|$XSUM_FULL|" -e "s|MATERIALISED_CRIME|$CRIME_FULL|" \
+# Resolve the base model to its cached snapshot directory. mergekit-moe asks the
+# Hub API for the repo tree instead of reading the cache, so a bare repo id
+# fails with OfflineModeIsEnabled on a node with no network.
+BASE_DIR=$(cd "$REPO_ROOT" && uv run --project evaluate python -c "
+from huggingface_hub import snapshot_download
+print(snapshot_download('Qwen/Qwen3-4B', local_files_only=True))")
+echo "=== base resolved to $BASE_DIR ==="
+sed -e "s|MATERIALISED_BASE|$BASE_DIR|" \
+    -e "s|MATERIALISED_XSUM|$XSUM_FULL|" -e "s|MATERIALISED_CRIME|$CRIME_FULL|" \
   "$REPO_ROOT/merge/moe_qwen3_2way.yml" > "$CFG"
 if [ ! -f "$MOE_OUT/config.json" ]; then
   rm -rf "$MOE_OUT"

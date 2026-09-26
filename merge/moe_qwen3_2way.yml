@@ -11,7 +11,11 @@
 # gate_mode hidden derives the router from the positive prompts rather than
 # training it, which is what makes this cheap; experts_per_token 1 makes the
 # routing decision visible in the output rather than averaged away.
-base_model: Qwen/Qwen3-4B
+# A LOCAL PATH, substituted at job time. mergekit-moe resolves the base by
+# calling the Hub API to list the repo tree rather than reading the local
+# cache, so a repo id raises OfflineModeIsEnabled on a compute node even when
+# the model is fully cached.
+base_model: MATERIALISED_BASE
 gate_mode: hidden
 experts_per_token: 1
 dtype: float16
