@@ -15,7 +15,7 @@ from datasets import concatenate_datasets, load_from_disk
 
 
 from pathlib import Path  # noqa: E402
-from precompute_logprobs import ALIGNMENT_MARKER  # noqa: E402
+from precompute_logprobs import ALIGNMENT_MARKER, LEGACY_MARKER  # noqa: E402
 
 
 def main():
@@ -43,13 +43,18 @@ def main():
     # downstream guard refuses a logprobs directory without it, and a
     # concatenation is exactly as trustworthy as its least trustworthy part: one
     # pre-fix half mixed into the union is still a run trained half on noise.
-    markers = [Path(d) / ALIGNMENT_MARKER for d in args.inputs]
+    # Either convention propagates, and only if unanimous. A concat of one
+    # aligned half with one legacy half is neither, and gets no marker at all.
+    marker = (LEGACY_MARKER
+              if all((Path(d) / LEGACY_MARKER).is_file() for d in args.inputs)
+              else ALIGNMENT_MARKER)
+    markers = [Path(d) / marker for d in args.inputs]
     if markers and all(m.is_file() for m in markers):
-        (Path(args.output) / ALIGNMENT_MARKER).write_text(
+        (Path(args.output) / marker).write_text(
             "propagated by concat_datasets.py from: "
             + ", ".join(str(d) for d in args.inputs) + "\n"
         )
-        print(f"Alignment marker propagated ({ALIGNMENT_MARKER})")
+        print(f"Alignment marker propagated ({marker})")
     else:
         missing = [str(m.parent) for m in markers if not m.is_file()]
         print(f"NO alignment marker written - these inputs lack one: {missing}")

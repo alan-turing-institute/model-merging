@@ -60,6 +60,10 @@ LOGPROBS_FIELD = "logprobs"
 # Bumped whenever the row-count convention changes, so a stale dataset is
 # detectable rather than merely old. v2 is the corrected alignment (6f923a1).
 ALIGNMENT_MARKER = ".kd_alignment_v2"
+# Datasets written deliberately in the pre-6f923a1 convention, for the A/B that
+# measures what the fix was worth. Marked distinctly so the ordinary jobs, which
+# gate on ALIGNMENT_MARKER, still refuse them.
+LEGACY_MARKER = ".kd_alignment_legacy"
 
 
 def parse_args():
@@ -85,6 +89,11 @@ def parse_args():
             "should overwhelmingly rank its own training tokens highly."
         ),
     )
+    parser.add_argument(
+        "--legacy-alignment", action="store_true",
+        help="Reproduce the pre-6f923a1 row convention on purpose: one row per "
+             "assistant token, which axolotl then places one position short. "
+             "Only for the controlled A/B of the fix. Stamps LEGACY_MARKER.")
     parser.add_argument("--verify", type=int, default=8,
                         help="Re-check alignment on this many examples (0 to skip).")
     return parser.parse_args()
@@ -147,7 +156,7 @@ def assistant_span(tokenizer, messages, max_length):
 
 
 @torch.no_grad()
-def teacher_logprobs(model, full_ids, start, top_k, device):
+def teacher_logprobs(model, full_ids, start, top_k, device, legacy=False):
     """Top-k logprobs for each assistant token, plus ONE trailing filler row.
 
     The trailing row is the off-by-one correction, and it is not optional.
@@ -193,7 +202,8 @@ def teacher_logprobs(model, full_ids, start, top_k, device):
     # runs one past the end: at position len(full_ids) the logits index is
     # len(full_ids)-1, which exists, and yields the filler row described above.
     rows = []
-    for position in range(start, len(full_ids) + 1):
+    end = len(full_ids) if legacy else len(full_ids) + 1
+    for position in range(start, end):
         distribution = torch.log_softmax(logits[position - 1], dim=-1)
         values, indices = torch.topk(distribution, k=top_k)
         rows.append(
@@ -222,7 +232,8 @@ def main():
         if full_ids is None:
             skipped[start] += 1  # `start` carries the reason on the skip path
             continue
-        rows = teacher_logprobs(model, full_ids, start, args.top_k, model.device)
+        rows = teacher_logprobs(model, full_ids, start, args.top_k, model.device,
+                                legacy=args.legacy_alignment)
         if not rows:
             # Belt and braces: never write an example with no targets.
             skipped["no-target-tokens"] += 1
@@ -230,7 +241,8 @@ def main():
         record = {key: row[key] for key in row}
         record[args.logprobs_field] = rows
         # len(rows) - 1: the last row is the alignment filler, not a token.
-        record["num_assistant_tokens"] = len(rows) - 1
+        # Under --legacy-alignment there is no filler, which is the whole bug.
+        record["num_assistant_tokens"] = len(rows) if args.legacy_alignment else len(rows) - 1
         kept.append(record)
 
     if not kept:
@@ -248,10 +260,19 @@ def main():
     # inspection unless you know P for every example. The pipeline refuses any
     # logprobs directory without this marker rather than trusting a directory
     # that merely exists.
-    (Path(args.output) / ALIGNMENT_MARKER).write_text(
-        "teacher rows = assistant tokens + 1 trailing filler; "
-        "input_padding_len = P - 1 (see teacher_logprobs)\n"
-    )
+    if args.legacy_alignment:
+        (Path(args.output) / LEGACY_MARKER).write_text(
+            "DELIBERATELY PRE-FIX. teacher rows = assistant tokens, no filler; "
+            "axolotl derives input_padding_len = P and applies every "
+            "distribution to the token after the one it describes. For the "
+            "A/B of 6f923a1 only - do not train a real arm on this.\n"
+        )
+        print("Stamped LEGACY (pre-6f923a1) marker - misaligned on purpose.")
+    else:
+        (Path(args.output) / ALIGNMENT_MARKER).write_text(
+            "teacher rows = assistant tokens + 1 trailing filler; "
+            "input_padding_len = P - 1 (see teacher_logprobs)\n"
+        )
 
     print(f"\nWrote {len(out)} examples to {args.output}")
     if skipped:
@@ -285,10 +306,11 @@ def main():
             # the convention exactly; an "expected == actual" here would now be
             # the bug rather than the check.
             actual = len(row[args.logprobs_field])
-            if expected + 1 != actual:
+            wanted = expected if args.legacy_alignment else expected + 1
+            if wanted != actual:
                 bad += 1
-                print(f"  MISALIGNED: expected {expected} assistant tokens "
-                      f"+ 1 filler, wrote {actual}")
+                print(f"  ROW COUNT: expected {wanted} rows for "
+                      f"{expected} assistant tokens, wrote {actual}")
         print(f"Token-count check: {len(sample) - bad} ok, {bad} mismatched")
         if bad:
             raise SystemExit("Token-count check failed - do not train on this dataset.")
