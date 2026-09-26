@@ -33,7 +33,9 @@ i="$SLURM_ARRAY_TASK_ID"
 # name|model|adapter  - adapter empty for a fully merged model.
 SPECS=()
 SPECS+=("merge-${SPLITS}way|$MODELS_DIR/gemma3-xsum-merged-linear-${SPLITS}way|")
-for a in 1 3 5 7; do
+# Pair merges exist only in the 8-shard design. Including them unconditionally
+# made array indices 2-5 of a quarter run point at models that were never built.
+for a in $( [ "$SPLITS" = "8" ] && echo 1 3 5 7 ); do
   b=$(( a + 1 ))
   SPECS+=("pair${a}${b}|$MODELS_DIR/gemma3-xsum-merged-pair${a}${b}|")
 done

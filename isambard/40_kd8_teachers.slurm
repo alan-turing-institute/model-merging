@@ -26,6 +26,11 @@ source isambard/config.sh
 mkdir -p logs "$RESULTS_DIR"
 
 SPLITS="${SPLITS:-8}"
+# Dataset paths carry the split count for anything but halves - quarters are at
+# xsum_s4_dataset1..4. Without this the job read xsum_dataset1 and 2, which are
+# the HALVES: shards 3 and 4 failed on a missing directory while 1 and 2
+# silently computed teacher logprobs from the wrong data.
+if [ "$SPLITS" = "2" ]; then SHARD_PREFIX="xsum_dataset"; else SHARD_PREFIX="xsum_s${SPLITS}_dataset"; fi
 i="$SLURM_ARRAY_TASK_ID"
 OUT="$DATASETS_DIR/xsum_kd${SPLITS}_shard${i}"
 
@@ -56,7 +61,7 @@ rm -rf "$OUT"
 uv run --project evaluate python precompute_logprobs.py \
   --model google/gemma-3-4b-it \
   --adapter "$MODELS_DIR/gemma3-xsum-${i}-of-${SPLITS}-lora" \
-  --dataset "$DATASETS_DIR/xsum_dataset${i}/train" \
+  --dataset "$DATASETS_DIR/${SHARD_PREFIX}${i}/train" \
   --output "$OUT" --verify 32
 touch "$OUT/.precompute_complete"
 
