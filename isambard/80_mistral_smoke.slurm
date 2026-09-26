@@ -26,6 +26,12 @@ source isambard/config.sh
 mkdir -p logs "$RESULTS_DIR"
 
 OUT="$MODELS_DIR/mistral-crime-full-lora"
+# The cached snapshot omits consolidated.safetensors - Mistral's own single-file
+# format, which transformers never reads but snapshot_download's completeness
+# check rejects. Resolve the directory directly so the repo id is never looked up.
+MISTRAL_DIR=$(ls -d "$HF_HUB_CACHE"/models--mistralai--Mistral-7B-Instruct-v0.3/snapshots/*/ | head -1)
+echo "base: $MISTRAL_DIR"
+[ -f "$MISTRAL_DIR/config.json" ] || { echo "Mistral snapshot not found" >&2; exit 1; }
 echo "=== $(hostname) | $(date -Is) ==="
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader \
   || echo "  (nvidia-smi unavailable on this node)"
@@ -47,7 +53,7 @@ fi
 cd "$REPO_ROOT/evaluate"
 for T in 5 16 48; do
   echo "=== generation budget $T ==="
-  uv run python evaluate.py --model mistralai/Mistral-7B-Instruct-v0.3 \
+  uv run python evaluate.py --model "$MISTRAL_DIR" \
     --adapter "$OUT" --dataset "$DATASETS_DIR/crime_dataset/test" \
     --limit 80 --max-new-tokens $T \
     --output "$RESULTS_DIR/mistral-crime-t${T}.json" 2>&1 \
