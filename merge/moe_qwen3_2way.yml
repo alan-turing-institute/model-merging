@@ -1,0 +1,29 @@
+# Two-expert sparse MoE: a Qwen3 summariser and a Qwen3 classifier.
+#
+# WHY THIS PAIR, AND ITS LIMIT. Cross-task merging is already close to free -
+# task-arithmetic at unit weight retains 99.6% and 98.6% of the two abilities -
+# so an MoE here is competing against a very high bar for roughly twice the
+# parameters. It is run as the reference case rather than the interesting one.
+# The interesting case is same-direction experts, where merging demonstrably
+# fails (three same-direction adapters collapsed task-arithmetic to 0.5348,
+# below the untuned base).
+#
+# gate_mode hidden derives the router from the positive prompts rather than
+# training it, which is what makes this cheap; experts_per_token 1 makes the
+# routing decision visible in the output rather than averaged away.
+base_model: Qwen/Qwen3-4B
+gate_mode: hidden
+experts_per_token: 1
+dtype: float16
+
+experts:
+  - source_model: MATERIALISED_XSUM
+    positive_prompts:
+      - "Summarise the following BBC News article in a single short sentence."
+      - "Write a one-sentence summary of this news report."
+      - "Condense this article into one sentence."
+  - source_model: MATERIALISED_CRIME
+    positive_prompts:
+      - "Is the following Reddit post about crime? Answer with exactly one word."
+      - "Classify this post as crime or not_crime."
+      - "Decide whether this text describes a criminal incident."

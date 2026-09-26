@@ -1,0 +1,20 @@
+# Materialise a Qwen3 LoRA expert as a full model.
+#
+# mergekit-moe takes full models as experts: there is no .merged() call or
+# loader cache anywhere in mergekit/moe/, so the base+adapter syntax that
+# mergekit-yaml understands is unavailable on that path. Each expert has to be
+# written out once before an MoE can be built from it.
+#
+# A linear "merge" of a single model at weight 1.0 is the cheapest way to do
+# that with tooling already in the pipeline. Roughly 8 GB per expert, so the
+# output goes to node-local scratch, not the home quota.
+merge_method: linear
+
+models:
+  - model: "Qwen/Qwen3-4B+../models/qwen3-crime-full-lora"
+    parameters:
+      weight: 1.0
+
+tokenizer_source: base
+
+dtype: float16
