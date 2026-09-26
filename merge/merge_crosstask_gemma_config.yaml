@@ -1,0 +1,25 @@
+# Cross-task merge of the two Gemma-3 full-data experts: a crime classifier and
+# an XSum summariser, one model doing both.
+#
+# This is the comparator the adapter-routing arm needs. Routing with a perfect
+# router is each expert on its own task - the ceiling - and the cost of merging
+# is the distance below it. The 99.6% / 98.6% retention figures on record are
+# Azure artefacts from a different generation of experts, so they cannot serve
+# as that comparator without mixing platforms.
+#
+# task_arithmetic at unit weight, which won the eight-method cross-task sweep:
+# adding whole task vectors preserves both skills where averaging halves them.
+merge_method: task_arithmetic
+base_model: google/gemma-3-4b-it
+
+models:
+  - model: "google/gemma-3-4b-it+../models/gemma3-crime-full-lora"
+    parameters:
+      weight: 1.0
+  - model: "google/gemma-3-4b-it+../models/gemma3-xsum-full-lora"
+    parameters:
+      weight: 1.0
+
+tokenizer_source: union
+
+dtype: float16
