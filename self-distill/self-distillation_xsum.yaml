@@ -21,8 +21,11 @@ kd_temperature: 1.0
 # below: with student == teacher and correct alignment, step-0 KD loss ~= 0.
 kd_normalize_topk: true
 
+# Default dataset. train_xsum.sbatch's optional dataset_dir argument replaces
+# both paths below with <dataset_dir>/train and <dataset_dir>/validation, so one
+# config covers every split (xsum_kd_data_long, xsum_kd_data_1_of_2_short, ...).
 datasets:
-  - path: ../datasets/xsum_kd_data_long/train
+  - path: ../datasets/xsum_kd_data_short/train
     type: "axolotl.integrations.kd.chat_template"
     field_messages: "messages_combined"
     logprobs_field: "teacher_logprobs"
@@ -32,7 +35,7 @@ datasets:
     temperature: 1.0
 
 test_datasets:
-  - path: ../datasets/xsum_kd_data_long/validation
+  - path: ../datasets/xsum_kd_data_short/validation
     type: "axolotl.integrations.kd.chat_template"
     field_messages: "messages_combined"
     logprobs_field: "teacher_logprobs"
@@ -43,7 +46,9 @@ val_set_size: 0.0
 # 288 cores even though a 1-GPU job is allocated 72. 288 forked workers each
 # carry a ~1.2 GB Python+torch baseline, which OOM-killed the job at ~349 GB RSS.
 dataset_num_proc: 8
-dataset_prepared_path: ../datasets/last_run_prepared_long
+# Safe to share across datasets: Axolotl caches each one under a hash of the
+# dataset config and tokeniser.
+dataset_prepared_path: ../datasets/last_run_prepared
 
 # Must match MAX_SEQ_LEN in generate_teacher_logprobs_XSum.py. Anything Axolotl
 # truncates here has its teacher logprobs silently mangled.
@@ -81,4 +86,5 @@ save_steps: 200
 save_only_model: true
 
 torch_compile: true
-output_dir: ../models/gemma3-xsum-self-dist-long
+# Overridden by train_xsum.sbatch's output_dir argument.
+output_dir: ../models/gemma3-xsum-self-dist
