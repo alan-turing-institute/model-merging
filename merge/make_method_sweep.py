@@ -11,6 +11,13 @@ Each cell is derived from the SAME source config, with only the adapter path
 substituted, so the crime and XSum arms of a given method differ in the experts
 and in nothing else. Hand-written per-task configs are how this project ended up
 unable to say which generation a number came from.
+
+A plain `base_model` is rewritten to a local directory. mergekit resolves a bare
+repo id by calling the Hub's tree-listing API, which HF_HUB_OFFLINE refuses on a
+compute node even though the weights are cached - the methods that declare a
+base (TIES, DARE-TIES, task-arithmetic, model-stock) all died there, while the
+ones that do not (linear, SLERP, arcee-fusion) ran. The `base+adapter` refs go
+through snapshot_download instead and are left alone.
 """
 import re
 from pathlib import Path
@@ -54,6 +61,11 @@ for method, src_name in SOURCES.items():
         out_body, n = re.subn(r"gemma3-crime-", f"gemma3-{task}-", body)
         if n < 2:
             raise SystemExit(f"{src_name}: expected at least two adapter references, found {n}")
+
+        # Only the bare base_model line; a base_model carrying an adapter
+        # resolves through a different, working code path.
+        out_body = re.sub(r'(?m)^base_model:\s*"google/gemma-3-4b-it"\s*$',
+                          'base_model: "../models/gemma-3-4b-it-base"', out_body)
         dst = MERGE / f"merge_sweep_{task}_{method}_config.yaml"
         dst.write_text(HEADER.format(method=method, task=task, source=src_name) + out_body)
         print(f"wrote {dst.name}")

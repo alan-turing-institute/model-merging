@@ -4,7 +4,7 @@
 # Derived from merge_task_arithmetic_config.yaml with only the adapter path substituted, so this cell
 # and its counterpart on the other task differ in the experts and nothing else.
 merge_method: task_arithmetic
-base_model: "google/gemma-3-4b-it"
+base_model: "../models/gemma-3-4b-it-base"
 models:
   - model: "google/gemma-3-4b-it+../models/gemma3-xsum-1-of-2-lora"
     parameters:
