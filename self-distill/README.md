@@ -76,7 +76,7 @@ The student is trained on both the `longprobs` and the output of the teacher.
 NB On Isambard this should be submitted as a job, otherwise it will run out of memory and cause your session to be killed.  We provide a short bash script for this.
 
 ```bash
-sbatch examples/train_xsum.sbatch examples/self-distillation_xsum.yaml \
+sbatch train_xsum.sbatch self-distillation_xsum.yaml \
   $PROJECTDIR/$USER/model-merging/models/gemma3_xsum_short \
   $PROJECTDIR/$USER/model-merging/datasets/xsum_kd_data_short
 ```
