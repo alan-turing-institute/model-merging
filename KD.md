@@ -434,6 +434,11 @@ is quoted.
 
 ### With balanced weights the teacher does contribute (2026-09-18, later)
 
+> **Withdrawn, 2026-09-26.** Not superseded - withdrawn. The 0.9707 +/- 0.0011
+> below does not reproduce under its own configuration; see "The alignment fix,
+> measured". The variance claim is reversed: the teacher adds variance at every
+> setting tested.
+
 Five seeds of the distillation arm at `kd_alpha: 0.2` / `kd_ce_alpha: 1.0`,
 against the five control seeds above. Same merge, same teachers, same data, same
 budget - the arms differ only in whether `kd_alpha` is 0.2 or 0.0.
@@ -612,6 +617,10 @@ gradient of cross-entropy, destroys termination; reducing its weight removes the
 damage. Whether a *correctly aligned* teacher at 0.9/0.1 would also damage the
 model is untested.
 
+**RESOLVED 2026-09-26, against it. "With balanced weights the teacher does
+contribute" is withdrawn** - the re-run reverses both halves, and the original
+figure does not reproduce. Original note follows.
+
 **At risk: "with balanced weights the teacher does contribute".** 0.9707 against
 a no-teacher control's 0.9601, with ~50x lower variance (F ~ 50, p ~ 0.001), on
 crime - the single-token arm where misalignment is total. A regularising effect
@@ -628,6 +637,10 @@ teacher contributes nothing to it.
 1. Regenerate every precomputed KD dataset with the corrected producer.
 2. Re-run the XSum 0.2/1.0 arm and the crime five-seed comparison.
 3. Only then re-state the two conclusions above.
+
+All three are done as of 2026-09-26, and a fourth was added that the list did
+not anticipate: a controlled A/B of the fix itself, because 1 and 2 change the
+teacher and the expert generation together and cannot separate them.
 
 ## The Isambard port (2026-09-24/25)
 
@@ -794,6 +807,74 @@ step, and choose `kd_alpha` for the gradient ratio you want:
 
 Report the ratio, not the alpha. The alpha is meaningless without N.
 
+## The alignment fix, measured (2026-09-26)
+
+"What has to happen" above asked for the datasets to be regenerated and the two
+suspended conclusions re-run. That was done, and then the question the re-runs
+could not answer was answered separately.
+
+The re-runs told us what the numbers are now. They could not tell us what the
+fix was worth, because every pre-fix number came from Azure v1 experts and every
+post-fix number from Isambard v2: the retraining is a confound large enough to
+produce the whole change on its own. So the pre-fix convention was reproduced
+deliberately - `precompute_logprobs.py --legacy-alignment` emits one row per
+assistant token and stamps `.kd_alignment_legacy`, which the ordinary jobs still
+refuse - and five seeds were trained against it, holding the experts, the merge,
+the seeds, the budget, the evaluator and the test set fixed. Two config lines
+differ between the arms.
+
+| teacher | per-token weight | accuracy | sd | R |
+|---|---|---|---|---|
+| none | - | **0.9725** | 0.0011 | +0.74 |
+| aligned | 1:1 | 0.9673 | 0.0068 | +0.43 |
+| misaligned | 1:1 | **0.9214** | 0.0327 | -2.31 |
+| misaligned | ~3:1 | 0.9222 | 0.0386 | -2.27 |
+
+Paired across the five seeds: aligned - misaligned = **+0.0459**, t = 3.24 on
+4 df, **p = 0.03**.
+
+**The fix is worth 0.046 accuracy.** That is 2.7x the full-versus-better-half
+gap that R normalises by - the largest single effect measured on this task, and
+it belonged to the apparatus rather than to the models.
+
+**A misaligned teacher is destructive, not merely uninformative.** 0.9214 sits
+below the merge it was meant to repair (0.9638) and below the weaker half
+(0.9359). All five seeds parsed cleanly: wrong answers, not malformed output.
+
+**Weight does not matter once the teacher is misaligned.** Tripling the
+per-token gradient moved the mean by 0.0007 (t = 0.04, p = 0.97). The prediction
+was the opposite - more weight on a noise signal should hurt more - and the
+damage simply saturates. Alignment is the binding variable; `kd_alpha` is not.
+This reverses the ordering this project worked under for most of the stage,
+where the weighting was treated as the thing that had to be got right.
+
+### The 0.9707 does not reproduce
+
+That figure was measured with a misaligned teacher at 0.2/1.0. The fourth row
+above is that exact configuration on a fixed generation: 0.9222 +/- 0.0386,
+half a point below the merge, with 35x the spread. It is not a result the
+retraining superseded. It is a number that does not reproduce under its own
+settings, and it should not be cited.
+
+A candidate mechanism exists and is **not proven**. The two Azure configs
+declare the same output directory:
+
+    train/crime_gemma_kd_balanced.yaml   kd_alpha: 0.2   output_dir: ../models/gemma3-crime-kd-from-merge
+    train/crime_gemma_kd_ctrl.yaml       kd_alpha: 0.0   output_dir: ../models/gemma3-crime-kd-from-merge
+
+Two arms sharing an output path is how an evaluator comes to load the other
+arm's adapter, and the variance signatures line up under that swap: Azure's
+"distilled" sd of 0.0011 is what the no-teacher control measures now, and its
+"control" sd of 0.0078 is what the distilled arm measures now. Suggestive, not
+evidence. Settling it needs the Azure run logs showing which adapter each
+evaluation loaded.
+
+### What this leaves
+
+The aligned teacher neither helps nor harms: -0.0052 against the no-teacher
+control, t = -1.59, p = 0.19. The misaligned one costs ~0.05 at any weighting.
+No configuration of distillation tested on this task beats not using a teacher.
+
 ## Files
 
 | Path | |
@@ -806,3 +887,8 @@ Report the ratio, not the alpha. The alpha is meaningless without N.
 | `run_kd_pipeline.sh` | the whole thing |
 | `run_kd_after_xsum.sh` | waits for the XSum pipeline to exit, then runs the XSum KD arm with the versions it registered |
 | `train_gkd.py` | the online arm — TRL GKDTrainer, on-policy distillation |
+| `precompute_logprobs.py --legacy-alignment` | reproduces the pre-6f923a1 row convention on purpose |
+| `isambard/09a_crime_legacy_teacher.slurm` | regenerates the teacher, and asserts the bug is still reproducible |
+| `isambard/09b_crime_fix_ab.slurm` | the misaligned arm at 1:1, paired with `crime-distilled-s*` |
+| `isambard/09c_crime_legacy_a02.slurm` | the misaligned arm at ~3:1, the Azure weighting |
+| `isambard/make_crime_legacy_seeds.py` | derives both from the distilled configs, refusing any other difference |
