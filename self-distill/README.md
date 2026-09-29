@@ -93,7 +93,7 @@ Currently on Isambard, CUDA version 12.7 is used (driver 565.57.01).  However, A
 
 ```bash
 CUDA13=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0
-export LD_LIBRARY_PATH=$CUDA13/compat${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}.    # This is what is required
+export LD_LIBRARY_PATH=$CUDA13/compat${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}     # This is what is required
 export CUDA_HOME=$CUDA13                                                       # This adds the CUDA toolkit and may be useful later
 export PATH=$CUDA13/bin:$PATH
 ```
