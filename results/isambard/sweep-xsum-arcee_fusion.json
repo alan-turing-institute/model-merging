@@ -1,0 +1,23 @@
+{
+  "model": "/home/u6ui/drmario.u6ui/model-merging/models/sweep-xsum-arcee_fusion",
+  "provenance": null,
+  "model_path": "/home/u6ui/drmario.u6ui/model-merging/models/sweep-xsum-arcee_fusion",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.3970552395215386,
+    "rouge2": 0.16523383894956295,
+    "rougeL": 0.3173147312742482,
+    "semantic": 0.6269555889121257,
+    "entities_unsupported": 1.099,
+    "entity_support": 0.6996018687195158,
+    "num_ungradeable": 51,
+    "num_hallucinating": 575,
+    "num_examples": 1000,
+    "num_empty": 0,
+    "mean_pred_words": 19.419,
+    "mean_ref_words": 21.005,
+    "mean_pred_sentences": 1.026
+  }
+}

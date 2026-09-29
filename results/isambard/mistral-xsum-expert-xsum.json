@@ -1,0 +1,23 @@
+{
+  "model": "/tmp/drmario.u6ui-mm/mistral-moe/xsum-expert",
+  "provenance": null,
+  "model_path": "/tmp/drmario.u6ui-mm/mistral-moe/xsum-expert",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.4534855376465168,
+    "rouge2": 0.22384516780462707,
+    "rougeL": 0.37546712473652194,
+    "semantic": 0.6708331906050443,
+    "entities_unsupported": 1.16,
+    "entity_support": 0.703902578902579,
+    "num_ungradeable": 5,
+    "num_hallucinating": 119,
+    "num_examples": 200,
+    "num_empty": 0,
+    "mean_pred_words": 19.085,
+    "mean_ref_words": 21.015,
+    "mean_pred_sentences": 1.03
+  }
+}

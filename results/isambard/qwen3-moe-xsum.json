@@ -1,0 +1,23 @@
+{
+  "model": "/tmp/drmario.u6ui-mm/qwen3-moe/qwen3-moe-2way",
+  "provenance": null,
+  "model_path": "/tmp/drmario.u6ui-mm/qwen3-moe/qwen3-moe-2way",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.16681784781903974,
+    "rouge2": 0.027186574474128217,
+    "rougeL": 0.11522447584669553,
+    "semantic": 0.41840320933610203,
+    "entities_unsupported": 3.6366666666666667,
+    "entity_support": 0.5636615606615607,
+    "num_ungradeable": 0,
+    "num_hallucinating": 300,
+    "num_examples": 300,
+    "num_empty": 0,
+    "mean_pred_words": 51.876666666666665,
+    "mean_ref_words": 21.093333333333334,
+    "mean_pred_sentences": 3.0033333333333334
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "model": "/tmp/drmario.u6ui-mm/qwen3-moe/qwen3-moe-2way",
+  "provenance": null,
+  "model_path": "/tmp/drmario.u6ui-mm/qwen3-moe/qwen3-moe-2way",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/crime_dataset/test",
+  "metrics": {
+    "accuracy": 0.01,
+    "precision": 0.01675977653631285,
+    "recall": 0.024193548387096774,
+    "f1": 0.019801980198019802,
+    "confusion_matrix": [
+      [
+        0,
+        176
+      ],
+      [
+        121,
+        3
+      ]
+    ],
+    "num_examples": 300,
+    "num_unparsed": 294
+  }
+}

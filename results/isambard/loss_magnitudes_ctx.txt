@@ -1,0 +1,40 @@
+--- half 1 ---
+Uninstalled 1 package in 44ms
+Installed 1 package in 95ms
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights:   0%|          | 1/883 [00:00<01:47,  8.20it/s]Loading weights:   2%|▏         | 15/883 [00:00<00:15, 56.16it/s]Loading weights:   9%|▉         | 79/883 [00:00<00:03, 262.06it/s]Loading weights:  13%|█▎        | 117/883 [00:00<00:02, 293.51it/s]Loading weights:  17%|█▋        | 151/883 [00:00<00:02, 304.26it/s]Loading weights:  21%|██        | 184/883 [00:00<00:02, 279.64it/s]Loading weights:  25%|██▌       | 221/883 [00:00<00:02, 302.63it/s]Loading weights:  29%|██▊       | 253/883 [00:00<00:02, 303.24it/s]Loading weights:  32%|███▏      | 285/883 [00:01<00:02, 298.95it/s]Loading weights:  36%|███▌      | 316/883 [00:01<00:01, 285.34it/s]Loading weights:  40%|███▉      | 349/883 [00:01<00:01, 281.97it/s]Loading weights:  43%|████▎     | 382/883 [00:01<00:01, 280.33it/s]Loading weights:  47%|████▋     | 416/883 [00:01<00:01, 293.22it/s]Loading weights:  54%|█████▍    | 477/883 [00:01<00:01, 379.98it/s]Loading weights:  67%|██████▋   | 593/883 [00:01<00:00, 597.56it/s]Loading weights:  82%|████████▏ | 721/883 [00:01<00:00, 788.57it/s]Loading weights:  95%|█████████▌| 841/883 [00:01<00:00, 903.18it/s]Loading weights: 100%|██████████| 883/883 [00:01<00:00, 449.18it/s]
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights:   8%|▊         | 68/883 [00:00<00:01, 656.65it/s]Loading weights:  16%|█▋        | 145/883 [00:00<00:01, 684.69it/s]Loading weights:  25%|██▌       | 224/883 [00:00<00:00, 726.86it/s]Loading weights:  34%|███▎      | 297/883 [00:00<00:01, 527.73it/s]Loading weights:  41%|████      | 359/883 [00:00<00:00, 553.66it/s]Loading weights:  50%|█████     | 445/883 [00:00<00:00, 642.15it/s]Loading weights:  66%|██████▌   | 584/883 [00:00<00:00, 854.54it/s]Loading weights:  85%|████████▌ | 754/883 [00:00<00:00, 1100.18it/s]Loading weights: 100%|██████████| 883/883 [00:00<00:00, 888.16it/s] 
+student /home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-merged-linear + None
+teacher google/gemma-3-4b-it + /home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-1-of-2-lora
+device cuda / torch.bfloat16, top-k 64, T 1.0
+
+positions                 790
+cross-entropy (gold)      1.6569
+KL(teacher||student)      0.0434
+KD term (KL x T^2)        0.0434
+magnitude ratio KD:CE     0.03 : 1
+
+Gradient contribution at the weightings on record:
+  kd_alpha 0.9 / kd_ce_alpha 0.1  -> teacher carries  19.1% of the loss  (0.039 vs 0.166)
+  kd_alpha 0.5 / kd_ce_alpha 0.5  -> teacher carries   2.6% of the loss  (0.022 vs 0.828)
+  kd_alpha 0.2 / kd_ce_alpha 1.0  -> teacher carries   0.5% of the loss  (0.009 vs 1.657)
+  kd_alpha 0.9 / kd_ce_alpha 1.0  -> teacher carries   2.3% of the loss  (0.039 vs 1.657)
+--- half 2 ---
+Uninstalled 1 package in 41ms
+Installed 1 package in 78ms
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights:   8%|▊         | 69/883 [00:00<00:04, 171.72it/s]Loading weights:  39%|███▊      | 341/883 [00:00<00:00, 818.81it/s]Loading weights:  56%|█████▌    | 494/883 [00:00<00:00, 776.41it/s]Loading weights: 100%|██████████| 883/883 [00:00<00:00, 1143.82it/s]
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights: 100%|██████████| 883/883 [00:00<00:00, 11013.65it/s]
+student /home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-merged-linear + None
+teacher google/gemma-3-4b-it + /home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-2-of-2-lora
+device cuda / torch.bfloat16, top-k 64, T 1.0
+
+positions                 661
+cross-entropy (gold)      1.7197
+KL(teacher||student)      0.0411
+KD term (KL x T^2)        0.0411
+magnitude ratio KD:CE     0.02 : 1
+
+Gradient contribution at the weightings on record:
+  kd_alpha 0.9 / kd_ce_alpha 0.1  -> teacher carries  17.7% of the loss  (0.037 vs 0.172)
+  kd_alpha 0.5 / kd_ce_alpha 0.5  -> teacher carries   2.3% of the loss  (0.021 vs 0.860)
+  kd_alpha 0.2 / kd_ce_alpha 1.0  -> teacher carries   0.5% of the loss  (0.008 vs 1.720)
+  kd_alpha 0.9 / kd_ce_alpha 1.0  -> teacher carries   2.1% of the loss  (0.037 vs 1.720)

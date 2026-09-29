@@ -1,0 +1,23 @@
+{
+  "model": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-merged-linear-4way",
+  "provenance": null,
+  "model_path": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-merged-linear-4way",
+  "adapter": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-kd4-parity",
+  "adapter_path": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-kd4-parity",
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.39358514430987807,
+    "rouge2": 0.16488303369000962,
+    "rougeL": 0.3165574507817443,
+    "semantic": 0.6246800262853504,
+    "entities_unsupported": 1.078,
+    "entity_support": 0.7044150063140698,
+    "num_ungradeable": 39,
+    "num_hallucinating": 567,
+    "num_examples": 1000,
+    "num_empty": 0,
+    "mean_pred_words": 18.668,
+    "mean_ref_words": 21.005,
+    "mean_pred_sentences": 1.024
+  }
+}

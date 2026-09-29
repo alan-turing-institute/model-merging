@@ -1,0 +1,23 @@
+{
+  "model": "/tmp/drmario.u6ui-mm/mistral-moe/moe-2way",
+  "provenance": null,
+  "model_path": "/tmp/drmario.u6ui-mm/mistral-moe/moe-2way",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.26915002785615405,
+    "rouge2": 0.0710334620440785,
+    "rougeL": 0.195986946282488,
+    "semantic": 0.5723809126764536,
+    "entities_unsupported": 0.59,
+    "entity_support": 0.9059103663715963,
+    "num_ungradeable": 2,
+    "num_hallucinating": 72,
+    "num_examples": 200,
+    "num_empty": 0,
+    "mean_pred_words": 31.86,
+    "mean_ref_words": 21.015,
+    "mean_pred_sentences": 1.155
+  }
+}
