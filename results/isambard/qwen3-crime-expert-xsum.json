@@ -1,0 +1,23 @@
+{
+  "model": "/tmp/drmario.u6ui-mm/qwen3-moe/qwen3-crime-expert",
+  "provenance": null,
+  "model_path": "/tmp/drmario.u6ui-mm/qwen3-moe/qwen3-crime-expert",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.17267270589613457,
+    "rouge2": 0.03036780337091227,
+    "rougeL": 0.1174788705815463,
+    "semantic": 0.43662101270010073,
+    "entities_unsupported": 3.56,
+    "entity_support": 0.5654940244940244,
+    "num_ungradeable": 0,
+    "num_hallucinating": 300,
+    "num_examples": 300,
+    "num_empty": 0,
+    "mean_pred_words": 52.196666666666665,
+    "mean_ref_words": 21.093333333333334,
+    "mean_pred_sentences": 2.9633333333333334
+  }
+}

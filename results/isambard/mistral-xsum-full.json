@@ -1,0 +1,23 @@
+{
+  "model": "/home/u6ui/drmario.u6ui/model-merging/.hf-cache/models--mistralai--Mistral-7B-Instruct-v0.3/snapshots/c170c708c41dac9275d15a8fff4eca08d52bab71/",
+  "provenance": null,
+  "model_path": "/home/u6ui/drmario.u6ui/model-merging/.hf-cache/models--mistralai--Mistral-7B-Instruct-v0.3/snapshots/c170c708c41dac9275d15a8fff4eca08d52bab71/",
+  "adapter": "/home/u6ui/drmario.u6ui/model-merging/models/mistral-xsum-full-lora",
+  "adapter_path": "/home/u6ui/drmario.u6ui/model-merging/models/mistral-xsum-full-lora",
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.45249888078981565,
+    "rouge2": 0.22319684453815555,
+    "rougeL": 0.3755882217189114,
+    "semantic": 0.6716554693877697,
+    "entities_unsupported": 1.16,
+    "entity_support": 0.7098006947233753,
+    "num_ungradeable": 6,
+    "num_hallucinating": 116,
+    "num_examples": 200,
+    "num_empty": 0,
+    "mean_pred_words": 19.135,
+    "mean_ref_words": 21.015,
+    "mean_pred_sentences": 1.03
+  }
+}

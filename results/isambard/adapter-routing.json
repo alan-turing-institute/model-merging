@@ -1,0 +1,8 @@
+{
+  "router_accuracy": 1.0,
+  "routed_crime_accuracy": 0.985,
+  "routed_crime_unparsed": 0,
+  "routed_xsum_rouge1": 0.41833501374257837,
+  "routed_xsum_words": 19.355,
+  "n_per_task": 200
+}

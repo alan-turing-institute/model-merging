@@ -1,0 +1,26 @@
+{
+  "model": "google/gemma-3-4b-it",
+  "provenance": null,
+  "model_path": "google/gemma-3-4b-it",
+  "adapter": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-full-lora",
+  "adapter_path": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-full-lora",
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/crime_dataset/test",
+  "metrics": {
+    "accuracy": 0.9767873723305478,
+    "precision": 0.9728033472803347,
+    "recall": 0.9748427672955975,
+    "f1": 0.9738219895287958,
+    "confusion_matrix": [
+      [
+        587,
+        13
+      ],
+      [
+        12,
+        465
+      ]
+    ],
+    "num_examples": 1077,
+    "num_unparsed": 0
+  }
+}

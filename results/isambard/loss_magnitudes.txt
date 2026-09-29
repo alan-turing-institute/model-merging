@@ -1,0 +1,50 @@
+--- half 1 ---
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights:   0%|          | 1/883 [00:00<01:44,  8.42it/s]Loading weights:   5%|▍         | 42/883 [00:00<00:03, 224.90it/s]Loading weights:   9%|▉         | 82/883 [00:00<00:02, 299.53it/s]Loading weights:  13%|█▎        | 119/883 [00:00<00:04, 181.50it/s]Loading weights:  17%|█▋        | 154/883 [00:00<00:03, 220.38it/s]Loading weights:  22%|██▏       | 193/883 [00:00<00:02, 261.20it/s]Loading weights:  25%|██▌       | 225/883 [00:01<00:04, 144.56it/s]Loading weights:  28%|██▊       | 249/883 [00:01<00:04, 136.00it/s]Loading weights:  30%|███       | 269/883 [00:01<00:05, 110.64it/s]Loading weights:  36%|███▌      | 315/883 [00:01<00:03, 160.06it/s]Loading weights:  39%|███▉      | 343/883 [00:02<00:03, 179.08it/s]Loading weights:  43%|████▎     | 377/883 [00:02<00:02, 209.76it/s]Loading weights:  46%|████▌     | 404/883 [00:02<00:02, 219.91it/s]Loading weights:  49%|████▉     | 431/883 [00:02<00:04, 95.70it/s] Loading weights:  61%|██████    | 537/883 [00:03<00:01, 211.71it/s]Loading weights:  66%|██████▌   | 582/883 [00:03<00:01, 245.45it/s]Loading weights:  75%|███████▌  | 663/883 [00:03<00:00, 342.57it/s]Loading weights:  81%|████████▏ | 718/883 [00:03<00:00, 352.67it/s]Loading weights:  88%|████████▊ | 778/883 [00:03<00:00, 398.70it/s]Loading weights:  95%|█████████▌| 843/883 [00:03<00:00, 452.57it/s]Loading weights: 100%|██████████| 883/883 [00:03<00:00, 244.15it/s]
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights:  10%|▉         | 84/883 [00:00<00:00, 813.71it/s]Loading weights:  19%|█▉        | 166/883 [00:00<00:00, 775.26it/s]Loading weights:  28%|██▊       | 244/883 [00:00<00:00, 771.32it/s]Loading weights:  37%|███▋      | 328/883 [00:00<00:00, 786.59it/s]Loading weights: 100%|██████████| 883/883 [00:00<00:00, 1857.52it/s]
+student /home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-merged-linear-2 + None
+teacher google/gemma-3-4b-it + /home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-1-of-2-lora
+device cuda / torch.bfloat16, top-k 64, T 1.0
+
+positions                 212
+cross-entropy (gold)      0.6087
+KL(teacher||student)      0.0331
+KD term (KL x T^2)        0.0331
+magnitude ratio KD:CE     0.05 : 1
+
+Per-token gradient weight, at N = 16 target tokens per optimiser step
+(the teacher term is summed, cross-entropy is meaned - see liger.py:93)
+
+  weighting                     teacher : CE
+  kd_alpha 0.9 / ce 0.1             144.0 : 1
+  kd_alpha 0.5 / ce 0.5              16.0 : 1
+  kd_alpha 0.2 / ce 1.0               3.2 : 1
+  kd_alpha 0.9 / ce 1.0              14.4 : 1
+  kd_alpha 0.0625 / ce 1.0            1.0 : 1   <- parity
+
+  parity needs kd_alpha = kd_ce_alpha / N = 0.0625
+  Report the RATIO, not the alpha: the alpha is meaningless without N.
+--- half 2 ---
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights:   6%|▌         | 55/883 [00:00<00:04, 175.91it/s]Loading weights:  15%|█▌        | 135/883 [00:00<00:04, 153.83it/s]Loading weights:  39%|███▊      | 341/883 [00:00<00:01, 445.39it/s]Loading weights:  49%|████▉     | 436/883 [00:01<00:01, 260.84it/s]Loading weights:  57%|█████▋    | 499/883 [00:01<00:01, 263.16it/s]Loading weights:  64%|██████▍   | 565/883 [00:02<00:01, 282.68it/s]Loading weights:  86%|████████▌ | 758/883 [00:02<00:00, 507.30it/s]Loading weights: 100%|██████████| 883/883 [00:02<00:00, 400.52it/s]
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights:  39%|███▉      | 343/883 [00:00<00:00, 2689.34it/s]Loading weights:  69%|██████▉   | 612/883 [00:00<00:00, 1819.60it/s]Loading weights: 100%|██████████| 883/883 [00:00<00:00, 2565.58it/s]
+student /home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-merged-linear-2 + None
+teacher google/gemma-3-4b-it + /home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-2-of-2-lora
+device cuda / torch.bfloat16, top-k 64, T 1.0
+
+positions                 198
+cross-entropy (gold)      0.7325
+KL(teacher||student)      0.0854
+KD term (KL x T^2)        0.0854
+magnitude ratio KD:CE     0.12 : 1
+
+Per-token gradient weight, at N = 16 target tokens per optimiser step
+(the teacher term is summed, cross-entropy is meaned - see liger.py:93)
+
+  weighting                     teacher : CE
+  kd_alpha 0.9 / ce 0.1             144.0 : 1
+  kd_alpha 0.5 / ce 0.5              16.0 : 1
+  kd_alpha 0.2 / ce 1.0               3.2 : 1
+  kd_alpha 0.9 / ce 1.0              14.4 : 1
+  kd_alpha 0.0625 / ce 1.0            1.0 : 1   <- parity
+
+  parity needs kd_alpha = kd_ce_alpha / N = 0.0625
+  Report the RATIO, not the alpha: the alpha is meaningless without N.

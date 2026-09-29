@@ -1,0 +1,23 @@
+{
+  "model": "google/gemma-3-4b-it",
+  "provenance": null,
+  "model_path": "google/gemma-3-4b-it",
+  "adapter": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-4-of-4-lora",
+  "adapter_path": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-xsum-4-of-4-lora",
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.3873850141214175,
+    "rouge2": 0.15897128498541999,
+    "rougeL": 0.3104581183795893,
+    "semantic": 0.615072507083416,
+    "entities_unsupported": 1.079,
+    "entity_support": 0.7134773055227601,
+    "num_ungradeable": 43,
+    "num_hallucinating": 576,
+    "num_examples": 1000,
+    "num_empty": 0,
+    "mean_pred_words": 19.019,
+    "mean_ref_words": 21.005,
+    "mean_pred_sentences": 1.018
+  }
+}

@@ -1,0 +1,12 @@
+model google/gemma-3-4b-it on cuda (torch.bfloat16)
+  example: 58 tokens, 3 assistant
+  example: 50 tokens, 5 assistant
+  example: 54 tokens, 5 assistant
+  example: 64 tokens, 3 assistant
+
+convention                            rows  positions   mean KL (nats)
+----------------------------------------------------------------------
+one extra row (6f923a1)              L-P+1         16           0.0000
+one row per assistant token            L-P         12          31.4417
+
+Teacher and student are the same model, so a correct alignment must give ~0.

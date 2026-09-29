@@ -1,0 +1,26 @@
+{
+  "model": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-merged-linear-2",
+  "provenance": null,
+  "model_path": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-merged-linear-2",
+  "adapter": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-kd-legacy-s1",
+  "adapter_path": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-crime-kd-legacy-s1",
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/crime_dataset/test",
+  "metrics": {
+    "accuracy": 0.9405756731662024,
+    "precision": 0.9747126436781609,
+    "recall": 0.8888888888888888,
+    "f1": 0.9298245614035088,
+    "confusion_matrix": [
+      [
+        589,
+        11
+      ],
+      [
+        53,
+        424
+      ]
+    ],
+    "num_examples": 1077,
+    "num_unparsed": 0
+  }
+}

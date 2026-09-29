@@ -1,0 +1,23 @@
+{
+  "model": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-crosstask-taskarith",
+  "provenance": null,
+  "model_path": "/home/u6ui/drmario.u6ui/model-merging/models/gemma3-crosstask-taskarith",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.41010484480993303,
+    "rouge2": 0.1813894137204252,
+    "rougeL": 0.32447805158690923,
+    "semantic": 0.6445195411145687,
+    "entities_unsupported": 1.17,
+    "entity_support": 0.715756816283132,
+    "num_ungradeable": 10,
+    "num_hallucinating": 116,
+    "num_examples": 200,
+    "num_empty": 0,
+    "mean_pred_words": 18.91,
+    "mean_ref_words": 21.015,
+    "mean_pred_sentences": 1.03
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "model": "/tmp/drmario.u6ui-mm/mistral-moe/crime-expert",
+  "provenance": null,
+  "model_path": "/tmp/drmario.u6ui-mm/mistral-moe/crime-expert",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.184694717297263,
+    "rouge2": 0.05655137370611066,
+    "rougeL": 0.14148146791809224,
+    "semantic": 0.43210909716784957,
+    "entities_unsupported": 1.285,
+    "entity_support": 0.6593895350036547,
+    "num_ungradeable": 17,
+    "num_hallucinating": 107,
+    "num_examples": 200,
+    "num_empty": 0,
+    "mean_pred_words": 27.11,
+    "mean_ref_words": 21.015,
+    "mean_pred_sentences": 1.44
+  }
+}
