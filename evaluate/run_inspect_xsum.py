@@ -16,7 +16,7 @@ a number in a table can always be traced back to its samples.
 
     uv run python run_inspect_xsum.py \
       --model google/gemma-3-4b-it \
-      --adapter azureml:gemma3-xsum-full-lora:3 \
+      --adapter azureml:gemma3-xsum-full-lora:3 --prompt-variant short \
       --output results/gemma3-xsum-full-lora.json
 """
 
@@ -42,14 +42,33 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", default="google/gemma-3-4b-it")
     parser.add_argument("--adapter", default=None)
-    parser.add_argument("--dataset", default="../../datasets/xsum_dataset/test")
+    parser.add_argument(
+        "--dataset",
+        default=None,
+        help="save_to_disk split to evaluate. Defaults to the task's own "
+        "(datasets/xsum_prompts/test).",
+    )
     parser.add_argument("--resource-group", default=os.environ.get("AZUREML_RG", "tire-1"))
     parser.add_argument("--workspace-name", default=os.environ.get("AZUREML_WS", "tire-2"))
     parser.add_argument("--subscription", default=None)
     parser.add_argument("--model-cache-dir", default=".azureml_models")
-    parser.add_argument("--max-new-tokens", type=int, default=64)
+    parser.add_argument(
+        "--max-new-tokens",
+        type=int,
+        default=None,
+        help="Overrides the task's own max_tokens (64).",
+    )
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--prompt-variant",
+        choices=["short", "long", "teacher"],
+        required=True,
+        help=(
+            "Which prepare_data_XSum.py prompt to evaluate with. Must match the "
+            "one the model was trained on, so there is deliberately no default."
+        ),
+    )
     parser.add_argument(
         "--dtype",
         default="bfloat16",
@@ -100,7 +119,9 @@ def main():
 
     provider = "hf-peft" if adapter_path else "hf"
 
-    task_args = {"dataset_path": args.dataset}
+    task_args = {"prompt_variant": args.prompt_variant}
+    if args.dataset is not None:
+        task_args["dataset_path"] = args.dataset
     if args.limit is not None:
         task_args["limit"] = args.limit
 
@@ -162,7 +183,7 @@ def main():
 
     print("Model      :", args.model)
     print("Adapter    :", args.adapter)
-    print("Dataset    :", args.dataset)
+    print("Dataset    :", log.eval.task_args.get("dataset_path", args.dataset))
     for rouge_type in ROUGE_TYPES:
         print(f"{rouge_type:11s}:", round(metrics[rouge_type], 4))
     if metrics["rouge1_stderr"] is not None:
@@ -187,7 +208,8 @@ def main():
         "model_path": model_path,
         "adapter": args.adapter,
         "adapter_path": adapter_path,
-        "dataset": args.dataset,
+        "dataset": log.eval.task_args.get("dataset_path", args.dataset),
+        "prompt_variant": args.prompt_variant,
         "eval_log": log.location,
         "metrics": metrics,
         "predictions": predictions,

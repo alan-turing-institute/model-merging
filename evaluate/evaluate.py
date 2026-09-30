@@ -85,7 +85,7 @@ def build_messages(post_text):
             "role": "user",
             "content": (
                 "Is the following Reddit post about crime? Answer with "
-                'exactly one word, either "crime" or "not_crime", and '
+                "exactly one word, either 'crime' or 'not_crime', and "
                 "nothing else.\n\n" + post_text
             ),
         }

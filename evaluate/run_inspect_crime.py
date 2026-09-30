@@ -40,12 +40,22 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", default="google/gemma-3-4b-it")
     parser.add_argument("--adapter", default=None)
-    parser.add_argument("--dataset", default="../../datasets/crime_dataset/test")
+    parser.add_argument(
+        "--dataset",
+        default=None,
+        help="save_to_disk split to evaluate. Defaults to the task's own "
+        "(datasets/crime_dataset/test).",
+    )
     parser.add_argument("--resource-group", default=os.environ.get("AZUREML_RG", "tire-1"))
     parser.add_argument("--workspace-name", default=os.environ.get("AZUREML_WS", "tire-2"))
     parser.add_argument("--subscription", default=None)
     parser.add_argument("--model-cache-dir", default=".azureml_models")
-    parser.add_argument("--max-new-tokens", type=int, default=16)
+    parser.add_argument(
+        "--max-new-tokens",
+        type=int,
+        default=None,
+        help="Overrides the task's own max_tokens (16).",
+    )
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument(
@@ -92,7 +102,9 @@ def main():
     else:
         model_name = model_path
 
-    task_args = {"dataset_path": args.dataset}
+    task_args = {}
+    if args.dataset is not None:
+        task_args["dataset_path"] = args.dataset
     if args.limit is not None:
         task_args["limit"] = args.limit
 
@@ -152,7 +164,7 @@ def main():
         "model_path": model_path,
         "adapter": args.adapter,
         "adapter_path": adapter_path,
-        "dataset": args.dataset,
+        "dataset": log.eval.task_args.get("dataset_path", args.dataset),
         "eval_log": log.location,
         "metrics": metrics,
         "predictions": predictions,
