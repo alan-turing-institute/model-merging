@@ -1,0 +1,120 @@
+# QLoRA fine-tune of gemma-3-4b-it for BillSum summarisation.
+#
+# ONE config for all four arms of the data-scaling curve. train_billsum.sbatch
+# overrides `datasets`, `test_datasets` and `output_dir` per arm and saves the
+# result as <output_dir>/config.yaml, so the arms cannot drift apart in any
+# hyperparameter - which is the whole point of a scaling curve, where the only
+# thing allowed to vary is how many training rows there are.
+base_model: google/gemma-3-4b-it
+
+load_in_4bit: true
+
+# Gemma-3 soft-capping NaNs under sdpa, and axolotl falls back to sdpa when
+# flash-attn is absent - which it is on aarch64. On Isambard that silently
+# produced loss 12.81 -> 0 with NaNs and an adapter that emitted an empty string
+# for every test article. A correctness setting, not a hyperparameter: eager
+# computes the same function, only slower.
+attn_implementation: eager
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+# tokenizer_default, not the `gemma` alias: the evaluator renders with
+# tokenizer.apply_chat_template, and the two must agree or the model is scored on
+# text shaped differently from what it trained on.
+chat_template: tokenizer_default
+# THE TURN TERMINATOR MUST BE TRAINED. Without this, axolotl warns that the turn
+# terminator won't be trained and carries on. Gemma ends a turn with
+# <end_of_turn>, not <eos>, so the model never learns to stop. On XSum that cost
+# us a fine-tune that ran to the generation cap on most examples and scored WORSE
+# than the untouched base model. It matters more here, not less: a BillSum
+# summary is 169 words to XSum's 21, so there is no short reference length to
+# hide behind.
+eot_tokens:
+  - "<end_of_turn>"
+train_on_eos: turn
+
+# Axolotl caches its tokenised dataset here and defaults to last_run_prepared
+# inside the repo, which reached 17 GB on the XSum runs and took the home
+# filesystem to its 101 GB quota - which stops every job on the machine.
+# train_billsum.sbatch exports MM_PREPARED to node-local scratch; this falls back
+# to the default when unset, so it stays correct off the cluster.
+dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}
+
+# Overridden per arm by train_billsum.sbatch. The paths here are the full arm, so
+# the config is still runnable on its own.
+datasets:
+  - path: ../datasets/billsum/full/train
+    type: chat_template
+
+test_datasets:
+  - path: ../datasets/billsum/full/validation
+    type: chat_template
+
+# Bills are long. prepare_billsum_data.py truncates documents to 2400 words,
+# which with a ~340-word summary and the chat wrapper comes to about 3,700 Gemma
+# tokens. THESE TWO NUMBERS ARE CHOSEN TOGETHER: axolotl silently DROPS any
+# example longer than sequence_len, so raising the word cap without raising this
+# would quietly shrink the arms and make the scaling curve a curve over the wrong
+# x-axis.
+sequence_len: 4096
+
+# axolotl defaults this to os.cpu_count(), which on a GH200 node reports all 288
+# cores regardless of what Slurm allocated; 288 tokenisation workers inside a
+# 16-core cgroup OOM-killed all three XSum expert runs.
+dataset_num_proc: 8
+
+# Loss on the assistant turn only. Training on the input would mean spending most
+# of the gradient on reproducing the text of Congressional bills, which is not
+# the task - and on BillSum the input is seven times the length of the target, so
+# getting this wrong wastes far more of the budget than it did on XSum.
+train_on_inputs: false
+
+gradient_checkpointing: true
+
+# Effective batch 16, as on the XSum arms, so the two tasks' results are read on
+# the same scale. 4 x 4096 tokens of a 4-bit 4B model with checkpointing is well
+# inside a GH200's 120 GB.
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+# Three rather than XSum's two. The arms differ by 8x in size, and a FIXED NUMBER
+# OF EPOCHS is the right protocol here - it is what you would actually do with
+# less data, and it keeps "how much data do I need" the question being asked -
+# but it does mean the smallest arm takes 8x fewer optimiser steps than the
+# largest. At two epochs the 500-row arm would get 62 steps, enough of which are
+# warmup that the arm would be measuring the schedule rather than the data.
+# Three epochs puts it at 94.
+#
+# Note which way this biases the result: the large arms get more steps AS WELL AS
+# more data, so if the curve still flattens between half and full, it flattens
+# despite the extra optimisation, and the saturation reading is the conservative
+# one.
+num_epochs: 3
+
+# A fixed count, not a ratio: a ratio would spend the same FRACTION of each arm
+# on warmup, so the smallest arm - the one with the fewest steps to spare - would
+# get the fewest warmup steps in absolute terms and a different effective
+# schedule from the largest.
+warmup_steps: 10
+
+learning_rate: 2e-4
+
+# Validation loss twice an epoch, on the 500 rows every arm shares. Comparable
+# across arms only because the rows are identical - see prepare_billsum_data.py.
+evals_per_epoch: 2
+
+output_dir: ../models/gemma3-billsum-full-lora
