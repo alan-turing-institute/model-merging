@@ -12,9 +12,11 @@
 # implications for whether to run merging experiments here. The gap from base to
 # the eighth arm is what tells them apart.
 #
-# aftercorr, not afterok: it pairs array index to array index, so the evaluation
-# of the eighth arm starts when the eighth arm finishes rather than waiting for
-# the full arm. On a busy queue that is most of the wall clock.
+# Each evaluation depends on ITS OWN array task (afterok:<jobid>_<index>), not on
+# the array as a whole, so the eighth arm is scored as soon as it finishes rather
+# than waiting for the full arm. On a busy queue that is most of the wall clock.
+# (aftercorr is the index-to-index form, but it pairs one array with another; the
+# evaluations here are single jobs, so each names the task it waits on.)
 set -euo pipefail
 
 EVAL_ONLY=0
@@ -61,7 +63,7 @@ echo "  base (n=0): $BASE_ID"
 for i in "${!ARMS[@]}"; do
   arm=${ARMS[$i]}
   dep=""
-  [[ -n $TRAIN_ID ]] && dep="aftercorr:${TRAIN_ID}_${i}"
+  [[ -n $TRAIN_ID ]] && dep="afterok:${TRAIN_ID}_${i}"
   id=$(submit_eval "$arm" "$dep" billsum google/gemma-3-4b-it \
     --adapter "../models/gemma3-billsum-$arm-lora" \
     -T prompt_variant=$PROMPT_VARIANT --limit $LIMIT)
