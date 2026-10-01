@@ -45,6 +45,9 @@ FRACTION = {"base": 0.0, "eighth": 0.125, "quarter": 0.25, "half": 0.5, "full": 
 
 BOOTSTRAP_RESAMPLES = 2000
 
+# Matches billsum_task.py's default, for logs written before the cap was a task arg.
+DEFAULT_MAX_TOKENS = 640
+
 
 def arm_of(log) -> str | None:
     """Which curve arm a log belongs to, from the adapter or model name."""
@@ -120,6 +123,23 @@ def main():
         # silently competing with what it replaced.
         if arm not in logs or log.eval.created > logs[arm].eval.created:
             logs[arm] = log
+
+    # EVERY POINT ON THE CURVE MUST SHARE ONE GENERATION CAP. The cap truncates
+    # long outputs, so an arm scored at 640 tokens and one scored at 1280 are not
+    # measuring the same thing, and the difference between them would be read as
+    # an effect of training data. This bit us in the obvious way: the base model
+    # left 24% of its generations unterminated at 640 and the smallest arm 10%,
+    # so the whole curve had to be re-scored at 1280. Refuse to compare across
+    # caps rather than quietly averaging them.
+    caps = {arm: (log.eval.task_args or {}).get("max_tokens", DEFAULT_MAX_TOKENS)
+            for arm, log in logs.items()}
+    if len(set(caps.values())) > 1:
+        detail = ", ".join(f"{arm}={cap}" for arm, cap in sorted(caps.items()))
+        raise SystemExit(
+            f"arms were scored under different generation caps ({detail}).\n"
+            f"Re-score the odd ones out with -T max_tokens=<the common value> "
+            f"before reading this curve."
+        )
 
     missing = [a for a in ARM_ORDER if a not in logs]
     if missing:
