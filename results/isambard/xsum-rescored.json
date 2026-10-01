@@ -1,0 +1,2089 @@
+{
+  "full": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.4049169303334976,
+    "rouge1": 0.416128668862437,
+    "cosine": 0.6543463540077209,
+    "bertscore_f1": 0.5087037077359855,
+    "nli_entail": 0.34103055383078756,
+    "summac_g3": 0.2473252859537024,
+    "geval_judge": 0.9101612627506256,
+    "entity_support": 0.6998077237767959,
+    "ci": {
+      "rouge1": [
+        0.3936,
+        0.4379
+      ],
+      "cosine": [
+        0.6319,
+        0.6767
+      ],
+      "bertscore_f1": [
+        0.486,
+        0.5302
+      ],
+      "nli_entail": [
+        0.2951,
+        0.3891
+      ],
+      "summac_g3": [
+        0.2049,
+        0.2919
+      ],
+      "geval_judge": [
+        0.8773,
+        0.9406
+      ],
+      "entity_support": [
+        0.6555,
+        0.7421
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": 0.0074,
+        "ci": [
+          -0.0067,
+          0.0215
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": 0.0155,
+        "ci": [
+          0.0019,
+          0.0299
+        ],
+        "excludes_zero": true
+      },
+      "bertscore_f1": {
+        "diff": 0.0107,
+        "ci": [
+          -0.0019,
+          0.0226
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": -0.0359,
+        "ci": [
+          -0.0721,
+          0.0029
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0269,
+        "ci": [
+          -0.0098,
+          0.0656
+        ],
+        "excludes_zero": false
+      },
+      "geval_judge": {
+        "diff": -0.008,
+        "ci": [
+          -0.044,
+          0.0272
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": -0.0059,
+        "ci": [
+          -0.0384,
+          0.0266
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "half1": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.39729494700992213,
+    "rouge1": 0.40290668327765766,
+    "cosine": 0.6304815144091844,
+    "bertscore_f1": 0.4920382828358561,
+    "nli_entail": 0.38452678563131487,
+    "summac_g3": 0.28770582729572197,
+    "geval_judge": 0.9131755618005991,
+    "entity_support": 0.6965537067099566,
+    "ci": {
+      "rouge1": [
+        0.3816,
+        0.4236
+      ],
+      "cosine": [
+        0.6086,
+        0.6538
+      ],
+      "bertscore_f1": [
+        0.4688,
+        0.5135
+      ],
+      "nli_entail": [
+        0.3347,
+        0.4355
+      ],
+      "summac_g3": [
+        0.2392,
+        0.3368
+      ],
+      "geval_judge": [
+        0.8778,
+        0.944
+      ],
+      "entity_support": [
+        0.652,
+        0.7403
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0057,
+        "ci": [
+          -0.0185,
+          0.0067
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.008,
+        "ci": [
+          -0.0207,
+          0.0057
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0057,
+        "ci": [
+          -0.0187,
+          0.0073
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0072,
+        "ci": [
+          -0.0323,
+          0.0449
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0665,
+        "ci": [
+          0.0263,
+          0.1051
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": -0.0047,
+        "ci": [
+          -0.0322,
+          0.021
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": -0.0096,
+        "ci": [
+          -0.0359,
+          0.0155
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "half2": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.39769819933671074,
+    "rouge1": 0.3975598557455043,
+    "cosine": 0.6277032036334276,
+    "bertscore_f1": 0.489828106733039,
+    "nli_entail": 0.39072086324478733,
+    "summac_g3": 0.27198687763324414,
+    "geval_judge": 0.9228218547999859,
+    "entity_support": 0.7360588391200636,
+    "ci": {
+      "rouge1": [
+        0.3738,
+        0.4199
+      ],
+      "cosine": [
+        0.6026,
+        0.6522
+      ],
+      "bertscore_f1": [
+        0.4668,
+        0.5114
+      ],
+      "nli_entail": [
+        0.3399,
+        0.4415
+      ],
+      "summac_g3": [
+        0.2255,
+        0.3198
+      ],
+      "geval_judge": [
+        0.892,
+        0.9508
+      ],
+      "entity_support": [
+        0.6908,
+        0.7765
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.011,
+        "ci": [
+          -0.024,
+          0.0008
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0109,
+        "ci": [
+          -0.0244,
+          0.002
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0079,
+        "ci": [
+          -0.0201,
+          0.0034
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0136,
+        "ci": [
+          -0.0227,
+          0.052
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0513,
+        "ci": [
+          0.0138,
+          0.0883
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0052,
+        "ci": [
+          -0.0181,
+          0.0289
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0303,
+        "ci": [
+          0.0007,
+          0.0571
+        ],
+        "excludes_zero": true
+      }
+    }
+  },
+  "merge": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.3990293485986777,
+    "rouge1": 0.40844611447463675,
+    "cosine": 0.6383999513834715,
+    "bertscore_f1": 0.4976935866288841,
+    "nli_entail": 0.37740414293512003,
+    "summac_g3": 0.22099149292298534,
+    "geval_judge": 0.9175727824866772,
+    "entity_support": 0.7062458410904007,
+    "ci": {
+      "rouge1": [
+        0.3865,
+        0.4318
+      ],
+      "cosine": [
+        0.6163,
+        0.6623
+      ],
+      "bertscore_f1": [
+        0.4755,
+        0.5203
+      ],
+      "nli_entail": [
+        0.3309,
+        0.424
+      ],
+      "summac_g3": [
+        0.1794,
+        0.2629
+      ],
+      "geval_judge": [
+        0.8853,
+        0.9486
+      ],
+      "entity_support": [
+        0.6643,
+        0.7454
+      ]
+    },
+    "paired_vs_merge": {}
+  },
+  "kd-parity": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.3996440950118943,
+    "rouge1": 0.4071102223881135,
+    "cosine": 0.6398172158002854,
+    "bertscore_f1": 0.4935732335224748,
+    "nli_entail": 0.3805153926930507,
+    "summac_g3": 0.23665540850546676,
+    "geval_judge": 0.9304284784197807,
+    "entity_support": 0.7076234214835251,
+    "ci": {
+      "rouge1": [
+        0.3849,
+        0.4295
+      ],
+      "cosine": [
+        0.6169,
+        0.664
+      ],
+      "bertscore_f1": [
+        0.4709,
+        0.5155
+      ],
+      "nli_entail": [
+        0.3343,
+        0.4297
+      ],
+      "summac_g3": [
+        0.194,
+        0.2826
+      ],
+      "geval_judge": [
+        0.9007,
+        0.9571
+      ],
+      "entity_support": [
+        0.6634,
+        0.7527
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0014,
+        "ci": [
+          -0.0122,
+          0.0095
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": 0.0013,
+        "ci": [
+          -0.0096,
+          0.0117
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0042,
+        "ci": [
+          -0.0143,
+          0.0057
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0032,
+        "ci": [
+          -0.0253,
+          0.0305
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0162,
+        "ci": [
+          -0.02,
+          0.0523
+        ],
+        "excludes_zero": false
+      },
+      "geval_judge": {
+        "diff": 0.0127,
+        "ci": [
+          -0.0124,
+          0.0388
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0017,
+        "ci": [
+          -0.0245,
+          0.0274
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "kd-t3": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.39876099579007385,
+    "rouge1": 0.4131701207958126,
+    "cosine": 0.6405203043669462,
+    "bertscore_f1": 0.5011458785505966,
+    "nli_entail": 0.36845588031952503,
+    "summac_g3": 0.23837799235712737,
+    "geval_judge": 0.9052970668673516,
+    "entity_support": 0.7082010582010582,
+    "ci": {
+      "rouge1": [
+        0.3901,
+        0.4353
+      ],
+      "cosine": [
+        0.6177,
+        0.6639
+      ],
+      "bertscore_f1": [
+        0.4776,
+        0.5232
+      ],
+      "nli_entail": [
+        0.3193,
+        0.4198
+      ],
+      "summac_g3": [
+        0.1936,
+        0.2821
+      ],
+      "geval_judge": [
+        0.8719,
+        0.9358
+      ],
+      "entity_support": [
+        0.6639,
+        0.7519
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": 0.0046,
+        "ci": [
+          -0.0078,
+          0.0171
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": 0.002,
+        "ci": [
+          -0.0111,
+          0.0146
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": 0.0034,
+        "ci": [
+          -0.0092,
+          0.0149
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": -0.0085,
+        "ci": [
+          -0.0497,
+          0.0331
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0172,
+        "ci": [
+          -0.018,
+          0.0539
+        ],
+        "excludes_zero": false
+      },
+      "geval_judge": {
+        "diff": -0.0125,
+        "ci": [
+          -0.0365,
+          0.0104
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0021,
+        "ci": [
+          -0.0316,
+          0.0351
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "kd-t9": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.3985241916063154,
+    "rouge1": 0.41112062454105563,
+    "cosine": 0.6433128605782986,
+    "bertscore_f1": 0.4945887729525566,
+    "nli_entail": 0.3923172190180048,
+    "summac_g3": 0.26744748658311435,
+    "geval_judge": 0.9375192605704069,
+    "entity_support": 0.7159785091132241,
+    "ci": {
+      "rouge1": [
+        0.39,
+        0.4319
+      ],
+      "cosine": [
+        0.6209,
+        0.6656
+      ],
+      "bertscore_f1": [
+        0.471,
+        0.518
+      ],
+      "nli_entail": [
+        0.3387,
+        0.4482
+      ],
+      "summac_g3": [
+        0.2194,
+        0.3157
+      ],
+      "geval_judge": [
+        0.909,
+        0.9631
+      ],
+      "entity_support": [
+        0.6721,
+        0.7593
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": 0.0027,
+        "ci": [
+          -0.0116,
+          0.0169
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": 0.0048,
+        "ci": [
+          -0.0101,
+          0.0194
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0031,
+        "ci": [
+          -0.0166,
+          0.01
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0154,
+        "ci": [
+          -0.0298,
+          0.0603
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0467,
+        "ci": [
+          0.0048,
+          0.0883
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0195,
+        "ci": [
+          -0.0097,
+          0.0483
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0104,
+        "ci": [
+          -0.0216,
+          0.0435
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "kd-aligned": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.38991807388911776,
+    "rouge1": 0.3907049653596886,
+    "cosine": 0.6325023633055389,
+    "bertscore_f1": 0.47881619960069655,
+    "nli_entail": 0.4010394511395134,
+    "summac_g3": 0.2627486970287282,
+    "geval_judge": 0.9281966742128134,
+    "entity_support": 0.7555168082945861,
+    "ci": {
+      "rouge1": [
+        0.3705,
+        0.4105
+      ],
+      "cosine": [
+        0.6091,
+        0.6566
+      ],
+      "bertscore_f1": [
+        0.4564,
+        0.5005
+      ],
+      "nli_entail": [
+        0.3492,
+        0.4521
+      ],
+      "summac_g3": [
+        0.2208,
+        0.31
+      ],
+      "geval_judge": [
+        0.8969,
+        0.9553
+      ],
+      "entity_support": [
+        0.7106,
+        0.7949
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0177,
+        "ci": [
+          -0.033,
+          -0.0024
+        ],
+        "excludes_zero": true
+      },
+      "cosine": {
+        "diff": -0.0059,
+        "ci": [
+          -0.0236,
+          0.0112
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0189,
+        "ci": [
+          -0.0331,
+          -0.0049
+        ],
+        "excludes_zero": true
+      },
+      "nli_entail": {
+        "diff": 0.0239,
+        "ci": [
+          -0.0208,
+          0.0697
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.042,
+        "ci": [
+          0.0011,
+          0.0857
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0095,
+        "ci": [
+          -0.0262,
+          0.0428
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0496,
+        "ci": [
+          0.0132,
+          0.0869
+        ],
+        "excludes_zero": true
+      }
+    }
+  },
+  "kd2-a09": {
+    "n": 200,
+    "num_empty": 85,
+    "rouge1_stored_n1000": 0.015537562181993236,
+    "rouge1": 0.014728426267354598,
+    "cosine": 0.04210063077043742,
+    "bertscore_f1": 0.1464230602834141,
+    "nli_entail": 0.032212025479238945,
+    "summac_g3": 0.05195455987763126,
+    "geval_judge": 0.5255485324561596,
+    "entity_support": 0.09574468085106383,
+    "ci": {
+      "rouge1": [
+        0.0101,
+        0.0197
+      ],
+      "cosine": [
+        0.0299,
+        0.0556
+      ],
+      "bertscore_f1": [
+        0.1173,
+        0.1771
+      ],
+      "nli_entail": [
+        0.0219,
+        0.043
+      ],
+      "summac_g3": [
+        0.0364,
+        0.0695
+      ],
+      "geval_judge": [
+        0.4565,
+        0.5952
+      ],
+      "entity_support": [
+        0.0388,
+        0.1596
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.3938,
+        "ci": [
+          -0.4172,
+          -0.3724
+        ],
+        "excludes_zero": true
+      },
+      "cosine": {
+        "diff": -0.5966,
+        "ci": [
+          -0.623,
+          -0.5701
+        ],
+        "excludes_zero": true
+      },
+      "bertscore_f1": {
+        "diff": -0.3509,
+        "ci": [
+          -0.3872,
+          -0.315
+        ],
+        "excludes_zero": true
+      },
+      "nli_entail": {
+        "diff": -0.3451,
+        "ci": [
+          -0.394,
+          -0.297
+        ],
+        "excludes_zero": true
+      },
+      "summac_g3": {
+        "diff": -0.1694,
+        "ci": [
+          -0.2148,
+          -0.1224
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": -0.3922,
+        "ci": [
+          -0.4635,
+          -0.314
+        ],
+        "excludes_zero": true
+      },
+      "entity_support": {
+        "diff": -0.6114,
+        "ci": [
+          -0.6805,
+          -0.5346
+        ],
+        "excludes_zero": true
+      }
+    }
+  },
+  "sweep-xsum-linear": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.39877895616262954,
+    "rouge1": 0.40814713249087076,
+    "cosine": 0.6396159736067056,
+    "bertscore_f1": 0.4979060388170183,
+    "nli_entail": 0.38257235359662445,
+    "summac_g3": 0.23161212180821167,
+    "geval_judge": 0.925827764198184,
+    "entity_support": 0.7074671586329617,
+    "ci": {
+      "rouge1": [
+        0.3861,
+        0.4318
+      ],
+      "cosine": [
+        0.618,
+        0.6625
+      ],
+      "bertscore_f1": [
+        0.4755,
+        0.5205
+      ],
+      "nli_entail": [
+        0.3367,
+        0.4304
+      ],
+      "summac_g3": [
+        0.1877,
+        0.2753
+      ],
+      "geval_judge": [
+        0.8956,
+        0.9551
+      ],
+      "entity_support": [
+        0.6653,
+        0.7477
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0003,
+        "ci": [
+          -0.0037,
+          0.0029
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": 0.0012,
+        "ci": [
+          -0.0017,
+          0.0048
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": 0.0002,
+        "ci": [
+          -0.0016,
+          0.0023
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0052,
+        "ci": [
+          -0.0025,
+          0.016
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0106,
+        "ci": [
+          0.0012,
+          0.0249
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0082,
+        "ci": [
+          -0.001,
+          0.0203
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0012,
+        "ci": [
+          -0.003,
+          0.0075
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "sweep-xsum-slerp": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.3997510820731483,
+    "rouge1": 0.40953760583910126,
+    "cosine": 0.6375811138004065,
+    "bertscore_f1": 0.49851328432559966,
+    "nli_entail": 0.37183911452913887,
+    "summac_g3": 0.23176679430063815,
+    "geval_judge": 0.9178919018805027,
+    "entity_support": 0.7008790035851892,
+    "ci": {
+      "rouge1": [
+        0.3887,
+        0.4314
+      ],
+      "cosine": [
+        0.6158,
+        0.6606
+      ],
+      "bertscore_f1": [
+        0.4763,
+        0.5201
+      ],
+      "nli_entail": [
+        0.3245,
+        0.4213
+      ],
+      "summac_g3": [
+        0.1885,
+        0.2772
+      ],
+      "geval_judge": [
+        0.8851,
+        0.948
+      ],
+      "entity_support": [
+        0.659,
+        0.7411
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": 0.0011,
+        "ci": [
+          -0.0055,
+          0.0083
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0008,
+        "ci": [
+          -0.0084,
+          0.0066
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": 0.0008,
+        "ci": [
+          -0.0062,
+          0.0079
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": -0.0055,
+        "ci": [
+          -0.023,
+          0.0107
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0106,
+        "ci": [
+          -0.0091,
+          0.0317
+        ],
+        "excludes_zero": false
+      },
+      "geval_judge": {
+        "diff": 0.0004,
+        "ci": [
+          -0.0163,
+          0.0171
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": -0.0053,
+        "ci": [
+          -0.0184,
+          0.0079
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "sweep-xsum-task_arithmetic": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.40028331548820417,
+    "rouge1": 0.4079763672112008,
+    "cosine": 0.6384449046105146,
+    "bertscore_f1": 0.4977715091966093,
+    "nli_entail": 0.3882763322195387,
+    "summac_g3": 0.23114307494797687,
+    "geval_judge": 0.9267726518213749,
+    "entity_support": 0.7108247422680413,
+    "ci": {
+      "rouge1": [
+        0.3868,
+        0.4309
+      ],
+      "cosine": [
+        0.615,
+        0.6625
+      ],
+      "bertscore_f1": [
+        0.4756,
+        0.5194
+      ],
+      "nli_entail": [
+        0.3404,
+        0.4354
+      ],
+      "summac_g3": [
+        0.1875,
+        0.2754
+      ],
+      "geval_judge": [
+        0.8968,
+        0.9552
+      ],
+      "entity_support": [
+        0.668,
+        0.7512
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0005,
+        "ci": [
+          -0.0077,
+          0.0067
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": 0.0001,
+        "ci": [
+          -0.0079,
+          0.0074
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": 0.0001,
+        "ci": [
+          -0.0067,
+          0.007
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0109,
+        "ci": [
+          -0.0092,
+          0.0318
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0099,
+        "ci": [
+          -0.0086,
+          0.0302
+        ],
+        "excludes_zero": false
+      },
+      "geval_judge": {
+        "diff": 0.0089,
+        "ci": [
+          -0.0097,
+          0.0279
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0049,
+        "ci": [
+          -0.0099,
+          0.0226
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "sweep-xsum-dare_ties": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.39786816853855833,
+    "rouge1": 0.40644912991931437,
+    "cosine": 0.6359377491474152,
+    "bertscore_f1": 0.492565345633775,
+    "nli_entail": 0.38252474457724017,
+    "summac_g3": 0.2531139706450631,
+    "geval_judge": 0.9154500222206116,
+    "entity_support": 0.7041699796801837,
+    "ci": {
+      "rouge1": [
+        0.3841,
+        0.4292
+      ],
+      "cosine": [
+        0.6125,
+        0.6587
+      ],
+      "bertscore_f1": [
+        0.4692,
+        0.5136
+      ],
+      "nli_entail": [
+        0.3354,
+        0.4307
+      ],
+      "summac_g3": [
+        0.2073,
+        0.3001
+      ],
+      "geval_judge": [
+        0.8824,
+        0.946
+      ],
+      "entity_support": [
+        0.6623,
+        0.7464
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0021,
+        "ci": [
+          -0.0112,
+          0.0059
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0026,
+        "ci": [
+          -0.013,
+          0.0071
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0053,
+        "ci": [
+          -0.0146,
+          0.0035
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0055,
+        "ci": [
+          -0.0141,
+          0.0256
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0324,
+        "ci": [
+          0.0092,
+          0.0577
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": -0.0024,
+        "ci": [
+          -0.0225,
+          0.0172
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": -0.0019,
+        "ci": [
+          -0.0235,
+          0.0185
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "sweep-xsum-ties": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.39939785851116616,
+    "rouge1": 0.4155207083520599,
+    "cosine": 0.6383822755515576,
+    "bertscore_f1": 0.5007429260760545,
+    "nli_entail": 0.3447165860905079,
+    "summac_g3": 0.22206252564472378,
+    "geval_judge": 0.8914756993949413,
+    "entity_support": 0.6941130050505051,
+    "ci": {
+      "rouge1": [
+        0.3939,
+        0.4366
+      ],
+      "cosine": [
+        0.6162,
+        0.6615
+      ],
+      "bertscore_f1": [
+        0.479,
+        0.5214
+      ],
+      "nli_entail": [
+        0.2968,
+        0.3963
+      ],
+      "summac_g3": [
+        0.1797,
+        0.2659
+      ],
+      "geval_judge": [
+        0.8567,
+        0.9252
+      ],
+      "entity_support": [
+        0.6478,
+        0.7374
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": 0.0071,
+        "ci": [
+          -0.0044,
+          0.0183
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0,
+        "ci": [
+          -0.0124,
+          0.0132
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": 0.003,
+        "ci": [
+          -0.0077,
+          0.0136
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": -0.0322,
+        "ci": [
+          -0.0699,
+          0.0064
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.001,
+        "ci": [
+          -0.0324,
+          0.0345
+        ],
+        "excludes_zero": false
+      },
+      "geval_judge": {
+        "diff": -0.0259,
+        "ci": [
+          -0.0533,
+          0.0006
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": -0.0121,
+        "ci": [
+          -0.0406,
+          0.0154
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "sweep-xsum-arcee_fusion": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.3970552395215386,
+    "rouge1": 0.4021432450905963,
+    "cosine": 0.6304772458225488,
+    "bertscore_f1": 0.48902490544132887,
+    "nli_entail": 0.3834716595246573,
+    "summac_g3": 0.2638447361539147,
+    "geval_judge": 0.9129000806063413,
+    "entity_support": 0.7045424638688887,
+    "ci": {
+      "rouge1": [
+        0.3803,
+        0.4251
+      ],
+      "cosine": [
+        0.6073,
+        0.654
+      ],
+      "bertscore_f1": [
+        0.4655,
+        0.5113
+      ],
+      "nli_entail": [
+        0.3347,
+        0.4332
+      ],
+      "summac_g3": [
+        0.2173,
+        0.3129
+      ],
+      "geval_judge": [
+        0.8807,
+        0.9439
+      ],
+      "entity_support": [
+        0.6618,
+        0.7463
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0064,
+        "ci": [
+          -0.0182,
+          0.0054
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0081,
+        "ci": [
+          -0.0197,
+          0.0032
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0088,
+        "ci": [
+          -0.0208,
+          0.0028
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0067,
+        "ci": [
+          -0.0261,
+          0.0393
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.043,
+        "ci": [
+          0.0086,
+          0.0781
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": -0.0048,
+        "ci": [
+          -0.0287,
+          0.02
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": -0.0018,
+        "ci": [
+          -0.0278,
+          0.0247
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "sweep-xsum-model_stock": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.34567403116122386,
+    "rouge1": 0.3374621761688404,
+    "cosine": 0.6043257042672485,
+    "bertscore_f1": 0.42179391682613643,
+    "nli_entail": 0.6178774544678163,
+    "summac_g3": 0.37152395632409024,
+    "geval_judge": 0.9934447234869004,
+    "entity_support": 0.8219927552401779,
+    "ci": {
+      "rouge1": [
+        0.3186,
+        0.358
+      ],
+      "cosine": [
+        0.5802,
+        0.6295
+      ],
+      "bertscore_f1": [
+        0.4004,
+        0.4442
+      ],
+      "nli_entail": [
+        0.5683,
+        0.6664
+      ],
+      "summac_g3": [
+        0.3199,
+        0.4227
+      ],
+      "geval_judge": [
+        0.9829,
+        1.0
+      ],
+      "entity_support": [
+        0.7848,
+        0.8569
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0709,
+        "ci": [
+          -0.09,
+          -0.0513
+        ],
+        "excludes_zero": true
+      },
+      "cosine": {
+        "diff": -0.0342,
+        "ci": [
+          -0.0539,
+          -0.0134
+        ],
+        "excludes_zero": true
+      },
+      "bertscore_f1": {
+        "diff": -0.0757,
+        "ci": [
+          -0.0924,
+          -0.0583
+        ],
+        "excludes_zero": true
+      },
+      "nli_entail": {
+        "diff": 0.2401,
+        "ci": [
+          0.193,
+          0.2861
+        ],
+        "excludes_zero": true
+      },
+      "summac_g3": {
+        "diff": 0.1498,
+        "ci": [
+          0.0966,
+          0.2064
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0754,
+        "ci": [
+          0.0463,
+          0.1063
+        ],
+        "excludes_zero": true
+      },
+      "entity_support": {
+        "diff": 0.1163,
+        "ci": [
+          0.0725,
+          0.1596
+        ],
+        "excludes_zero": true
+      }
+    }
+  },
+  "merge-4way": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.3953667745082895,
+    "rouge1": 0.3990457695171395,
+    "cosine": 0.6327617321163416,
+    "bertscore_f1": 0.4898338955841609,
+    "nli_entail": 0.37916309856896985,
+    "summac_g3": 0.29376030524697855,
+    "geval_judge": 0.9278485804051161,
+    "entity_support": 0.709045584045584,
+    "ci": {
+      "rouge1": [
+        0.376,
+        0.4211
+      ],
+      "cosine": [
+        0.6094,
+        0.657
+      ],
+      "bertscore_f1": [
+        0.4682,
+        0.5112
+      ],
+      "nli_entail": [
+        0.3298,
+        0.4322
+      ],
+      "summac_g3": [
+        0.2448,
+        0.3473
+      ],
+      "geval_judge": [
+        0.8983,
+        0.9553
+      ],
+      "entity_support": [
+        0.6652,
+        0.753
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0094,
+        "ci": [
+          -0.023,
+          0.004
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0058,
+        "ci": [
+          -0.0196,
+          0.0085
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.008,
+        "ci": [
+          -0.0207,
+          0.0041
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0023,
+        "ci": [
+          -0.0412,
+          0.0458
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0732,
+        "ci": [
+          0.0266,
+          0.1227
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0099,
+        "ci": [
+          -0.0187,
+          0.0401
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0028,
+        "ci": [
+          -0.0274,
+          0.032
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "shard1-of-4": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.3912774781417195,
+    "rouge1": 0.39795981371358957,
+    "cosine": 0.6283267910778523,
+    "bertscore_f1": 0.48160570399835706,
+    "nli_entail": 0.37727905591658784,
+    "summac_g3": 0.28876710601296507,
+    "geval_judge": 0.9189119277894497,
+    "entity_support": 0.7179465709728867,
+    "ci": {
+      "rouge1": [
+        0.3767,
+        0.4184
+      ],
+      "cosine": [
+        0.6057,
+        0.6509
+      ],
+      "bertscore_f1": [
+        0.46,
+        0.5029
+      ],
+      "nli_entail": [
+        0.3283,
+        0.4278
+      ],
+      "summac_g3": [
+        0.2433,
+        0.336
+      ],
+      "geval_judge": [
+        0.8875,
+        0.9477
+      ],
+      "entity_support": [
+        0.6757,
+        0.7597
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0106,
+        "ci": [
+          -0.0248,
+          0.0032
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0101,
+        "ci": [
+          -0.0249,
+          0.0044
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0161,
+        "ci": [
+          -0.0293,
+          -0.0036
+        ],
+        "excludes_zero": true
+      },
+      "nli_entail": {
+        "diff": -0.0001,
+        "ci": [
+          -0.0453,
+          0.0448
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0684,
+        "ci": [
+          0.0251,
+          0.1113
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0006,
+        "ci": [
+          -0.0303,
+          0.0331
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.012,
+        "ci": [
+          -0.0232,
+          0.048
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "kd4-parity": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.39358514430987807,
+    "rouge1": 0.4002632022004233,
+    "cosine": 0.633221168667078,
+    "bertscore_f1": 0.49251641040667893,
+    "nli_entail": 0.37683215821016347,
+    "summac_g3": 0.2918613698123227,
+    "geval_judge": 0.9274019145220518,
+    "entity_support": 0.7133350634626144,
+    "ci": {
+      "rouge1": [
+        0.3774,
+        0.4227
+      ],
+      "cosine": [
+        0.6096,
+        0.6586
+      ],
+      "bertscore_f1": [
+        0.4709,
+        0.5147
+      ],
+      "nli_entail": [
+        0.3271,
+        0.4274
+      ],
+      "summac_g3": [
+        0.244,
+        0.3397
+      ],
+      "geval_judge": [
+        0.8977,
+        0.9544
+      ],
+      "entity_support": [
+        0.6689,
+        0.7564
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0081,
+        "ci": [
+          -0.0204,
+          0.0045
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0052,
+        "ci": [
+          -0.0183,
+          0.0084
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": -0.0051,
+        "ci": [
+          -0.0174,
+          0.0068
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.0002,
+        "ci": [
+          -0.0407,
+          0.0387
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0713,
+        "ci": [
+          0.0277,
+          0.1145
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0095,
+        "ci": [
+          -0.0218,
+          0.0405
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0074,
+        "ci": [
+          -0.0242,
+          0.0368
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "ctx-merge": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.39966889766304114,
+    "rouge1": 0.4112680379866109,
+    "cosine": 0.641628440245986,
+    "bertscore_f1": 0.5007606993988156,
+    "nli_entail": 0.39447262733243404,
+    "summac_g3": 0.2570806703556445,
+    "geval_judge": 0.9183388260006905,
+    "entity_support": 0.7211189583612264,
+    "ci": {
+      "rouge1": [
+        0.3884,
+        0.4345
+      ],
+      "cosine": [
+        0.6183,
+        0.6658
+      ],
+      "bertscore_f1": [
+        0.4785,
+        0.5221
+      ],
+      "nli_entail": [
+        0.3436,
+        0.4429
+      ],
+      "summac_g3": [
+        0.2114,
+        0.3038
+      ],
+      "geval_judge": [
+        0.8874,
+        0.9493
+      ],
+      "entity_support": [
+        0.6794,
+        0.7599
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": 0.0028,
+        "ci": [
+          -0.0071,
+          0.0131
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": 0.0031,
+        "ci": [
+          -0.0073,
+          0.0137
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": 0.003,
+        "ci": [
+          -0.0071,
+          0.0133
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": 0.017,
+        "ci": [
+          -0.0106,
+          0.0444
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.036,
+        "ci": [
+          0.0082,
+          0.0659
+        ],
+        "excludes_zero": true
+      },
+      "geval_judge": {
+        "diff": 0.0004,
+        "ci": [
+          -0.0268,
+          0.028
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0151,
+        "ci": [
+          -0.0061,
+          0.0369
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "ctx-kd-parity": {
+    "n": 200,
+    "num_empty": 0,
+    "rouge1_stored_n1000": 0.3986890854169386,
+    "rouge1": 0.4074727806853292,
+    "cosine": 0.632366750240326,
+    "bertscore_f1": 0.497839033883065,
+    "nli_entail": 0.362844676268578,
+    "summac_g3": 0.2531533130153548,
+    "geval_judge": 0.926695826202631,
+    "entity_support": 0.7244098494098494,
+    "ci": {
+      "rouge1": [
+        0.385,
+        0.4296
+      ],
+      "cosine": [
+        0.6092,
+        0.6563
+      ],
+      "bertscore_f1": [
+        0.4744,
+        0.5192
+      ],
+      "nli_entail": [
+        0.3135,
+        0.4106
+      ],
+      "summac_g3": [
+        0.21,
+        0.2975
+      ],
+      "geval_judge": [
+        0.8959,
+        0.9543
+      ],
+      "entity_support": [
+        0.6823,
+        0.7664
+      ]
+    },
+    "paired_vs_merge": {
+      "rouge1": {
+        "diff": -0.0009,
+        "ci": [
+          -0.0123,
+          0.0099
+        ],
+        "excludes_zero": false
+      },
+      "cosine": {
+        "diff": -0.0061,
+        "ci": [
+          -0.0196,
+          0.0069
+        ],
+        "excludes_zero": false
+      },
+      "bertscore_f1": {
+        "diff": 0.0001,
+        "ci": [
+          -0.0122,
+          0.0118
+        ],
+        "excludes_zero": false
+      },
+      "nli_entail": {
+        "diff": -0.0141,
+        "ci": [
+          -0.0516,
+          0.021
+        ],
+        "excludes_zero": false
+      },
+      "summac_g3": {
+        "diff": 0.0321,
+        "ci": [
+          -0.0025,
+          0.0678
+        ],
+        "excludes_zero": false
+      },
+      "geval_judge": {
+        "diff": 0.0088,
+        "ci": [
+          -0.0165,
+          0.034
+        ],
+        "excludes_zero": false
+      },
+      "entity_support": {
+        "diff": 0.0183,
+        "ci": [
+          -0.0106,
+          0.0475
+        ],
+        "excludes_zero": false
+      }
+    }
+  },
+  "_spread": {
+    "rouge1": {
+      "min": 0.014728426267354598,
+      "max": 0.416128668862437,
+      "spread": 0.4014002425950824,
+      "sd": 0.08408638972938451
+    },
+    "cosine": {
+      "min": 0.04210063077043742,
+      "max": 0.6543463540077209,
+      "spread": 0.6122457232372834,
+      "sd": 0.12658602368571292
+    },
+    "bertscore_f1": {
+      "min": 0.1464230602834141,
+      "max": 0.5087037077359855,
+      "spread": 0.3622806474525714,
+      "sd": 0.07524415665069731
+    },
+    "nli_entail": {
+      "min": 0.032212025479238945,
+      "max": 0.6178774544678163,
+      "spread": 0.5856654289885773,
+      "sd": 0.09278436291306026
+    },
+    "summac_g3": {
+      "min": 0.05195455987763126,
+      "max": 0.37152395632409024,
+      "spread": 0.319569396446459,
+      "sd": 0.05552039773722986
+    },
+    "geval_judge": {
+      "min": 0.5255485324561596,
+      "max": 0.9934447234869004,
+      "spread": 0.46789619103074076,
+      "sd": 0.0867140579835349
+    },
+    "entity_support": {
+      "min": 0.09574468085106383,
+      "max": 0.8219927552401779,
+      "spread": 0.7262480743891141,
+      "sd": 0.13518098295078157
+    }
+  }
+}
