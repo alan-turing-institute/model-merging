@@ -64,12 +64,18 @@ test_datasets:
   - path: ../datasets/billsum/full/validation
     type: chat_template
 
-# Bills are long. prepare_billsum_data.py truncates documents to 2400 words,
-# which with a ~340-word summary and the chat wrapper comes to about 3,700 Gemma
-# tokens. THESE TWO NUMBERS ARE CHOSEN TOGETHER: axolotl silently DROPS any
-# example longer than sequence_len, so raising the word cap without raising this
-# would quietly shrink the arms and make the scaling curve a curve over the wrong
-# x-axis.
+# Bills are long. prepare_billsum_data.py truncates documents to 2900 TOKENS -
+# measured with this model's own tokenizer, not estimated from a word count.
+# Legislative text runs 1.74 tokens per word against ordinary prose's ~1.3, and a
+# word-based cap that looked like 3,700 tokens actually produced examples of 6,948
+# and put 7% of the full arm over this window.
+#
+# THESE TWO NUMBERS ARE ONE DECISION: axolotl silently DROPS any example longer
+# than sequence_len rather than truncating it, so a document budget raised without
+# raising this would not shorten those examples, it would delete them - quietly
+# shrinking the arms and plotting the scaling curve against the wrong x-axis.
+# prepare_billsum_data.py verifies the fit on the rendered chat text and refuses
+# to finish if anything is over.
 sequence_len: 4096
 
 # axolotl defaults this to os.cpu_count(), which on a GH200 node reports all 288

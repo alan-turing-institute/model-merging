@@ -36,6 +36,7 @@ import argparse
 from pathlib import Path
 
 from datasets import DatasetDict, load_dataset, load_from_disk
+from transformers import AutoTokenizer
 
 # Terse, like STUDENT_SHORT in self-distill/prepare_data_XSum.py: the format is
 # meant to be learned into the weights, not re-read from the prompt at every
@@ -49,23 +50,36 @@ STUDENT_LONG = (
     "\n\nOutput only the summary."
 )
 
-# Bills run long: median 1,217 words, 90th percentile 2,071, maximum 2,697 in the
-# training split. This cap and the configs' `sequence_len: 4096` are chosen
-# together and have to move together. Axolotl SILENTLY DROPS any example longer
-# than sequence_len, so an uncapped document does not produce a truncated
-# training example - it produces no training example at all, and a scaling curve
-# whose arms quietly contain fewer rows than their names claim. Truncating here
-# instead keeps every row, and keeps the count honest.
+# Bills run long: median 1,217 words, 90th percentile 2,071 in the training
+# split. Documents are therefore truncated to fit the training window - but in
+# TOKENS, not words, and the difference is not cosmetic. Legislative text runs
+# 1.74 tokens per word (measured on this split with the Gemma tokenizer), where
+# ordinary prose is nearer 1.3: section symbols, subsection markers, dollar
+# figures and statutory citations all tokenise badly. A 2400-word cap, which a
+# word-count estimate said was ~3,700 tokens, actually produced examples of up to
+# 6,948 - and 7% of the full arm was over sequence_len.
 #
-# 2400 words plus a ~340-word summary is about 3,700 Gemma tokens with the chat
-# wrapper, which fits 4096 with room to spare, and leaves ~95% of training
-# documents untouched.
-MAX_DOCUMENT_WORDS = 2400
+# THAT IS THE FAILURE THIS FILE EXISTS TO PREVENT. Axolotl SILENTLY DROPS any
+# example longer than sequence_len rather than truncating it, so those 7% would
+# not have become shortened training examples - they would have become no
+# training examples at all, and the scaling curve would have been plotted against
+# an x-axis that was simply wrong, with nothing in any log to say so.
+#
+# The budget below is derived from the measured distribution rather than
+# estimated: summaries are 214 tokens at the median and 1,101 at the observed
+# maximum, and the chat wrapper costs 12. 2900 + 1101 + 12 = 4013, inside a
+# 4096 window with room to spare. Summaries are never truncated - the target has
+# to survive intact or the example teaches the model to stop early.
+DEFAULT_SEQUENCE_LEN = 4096
+DEFAULT_DOCUMENT_TOKENS = 2900
+TOKENIZER = "google/gemma-3-4b-it"
 
 
-def truncate(text: str, max_words: int = MAX_DOCUMENT_WORDS) -> str:
-    words = text.split()
-    return text if len(words) <= max_words else " ".join(words[:max_words])
+def truncate_tokens(text: str, tokenizer, max_tokens: int) -> str:
+    ids = tokenizer(text, add_special_tokens=False)["input_ids"]
+    if len(ids) <= max_tokens:
+        return text
+    return tokenizer.decode(ids[:max_tokens], skip_special_tokens=True)
 
 
 def convert_to_prompt(example):
@@ -92,11 +106,23 @@ def to_training_example(example, prompt_variant: str):
             + [{"role": "assistant", "content": example["summary"]}]}
 
 
-def normalise(dataset):
-    """BillSum calls the source text `text`; the rest of the repo calls it
-    `document`, and the evaluator's entity-grounding scorer reads that name."""
+def normalise(dataset, tokenizer, max_tokens: int):
+    """Rename `text` to `document` and truncate it to the token budget.
+
+    BillSum calls the source text `text`; the rest of the repo calls it
+    `document`, and the evaluator's entity-grounding scorer reads that name.
+
+    The SAME budget is applied to the training arms and to both evaluation
+    splits. It has to be: a model trained on documents cut at 2,900 tokens and
+    then scored on whole ones is being asked at test time for something it never
+    saw at training time, and the gap would be read as a property of the method
+    rather than of the harness.
+    """
     renamed = dataset.rename_column("text", "document")
-    return renamed.map(lambda row: {"document": truncate(row["document"])})
+    return renamed.map(
+        lambda row: {"document": truncate_tokens(row["document"], tokenizer, max_tokens)},
+        desc="truncating documents",
+    )
 
 
 def parse_args():
@@ -120,7 +146,35 @@ def parse_args():
         "--prompt-variant", default="short", choices=["short", "long"],
         help="Which prompt the training targets are built with. Evaluate with the same one.",
     )
+    parser.add_argument(
+        "--document-tokens", type=int, default=DEFAULT_DOCUMENT_TOKENS,
+        help="Token budget for the bill text. Must leave room for the longest summary.",
+    )
+    parser.add_argument(
+        "--sequence-len", type=int, default=DEFAULT_SEQUENCE_LEN,
+        help="Must match billsum_gemma.yaml. Only used to verify nothing will be dropped.",
+    )
+    parser.add_argument("--tokenizer", default=TOKENIZER)
     return parser.parse_args()
+
+
+def verify_fits(dataset, tokenizer, sequence_len: int, label: str) -> int:
+    """Count training examples that axolotl would silently drop.
+
+    This is the check the whole file is built around, so it runs on the real
+    rendered chat text rather than on an estimate, and it is loud: a single
+    over-length example means the arm is not the size its name claims, and the
+    scaling curve is measuring something other than data quantity.
+    """
+    lengths = [
+        len(tokenizer(tokenizer.apply_chat_template(row["messages"], tokenize=False))["input_ids"])
+        for row in dataset
+    ]
+    over = sum(length > sequence_len for length in lengths)
+    longest = max(lengths)
+    print(f"{label:>18}: {len(lengths)} rows, longest {longest} tokens"
+          f"{f' - {over} OVER sequence_len={sequence_len}' if over else ' - all fit'}")
+    return over
 
 
 def load(dataset: str) -> DatasetDict:
@@ -133,10 +187,15 @@ def main():
     args = parse_args()
     ds = load(args.dataset)
 
+    # The tokenizer the model will actually train with. Truncating by words
+    # instead - the obvious shortcut, since it needs no model - is what put 7%
+    # of the full arm over the window on the first attempt.
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+
     # BillSum ships train / test / ca_test and no validation split, so the
     # validation rows come off the end of a shuffled train split - after the
     # training pool, so that growing the training arms never eats into them.
-    train_pool = normalise(ds["train"]).shuffle(seed=42)
+    train_pool = normalise(ds["train"], tokenizer, args.document_tokens).shuffle(seed=42)
     needed = args.train_size + args.validation_size
     if needed > len(train_pool):
         raise ValueError(
@@ -146,6 +205,7 @@ def main():
     train_full = train_pool.select(range(args.train_size))
     validation = train_pool.select(range(args.train_size, needed))
 
+    dropped = 0
     scales = {
         "full": args.train_size,
         "half": args.train_size // 2,
@@ -163,7 +223,7 @@ def main():
             ),
         })
         arm.save_to_disk(str(args.output_dir / name))
-        print(f"{name:>8}: {n} train rows")
+        dropped += verify_fits(arm["train"], tokenizer, args.sequence_len, name)
 
     # Evaluation splits keep `document` and `summary`; billsum_task.py builds the
     # prompt from the document itself, so no `messages` column is needed here.
@@ -174,11 +234,19 @@ def main():
     # makes it the more honest place to look for a merge's advantage: methods that
     # only ever recover in-distribution behaviour have nothing to show on it.
     for split, size in (("test", args.test_size), ("ca_test", None)):
-        subset = normalise(ds[split]).shuffle(seed=42)
+        subset = normalise(ds[split], tokenizer, args.document_tokens).shuffle(seed=42)
         if size is not None:
             subset = subset.select(range(min(size, len(subset))))
         subset.save_to_disk(str(args.output_dir / split))
-        print(f"{split:>8}: {len(subset)} rows")
+        print(f"{split:>18}: {len(subset)} rows")
+
+    if dropped:
+        raise SystemExit(
+            f"\n{dropped} training examples exceed --sequence-len {args.sequence_len} and "
+            f"would be SILENTLY DROPPED by axolotl.\nLower --document-tokens (currently "
+            f"{args.document_tokens}) or raise sequence_len in billsum_gemma.yaml - and "
+            f"change BOTH, they are one decision."
+        )
 
 
 if __name__ == "__main__":

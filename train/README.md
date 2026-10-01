@@ -83,9 +83,18 @@ saturated at this scale and the merging arms should not be run on it** — which
 a two-GPU-hour answer rather than a month-long one.
 
 Two numbers in [`billsum_gemma.yaml`](billsum_gemma.yaml) and
-[`prepare_billsum_data.py`](prepare_billsum_data.py) are chosen together and must
-move together: `sequence_len: 4096` and the 2400-word document cap. Axolotl
-**silently drops** any example longer than `sequence_len` rather than truncating
-it, so raising the word cap alone would quietly shrink the arms and leave the
-curve plotted against an x-axis that is wrong. `train_billsum.sbatch` prints the
-row count before and after tokenisation so a gap is visible.
+[`prepare_billsum_data.py`](prepare_billsum_data.py) are one decision, not two:
+`sequence_len: 4096` and the 2900-**token** document budget. Axolotl **silently
+drops** any example longer than `sequence_len` rather than truncating it, so a
+budget raised without raising `sequence_len` does not shorten those examples — it
+deletes them, quietly shrinking the arms and plotting the curve against an x-axis
+that is wrong.
+
+Truncating by words instead of tokens is the obvious shortcut and it is a trap:
+legislative text runs **1.74 tokens per word** (measured with the Gemma tokenizer
+on this split) against ordinary prose's ~1.3, so a 2,400-word cap that a word-count
+estimate put at ~3,700 tokens in fact produced examples of up to 6,948 and placed
+7% of the full arm over the window. `prepare_billsum_data.py` now truncates in
+tokens and verifies the fit on the rendered chat text, refusing to finish if any
+example would be dropped; `train_billsum.sbatch` prints the row count again before
+and after tokenisation.

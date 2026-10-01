@@ -47,8 +47,17 @@ echo "arm=$ARM  dataset=$DATASET_DIR  output=$OUTPUT_DIR"
 # Axolotl does not error, it just sets device: cpu and grinds.
 export LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
-# Hugging Face downloads live in the project area, not the 100 GB home quota.
-export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
+# Hugging Face downloads (base models, the semantic scorer's encoder) live in
+# the project area, not the 100 GB home quota. See the main README.
+#
+# HF_HUB_CACHE, NOT HF_HOME. HF_HOME relocates the auth token as well as the
+# cache, which silently logs you out: gemma-3-4b-it is a gated repo, so the next
+# fetch 401s instead of failing closed, and on an offline compute node it simply
+# cannot find the weights. The token stays at ~/.cache/huggingface/token where
+# `hf auth login` put it. Checked on this machine: the models actually live in
+# $PROJECTDIR/$USER/mm/hf-cache (39 GB, gemma plus the scorer's encoders), and
+# $PROJECTDIR/$USER/hf_cache holds datasets only.
+export HF_HUB_CACHE=${HF_HUB_CACHE:-$PROJECTDIR/$USER/mm/hf-cache}
 
 # Axolotl's tokenised-dataset cache reached 17 GB on the XSum runs and took the
 # home filesystem to its quota, which stops every job on the machine. Node-local

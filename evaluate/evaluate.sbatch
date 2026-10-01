@@ -71,7 +71,15 @@ export LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0
 
 # Hugging Face downloads (base models, the semantic scorer's encoder) live in
 # the project area, not the 100 GB home quota. See the main README.
-export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
+#
+# HF_HUB_CACHE, NOT HF_HOME. HF_HOME relocates the auth token as well as the
+# cache, which silently logs you out: gemma-3-4b-it is a gated repo, so the next
+# fetch 401s instead of failing closed, and on an offline compute node it simply
+# cannot find the weights. The token stays at ~/.cache/huggingface/token where
+# `hf auth login` put it. Checked on this machine: the models actually live in
+# $PROJECTDIR/$USER/mm/hf-cache (39 GB, gemma plus the scorer's encoders), and
+# $PROJECTDIR/$USER/hf_cache holds datasets only.
+export HF_HUB_CACHE=${HF_HUB_CACHE:-$PROJECTDIR/$USER/mm/hf-cache}
 
 uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is the CUDA compat lib on LD_LIBRARY_PATH?'"
 
