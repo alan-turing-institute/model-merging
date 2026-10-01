@@ -7,3 +7,8 @@ __pycache__/
 evaluate/.azureml_models/
 .pipeline_versions
 .pipeline_versions_xsum
+
+# models/ and .hf-cache are now symlinks to project storage; the trailing-slash
+# forms above only match directories.
+models
+.hf-cache
