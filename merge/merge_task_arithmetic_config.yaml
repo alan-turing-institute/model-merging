@@ -13,4 +13,4 @@ models:
     parameters:
       weight: 0.5
 tokenizer_source: union
-dtype: float16
+dtype: bfloat16

@@ -136,6 +136,30 @@ This should be used if you have previously pulled the code from github, but are 
     uv run --project evaluate python
     ```
 
+### Data and model storage on Isambard-AI
+
+Keep only the code in your home directory. Home has a 100 GB quota, which a few models and the Hugging Face cache fill quickly. Store models, datasets and the Hugging Face cache in the project area, `$PROJECTDIR/$USER`, which is Lustre storage with far more space.
+
+After cloning, make `models/` and `datasets/` in the repo symlinks into the project area. Every script refers to them as `../models/...` and `../datasets/...`, and the symlinks keep those paths working:
+
+```bash
+mkdir -p $PROJECTDIR/$USER/model-merging/{models,datasets}
+cd ~/model-merging    # the repo root
+ln -s $PROJECTDIR/$USER/model-merging/models   models
+ln -s $PROJECTDIR/$USER/model-merging/datasets datasets
+```
+
+`ln -s` puts the link inside a folder of the same name if one already exists, so move or delete any existing `models/` or `datasets/` first.
+
+Point the Hugging Face cache at the project area as well. Base models and the evaluation's sentence encoder are downloaded there:
+
+```bash
+echo 'export HF_HOME=$PROJECTDIR/$USER/hf_cache' >> ~/.bashrc
+source ~/.bashrc
+```
+
+`evaluate/evaluate.sbatch` and `self-distill/train_xsum.sbatch` set `HF_HOME` to the same place themselves if it isn't already set.
+
 ## Model merging using mergekit
 
 Overview of the process for a `poor-mans parallelism' model merging to train a classifier:
@@ -170,7 +194,7 @@ Trained/converted/merged models are large (GBs each) and are **not** kept in `mo
 az ml model create --name <name> --version 1 --type custom_model --path <local-path> --resource-group tire-1 --workspace-name tire-2
 ```
 
-and fetch one back (or pass `azureml:<name>:<version>` directly to [evaluate.py](evaluate/README.md), which downloads automatically) with:
+and fetch one back (or pass `azureml:<name>:<version>` directly to [evaluate/Azure/evaluate.sh](evaluate/README.md), which downloads automatically) with:
 
 ```bash
 az ml model download --name <name> --version 1 --download-path <dir> --resource-group tire-1 --workspace-name tire-2

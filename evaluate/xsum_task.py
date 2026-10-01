@@ -1,18 +1,20 @@
 """XSum summarisation as an Inspect AI task.
 
-The Inspect equivalent of evaluate_summarisation.py - ROUGE plus the semantic
+The Inspect equivalent of old/evaluate_summarisation.py - ROUGE plus the semantic
 and entity-grounding scores - expressed as a Task so it gets Inspect's log
 format, `inspect view`, sample-level introspection and its own CLI:
 
     inspect eval xsum_task.py --model hf/google/gemma-3-4b-it \
-      -M batch_size=8 -M do_sample=false -T prompt_variant=short
+      -M batch_size=8 -M do_sample=false -M dtype=bfloat16 -T prompt_variant=short
 
 A full model saved on disk (config.json + model.safetensors) loads with the
 plain hf provider; the name after hf/ is only a label, model_path is what loads:
 
     inspect eval xsum_task.py --model hf/gemma3-xsum-self-dist-short \
       -M model_path=../models/gemma3-xsum-self-dist-short \
-      -M batch_size=8 -M do_sample=false -T prompt_variant=short
+      -M batch_size=8 -M do_sample=false -M dtype=bfloat16 -T prompt_variant=short
+
+evaluate.sbatch (Isambard-AI) and Azure/evaluate.sh build these commands.
 
 PROMPT PARITY: the prompt is built here, from the article, by the same
 `convert_to_prompt` that self-distill/prepare_data_XSum.py uses to build the
@@ -137,7 +139,7 @@ def rouge():
 # --- semantic scoring -------------------------------------------------------
 #
 # The metrics themselves live in semantic_metrics.py, shared with
-# evaluate_summarisation.py. See that module for why ROUGE alone is a poor proxy
+# old/evaluate_summarisation.py. See that module for why ROUGE alone is a poor proxy
 # on XSum in both directions, and for the measured hallucination case that
 # motivates entity_support.
 
@@ -163,7 +165,7 @@ def semantic():
         # nothing to ground. NaN is Inspect's "unscored" marker for a key of a
         # dict-valued score: that sample is left out of entity_support's mean
         # and stderr, so the logged figure is the mean over gradeable summaries
-        # only, as evaluate_summarisation.py computes it. entity_gradeable
+        # only, as old/evaluate_summarisation.py computes it. entity_gradeable
         # keeps the denominator visible.
         value["entity_gradeable"] = 0.0 if value["entity_support"] is None else 1.0
         if value["entity_support"] is None:

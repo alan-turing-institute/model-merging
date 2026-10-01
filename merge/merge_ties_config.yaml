@@ -17,4 +17,4 @@ models:
       weight: 0.5
       density: 0.5
 tokenizer_source: union
-dtype: float16
+dtype: bfloat16

@@ -33,6 +33,10 @@ exec > "$OUTPUT_DIR/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.out" 2>&1
 # Axolotl does not error, it just sets device: cpu and grinds.
 export LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
+# Hugging Face downloads (base models, the semantic scorer's encoder) live in
+# the project area, not the 100 GB home quota. See the main README.
+export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
+
 uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is the CUDA compat lib on LD_LIBRARY_PATH?'"
 
 # Axolotl's --datasets flag only takes a string, not the list of dicts the KD

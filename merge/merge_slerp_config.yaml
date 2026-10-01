@@ -14,4 +14,4 @@ models:
 parameters:
   t: 0.5   # 0.0 = pure base_model, 1.0 = pure other model, 0.5 = midpoint
 tokenizer_source: union
-dtype: float16
+dtype: bfloat16

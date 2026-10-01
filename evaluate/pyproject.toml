@@ -1,7 +1,7 @@
 [project]
 name = "evaluate"
 version = "0.1.0"
-description = "Scripts to evaluate model performance as a classifier (evaluate.py) or a summariser (evaluate_summarisation.py) against a dataset"
+description = "Inspect AI tasks to evaluate models as a crime classifier (crime_task.py) or an XSum summariser (xsum_task.py)"
 readme = "README.md"
 authors = [
     { name = "Justin McInroy", email = "jmcinroy@turing.ac.uk" },
@@ -27,8 +27,24 @@ dependencies = [
     "tqdm",
 ]
 
+# Registers the hf-peft model provider with Inspect, so a plain
+# `inspect eval crime_task.py --model hf-peft/<base> -M adapter_path=<dir>`
+# finds it with no wrapper script. Inspect loads every `inspect_ai` entry point
+# when it meets a model API it does not know.
+[project.entry-points.inspect_ai]
+hf-peft = "hf_peft_provider"
+
+# Installs this directory (editable) so the entry point above exists. Only the
+# provider is a module of the package; the task files are still run by path.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["hf_peft_provider"]
+
 [tool.uv]
-package = false
+package = true
 
 # torch comes from PyPI unpinned, which on Isambard-AI (GH200, aarch64) means a
 # CUDA 13.0 (cu130) build. The node driver is 565.57.01 (CUDA 12.7), so that

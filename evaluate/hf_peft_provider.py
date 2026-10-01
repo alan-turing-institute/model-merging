@@ -2,13 +2,17 @@
 
 Inspect's built-in `hf` provider loads weights with `AutoModelForCausalLM` and
 has no notion of adapters - there is not one mention of peft, lora or adapter
-anywhere in it. Most of what this repo evaluates is base+adapter, so without
-this every adapter would have to be materialised into a full ~8.1GB model
-purely to be scored, which is most of a compute instance's disk per variant.
+anywhere in it. The crime models are base+adapter, so without this every
+adapter would have to be materialised into a full ~8.1GB model purely to be
+scored, which is most of a compute instance's disk per variant. (The XSum
+models are self-distilled full models and use the plain hf provider.)
 
 Registered as `hf-peft`, so a model reference looks like:
 
     hf-peft/google/gemma-3-4b-it        with model arg adapter_path=<path>
+
+Inspect finds it through the `inspect_ai` entry point in pyproject.toml, so no
+import is needed before `inspect eval`.
 
 Everything else - `batch_size`, `device`, `do_sample`, `model_path`, chat
 template handling - is inherited from the built-in provider unchanged, so this

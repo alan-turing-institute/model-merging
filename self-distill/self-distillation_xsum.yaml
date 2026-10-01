@@ -1,8 +1,8 @@
-# Self-distillation of gemma-3-1b-it on XSum one-sentence summaries.
+# Self-distillation of gemma-3-4b-it on XSum one-sentence summaries.
 # The student MUST be the same model as TEACHER_MODEL in
 # generate_teacher_logprobs_XSum.py: the KD loss gathers student logprobs at the
 # teacher's token ids, so a different tokeniser indexes out of bounds.
-base_model: google/gemma-3-1b-it
+base_model: google/gemma-3-4b-it
 # Use the tokeniser's own template so training tokenisation is byte-identical to
 # what the generation script assumed. (axolotl's built-in `gemma3` template is
 # equivalent, but tokenizer_default removes the chance of drift.)
@@ -82,7 +82,7 @@ eval_strategy: steps
 eval_steps: 50
 save_strategy: steps
 save_steps: 200
-# skip AdamW optimiser state in checkpoints: 7.4 GB -> ~2 GB each
+# skip AdamW optimiser state in checkpoints: ~43 GB -> ~9 GB each (4B)
 save_only_model: true
 
 torch_compile: true

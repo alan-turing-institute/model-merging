@@ -1,13 +1,5 @@
 """Semantic and grounding metrics, shared by both evaluators.
 
-One module rather than one copy per evaluator, deliberately. This repo already
-carries a metric that drifted: the crime prompt is written out in
-prepare_data.py and again in evaluate.py, and the two differ by four characters
-(single quotes against double), which means every crime model is trained on one
-wording and tested on another. A metric duplicated across
-evaluate_summarisation.py and xsum_task.py would drift the same way, and the
-symptom would be two arms that look comparable and are not.
-
 WHY THESE TWO, ON TOP OF ROUGE. ROUGE is lexical overlap, and on XSum that is a
 poor proxy in both directions.
 

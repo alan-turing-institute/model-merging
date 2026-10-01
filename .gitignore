@@ -1,7 +1,9 @@
-models/
-datasets/
+models
+datasets
 .venv
 __pycache__/
 *.pyc
 .uv-cache/
 evaluate/.azureml_models/
+evaluate/logs/
+*.egg-info/

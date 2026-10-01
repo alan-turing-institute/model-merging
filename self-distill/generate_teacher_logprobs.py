@@ -35,7 +35,7 @@
 # <output_dir>/kd_data_long and <output_dir>/kd_data_short.
 #
 # Usage:
-#   python generate_teacher_logprobs.py google/gemma-3-1b-it \
+#   python generate_teacher_logprobs.py google/gemma-3-4b-it \
 #       ../datasets/xsum_prompts ../datasets/xsum_kd
 #   python generate_teacher_logprobs.py path/to/teacher \
 #       ../datasets/xsum_splits/xsum_prompts_1_of_3 ../datasets/xsum_kd_1_of_3 --top-k 50

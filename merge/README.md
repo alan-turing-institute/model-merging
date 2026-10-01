@@ -30,7 +30,7 @@ models:                     # list of models to merge
 # parameters: insert parameters here
 tokenizer_source: union     # union of tokenizers from all models
 
-dtype: float16
+dtype: bfloat16
 }
 ```
 
