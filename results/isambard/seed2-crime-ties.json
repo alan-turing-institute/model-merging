@@ -1,0 +1,26 @@
+{
+  "model": "/home/u6ui/drmario.u6ui/model-merging/models/seed2-crime-ties",
+  "provenance": null,
+  "model_path": "/home/u6ui/drmario.u6ui/model-merging/models/seed2-crime-ties",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/crime_dataset/test",
+  "metrics": {
+    "accuracy": 0.9554317548746518,
+    "precision": 0.9422680412371134,
+    "recall": 0.9580712788259959,
+    "f1": 0.9501039501039501,
+    "confusion_matrix": [
+      [
+        572,
+        28
+      ],
+      [
+        20,
+        457
+      ]
+    ],
+    "num_examples": 1077,
+    "num_unparsed": 9
+  }
+}

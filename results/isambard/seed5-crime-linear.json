@@ -1,0 +1,26 @@
+{
+  "model": "/home/u6ui/drmario.u6ui/model-merging/models/seed5-crime-linear",
+  "provenance": null,
+  "model_path": "/home/u6ui/drmario.u6ui/model-merging/models/seed5-crime-linear",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/model-merging/../datasets/crime_dataset/test",
+  "metrics": {
+    "accuracy": 0.9665738161559888,
+    "precision": 0.9565217391304348,
+    "recall": 0.9685534591194969,
+    "f1": 0.9625,
+    "confusion_matrix": [
+      [
+        579,
+        21
+      ],
+      [
+        15,
+        462
+      ]
+    ],
+    "num_examples": 1077,
+    "num_unparsed": 0
+  }
+}
