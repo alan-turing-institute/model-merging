@@ -4,8 +4,11 @@ Evaluation runs as [Inspect AI](https://inspect.aisi.org.uk/) tasks:
 
 - `crime_task.py` - classifies Reddit posts as `crime` / `not_crime`. Reports accuracy, precision, recall, F1, confusion-matrix counts and the share of unparseable answers.
 - `xsum_task.py` - one-sentence XSum summaries. Reports ROUGE-1/2/L, embedding similarity to the reference (`semantic`), whether the names and numbers in the summary appear in the article (`entity_support`), and output length.
+- `billsum_task.py` - multi-sentence summaries of US Congressional bills. The same scores plus `rougeLsum`, which is what multi-sentence summarisation reports (`rougeL` takes the longest common subsequence over the whole string and so punishes covering the same provisions in a different order), and `unterminated`, the share of generations that stopped without terminal punctuation. Score on `../datasets/billsum/ca_test` with `-T dataset_path=... -T max_tokens=896` for the out-of-distribution check.
 
-Both build their prompts with the same function as the script that made the training data (`train/prepare_data.py` and `self-distill/prepare_data_XSum.py`), so training and evaluation wording cannot drift apart.
+Each builds its prompts with the same function as the script that made the training data (`train/prepare_data.py`, `self-distill/prepare_data_XSum.py`, `train/prepare_billsum_data.py`), so training and evaluation wording cannot drift apart.
+
+`billsum_curve.py` reads a directory of `.eval` logs and reports the BillSum data-scaling curve: each arm's scores against its training-set size, and a paired bootstrap between consecutive arms. See [`../train/README.md`](../train/README.md) for what the curve is for.
 
 Each run writes a `.eval` log to `logs/` with every sample, score and setting. Browse them with:
 
