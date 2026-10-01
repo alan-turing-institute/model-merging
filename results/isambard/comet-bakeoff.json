@@ -1,0 +1,55 @@
+{
+  "identity": {
+    "n": 200,
+    "comet": 0.9477461755275727,
+    "says_what_reference_says": true,
+    "faithful_to_article": true
+  },
+  "model_output": {
+    "n": 200,
+    "comet": 0.7342920111119747,
+    "says_what_reference_says": true,
+    "faithful_to_article": true
+  },
+  "paraphrase_nat": {
+    "n": 200,
+    "comet": 0.8268246734142304,
+    "says_what_reference_says": true,
+    "faithful_to_article": true
+  },
+  "entity_swap": {
+    "n": 193,
+    "comet": 0.8693118740857574,
+    "says_what_reference_says": false,
+    "faithful_to_article": false
+  },
+  "number_swap": {
+    "n": 51,
+    "comet": 0.9257682538500019,
+    "says_what_reference_says": false,
+    "faithful_to_article": false
+  },
+  "negation": {
+    "n": 173,
+    "comet": 0.869653845453538,
+    "says_what_reference_says": false,
+    "faithful_to_article": false
+  },
+  "word_shuffle": {
+    "n": 200,
+    "comet": 0.5067568725347519,
+    "says_what_reference_says": false,
+    "faithful_to_article": false
+  },
+  "unrelated": {
+    "n": 200,
+    "comet": 0.44572624027729035,
+    "says_what_reference_says": false,
+    "faithful_to_article": false
+  },
+  "separation": {
+    "preserved": 0.7805583422631026,
+    "broken": 0.723443417240268,
+    "gap": 0.05711492502283466
+  }
+}
