@@ -1,0 +1,108 @@
+{
+  "task": "billsum",
+  "metric": "rougeLsum",
+  "max_tokens": 1280,
+  "test_examples": 500,
+  "bootstrap_resamples": 2000,
+  "note": "one run per arm; seed spread unmeasured. On the crime task it was 0.004-0.005, so read any step below that as flat.",
+  "arms": [
+    {
+      "arm": "base",
+      "rows": 0,
+      "rougeLsum": 0.3529,
+      "rouge1": 0.3931,
+      "rouge2": 0.1556,
+      "semantic": 0.7914,
+      "entity_support": 0.7767,
+      "pred_words": 382.16,
+      "ref_words": 170.718,
+      "unterminated": 0.038
+    },
+    {
+      "arm": "eighth",
+      "rows": 500,
+      "rougeLsum": 0.457,
+      "rouge1": 0.5009,
+      "rouge2": 0.3278,
+      "semantic": 0.8422,
+      "entity_support": 0.8377,
+      "pred_words": 279.886,
+      "ref_words": 170.718,
+      "unterminated": 0.06
+    },
+    {
+      "arm": "quarter",
+      "rows": 1000,
+      "rougeLsum": 0.4845,
+      "rouge1": 0.5286,
+      "rouge2": 0.3522,
+      "semantic": 0.8516,
+      "entity_support": 0.8394,
+      "pred_words": 244.67,
+      "ref_words": 170.718,
+      "unterminated": 0.042
+    },
+    {
+      "arm": "half",
+      "rows": 2000,
+      "rougeLsum": 0.5012,
+      "rouge1": 0.5453,
+      "rouge2": 0.3728,
+      "semantic": 0.8588,
+      "entity_support": 0.8457,
+      "pred_words": 247.588,
+      "ref_words": 170.718,
+      "unterminated": 0.048
+    },
+    {
+      "arm": "full",
+      "rows": 4000,
+      "rougeLsum": 0.5073,
+      "rouge1": 0.551,
+      "rouge2": 0.3783,
+      "semantic": 0.8623,
+      "entity_support": 0.8375,
+      "pred_words": 256.624,
+      "ref_words": 170.718,
+      "unterminated": 0.058
+    }
+  ],
+  "steps": [
+    {
+      "from": "base",
+      "to": "eighth",
+      "delta": 0.1041,
+      "ci_low": 0.0906,
+      "ci_high": 0.1179,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "eighth",
+      "to": "quarter",
+      "delta": 0.0275,
+      "ci_low": 0.0143,
+      "ci_high": 0.0409,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "quarter",
+      "to": "half",
+      "delta": 0.0167,
+      "ci_low": 0.0041,
+      "ci_high": 0.0292,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "half",
+      "to": "full",
+      "delta": 0.0061,
+      "ci_low": -0.0043,
+      "ci_high": 0.0166,
+      "n": 500,
+      "flat": true
+    }
+  ]
+}
