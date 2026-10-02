@@ -70,12 +70,20 @@ test_datasets:
 # word-based cap that looked like 3,700 tokens actually produced examples of 6,948
 # and put 7% of the full arm over this window.
 #
-# THESE TWO NUMBERS ARE ONE DECISION: axolotl silently DROPS any example longer
-# than sequence_len rather than truncating it, so a document budget raised without
-# raising this would not shorten those examples, it would delete them - quietly
-# shrinking the arms and plotting the scaling curve against the wrong x-axis.
-# prepare_billsum_data.py verifies the fit on the rendered chat text and refuses
-# to finish if anything is over.
+# THESE TWO NUMBERS ARE ONE DECISION. Axolotl's default excess_length_strategy
+# is `drop`, so a document budget raised without raising sequence_len would not
+# shorten the over-long examples, it would delete them - shrinking the arms and
+# plotting the scaling curve against the wrong x-axis. It does say so, in one
+# INFO line ("Dropped N sequences outside valid range") among a long
+# preprocessing log, which is easy to miss and is not a failure.
+#
+# `raise` makes it a failure instead: axolotl stops with a ValueError naming the
+# offending length. Measured on 0.18.0, the three strategies on 10 rows with 3
+# over the window: default keeps 7 and logs the loss, raise exits nonzero,
+# truncate keeps all 10. prepare_billsum_data.py checks the same thing earlier,
+# on the login node; this is the backstop for a config edited without re-running
+# the prep script.
+excess_length_strategy: raise
 sequence_len: 4096
 
 # axolotl defaults this to os.cpu_count(), which on a GH200 node reports all 288

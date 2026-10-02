@@ -59,11 +59,24 @@ STUDENT_LONG = (
 # word-count estimate said was ~3,700 tokens, actually produced examples of up to
 # 6,948 - and 7% of the full arm was over sequence_len.
 #
-# THAT IS THE FAILURE THIS FILE EXISTS TO PREVENT. Axolotl SILENTLY DROPS any
-# example longer than sequence_len rather than truncating it, so those 7% would
-# not have become shortened training examples - they would have become no
-# training examples at all, and the scaling curve would have been plotted against
-# an x-axis that was simply wrong, with nothing in any log to say so.
+# THAT IS THE FAILURE THIS FILE EXISTS TO PREVENT. Axolotl's default
+# excess_length_strategy is `drop`, so an example longer than sequence_len does
+# not become a shortened training example - it becomes no training example at
+# all, and the arm quietly contains fewer rows than its name claims.
+#
+# Verified on axolotl 0.18.0 rather than assumed, because an earlier version of
+# this comment claimed the drop was SILENT and that was wrong. Feeding 10 rows
+# (7 short, 3 over a 512-token window) through `axolotl preprocess`:
+#
+#   default              7 of 10 rows kept, and it logs at INFO:
+#                        "Dropped 3 sequences outside valid range ([None, 512])"
+#   excess_length_strategy: raise      ValueError, job exits nonzero
+#   excess_length_strategy: truncate   10 of 10 kept, cut to 512
+#
+# So the loss IS reported, in one INFO line among a long preprocessing log. The
+# config now sets `raise`, which turns that line into a failed job. This script
+# is the earlier of the two checks: it fails on the login node during data prep,
+# before anything is queued, rather than inside an allocated GPU job.
 #
 # The budget below is derived from the measured distribution rather than
 # estimated: summaries are 214 tokens at the median and 1,101 at the observed

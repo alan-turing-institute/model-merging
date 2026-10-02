@@ -97,9 +97,10 @@ for key, split in (("datasets", "train"), ("test_datasets", "validation")):
         ds["path"] = path
 with open(dst, "w") as f:
     yaml.safe_dump(cfg, f, sort_keys=False)
-# Print the row count the arm ACTUALLY has. Axolotl silently drops examples
-# longer than sequence_len, so an arm can contain fewer rows than its name
-# claims; the scaling curve's x-axis is only trustworthy if this is checked.
+# Print the row count the arm ACTUALLY has. Axolotl's default
+# excess_length_strategy drops examples longer than sequence_len (the config
+# sets `raise` so that fails the job instead), so an arm could otherwise contain
+# fewer rows than its name claims, and the scaling curve's x-axis would be wrong.
 n = len(load_from_disk(os.path.join(dataset_dir, "train")))
 print(f"output_dir: {cfg['output_dir']}")
 print(f"train rows on disk: {n}")

@@ -84,11 +84,23 @@ a two-GPU-hour answer rather than a month-long one.
 
 Two numbers in [`billsum_gemma.yaml`](billsum_gemma.yaml) and
 [`prepare_billsum_data.py`](prepare_billsum_data.py) are one decision, not two:
-`sequence_len: 4096` and the 2900-**token** document budget. Axolotl **silently
-drops** any example longer than `sequence_len` rather than truncating it, so a
-budget raised without raising `sequence_len` does not shorten those examples — it
-deletes them, quietly shrinking the arms and plotting the curve against an x-axis
-that is wrong.
+`sequence_len: 4096` and the 2900-**token** document budget. Axolotl's default
+`excess_length_strategy` is `drop`, so a budget raised without raising
+`sequence_len` does not shorten the over-long examples — it deletes them,
+shrinking the arms and plotting the curve against an x-axis that is wrong.
+
+It does report the loss, in one `INFO` line among a long preprocessing log:
+`Dropped N sequences outside valid range`. Measured on axolotl 0.18.0 with 10
+rows of which 3 exceed the window:
+
+| `excess_length_strategy` | rows kept | outcome |
+| --- | --- | --- |
+| `drop` (default) | 7 of 10 | logs `Dropped 3 sequences outside valid range` |
+| `raise` | — | `ValueError`, job exits nonzero |
+| `truncate` | 10 of 10 | cut to `sequence_len` |
+
+The config sets **`raise`**, which turns an easily-missed log line into a failed
+job.
 
 Truncating by words instead of tokens is the obvious shortcut and it is a trap:
 legislative text runs **1.74 tokens per word** (measured with the Gemma tokenizer
