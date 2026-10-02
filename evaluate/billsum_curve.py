@@ -25,6 +25,7 @@ turns on it, run the arm again at a second seed.
 """
 
 import argparse
+import json
 import statistics
 from collections import defaultdict
 from pathlib import Path
@@ -109,6 +110,8 @@ def main():
     parser.add_argument("--metric", default=HEADLINE, help="metric to test the curve on")
     parser.add_argument("--train-size", type=int, default=4000,
                         help="rows in the full arm, for the x-axis")
+    parser.add_argument("--json", type=Path,
+                        help="also write the curve here, to commit alongside the .eval logs")
     args = parser.parse_args()
 
     logs = {}
@@ -186,6 +189,36 @@ def main():
               f"CI [{lo:+.4f}, {hi:+.4f}]  n={n}  {'flat' if flat else 'rising'}")
         if (lower, upper) == ("half", "full"):
             flat_at_top = flat
+
+    if args.json:
+        # The .eval logs are the record; this is the summary small enough to
+        # commit next to the other results and to read without Inspect.
+        payload = {
+            "task": "billsum",
+            "metric": args.metric,
+            "max_tokens": next(iter(set(caps.values()))),
+            "test_examples": len(next(iter(samples.values())).get(args.metric, {})),
+            "bootstrap_resamples": BOOTSTRAP_RESAMPLES,
+            "note": "one run per arm; seed spread unmeasured. On the crime task it "
+                    "was 0.004-0.005, so read any step below that as flat.",
+            "arms": [
+                {"arm": arm, "rows": int(FRACTION[arm] * args.train_size),
+                 **{m: round(statistics.fmean(samples[arm][m].values()), 4)
+                    for m in REPORTED if samples[arm].get(m)}}
+                for arm in present
+            ],
+            "steps": [
+                {"from": lower, "to": upper, "delta": round(r[0], 4),
+                 "ci_low": round(r[1], 4), "ci_high": round(r[2], 4), "n": r[3],
+                 "flat": r[1] <= 0 <= r[2]}
+                for lower, upper in zip(present, present[1:])
+                if (r := paired_bootstrap(samples[lower].get(args.metric, {}),
+                                          samples[upper].get(args.metric, {}))) is not None
+            ],
+        }
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(payload, indent=2) + "\n")
+        print(f"\nwrote {args.json}")
 
     if flat_at_top is True:
         print("\nThe top step is flat: doubling the training data from half to full "
