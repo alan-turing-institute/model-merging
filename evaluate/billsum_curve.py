@@ -46,6 +46,10 @@ FRACTION = {"base": 0.0, "eighth": 0.125, "quarter": 0.25, "half": 0.5, "full": 
 
 BOOTSTRAP_RESAMPLES = 2000
 
+# Expert-draw standard deviation measured on the crime task across five seeds.
+# A gap smaller than this cannot be attributed to the method rather than the draw.
+SEED_SPREAD = 0.005
+
 # Matches billsum_task.py's default, for logs written before the cap was a task arg.
 DEFAULT_MAX_TOKENS = 640
 
@@ -220,11 +224,44 @@ def main():
         args.json.write_text(json.dumps(payload, indent=2) + "\n")
         print(f"\nwrote {args.json}")
 
+    # THE QUESTION THE CURVE IS ACTUALLY FOR. A merging experiment reports the
+    # recovery fraction R = (model - best shard) / (full - best shard), and that
+    # denominator is just the gap between the full-data arm and one shard. An
+    # n-way split of the training set puts each shard at 1/n of the data, which
+    # is a point this curve already measures - so the curve says, before any
+    # expert is trained, whether an n-way experiment has a denominator big
+    # enough to divide by.
+    SHARDS = {2: "half", 4: "quarter", 8: "eighth"}
+    if "full" in samples:
+        print("\nrecovery-fraction denominator (full - shard), by shard count:")
+        for n, arm in SHARDS.items():
+            if arm not in samples:
+                continue
+            result = paired_bootstrap(samples[arm].get(args.metric, {}),
+                                      samples["full"].get(args.metric, {}))
+            if result is None:
+                continue
+            point, lo, hi, _ = result
+            # Usable when the interval clears zero AND the gap clears the
+            # seed-to-seed spread measured on the crime task, below which a
+            # difference cannot be attributed to the method rather than the draw.
+            verdict = ("unusable - denominator is noise" if lo <= 0
+                       else "marginal" if point < 2 * SEED_SPREAD
+                       else "usable")
+            print(f"  {n}-way (each expert sees {arm}'s data): {point:+.4f}  "
+                  f"CI [{lo:+.4f}, {hi:+.4f}]  {verdict}")
+
     if flat_at_top is True:
-        print("\nThe top step is flat: doubling the training data from half to full "
-              "did not move the score.\nBillSum is saturated at this scale, and a "
-              "merging experiment here would be measuring noise,\njust as XSum was. "
-              "Either raise --train-size and re-run, or look elsewhere.")
+        print(
+            "\nThe top step is flat: doubling the training data from half to full did not\n"
+            "move the score. That is NOT the XSum failure - on XSum nothing separated at all,\n"
+            "whereas here base to full is a large, clearly resolved gap. What has flattened\n"
+            "is the data axis past the half arm.\n\n"
+            "The consequence is specific: a 2-way split puts each expert on the half arm, so\n"
+            "the recovery fraction's denominator is the flat step above and R is undefined.\n"
+            "Read the shard table - split into more shards, so each expert sits further down\n"
+            "the curve where it is still steep, or raise --train-size so a 2-way shard does."
+        )
     elif flat_at_top is False:
         print("\nThe top step is rising: the score is still improving at the full "
               "training set.\nBillSum has headroom at this scale, so differences "
