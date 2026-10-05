@@ -1,0 +1,114 @@
+{
+  "configurations": [
+    {
+      "label": "base",
+      "params": 4300079472,
+      "params_billions": 4.3001,
+      "peak_gib": 8.181,
+      "short_prompts_crime": {
+        "tokens_per_s_median": 21.84,
+        "tokens_per_s_runs": [
+          9.35,
+          21.84,
+          22.21
+        ],
+        "spread": 12.86
+      },
+      "long_prompts_xsum": {
+        "tokens_per_s_median": 21.63,
+        "tokens_per_s_runs": [
+          3.72,
+          21.63,
+          22.08
+        ],
+        "spread": 18.36
+      }
+    },
+    {
+      "label": "merged_crosstask",
+      "params": 4299918192,
+      "params_billions": 4.2999,
+      "peak_gib": 8.181,
+      "short_prompts_crime": {
+        "tokens_per_s_median": 22.14,
+        "tokens_per_s_runs": [
+          21.25,
+          22.14,
+          22.7
+        ],
+        "spread": 1.45
+      },
+      "long_prompts_xsum": {
+        "tokens_per_s_median": 21.66,
+        "tokens_per_s_runs": [
+          18.74,
+          21.66,
+          22.21
+        ],
+        "spread": 3.47
+      }
+    },
+    {
+      "label": "base+1_adapter",
+      "params": 4311978352,
+      "params_billions": 4.312,
+      "peak_gib": 8.229,
+      "short_prompts_crime": {
+        "tokens_per_s_median": 15.28,
+        "tokens_per_s_runs": [
+          15.19,
+          15.28,
+          15.37
+        ],
+        "spread": 0.18
+      },
+      "long_prompts_xsum": {
+        "tokens_per_s_median": 15.2,
+        "tokens_per_s_runs": [
+          9.91,
+          15.2,
+          15.25
+        ],
+        "spread": 5.34
+      }
+    },
+    {
+      "label": "base+2_adapters_routed",
+      "params": 4323877232,
+      "params_billions": 4.3239,
+      "peak_gib": 8.268,
+      "short_prompts_crime": {
+        "tokens_per_s_median": 15.1,
+        "tokens_per_s_runs": [
+          15.02,
+          15.1,
+          15.48
+        ],
+        "spread": 0.46
+      },
+      "long_prompts_xsum": {
+        "tokens_per_s_median": 15.18,
+        "tokens_per_s_runs": [
+          14.98,
+          15.18,
+          15.49
+        ],
+        "spread": 0.51
+      }
+    }
+  ],
+  "merged_vs_base_params": -161280,
+  "routed_vs_base_params": 23797760,
+  "short_prompts_crime_tokens_per_s": {
+    "base": 21.84,
+    "merged_crosstask": 22.14,
+    "base+1_adapter": 15.28,
+    "base+2_adapters_routed": 15.1
+  },
+  "long_prompts_xsum_tokens_per_s": {
+    "base": 21.63,
+    "merged_crosstask": 21.66,
+    "base+1_adapter": 15.2,
+    "base+2_adapters_routed": 15.18
+  }
+}
