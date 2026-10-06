@@ -1,0 +1,30 @@
+[project]
+name = "metrics"
+version = "0.1.0"
+description = "Learned evaluation metrics whose dependencies conflict with the evaluation project"
+readme = "README.md"
+requires-python = ">=3.12"
+# ISOLATED ON PURPOSE. unbabel-comet pulls pytorch-lightning and pins
+# transformers back to 4.x; installing it into evaluate/ downgraded the library
+# that every result in this programme was measured under. A metric is not worth
+# changing the apparatus for, so it gets its own environment and its own job.
+dependencies = [
+    "unbabel-comet",
+    "torch",
+]
+
+[tool.uv]
+package = false
+
+# Same reasoning as train/ and evaluate/: PyPI aarch64 wheels are CUDA 13.0 and
+# Isambard runs a 12.7 driver, so a default resolve gives a torch that reports
+# cuda.is_available() False inside a GPU allocation.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'aarch64'" },
+]
