@@ -43,22 +43,22 @@ First you must ensure that the CUDA driver is properly pointing to the latest ve
 export LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat
 ```
 
-For self-distillation, we need a teacher and a student.  First, we train the teacher with a strict prompt and a system prompt detailing the summarisation task.
+For self-distillation, we need a teacher and a student.  First, we train the teacher with a strict prompt and a system prompt detailing the summarisation task.  We provide an sbatch script as a wrapper to `generate_teacher_longprobs.py`.
 
 ```bash
-uv run python generate_teacher_logprobs.py google/gemma-3-4b-it \
+sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
   $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts \
   $PROJECTDIR/$USER/model-merging/datasets \
-  --prefix xsum_kd_data
+  gemma3-4b-xsum_kd_data
 ```
 
-The arguments are the teacher model (a Hugging Face address or a local folder), the prompts dataset and the output directory. One dataset is written per student prompt, named `<prefix>_long` and `<prefix>_short`; with `--prefix xsum_kd_data` and `../datasets` as above, these are the paths the Axolotl configs read from. For a split dataset, run it once per piece, e.g.
+The arguments are the teacher model (a Hugging Face address or a local folder), the prompts dataset, the output directory and optionally a prefix `<prefix>`. One dataset is written per student prompt, named `<prefix>_long` and `<prefix>_short` into the output directory. For a split dataset, run it once per piece, e.g.
 
 ```bash
-uv run python generate_teacher_logprobs.py google/gemma-3-4b-it \
+sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
   $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts_1_of_3 \
   $PROJECTDIR/$USER/model-merging/datasets \
-  --prefix xsum_kd_data_1_of_3
+  gemma3-4b-xsum_kd_data_1_of_3
 ```
 
 Optional arguments (see `--help`): `--top-k` (default 20), `--temperature` (0, i.e. greedy), `--max-tokens` (128), `--max-seq-len` (4096, which must match `sequence_len` in the Axolotl config), `--seed`, `--prefix`, `--teacher-field` and `--student-fields` (for other column names), `--tensor-parallel-size`, `--gpu-memory-utilization` and `--no-enforce-eager`.
