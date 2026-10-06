@@ -31,6 +31,7 @@ datasets/xsum_prompts/test works as it is, as does any XSum split saved with
 
 import importlib.util
 import math
+import re
 from pathlib import Path
 
 from datasets import load_from_disk
@@ -71,9 +72,122 @@ def load_convert_to_prompt():
     return module.convert_to_prompt
 
 
+# --- format checks ----------------------------------------------------------
+#
+# The self-distillation target is one sentence of 20-25 words with no preamble.
+# These measure each of those directly, plus the word repetition that the KD
+# alignment bug produced (self-distill/KD_ALIGNMENT_BUG.md).
+
+TARGET_WORDS = (20, 25)
+
+# Words that end in a full stop without ending a sentence. Compared lower-case,
+# with the full stop removed.
+_ABBREVIATIONS = {
+    "mr", "mrs", "ms", "dr", "prof", "st", "gov", "sen", "rep", "gen", "col",
+    "lt", "sgt", "rev", "sir", "jr", "sr", "co", "corp", "inc", "ltd", "plc",
+    "no", "vs", "etc", "approx", "dept", "est", "fig", "jan", "feb", "mar",
+    "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+}
+# A single letter or dotted initials such as "J" or "U.S" (the final full stop
+# already removed).
+_INITIALS = re.compile(r"^(?:[A-Za-z]\.)*[A-Za-z]$")
+_CLOSING = "\"'”’)]"
+
+
 def count_sentences(text: str) -> int:
-    """Rough sentence count - enough to tell one sentence from a paragraph."""
-    return sum(text.count(mark) for mark in ".!?") or (1 if text else 0)
+    """Number of sentences, not fooled by abbreviations or decimals.
+
+    A sentence ends at a word ending in . ! or ? (before any closing quote or
+    bracket), unless that word is an abbreviation or an initial. Decimals such
+    as "4.2" never end in a full stop, so they are not counted. A final run of
+    words with no closing punctuation - a truncated generation - counts as one
+    more sentence. A sentence ending in "U.S." is under-counted; that is rare
+    and errs towards one sentence, not away from it.
+    """
+    count = 0
+    open_sentence = False
+    for word in text.split():
+        stripped = word.rstrip(_CLOSING)
+        open_sentence = True
+        if not stripped or stripped[-1] not in ".!?":
+            continue
+        if stripped[-1] == ".":
+            body = stripped.rstrip(".")
+            if body.lower() in _ABBREVIATIONS or _INITIALS.match(body):
+                continue
+        count += 1
+        open_sentence = False
+    return count + open_sentence
+
+
+# Openings that introduce a summary rather than being one: "Here's a
+# one-sentence summary of the BBC News article:", "Sure!", "**Summary:**".
+_PREAMBLE_OPENING = re.compile(
+    r"^\W*(?:here(?:'|’)?s\b|here is\b|sure\b|okay\b|certainly\b|of course\b|"
+    r"summary\b|in one sentence\b|(?:my|a|the) (?:one[- ]sentence )?summary\b)",
+    re.IGNORECASE,
+)
+# Any first line ending in a colon with more text after it - the shape every
+# preamble in the base models' outputs takes, whatever its wording.
+_PREAMBLE_LINE = re.compile(r"^[^\n]*:[*\s]*\n\s*\S")
+
+
+# Openings that talk about the article instead of summarising it: "This BBC
+# News article highlights...", "The article details...", "According to the BBC
+# News article, ...". Only "article"-type nouns, and only followed by a
+# reporting verb (or after "according to"), so "A UN report highlights..." or
+# "A BBC Spotlight investigation revealed..." - real reports, real BBC
+# programmes - are not caught.
+_META_OPENING = re.compile(
+    r"^\W*(?P<according>according to |in )?(?:this|the) "
+    r"(?P<noun>(?:bbc(?: news)?(?: online)? |news |online )?(?:article|piece|text|passage))"
+    r"(?(according)\b|,? (?:details|describes|highlights|reports|reflects|"
+    r"introduces|promotes|summari[sz]es|offers|asks|discusses|explains|examines|"
+    r"covers|focuses|reveals|tells|looks|explores|outlines|presents|provides|"
+    r"features|announces|argues|states|says|notes|recounts|celebrates|profiles|"
+    r"is|was)\b)",
+    re.IGNORECASE,
+)
+
+
+def talks_about_article(text: str, document: str) -> bool:
+    """Whether the output opens by describing the article rather than its news.
+
+    Not counted when the source itself uses the same phrase - an article about
+    a BBC News article can be summarised as "The BBC News article ..." - unless
+    the phrase is only followed by a number there, as in "Article 50".
+    """
+    match = _META_OPENING.match(text)
+    if not match:
+        return False
+    noun = r"\s+".join(map(re.escape, match["noun"].split()))
+    return not re.search(rf"\b{noun}\b(?!\s*\d)", document, re.IGNORECASE)
+
+
+def has_preamble(text: str, document: str = "") -> bool:
+    return bool(
+        _PREAMBLE_OPENING.match(text)
+        or _PREAMBLE_LINE.match(text)
+        or talks_about_article(text, document)
+    )
+
+
+# The same word twice in a row, separated only by whitespace, so "very, very"
+# is not caught but "legal legal" is.
+_REPEATED_WORD = re.compile(r"\b(\w+)\s+\1\b", re.IGNORECASE)
+# The same word four or more times in a row: "family family family family".
+_REPEATED_RUN = re.compile(r"\b(\w+)(?:\s+\1\b){3,}", re.IGNORECASE)
+
+
+def repeated_words(prediction: str, document: str) -> list[str]:
+    """Immediately repeated words in the prediction that the article does not
+    repeat itself, so a name such as "Tian Tian" is not counted."""
+    haystack = " ".join(document.split()).lower()
+    return [
+        m.group(0)
+        for m in _REPEATED_WORD.finditer(prediction)
+        if " ".join(m.group(0).split()).lower() not in haystack
+    ]
 
 
 def to_chat(messages):
@@ -107,15 +221,10 @@ def xsum_samples(dataset_path, prompt_variant, limit=None,
         "rouge1": [mean(), stderr()],
         "rouge2": [mean(), stderr()],
         "rougeL": [mean(), stderr()],
-        # Not quality measures - drift detectors. A merged model sliding back
-        # towards base behaviour, or one task's output format leaking into
-        # another, moves these before it moves ROUGE.
-        "pred_words": [mean()],
-        "pred_sentences": [mean()],
     }
 )
 def rouge():
-    """Per-sample ROUGE F1 against the reference summary, plus length stats."""
+    """Per-sample ROUGE F1 against the reference summary."""
     scoring = rouge_scoring.RougeScorer(ROUGE_TYPES, use_stemmer=True)
 
     async def score(state: TaskState, target: Target) -> Score:
@@ -123,14 +232,61 @@ def rouge():
         reference = target.text
         scores = scoring.score(reference, prediction)
         value = {rouge_type: scores[rouge_type].fmeasure for rouge_type in ROUGE_TYPES}
-        value["pred_words"] = float(len(prediction.split()))
-        value["pred_sentences"] = float(count_sentences(prediction))
         return Score(
             value=value,
             answer=prediction,
             # Surfaced in `inspect view`, so a sample that looks wrong can be
             # read against its reference without leaving the viewer.
             explanation=f"reference: {reference}",
+        )
+
+    return score
+
+
+@scorer(
+    metrics={
+        # Not quality measures - drift detectors. A merged model sliding back
+        # towards base behaviour, or one task's output format leaking into
+        # another, moves these before it moves ROUGE.
+        "pred_words": [mean()],
+        "pred_sentences": [mean()],
+        # Shares of outputs, so the mean is the fraction meeting each check.
+        "in_word_range": [mean(), stderr()],
+        "one_sentence": [mean(), stderr()],
+        "preamble": [mean(), stderr()],
+        "repeated_word": [mean(), stderr()],
+        "repeated_run": [mean()],
+    }
+)
+def format_checks():
+    """Whether each output has the trained format: one sentence, 20-25 words,
+    no preamble, no repeated words.
+
+    Counted on the whole completion, preamble included, since that is what the
+    model produced.
+    """
+    low, high = TARGET_WORDS
+
+    async def score(state: TaskState, target: Target) -> Score:
+        prediction = state.output.completion.strip()
+        words = len(prediction.split())
+        sentences = count_sentences(prediction)
+        document = (state.metadata or {}).get("document", "")
+        repeats = repeated_words(prediction, document)
+        value = {
+            "pred_words": float(words),
+            "pred_sentences": float(sentences),
+            "in_word_range": float(low <= words <= high),
+            "one_sentence": float(sentences == 1),
+            "preamble": float(has_preamble(prediction, document)),
+            "repeated_word": float(bool(repeats)),
+            "repeated_run": float(bool(_REPEATED_RUN.search(prediction))),
+        }
+        return Score(
+            value=value,
+            answer=prediction,
+            explanation=f"{words} words, {sentences} sentences"
+            + (f" | repeated: {', '.join(repeats)}" if repeats else ""),
         )
 
     return score
@@ -206,7 +362,7 @@ def xsum(
             name="xsum",
         ),
         solver=generate(),
-        scorer=[rouge(), semantic()],
+        scorer=[rouge(), format_checks(), semantic()],
         # The models were trained earlier with a teacher which had 128 tokens.
         # XSum references average ~21 words; 128 tokens leaves room for a
         # chattier model to show itself without truncating a real sentence.
@@ -215,6 +371,9 @@ def xsum(
         config=GenerateConfig(max_tokens=128),
         # 1: prompt built from prepare_data_XSum.py by prompt_variant, instead
         # of read from a pre-rendered `prompt` column.
-        version=1,
+        # 2: format_checks scorer (word range, one sentence, preamble,
+        # repetition); pred_words/pred_sentences moved into it from rouge, and
+        # sentences no longer counted at every full stop.
+        version=2,
         metadata={"prompt_variant": prompt_variant},
     )
