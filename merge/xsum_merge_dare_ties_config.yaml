@@ -1,0 +1,24 @@
+# DARE + TIES — https://arxiv.org/abs/2311.03099
+# DARE randomly drops a large fraction of each delta (keeping only `density`)
+# and rescales the survivors to compensate, then applies TIES' sign-majority
+# consensus on what's left. Tests whether most of each half's fine-tuning
+# delta is redundant/idiosyncratic to that half and can be dropped without
+# hurting held-out summary quality — a robustness/overfitting probe that plain
+# `linear`/`task_arithmetic` can't tell you anything about.
+#
+# `density` here is deliberately much lower than in xsum_merge_ties_config.yaml
+# (that's the "DARE" part — try dropping even more, e.g. 0.1, as a further
+# experiment).
+merge_method: dare_ties
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "../models/gemma3_4b_xsum_1_of_2_short"
+    parameters:
+      weight: 0.5
+      density: 0.3
+  - model: "../models/gemma3_4b_xsum_2_of_2_short"
+    parameters:
+      weight: 0.5
+      density: 0.3
+tokenizer_source: union
+dtype: bfloat16

@@ -41,7 +41,7 @@ You should edit this file to describe the merge you want to complete.
 
 `Mergekit` can also do more complicated multi-stage merging workflows.  These aren't covered by these scripts, but details can be found in the [multi-stage section in mergekit](https://github.com/arcee-ai/mergekit/tree/main#multi-stage-merging-mergekit-multi).
 
-We give some examples of mergekit yaml files for different merging methods including [linear](merge_linear_config.yaml), [merge_task_arithmetic_config.yaml](merge_task_arithmetic_config.yaml), [merge_ties_config.yaml](merge_ties_config.yaml), [merge_dare_ties_config.yaml](merge_dare_ties_config.yaml), [merge_model_stock_config.yaml](merge_model_stock_config.yaml), [merge_slerp_config.yaml](merge_slerp_config.yaml), and [merge_arcee_fusion_config.yaml](merge_arcee_fusion_config.yaml).
+We give some examples of mergekit yaml files for different merging methods including [linear](crime_merge_linear_config.yaml), [crime_merge_task_arithmetic_config.yaml](crime_merge_task_arithmetic_config.yaml), [crime_merge_ties_config.yaml](crime_merge_ties_config.yaml), [crime_merge_dare_ties_config.yaml](crime_merge_dare_ties_config.yaml), [crime_merge_model_stock_config.yaml](crime_merge_model_stock_config.yaml), [crime_merge_slerp_config.yaml](crime_merge_slerp_config.yaml), and [crime_merge_arcee_fusion_config.yaml](crime_merge_arcee_fusion_config.yaml).
 
 To merge two complete models (not base model + LoRA adapter), then run
 
@@ -52,7 +52,7 @@ uv run mergekit-yaml <config yaml> <output directory>   --cuda --lazy-unpickle -
 If your models are listed using the `base_model+adapter` syntax, then mergekit needs a place to materialize each `base_model+adapter` combination before merging.  To do this you must also pass a `--lora-merge-cache` path.
 
 ```bash
-uv run mergekit-yaml merge_linear_config.yaml ../models/gemma3-crime_merged-linear --cuda --lazy-unpickle --allow-crimes --lora-merge-cache ../models/.lora_merge_cache
+uv run mergekit-yaml crime_merge_linear_config.yaml ../models/gemma3-crime_merged-linear --cuda --lazy-unpickle --allow-crimes --lora-merge-cache ../models/.lora_merge_cache
 ```
 
 ## Possible problems
@@ -60,7 +60,7 @@ uv run mergekit-yaml merge_linear_config.yaml ../models/gemma3-crime_merged-line
 If the compute has GPUs with a smaller amount of VRAM, eg 16Gb, then this might max out, e.g. with TIES and DARE-TIES.  In this case, remove the `cuda` flag and instead use the system RAM.  Using CPUs, you can add the `-j` flag, to parallelise across several nodes.
 
 ```bash
-uv run mergekit-yaml merge_ties_config.yaml  ../models/gemma3-crime-merged-ties --lazy-unpickle --allow-crimes --lora-merge-cache ../models/.lora_merge_cache -j 8
+uv run mergekit-yaml crime_merge_ties_config.yaml  ../models/gemma3-crime-merged-ties --lazy-unpickle --allow-crimes --lora-merge-cache ../models/.lora_merge_cache -j 8
 ```
 
 `task_arithmetic`/`ties`/`dare_ties`/`model_stock` also need `base_model: google/gemma-3-4b-it` in the config (to compute each adapter's weight delta) — this downloads from the Hugging Face hub automatically the first time, same as training.

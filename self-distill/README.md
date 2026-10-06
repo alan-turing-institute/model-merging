@@ -49,16 +49,16 @@ For self-distillation, we need a teacher and a student.  First, we train the tea
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
   $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts \
   $PROJECTDIR/$USER/model-merging/datasets \
-  gemma3-4b-xsum_kd_data
+  gemma3_4b_xsum_kd_data
 ```
 
 The arguments are the teacher model (a Hugging Face address or a local folder), the prompts dataset, the output directory and optionally a prefix `<prefix>`. One dataset is written per student prompt, named `<prefix>_long` and `<prefix>_short` into the output directory. For a split dataset, run it once per piece, e.g.
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
-  $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts_1_of_3 \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts_1_of_2 \
   $PROJECTDIR/$USER/model-merging/datasets \
-  gemma3-4b-xsum_kd_data_1_of_3
+  gemma3_4b_xsum_kd_data_1_of_2
 ```
 
 Optional arguments (see `--help`): `--top-k` (default 20), `--temperature` (0, i.e. greedy), `--max-tokens` (128), `--max-seq-len` (4096, which must match `sequence_len` in the Axolotl config), `--seed`, `--prefix`, `--teacher-field` and `--student-fields` (for other column names), `--tensor-parallel-size`, `--gpu-memory-utilization` and `--no-enforce-eager`.

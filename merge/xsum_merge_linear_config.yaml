@@ -1,0 +1,16 @@
+# config.yaml — a minimal linear merge of two self-distilled XSum students (full models, not LoRA adapters).
+merge_method: linear        # linear merge of two models, weighted by the "weight" parameter below
+
+models:                     # list of models to merge
+  - model: "../models/gemma3_4b_xsum_1_of_2_short"
+    parameters:
+      weight: 0.5
+
+  - model: "../models/gemma3_4b_xsum_2_of_2_short"
+    parameters:
+      weight: 0.5
+
+# parameters: insert parameters here
+tokenizer_source: union     # union of tokenizers from all models
+
+dtype: bfloat16

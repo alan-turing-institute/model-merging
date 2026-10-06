@@ -1,0 +1,15 @@
+# Model Stock — https://arxiv.org/abs/2403.19522
+# Estimates, from the geometry between the base model and each fine-tune
+# (the angle between their weight deltas), the interpolation point that
+# approximates what averaging many independent fine-tunes of the same task
+# would converge to.
+#
+# Note mergekit's implementation requires the base model plus at least two
+# other models (it needs 3+ tensors to estimate the angle)
+merge_method: model_stock
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "../models/gemma3_4b_xsum_1_of_2_short"
+  - model: "../models/gemma3_4b_xsum_2_of_2_short"
+tokenizer_source: union
+dtype: bfloat16
