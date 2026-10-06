@@ -16,15 +16,12 @@ dependencies = [
 [tool.uv]
 package = false
 
-# Same reasoning as train/ and evaluate/: PyPI aarch64 wheels are CUDA 13.0 and
-# Isambard runs a 12.7 driver, so a default resolve gives a torch that reports
-# cuda.is_available() False inside a GPU allocation.
-[[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
-explicit = true
-
-[tool.uv.sources]
-torch = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'aarch64'" },
-]
+# torch is left unpinned, as in train/ and evaluate/, so that on Isambard-AI
+# (GH200, aarch64) it resolves to the same CUDA 13.0 build the rest of the repo
+# uses. A cu128 pin here would have meant scoring under a different CUDA than
+# every other measurement in the programme, which is exactly the kind of
+# difference that makes numbers quietly non-comparable.
+#
+# Since October 2026 the node driver (580.173) runs cu130 natively; the job
+# script strips any forward-compat libcuda from LD_LIBRARY_PATH (it is older
+# than the driver and breaks the GPU) and asserts torch.cuda.is_available().

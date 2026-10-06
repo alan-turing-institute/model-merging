@@ -13,6 +13,8 @@ dependencies = [
     "transformers",
     "datasets",
     "torch",
+    # xsum_faithfulness.py; roberta-large scorer with baseline rescaling
+    "bert-score",
     "accelerate",
     "peft",
     "scikit-learn",
