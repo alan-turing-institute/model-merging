@@ -37,12 +37,6 @@ which with split your dataset into `n` peices and saves them in the output direc
 
 #### Teacher training
 
-First you must ensure that the CUDA driver is properly pointing to the latest version (see below for details).
-
-```bash
-export LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat
-```
-
 For self-distillation, we need a teacher and a student.  First, we train the teacher with a strict prompt and a system prompt detailing the summarisation task.  We provide an sbatch script as a wrapper to `generate_teacher_longprobs.py`.
 
 ```bash
@@ -63,7 +57,7 @@ sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
 
 Optional arguments (see `--help`): `--top-k` (default 20), `--temperature` (0, i.e. greedy), `--max-tokens` (128), `--max-seq-len` (4096, which must match `sequence_len` in the Axolotl config), `--seed`, `--prefix`, `--teacher-field` and `--student-fields` (for other column names), `--tensor-parallel-size`, `--gpu-memory-utilization` and `--no-enforce-eager`.
 
-This needs a GPU and the forward-compatibility driver on `LD_LIBRARY_PATH` (see [Isambard technicalities](#isambard-technicalities)). Note that vLLM is not exactly deterministic between runs, even when greedy: rerunning can give a slightly different generation for a few rows.
+This needs a GPU. Note that vLLM is not exactly deterministic between runs, even when greedy: rerunning can give a slightly different generation for a few rows.
 
 We record the one sentence summarisation together with the `logprobs`.  This is a sequence of probability distributions, one for each token in the output.
 
@@ -86,19 +80,6 @@ This takes as parameters:
 - a yaml config file for the Axolotl training using the kd plugin
 - an output directory for the model
 - optionally a dataset directory.  If the dataset directory is given, the script writes a new yaml idenitcal to the one given, except for the dataset location.
-
-### Isambard technicalities
-
-Currently on Isambard, CUDA version 12.7 is used (driver 565.57.01).  However, Axolotl requires CUDA version 13, so we have used a [forward-compatibility driver](https://docs.isambard.ac.uk/user-documentation/guides/gpus_and_cuda/#cuda-forward-compatibility).  This is installed in `$LIBRARYDIR/shared` and is accessable to everyone in TIRE on Isambard.  To enable it you must set `LD_LIBRARY_PATH` in **every** shell and **every** job script (check this):
-
-```bash
-CUDA13=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0
-export LD_LIBRARY_PATH=$CUDA13/compat${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}     # This is what is required
-export CUDA_HOME=$CUDA13                                                       # This adds the CUDA toolkit and may be useful later
-export PATH=$CUDA13/bin:$PATH
-```
-
-If you don't do this, axolotl will revert to CPUs and hence take a long time.  Elsewhere you may get odd errors which you might well attribute to something else.
 
 ### The alignment problem in the kd plugin
 

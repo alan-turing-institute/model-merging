@@ -19,22 +19,24 @@ lora_qkv_kernel: false
 lora_o_kernel: false
 
 chat_template: gemma
+eot_tokens:
+  - "<end_of_turn>"
 
 datasets:
-  - path: ../datasets/crime_dataset1/train
+  - path: ../datasets/crime_dataset_1_of_2/train
     type: chat_template
 
 test_datasets:
-  - path: ../datasets/crime_dataset1/validation
+  - path: ../datasets/crime_dataset_1_of_2/validation
     type: chat_template
 
 sequence_len: 2048
 
-micro_batch_size: 4
-gradient_accumulation_steps: 4
+micro_batch_size: 16
+gradient_accumulation_steps: 1
 
 num_epochs: 3
 
 learning_rate: 2e-4
 
-output_dir: ../models/gemma3-crime-1-of-2-lora
+output_dir: ../models/gemma3-4b-crime-1-of-2-lora

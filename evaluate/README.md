@@ -35,15 +35,6 @@ The script always uses greedy decoding and loads the weights in bfloat16, so eve
 
 The `semantic` score needs `sentence-transformers/all-MiniLM-L6-v2` in the Hugging Face cache. Compute nodes have no outbound network, so download it once from a login node. If it is missing, `semantic` is reported as 0.0 with only a printed warning.
 
-### Isambard Cuda technical details
-
-Isambard-AI's GPU driver (565.57.01) only supports up to CUDA 12.7, but the torch that `uv sync` installs here is built for CUDA 13.0. `evaluate.sbatch` puts the CUDA 13.0 [forward-compatibility driver](https://docs.isambard.ac.uk/user-documentation/guides/gpus_and_cuda/#cuda-forward-compatibility) ahead of the system one. To run anything by hand, you need to have set it in your shell first:
-
-```bash
-export LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-```
-
-Without it nothing errors: `torch.cuda.is_available()` is `False` and the model quietly runs on the CPU, which is much slower.
 
 ## Running on Azure
 

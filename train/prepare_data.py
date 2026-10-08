@@ -65,51 +65,6 @@ def main():
     dataset = dataset.map(convert)
     dataset.save_to_disk("../datasets/crime_dataset")
 
-    # Now split the training and validation datasets into two
-
-    # If we need to load the dataset from disk
-    # from datasets import load_from_disk
-    # dataset = load_from_disk("datasets/crime_dataset")
-
-    train = dataset["train"]
-    validation = dataset["validation"]
-
-    # Split the training set into two halves
-    train_split = train.train_test_split(
-        test_size=0.5,
-        seed=42,
-        stratify_by_column="label"
-    )
-
-    train1 = train_split["train"]
-    train2 = train_split["test"]
-
-    # Split the validation sets into two halves
-    val_split = validation.train_test_split(
-        test_size=0.5,
-        seed=42,
-        stratify_by_column="label"
-    )
-
-    validation1 = val_split["train"]
-    validation2 = val_split["test"]
-
-    dataset1 = DatasetDict({
-        "train": train1,
-        "validation": validation1
-    })
-
-    dataset2 = DatasetDict({
-        "train": train2,
-        "validation": validation2
-    })
-
-    # Map the conversion function to the dataset and save it to disk
-    # dataset = dataset.map(convert)
-
-    dataset1.save_to_disk("../datasets/crime_dataset1")
-    dataset2.save_to_disk("../datasets/crime_dataset2")
-
 
 if __name__ == "__main__":
     main()

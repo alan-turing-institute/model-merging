@@ -61,15 +61,18 @@ else
   PROVIDER=hf
 fi
 
-# Required in every job script on Isambard-AI. Without it the cu130 torch build
-# cannot see the GPU and Inspect quietly runs the model on the CPU.
-export LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+# The nodes' driver (580.173) now supports the cu130 wheels natively, and the
+# older CUDA 13.0 forward-compat libcuda (580.65) breaks it with error 803. sbatch
+# copies the submitting shell's LD_LIBRARY_PATH, so strip the compat dir from it.
+LD_LIBRARY_PATH=$(tr ':' '
+' <<<"${LD_LIBRARY_PATH:-}" | { grep -v '/compat$' || true; } | paste -sd: -)
+export LD_LIBRARY_PATH
 
 # Hugging Face downloads (base models, the semantic scorer's encoder) live in
 # the project area, not the 100 GB home quota. See the main README.
 export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
 
-uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is the CUDA compat lib on LD_LIBRARY_PATH?'"
+uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is a CUDA compat lib on LD_LIBRARY_PATH?'"
 
 # Greedy decoding and bf16 weights for every model, whatever its config.json
 # says: Inspect's hf provider defaults do_sample to true, and a checkpoint whose

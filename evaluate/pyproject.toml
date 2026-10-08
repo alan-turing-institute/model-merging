@@ -47,7 +47,4 @@ py-modules = ["hf_peft_provider"]
 package = true
 
 # torch comes from PyPI unpinned, which on Isambard-AI (GH200, aarch64) means a
-# CUDA 13.0 (cu130) build. The node driver is 565.57.01 (CUDA 12.7), so that
-# build only sees the GPU with the CUDA 13.0 forward-compatibility libcuda
-# ahead of the system one on LD_LIBRARY_PATH - without it,
-# torch.cuda.is_available() is False with no other symptom. See README.md.
+# CUDA 13.0 (cu130) build, which the node driver (580.173) supports natively.
