@@ -5,12 +5,12 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=72
 #SBATCH --mem=115000M
-#SBATCH --time=02:00:00
-#SBATCH --array=0-5
+#SBATCH --time=03:00:00
+#SBATCH --array=0-6
 # Train the arms of the SAMSum data-scaling curve, one per array task.
 #
 # Usage, from train/:
-#   sbatch train_samsum.sbatch                      # all six arms
+#   sbatch train_samsum.sbatch                      # all seven arms
 #   sbatch --array=0 train_samsum.sbatch            # just the largest arm
 #   sbatch train_samsum.sbatch samsum_gemma.yaml ../datasets/samsum
 #
@@ -19,8 +19,8 @@
 # cheapest way to guarantee that. The config actually used is saved as
 # <output_dir>/config.yaml, so what each arm ran is recoverable from the arm.
 #
-# Two hours rather than BillSum's four: SAMSum sequences are a third as long, and
-# the largest arm here is 8,000 rows at four epochs.
+# Three hours rather than BillSum's four: SAMSum sequences are a third as long,
+# but the largest arm here runs 6,400 rows at six epochs (~2,400 steps).
 set -euo pipefail
 CONFIG=${1:-samsum_gemma.yaml}
 DATA_ROOT=${2:-../datasets/samsum}
@@ -28,7 +28,7 @@ DATA_ROOT=${2:-../datasets/samsum}
 # Largest first: it is both the longest job (so starting it first shortens the
 # wall clock) and the curve's ceiling, without which no step below it can be
 # read as saturation rather than as undertrained.
-ARMS=(n8000 n4000 n2000 n1000 n500 n250)
+ARMS=(n6400 n3200 n1600 n800 n400 n200 n100)
 ARM=${ARMS[${SLURM_ARRAY_TASK_ID:-0}]}
 DATASET_DIR="$DATA_ROOT/$ARM"
 OUTPUT_DIR="../models/gemma3-samsum-$ARM-lora"

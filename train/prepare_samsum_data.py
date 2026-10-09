@@ -18,13 +18,22 @@
 # FORMAT, and format is cheap to learn. That is a perfectly good answer - it just
 # has to be measured at the bottom of the curve, not the top.
 #
-# HENCE THE ARMS GO DOWN, NOT UP. BillSum's curve ran 500/1000/2000/4000 and
-# found its last real step at 500->1000. Running SAMSum over the same range would
-# very likely report four flat steps and tell us nothing about WHERE it
-# saturated. The default ladder here is 250/500/1000/2000/4000/8000: six nested
-# arms spanning five doublings, which brackets the saturation point instead of
-# assuming it is above 500. SAMSum dialogues are short (median 73 words), so six
-# arms here cost less GPU time than BillSum's four.
+# HENCE THE ARMS GO DOWN, NOT UP, AND FURTHER DOWN THAN LOOKS SENSIBLE. BillSum's
+# curve ran 500/1000/2000/4000 and found its last real step at 500->1000. The
+# only tabulated SAMSum learning curve found in the literature (Llama3-8B-Instruct
+# in the MRDS paper) puts 100 training examples at 50.9 ROUGE-1 and 300 at 51.1,
+# against roughly 51.6 for the whole 14,731-row corpus - that is, essentially all
+# of the gain inside the first hundred examples. If that transfers to Gemma 3,
+# a ladder starting at 500 would report nothing but flat steps and would not
+# locate the saturation point at all.
+#
+# The default ladder is therefore 100/200/400/800/1600/3200/6400: seven nested
+# arms, six exact doublings, starting BELOW the published saturation point. Every
+# arm except the smallest has its own half present in the ladder, which is what
+# makes scaling_curve.py's recovery-fraction denominator table complete - the
+# denominator for a two-way split at n is the step from n/2 to n, and it can only
+# be read where both arms exist. SAMSum dialogues are short (median 73 words), so
+# seven arms here still cost less GPU time than BillSum's four.
 #
 # THE SUBSETS ARE NESTED, as in prepare_billsum_data.py and for the same reason:
 # the 250 arm is a prefix of the 500 arm, and so on. Independent draws would
@@ -72,7 +81,7 @@ DEFAULT_DOCUMENT_TOKENS = 1200
 TOKENIZER = "google/gemma-3-4b-it"
 
 # 250/500/1000/2000/4000/8000. Five doublings, bracketing the saturation point.
-DEFAULT_ARMS = [250, 500, 1000, 2000, 4000, 8000]
+DEFAULT_ARMS = [100, 200, 400, 800, 1600, 3200, 6400]
 
 
 def arm_name(rows: int) -> str:

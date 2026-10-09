@@ -1,5 +1,5 @@
 #!/bin/bash
-# Submit the whole SAMSum data-scaling curve: six training arms, then an
+# Submit the whole SAMSum data-scaling curve: seven training arms, then an
 # evaluation of each, plus the untrained base model.
 #
 # Usage, from train/:
@@ -11,8 +11,10 @@
 # flat because fine-tuning does nothing on it at all, and those have opposite
 # implications. The gap from base to the 250-row arm is what tells them apart -
 # and on SAMSum it is the measurement the whole screen turns on, because the
-# expected shape here is a large base->250 jump followed by a flat curve, which
-# would mean the task teaches FORMAT rather than capability.
+# expected shape here is a large base->100 jump followed by a flat curve, which
+# would mean the task teaches FORMAT rather than capability. The published
+# Llama3-8B numbers (50.9 ROUGE-1 at 100 examples, 51.1 at 300, ~51.6 at 14,731)
+# say to expect exactly that, which is why the ladder starts at 100.
 #
 # Each evaluation depends on ITS OWN array task (afterok:<jobid>_<index>), not on
 # the array as a whole, so the smallest arm is scored as soon as it finishes
@@ -30,7 +32,7 @@ cd "$(dirname "$0")"
 EVAL_DIR=../evaluate
 # Must match the ARMS array in train_samsum.sbatch, index for index: the
 # evaluation dependencies are built from these positions.
-ARMS=(n8000 n4000 n2000 n1000 n500 n250)
+ARMS=(n6400 n3200 n1600 n800 n400 n200 n100)
 
 for arm in "${ARMS[@]}"; do
   [[ -d "../datasets/samsum/$arm/train" ]] || {

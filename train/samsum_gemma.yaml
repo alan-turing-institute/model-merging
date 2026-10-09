@@ -59,11 +59,11 @@ dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}
 # Overridden per arm by train_samsum.sbatch. The paths here are the largest arm,
 # so the config is still runnable on its own.
 datasets:
-  - path: ../datasets/samsum/n8000/train
+  - path: ../datasets/samsum/n6400/train
     type: chat_template
 
 test_datasets:
-  - path: ../datasets/samsum/n8000/validation
+  - path: ../datasets/samsum/n6400/validation
     type: chat_template
 
 # Dialogues are short: 73 words at the median, 803 at the observed maximum, so
@@ -92,17 +92,21 @@ gradient_checkpointing: true
 micro_batch_size: 8
 gradient_accumulation_steps: 2
 
-# FOUR rather than BillSum's three. The ladder here extends a doubling LOWER
-# (250 rows against BillSum's 500), and a fixed number of epochs - the right
-# protocol, because it is what you would actually do with less data - means the
-# smallest arm takes the fewest optimiser steps. At three epochs the 250-row arm
-# would get 47 steps, enough of which are warmup that it would be measuring the
-# schedule rather than the data. Four puts it at 62.
+# SIX rather than BillSum's three, and the reason is a bias that runs the WRONG
+# WAY here. A fixed number of epochs is the right protocol - it is what you would
+# actually do with less data - but it means the smallest arm takes the fewest
+# optimiser steps, so an under-trained bottom rung scores low and the curve above
+# it looks like it is rising. On a task where the hypothesis under test is "this
+# saturates almost immediately", that would MANUFACTURE the headroom the screen
+# exists to detect. BillSum could tolerate it because its bottom arm was 500 rows;
+# this ladder starts at 100.
 #
-# Note which way this biases the result: the large arms get more steps AS WELL AS
-# more data, so if the curve flattens anyway, it flattens despite the extra
-# optimisation, and the saturation reading is the conservative one.
-num_epochs: 4
+# At six epochs the 100-row arm gets 37 optimiser steps and the 6,400-row arm
+# 2,400. 37 is still thin. If the 100-row arm's validation loss is plainly still
+# falling at the end of training, re-run that arm alone with more epochs before
+# concluding anything from the bottom of the curve - the check is in the log, not
+# in this comment.
+num_epochs: 6
 
 # A fixed count, not a ratio, so every arm gets the same absolute schedule. Five
 # rather than BillSum's ten, because the bottom arm here has 62 steps to spend
@@ -115,4 +119,4 @@ learning_rate: 2e-4
 # across arms only because the rows are identical.
 evals_per_epoch: 2
 
-output_dir: ../models/gemma3-samsum-n8000-lora
+output_dir: ../models/gemma3-samsum-n6400-lora
