@@ -44,7 +44,35 @@ echo "arm=$ARM  dataset=$DATASET_DIR  output=$OUTPUT_DIR"
 
 # Required in every job script. Without it torch silently falls back to CPU --
 # Axolotl does not error, it just sets device: cpu and grinds.
-export LD_LIBRARY_PATH=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+# CUDA 13.0 FORWARD-COMPAT LIBS - ONLY WHEN THEY ARE NEWER THAN THE NODE DRIVER.
+# Until early October 2026 the nodes ran driver 565.57.01 (CUDA 12.7), and a cu130
+# torch build could only see the GPU with the compat libcuda ahead of the system
+# one; without it torch fell back to CPU in silence. Isambard then upgraded the
+# nodes to 580.173.02, which supports CUDA 13.0 natively - and the compat libcuda
+# (580.65.06) became OLDER than the kernel driver. An older userspace libcuda
+# against a newer kernel module is CUDA error 803 ("unsupported display driver /
+# cuda driver combination"), so the unconditional export that used to be
+# required started failing every GPU job. Measured on nid010593:
+#   no compat:   torch 2.11.0+cu130, cuda 13.0, is_available() True
+#   with compat: torch 2.11.0+cu130, cuda 13.0, is_available() False
+# Either way the job runs the same cu130 torch build on the GPU, which is the
+# comparability requirement; the version check below keeps that true across a
+# driver change in either direction.
+CUDA_COMPAT=/projects/u6ui/shared/nvhpc/Linux_aarch64/25.11/cuda/13.0/compat
+sys_libcuda=$(ls /usr/lib64/libcuda.so.*.* 2>/dev/null | sed 's/.*libcuda\.so\.//' | sort -V | tail -1)
+compat_libcuda=$(ls "$CUDA_COMPAT"/libcuda.so.*.* 2>/dev/null | sed 's/.*libcuda\.so\.//' | sort -V | tail -1)
+if [[ -n $compat_libcuda && $compat_libcuda != "$sys_libcuda" \
+      && $(printf '%s\n%s\n' "$sys_libcuda" "$compat_libcuda" | sort -V | tail -1) == "$compat_libcuda" ]]; then
+  export LD_LIBRARY_PATH=$CUDA_COMPAT${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+  echo "cuda: driver $sys_libcuda older than compat $compat_libcuda - using compat libs"
+else
+  echo "cuda: driver ${sys_libcuda:-unknown} not older than compat ${compat_libcuda:-none} - using system libcuda"
+fi
+
+# Never re-resolve the environment inside a job. Several array tasks share one
+# venv, and concurrent `uv run` syncs race on it; worse, a sync can silently move
+# torch to a different build mid-curve. Sync once on a login node instead.
+export UV_NO_SYNC=1
 
 # HF_HUB_CACHE, NOT HF_HOME. HF_HOME relocates the auth token as well as the
 # cache, which silently logs you out: gemma-3-4b-it is a gated repo, so the next
