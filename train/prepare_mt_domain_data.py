@@ -66,7 +66,7 @@ def parse_args():
 def main():
     args = parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
-    n_tokens = lambda row: len(tokenizer.apply_chat_template(to_training_example(row)["messages"], tokenize=True))
+    n_tokens = lambda row: len(tokenizer(tokenizer.apply_chat_template(to_training_example(row)["messages"], tokenize=False))["input_ids"])
 
     raw = {d: load_dataset(ident) for d, ident in SOURCES.items()}
     held_out = {r["en"].strip() for d in raw.values() for s in ("dev", "test") for r in d[s]}

@@ -123,7 +123,7 @@ def main():
     for name, rows in arms.items():
         arm = DatasetDict({"train": rows.map(render), "validation": val_rendered})
         arm.save_to_disk(str(args.output_dir / name))
-        longest = max(len(tokenizer.apply_chat_template(m, tokenize=True)) for m in arm["train"]["messages"])
+        longest = max(len(tokenizer(tokenizer.apply_chat_template(m, tokenize=False))["input_ids"]) for m in arm["train"]["messages"])
         over += longest > SEQUENCE_LEN
         shards = {s: sum(1 for x in rows["shard"] if x == s) for s in ("a", "b")}
         print(f"{name:>10}: {len(rows)} rows  shard a/b {shards['a']}/{shards['b']}  longest {longest} tokens")
