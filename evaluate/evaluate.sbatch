@@ -23,7 +23,7 @@
 #
 # The .eval log is written to logs/; read it with `uv run inspect view`.
 set -euo pipefail
-USAGE="usage: sbatch evaluate.sbatch <crime|xsum|billsum|samsum> <model> [--adapter <dir>] [inspect eval args...]"
+USAGE="usage: sbatch evaluate.sbatch <crime|xsum|billsum|samsum|clinc150|mt_domain> <model> [--adapter <dir>] [inspect eval args...]"
 TASK=${1:?$USAGE}
 MODEL=${2:?$USAGE}
 shift 2
@@ -46,7 +46,7 @@ TASK_FILE=${TASK}_task.py
 # never saw. samsum is in this list for the same reason the other two are: its
 # default happens to match the training default today, which makes an omission
 # silent rather than harmless.
-if [[ $TASK == xsum || $TASK == billsum || $TASK == samsum ]] && [[ " $* " != *" prompt_variant="* ]]; then
+if [[ $TASK == xsum || $TASK == billsum || $TASK == samsum || $TASK == clinc150 ]] && [[ " $* " != *" prompt_variant="* ]]; then
   echo "$TASK needs -T prompt_variant=... (the prompt the model was trained on)" >&2
   exit 1
 fi

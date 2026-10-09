@@ -1,0 +1,41 @@
+# QLoRA fine-tune of gemma-3-4b-it for English->German medical/legal translation.
+# ONE config for every arm of the domain-split screen; train_screen.sbatch
+# overrides the dataset paths and output_dir per arm.
+base_model: google/gemma-3-4b-it
+load_in_4bit: true
+# Correctness settings carried over from samsum_gemma.yaml / billsum_gemma.yaml,
+# each a measured failure on an earlier arm - see the comments there.
+attn_implementation: eager
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj]
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+chat_template: tokenizer_default
+eot_tokens: ["<end_of_turn>"]
+train_on_eos: turn
+dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}
+excess_length_strategy: raise
+dataset_num_proc: 8
+train_on_inputs: false
+gradient_checkpointing: true
+warmup_steps: 10
+learning_rate: 2e-4
+evals_per_epoch: 2
+# prepare_mt_domain_data.py drops training pairs over 1024 rendered tokens
+# rather than truncating them: a cut source sentence no longer matches its
+# reference, and the example would teach the model to invent the missing half.
+sequence_len: 1024
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+num_epochs: 3
+datasets:
+  - path: ../datasets/mt_domain/full/train
+    type: chat_template
+test_datasets:
+  - path: ../datasets/mt_domain/full/validation
+    type: chat_template
+output_dir: ../models/gemma3-mt_domain-full-lora

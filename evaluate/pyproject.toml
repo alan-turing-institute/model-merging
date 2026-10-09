@@ -25,6 +25,9 @@ dependencies = [
     # The scorer degrades to 0.0 rather than failing if it is missing.
     "sentence-transformers",
     "tqdm",
+    # chrF++ for mt_domain_task.py. The reference implementation rather than a
+    # hand-rolled one, so the numbers match what MT papers report.
+    "sacrebleu",
 ]
 
 # Registers the hf-peft model provider with Inspect, so a plain
