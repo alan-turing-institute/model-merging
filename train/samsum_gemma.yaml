@@ -1,0 +1,118 @@
+# QLoRA fine-tune of gemma-3-4b-it for SAMSum dialogue summarisation.
+#
+# ONE config for every arm of the data-scaling curve. train_samsum.sbatch
+# overrides `datasets`, `test_datasets` and `output_dir` per arm and saves the
+# result as <output_dir>/config.yaml, so the arms cannot drift apart in any
+# hyperparameter - the whole point of a scaling curve, where the only thing
+# allowed to vary is how many training rows there are.
+#
+# Derived from billsum_gemma.yaml. The correctness settings below (eager
+# attention, eot_tokens, dataset_num_proc, excess_length_strategy) are carried
+# over unchanged: each was a measured failure on an earlier arm, not a
+# preference.
+base_model: google/gemma-3-4b-it
+
+load_in_4bit: true
+
+# Gemma-3 soft-capping NaNs under sdpa, and axolotl falls back to sdpa when
+# flash-attn is absent - which it is on aarch64. On Isambard that silently
+# produced loss 12.81 -> 0 with NaNs and an adapter that emitted an empty string
+# for every test example. A correctness setting, not a hyperparameter: eager
+# computes the same function, only slower.
+attn_implementation: eager
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+# tokenizer_default, not the `gemma` alias: the evaluator renders with
+# tokenizer.apply_chat_template, and the two must agree or the model is scored on
+# text shaped differently from what it trained on.
+chat_template: tokenizer_default
+# THE TURN TERMINATOR MUST BE TRAINED. Gemma ends a turn with <end_of_turn>, not
+# <eos>; without this axolotl warns and carries on, and the model never learns to
+# stop. On XSum that cost a fine-tune that ran to the generation cap on most
+# examples and scored WORSE than the untouched base model. SAMSum references are
+# 20 words, so an un-terminated generation is proportionally the worst failure of
+# the three tasks - there is nothing to hide behind.
+eot_tokens:
+  - "<end_of_turn>"
+train_on_eos: turn
+
+# Axolotl caches its tokenised dataset here and defaults to last_run_prepared
+# inside the repo, which reached 17 GB on the XSum runs and took the home
+# filesystem to its 101 GB quota - which stops every job on the machine.
+dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}
+
+# Overridden per arm by train_samsum.sbatch. The paths here are the largest arm,
+# so the config is still runnable on its own.
+datasets:
+  - path: ../datasets/samsum/n8000/train
+    type: chat_template
+
+test_datasets:
+  - path: ../datasets/samsum/n8000/validation
+    type: chat_template
+
+# Dialogues are short: 73 words at the median, 803 at the observed maximum, so
+# ~1,050 tokens at the very top. prepare_samsum_data.py truncates to 1,200 tokens
+# and verifies on the login node that nothing exceeds this window.
+#
+# THESE TWO NUMBERS ARE ONE DECISION - see prepare_samsum_data.py. `raise` turns
+# axolotl's one-line INFO about dropped sequences into a failed job.
+excess_length_strategy: raise
+sequence_len: 1536
+
+# axolotl defaults this to os.cpu_count(), which on a GH200 node reports all 288
+# cores regardless of what Slurm allocated; 288 tokenisation workers inside a
+# 16-core cgroup OOM-killed all three XSum expert runs.
+dataset_num_proc: 8
+
+# Loss on the assistant turn only.
+train_on_inputs: false
+
+gradient_checkpointing: true
+
+# Effective batch 16, as on the BillSum and XSum arms, so the three tasks' curves
+# are read on the same scale. SAMSum sequences are a third of BillSum's, so the
+# same effective batch is reached with a larger micro-batch and fewer
+# accumulation steps, which is simply faster.
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+
+# FOUR rather than BillSum's three. The ladder here extends a doubling LOWER
+# (250 rows against BillSum's 500), and a fixed number of epochs - the right
+# protocol, because it is what you would actually do with less data - means the
+# smallest arm takes the fewest optimiser steps. At three epochs the 250-row arm
+# would get 47 steps, enough of which are warmup that it would be measuring the
+# schedule rather than the data. Four puts it at 62.
+#
+# Note which way this biases the result: the large arms get more steps AS WELL AS
+# more data, so if the curve flattens anyway, it flattens despite the extra
+# optimisation, and the saturation reading is the conservative one.
+num_epochs: 4
+
+# A fixed count, not a ratio, so every arm gets the same absolute schedule. Five
+# rather than BillSum's ten, because the bottom arm here has 62 steps to spend
+# and ten of them on warmup would be a sixth of the run.
+warmup_steps: 5
+
+learning_rate: 2e-4
+
+# Validation loss twice an epoch, on the 500 rows every arm shares. Comparable
+# across arms only because the rows are identical.
+evals_per_epoch: 2
+
+output_dir: ../models/gemma3-samsum-n8000-lora
