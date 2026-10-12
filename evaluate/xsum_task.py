@@ -27,6 +27,21 @@ The variant is a task argument, so it is recorded in every .eval log.
 The dataset therefore needs only `document` and `summary` (and ideally `id`):
 datasets/xsum_prompts/test works as it is, as does any XSum split saved with
 `save_to_disk`.
+
+NO PREPARED DATA NEEDED. If the default split is missing, it is rebuilt from
+the Hub - the same 1,000 test articles prepare_data_XSum.py selects
+(shuffle(seed=42), first 1,000) at a pinned revision - and saved there. Compute
+nodes have no network, so on Isambard build it once on a login node:
+
+    uv run python xsum_task.py
+
+DOCUMENT_WORDS, AND THE REPORT'S NUMBERS. The Isambard results in the report
+were produced from prepare_xsum_data.py on the xsum-summarisation branch, which
+collapsed whitespace and cut each article to 512 words (211 of the 1,000 test
+articles are longer). prepare_data_XSum.py on main does neither. Pass
+-T document_words=512 to reproduce those inputs exactly - verified identical
+for all 1,000 rows against the split the report used. Like prompt_variant, it
+must match what the model was trained on, and it is recorded in every log.
 """
 
 import importlib.util
@@ -34,7 +49,7 @@ import math
 import re
 from pathlib import Path
 
-from datasets import load_from_disk
+from datasets import load_dataset, load_from_disk
 from inspect_ai import Task, task
 from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.model import ChatMessageSystem, ChatMessageUser, GenerateConfig
@@ -52,6 +67,14 @@ ROUGE_TYPES = ["rouge1", "rouge2", "rougeL"]
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATASET = REPO_ROOT / "datasets" / "xsum_prompts" / "test"
 PREPARE_SCRIPT = REPO_ROOT / "self-distill" / "prepare_data_XSum.py"
+
+# Where the default split is rebuilt from when it is missing. The revision is
+# pinned so the rebuild cannot drift if the Hub repo changes; at this revision
+# shuffle(seed=42) + select(range(1000)) gives the same ids, in the same order,
+# as the split the report's XSum results used.
+XSUM_HUB = "EdinburghNLP/xsum"
+XSUM_REVISION = "7d4d486c2f8ef850b1a11aead99b894ff3dd7da9"
+XSUM_TEST_SIZE = 1_000
 
 # prompt_variant -> the field of convert_to_prompt's output holding that chat.
 PROMPT_FIELDS = {
@@ -196,11 +219,51 @@ def to_chat(messages):
     return [roles[m["role"]](content=m["content"]) for m in messages]
 
 
+def build_default_split():
+    """Rebuild datasets/xsum_prompts/test from the Hub and save it.
+
+    Same selection as prepare_data_XSum.py. Needs network: on Isambard, run it
+    on a login node (`uv run python xsum_task.py`), not inside a job.
+    """
+    split = (load_dataset(XSUM_HUB, split="test", revision=XSUM_REVISION)
+             .shuffle(seed=42).select(range(XSUM_TEST_SIZE)))
+    split.save_to_disk(str(DEFAULT_DATASET))
+    return split
+
+
+def load_split(dataset_path):
+    """The saved split at dataset_path; for the default path only, rebuilt from
+    the Hub if it is missing. A wrong path passed explicitly fails loudly
+    rather than silently scoring something else."""
+    path = Path(dataset_path)
+    if path.exists():
+        return load_from_disk(str(path))
+    if path != DEFAULT_DATASET:
+        raise FileNotFoundError(f"no dataset at {path}")
+    try:
+        return build_default_split()
+    except Exception as error:
+        raise RuntimeError(
+            f"{path} is missing and could not be rebuilt from the Hub ({error}). "
+            "On a machine without network - an Isambard compute node - run "
+            "`uv run python xsum_task.py` on a login node first."
+        ) from error
+
+
+def truncate_words(text, document_words):
+    """Collapse whitespace and keep the first document_words words: exactly what
+    prepare_xsum_data.py did to the articles behind the report's numbers."""
+    return " ".join(text.split()[:document_words]) if document_words else text
+
+
 def xsum_samples(dataset_path, prompt_variant, limit=None,
-                 reference_column="summary"):
+                 reference_column="summary", document_words=None):
     field = PROMPT_FIELDS[prompt_variant]
     convert_to_prompt = load_convert_to_prompt()
-    dataset = load_from_disk(str(dataset_path))
+    dataset = load_split(dataset_path)
+    if document_words:
+        dataset = dataset.map(
+            lambda row: {"document": truncate_words(row["document"], document_words)})
     if limit is not None:
         dataset = dataset.select(range(min(limit, len(dataset))))
     return [
@@ -346,6 +409,7 @@ def xsum(
     limit: int | None = None,
     reference_column: str = "summary",
     faithfulness: bool = False,
+    document_words: int | None = None,
 ) -> Task:
     """XSum single-sentence summarisation, scored by ROUGE and grounding.
 
@@ -357,6 +421,11 @@ def xsum(
     because it loads about 6 GB of extra models; pass -T faithfulness=true to
     enable. Scoring happens inline, so these land in the same .eval log as
     ROUGE rather than needing a separate re-scoring pass over stored JSON.
+
+    document_words: collapse whitespace and cut each article to this many
+    words before prompting. 512 reproduces the inputs behind the report's
+    Isambard results; leave unset for prepare_data_XSum.py's full articles.
+    Must match what the model was trained on.
     """
     if prompt_variant not in PROMPT_FIELDS:
         raise ValueError(
@@ -366,7 +435,8 @@ def xsum(
 
     return Task(
         dataset=MemoryDataset(
-            xsum_samples(dataset_path, prompt_variant, limit, reference_column),
+            xsum_samples(dataset_path, prompt_variant, limit, reference_column,
+                         document_words),
             name="xsum",
         ),
         solver=generate(),
@@ -383,6 +453,14 @@ def xsum(
         # 2: format_checks scorer (word range, one sentence, preamble,
         # repetition); pred_words/pred_sentences moved into it from rouge, and
         # sentences no longer counted at every full stop.
-        version=2,
-        metadata={"prompt_variant": prompt_variant},
+        # 3: document_words option, and the default split rebuilt from the Hub
+        # when missing. Scoring and default behaviour unchanged.
+        version=3,
+        metadata={"prompt_variant": prompt_variant, "document_words": document_words},
     )
+
+
+if __name__ == "__main__":
+    # Build the default test split once, on a machine with network access.
+    rows = build_default_split()
+    print(f"saved {len(rows)} XSum test rows to {DEFAULT_DATASET}")

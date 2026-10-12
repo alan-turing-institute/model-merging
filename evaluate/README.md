@@ -15,6 +15,28 @@ uv run inspect view --log-dir logs
 
 and load them into pandas with `inspect_ai.analysis.samples_df("logs")` / `evals_df("logs")`.
 
+## Test data
+
+`xsum_task.py` needs no separate preparation. If `datasets/xsum_prompts/test` is missing, it rebuilds the same 1,000 test articles `self-distill/prepare_data_XSum.py` selects, from the Hub at a pinned revision, and saves them there. Compute nodes have no network, so on Isambard build it once on a login node first:
+
+```bash
+uv run python xsum_task.py
+```
+
+**Reproducing the report's XSum numbers.** Those were produced from `prepare_xsum_data.py` on the `xsum-summarisation` branch, which collapsed whitespace and cut each article to 512 words; `prepare_data_XSum.py` on `main` does neither. Add `-T document_words=512` to score exactly the inputs the report used (checked identical for all 1,000 rows). Like `prompt_variant`, it must match what the model was trained on.
+
+The optional reference-free metrics (`-T faithfulness=true`, see `xsum_faithfulness.py`) load about 6 GB of extra models and are off by default.
+
+`crime_task.py` reads the split written by `train/prepare_data.py`.
+
+## Checking a setup
+
+```bash
+bash smoke_test.sh
+```
+
+runs every task end to end on three synthetic rows with Inspect's built-in `mockllm` provider - no GPU, no gated model, no prepared data - and checks each writes a successful log. It is the quickest way to confirm a fresh clone works, and CI runs it on every pull request, together with `uv lock --check` for each environment.
+
 ## Running on Isambard-AI
 
 Submit `evaluate.sbatch` from `evaluate/`:
