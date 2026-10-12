@@ -23,7 +23,7 @@
 #
 # The .eval log is written to logs/; read it with `uv run inspect view`.
 set -euo pipefail
-USAGE="usage: sbatch evaluate.sbatch <crime|xsum|billsum|samsum|clinc150|mt_domain|bigpatent|billsum_split> <model> [--adapter <dir>] [inspect eval args...]"
+USAGE="usage: sbatch evaluate.sbatch <crime|xsum|billsum|samsum|clinc150|mt_domain|bigpatent|billsum_split|mt_zh> <model> [--adapter <dir>] [inspect eval args...]"
 TASK=${1:?$USAGE}
 MODEL=${2:?$USAGE}
 shift 2

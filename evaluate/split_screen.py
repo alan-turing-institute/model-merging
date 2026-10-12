@@ -35,6 +35,9 @@ from inspect_ai.log import list_eval_logs, read_eval_log
 from scaling_curve import paired_bootstrap, per_sample
 
 TASKS = {
+    "mt_zh": {"headline": "chrf", "seed_spread": 0.5, "extras": ["truncated", "length_ratio"],
+              "shards": {"un": "chrf_un", "news": "chrf_news"},
+              "experts": {"expert_un": "un", "expert_news": "news"}},
     # Random halves, not a partition: the "domain" line is the two-expert
     # denominator and there is no per-shard table.
     "billsum_split": {"headline": "rougeLsum", "seed_spread": 0.005, "extras": ["unterminated", "pred_words"],
