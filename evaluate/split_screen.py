@@ -35,6 +35,9 @@ from inspect_ai.log import list_eval_logs, read_eval_log
 from scaling_curve import paired_bootstrap, per_sample
 
 TASKS = {
+    "bigpatent": {"headline": "rougeLsum", "seed_spread": 0.005, "extras": ["unterminated", "pred_words"],
+                  "shards": {"c": "rouge_c", "h": "rouge_h"},
+                  "experts": {"expert_c": "c", "expert_h": "h"}},
     "clinc150": {"headline": "accuracy", "seed_spread": 0.005, "extras": ["valid"],
                  "shards": {"a": "acc_a", "b": "acc_b"},
                  "experts": {"expert_a": "a", "expert_b": "b"}},
