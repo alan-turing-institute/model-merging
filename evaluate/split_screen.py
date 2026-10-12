@@ -35,6 +35,10 @@ from inspect_ai.log import list_eval_logs, read_eval_log
 from scaling_curve import paired_bootstrap, per_sample
 
 TASKS = {
+    # Random halves, not a partition: the "domain" line is the two-expert
+    # denominator and there is no per-shard table.
+    "billsum_split": {"headline": "rougeLsum", "seed_spread": 0.005, "extras": ["unterminated", "pred_words"],
+                      "shards": {}, "experts": {"expert_1": None, "expert_2": None}},
     "bigpatent": {"headline": "rougeLsum", "seed_spread": 0.005, "extras": ["unterminated", "pred_words"],
                   "shards": {"c": "rouge_c", "h": "rouge_h"},
                   "experts": {"expert_c": "c", "expert_h": "h"}},

@@ -8,7 +8,7 @@
 #
 # Read the result with:  cd evaluate && uv run python split_screen.py logs --task <task>
 set -euo pipefail
-TASK=${1:?usage: run_screen.sh <clinc150|mt_domain|bigpatent> [--eval-only]}
+TASK=${1:?usage: run_screen.sh <clinc150|mt_domain|bigpatent|billsum_split> [--eval-only]}
 EVAL_ONLY=0; [[ ${2:-} == --eval-only ]] && EVAL_ONLY=1
 cd "$(dirname "$0")"
 DATA_ROOT=../datasets/$TASK
@@ -21,6 +21,7 @@ mapfile -t ARMS < "$DATA_ROOT/ARMS"
 # zero is informative but is not its zero-shot ability.
 case $TASK in
   clinc150)  TRAINED=(-T prompt_variant=short); BASES=("short" "labels"); EVAL_TIME=01:00:00 ;;
+  billsum_split) TRAINED=(-T prompt_variant=short); BASES=("short"); EVAL_TIME=03:00:00 ;;
   bigpatent) TRAINED=();                        BASES=("");               EVAL_TIME=03:00:00 ;;
   mt_domain) TRAINED=();                        BASES=("");               EVAL_TIME=02:00:00 ;;
   *) echo "unknown task $TASK" >&2; exit 1 ;;
