@@ -13,6 +13,7 @@
 # output_dir overrides the one in the YAML. dataset_dir, if given, overrides the
 # datasets/test_datasets paths with <dataset_dir>/train and
 # <dataset_dir>/validation (the layout generate_teacher_logprobs.py writes).
+# The tokenised dataset is cached per run in <output_dir>/prepared.
 # The config actually used is saved as <output_dir>/config.yaml. Relative paths
 # resolve against the directory sbatch was run from.
 set -euo pipefail
@@ -51,6 +52,10 @@ src, dst, output_dir, dataset_dir = sys.argv[1:]
 with open(src) as f:
     cfg = yaml.safe_load(f)
 cfg["output_dir"] = output_dir
+# A per-run cache: Axolotl's hash ignores the base model, so concurrent runs on
+# the same dataset sharing one cache overwrite each other's mmapped arrow files
+# (SIGBUS in the dataloader).
+cfg["dataset_prepared_path"] = os.path.join(output_dir, "prepared")
 if dataset_dir:
     for key, split in (("datasets", "train"), ("test_datasets", "validation")):
         path = os.path.join(dataset_dir, split)
@@ -61,6 +66,7 @@ if dataset_dir:
 with open(dst, "w") as f:
     yaml.safe_dump(cfg, f, sort_keys=False)
 print(f"output_dir: {cfg['output_dir']}")
+print(f"prepared:   {cfg['dataset_prepared_path']}")
 print(f"train:      {[d['path'] for d in cfg['datasets']]}")
 print(f"validation: {[d['path'] for d in cfg['test_datasets']]}")
 EOF

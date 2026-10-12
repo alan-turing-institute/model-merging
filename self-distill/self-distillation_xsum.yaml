@@ -46,8 +46,10 @@ val_set_size: 0.0
 # 288 cores even though a 1-GPU job is allocated 72. 288 forked workers each
 # carry a ~1.2 GB Python+torch baseline, which OOM-killed the job at ~349 GB RSS.
 dataset_num_proc: 8
-# Safe to share across datasets: Axolotl caches each one under a hash of the
-# dataset config and tokeniser.
+# Not safe to share between concurrent runs: Axolotl's cache hash ignores the
+# base model, so e.g. a 1B and a 4B run on the same dataset rewrite each other's
+# arrow files mid-training (SIGBUS). train_xsum.sbatch overrides this with
+# <output_dir>/prepared.
 dataset_prepared_path: ../datasets/last_run_prepared
 
 # Must match MAX_SEQ_LEN in generate_teacher_logprobs_XSum.py. Anything Axolotl
