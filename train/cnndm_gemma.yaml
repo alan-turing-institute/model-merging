@@ -25,7 +25,7 @@ gradient_checkpointing: true
 warmup_steps: 10
 learning_rate: 2e-4
 evals_per_epoch: 2
-# Descriptions are truncated to 3,300 tokens by prepare_cnndm_data.py, and
+# Articles are truncated to 1,600 tokens by prepare_cnndm_data.py, and
 # any example still over this window is dropped there, not here.
 sequence_len: 2048
 micro_batch_size: 8
