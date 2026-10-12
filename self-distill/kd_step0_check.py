@@ -13,8 +13,15 @@ tokenised eval rows axolotl trained on (its prepared dataset):
   3. cross-entropy per target token, both ways;
   4. axolotl's own fused loss on the same rows, per token (= what eval_loss logs).
 
-Correct alignment and correct logits: (1) at shift 0 ~ 0, (2) matches (1), and
-(4) ~ half of (3).
+Correct alignment and correct logits: (2) matches (1), (4) ~ half of (3), and
+(1) is lowest at shift 0. (1) is ~0 only if the student reads the TEACHER's
+prompt, so the check also re-scores each row in the teacher's context:
+
+  5. KL and cross-entropy with the student given the teacher's own prompt
+     (strict system message and 20-25-word ask) instead of the short one.
+
+If (5) is ~0 the pipeline is sound, and the step-0 gap in the student's context
+is the prompt difference self-distillation is meant to close.
 
     python kd_step0_check.py <prepared_dir> [--rows 32] [--load-in-4bit]
 """
@@ -24,7 +31,26 @@ import glob
 
 import torch
 from datasets import load_from_disk
-from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+import importlib.util
+from pathlib import Path
+
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+_spec = importlib.util.spec_from_file_location("prep", Path(__file__).with_name("prepare_data_XSum.py"))
+prep = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(prep)
+
+
+def teacher_context(tokenizer, input_ids, labels):
+    """(teacher-context ids, offset): the same assistant tokens behind the
+    teacher's prompt, rebuilt from the article inside the student's prompt."""
+    a0 = next(i for i, l in enumerate(labels) if l != -100)
+    student_prompt = tokenizer.decode(input_ids[:a0])
+    marker = prep.STUDENT_SHORT + "\n\n"
+    document = student_prompt.split(marker, 1)[1].split("<end_of_turn>", 1)[0]
+    messages = prep.convert_to_prompt({"document": document})["teacher_messages"]
+    text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    prompt_ids = tokenizer(text, add_special_tokens=False)["input_ids"]
+    return prompt_ids + list(input_ids[a0:]), len(prompt_ids) - a0
 
 
 def lm_head_of(model):
@@ -86,11 +112,13 @@ def main():
                                                  quantization_config=quant, device_map="cuda").eval()
     print(f"model class: {type(model).__name__}; weights: {'4-bit nf4' if a.load_in_4bit else 'bf16'}")
     head = lm_head_of(model)
+    tokenizer = AutoTokenizer.from_pretrained(a.model)
 
     from axolotl.integrations.kd.kernels.liger import LigerFusedLinearKLTopKLogprobLoss
     fused = LigerFusedLinearKLTopKLogprobLoss(0.5, 0.5, 1.0, 0.0, compute_ce_loss=True, normalize_topk=True)
 
-    acc = {k: [0.0, 0] for k in ("kl-1", "kl0", "kl+1", "kl0_trainer", "ce", "ce_trainer", "fused")}
+    acc = {k: [0.0, 0] for k in ("kl-1", "kl0", "kl+1", "kl0_trainer", "ce", "ce_trainer", "fused",
+                                 "kl_teacher_ctx", "ce_teacher_ctx")}
     max_diff, agree, positions = 0.0, 0, 0
     for row in ds.select(range(min(a.rows, len(ds)))):
         ids = torch.tensor(row["input_ids"], device="cuda")
@@ -110,6 +138,22 @@ def main():
         t, n = kl_topk(F, tid, tlp, tmask, 0); acc["kl0_trainer"][0] += t; acc["kl0_trainer"][1] += n
         t, n = ce(L, labels); acc["ce"][0] += t; acc["ce"][1] += n
         t, n = ce(F, labels); acc["ce_trainer"][0] += t; acc["ce_trainer"][1] += n
+        # (5) the same rows behind the teacher's own prompt.
+        t_ids, delta = teacher_context(tokenizer, row["input_ids"], row["labels"])
+        with torch.no_grad():
+            Lt = model(input_ids=torch.tensor(t_ids, device="cuda")[None]).logits[0].float()
+        T = Lt.shape[0]
+        for i in range(len(row["input_ids"])):
+            m = tmask[i].bool()
+            if m.any() and 0 <= i + delta < T:
+                s = torch.log_softmax(Lt[i + delta], -1)[tid[i]]
+                s = s - torch.logsumexp(s, -1)
+                acc["kl_teacher_ctx"][0] += (tlp[i][m].exp() * (tlp[i][m] - s[m])).sum().item()
+                acc["kl_teacher_ctx"][1] += 1
+        t_labels = torch.tensor([-100] * (delta + next(i for i, l in enumerate(row["labels"]) if l != -100))
+                                + [l for l in row["labels"][next(i for i, l in enumerate(row["labels"]) if l != -100):]],
+                                device="cuda")
+        c, n = ce(Lt, t_labels); acc["ce_teacher_ctx"][0] += c; acc["ce_teacher_ctx"][1] += n
         try:
             Hb = H[None].detach().to(head.weight.dtype).requires_grad_(True)
             loss = fused(head.weight, Hb, tid[None], tlp[None], tmask[None], true_labels=labels[None])
@@ -124,6 +168,7 @@ def main():
     print(f"KL(teacher||student) per token, trainer logits: shift 0 {mean('kl0_trainer'):.4f}")
     print(f"cross-entropy per target token: model logits {mean('ce'):.4f} | trainer logits {mean('ce_trainer'):.4f}")
     print(f"0.5*KL + 0.5*CE, trainer logits: {0.5 * mean('kl0_trainer') + 0.5 * mean('ce_trainer'):.4f}")
+    print(f"TEACHER'S CONTEXT - KL per token {mean('kl_teacher_ctx'):.4f} | cross-entropy per token {mean('ce_teacher_ctx'):.4f}")
     print("axolotl fused loss per token:", f"{mean('fused'):.4f}" if acc["fused"][1] > 0 else f"not run ({fused_error})")
 
 
