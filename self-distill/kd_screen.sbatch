@@ -33,5 +33,15 @@ case $STAGE in
     uv run axolotl preprocess self-distillation_xsum_lora.yaml
     uv run axolotl train      self-distillation_xsum_lora.yaml
     ;;
+  check)
+    # Step-0 check on the eval rows axolotl prepared, at both weight formats.
+    # Axolotl never expanded the ${MM_PREPARED:-...} in the config, so its
+    # prepared data is in a directory literally named that.
+    PREP=${2:-}
+    [[ -n $PREP ]] || PREP='${MM_PREPARED:-last_run_prepared}'
+    [[ -d $PREP ]] || { echo "no prepared data at $PREP" >&2; exit 1; }
+    uv run python kd_step0_check.py "$PREP"
+    uv run python kd_step0_check.py "$PREP" --load-in-4bit
+    ;;
   *) echo "unknown stage $STAGE" >&2; exit 1 ;;
 esac
