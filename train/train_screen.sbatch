@@ -10,6 +10,7 @@
 # writes, so the array size is set at submission (run_screen.sh does this).
 #
 #   sbatch --array=0-3 --job-name=clinc150 train_screen.sbatch clinc150
+#   sbatch --array=3 train_screen.sbatch mt_domain 2     # arm 3, seed 2
 set -euo pipefail
 TASK=${1:?usage: train_screen.sbatch <task>}
 DATA_ROOT=../datasets/$TASK
@@ -17,19 +18,19 @@ cd "$SLURM_SUBMIT_DIR"
 mapfile -t ARMS < "$DATA_ROOT/ARMS"
 ARM=${ARMS[${SLURM_ARRAY_TASK_ID:-0}]}
 DATASET_DIR="$DATA_ROOT/$ARM"
-# SEED (optional, via --export) reruns an arm on the same data with a different
-# training seed, to measure the run-to-run spread the screens' "x seed spread"
-# multiples assume. The adapter is renamed <arm>_s<seed> so it cannot overwrite
-# the original.
-SEED=${SEED:-}
+# SEED (optional second argument) reruns an arm on the same data with a
+# different training seed, to measure the run-to-run spread the screens'
+# "x seed spread" multiples assume. The adapter is renamed <arm>_s<seed> so it
+# cannot overwrite the original. An argument, not --export=ALL: exporting the
+# login environment carried its TMPDIR to compute nodes, where it does not
+# exist, and every run failed in datasets.
+SEED=${2:-}
+export SEED
 OUTPUT_DIR="../models/gemma3-$TASK-$ARM${SEED:+_s$SEED}-lora"
 mkdir -p "$OUTPUT_DIR"
 exec > "$OUTPUT_DIR/$TASK-${SLURM_JOB_ID:-0}.out" 2>&1
 echo "task=$TASK arm=$ARM dataset=$DATASET_DIR output=$OUTPUT_DIR"
 
-# A TMPDIR inherited from a login node (e.g. via --export=ALL) points at a
-# directory compute nodes do not have, and datasets then refuses to run.
-[[ -n ${TMPDIR:-} && -d $TMPDIR && -w $TMPDIR ]] || export TMPDIR=/tmp
 source ./cuda_env.sh
 export MM_PREPARED="${TMPDIR:-/tmp}/axolotl-prepared-$TASK-$ARM"
 mkdir -p "$MM_PREPARED"
