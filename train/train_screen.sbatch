@@ -27,6 +27,9 @@ mkdir -p "$OUTPUT_DIR"
 exec > "$OUTPUT_DIR/$TASK-${SLURM_JOB_ID:-0}.out" 2>&1
 echo "task=$TASK arm=$ARM dataset=$DATASET_DIR output=$OUTPUT_DIR"
 
+# A TMPDIR inherited from a login node (e.g. via --export=ALL) points at a
+# directory compute nodes do not have, and datasets then refuses to run.
+[[ -n ${TMPDIR:-} && -d $TMPDIR && -w $TMPDIR ]] || export TMPDIR=/tmp
 source ./cuda_env.sh
 export MM_PREPARED="${TMPDIR:-/tmp}/axolotl-prepared-$TASK-$ARM"
 mkdir -p "$MM_PREPARED"
