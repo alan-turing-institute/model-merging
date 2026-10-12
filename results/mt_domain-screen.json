@@ -1,7 +1,7 @@
 {
   "task": "mt_domain",
   "metric": "chrf",
-  "seed_spread_assumed": 0.5,
+  "seed_spread_assumed": 0.045,
   "arms": {
     "base": {
       "chrf": 18.86147714083705,
@@ -23,6 +23,20 @@
       "chrf_law": 58.4565613716035,
       "truncated": 0.0,
       "length_ratio": 1.1674115995124963
+    },
+    "expert_law_s2": {
+      "chrf": 57.117682417882314,
+      "chrf_medical": 55.721995453758815,
+      "chrf_law": 58.51336938200581,
+      "truncated": 0.0,
+      "length_ratio": 1.169096927848355
+    },
+    "expert_law_s3": {
+      "chrf": 57.03304536400306,
+      "chrf_medical": 55.73906276390371,
+      "chrf_law": 58.32702796410242,
+      "truncated": 0.0,
+      "length_ratio": 1.1687281561009546
     },
     "expert_medical": {
       "chrf": 54.32177062921867,
@@ -47,7 +61,7 @@
       1.7701
     ],
     "n": 2000,
-    "usable": false
+    "usable": true
   },
   "domain": {
     "vs": "expert_law",
@@ -57,7 +71,7 @@
       3.073
     ],
     "n": 2000,
-    "usable": false
+    "usable": true
   },
   "per_shard": {
     "expert_medical@medical": {

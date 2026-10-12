@@ -1,0 +1,84 @@
+{
+  "task": "mt_zh",
+  "metric": "chrf",
+  "seed_spread_assumed": 0.5,
+  "arms": {
+    "base": {
+      "chrf": 5.584739789992267,
+      "chrf_un": 5.709617812954234,
+      "chrf_news": 5.4598617670303,
+      "truncated": 0.0,
+      "length_ratio": 46.914201756270764
+    },
+    "full": {
+      "chrf": 36.71482726527421,
+      "chrf_un": 43.52370773663638,
+      "chrf_news": 29.905946793912033,
+      "truncated": 0.0,
+      "length_ratio": 1.0213057579561475
+    },
+    "expert_news": {
+      "chrf": 30.389051904445136,
+      "chrf_un": 31.21196100856719,
+      "chrf_news": 29.56614280032308,
+      "truncated": 0.0,
+      "length_ratio": 1.1546571403285162
+    },
+    "expert_un": {
+      "chrf": 36.29104767591852,
+      "chrf_un": 43.88271197191812,
+      "chrf_news": 28.699383379918913,
+      "truncated": 0.0,
+      "length_ratio": 1.010621287329341
+    },
+    "iid_half": {
+      "chrf": 35.811236884879804,
+      "chrf_un": 41.73228744898259,
+      "chrf_news": 29.890186320777016,
+      "truncated": 0.0,
+      "length_ratio": 1.0422060858642364
+    }
+  },
+  "iid": {
+    "vs": "iid_half",
+    "delta": 0.9036,
+    "ci": [
+      0.487,
+      1.3553
+    ],
+    "n": 2000,
+    "usable": false
+  },
+  "domain": {
+    "vs": "expert_un",
+    "delta": 0.4238,
+    "ci": [
+      -0.0205,
+      0.8576
+    ],
+    "n": 2000,
+    "usable": false
+  },
+  "per_shard": {
+    "expert_un@un": {
+      "expert": 43.88271197191812,
+      "full": 43.52370773663638,
+      "where": "home"
+    },
+    "expert_un@news": {
+      "expert": 28.699383379918913,
+      "full": 29.905946793912033,
+      "where": "away"
+    },
+    "expert_news@un": {
+      "expert": 31.21196100856719,
+      "full": 43.52370773663638,
+      "where": "away"
+    },
+    "expert_news@news": {
+      "expert": 29.56614280032308,
+      "full": 29.905946793912033,
+      "where": "home"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "task": "billsum_split",
+  "metric": "rougeLsum",
+  "seed_spread_assumed": 0.0015,
+  "arms": {
+    "base-short": {
+      "rougeLsum": 0.3527894819224106,
+      "unterminated": 0.028,
+      "pred_words": 380.08
+    },
+    "full": {
+      "rougeLsum": 0.4824547086190142,
+      "unterminated": 0.044,
+      "pred_words": 244.958
+    },
+    "expert_1": {
+      "rougeLsum": 0.45581341321106156,
+      "unterminated": 0.046,
+      "pred_words": 261.584
+    },
+    "expert_2": {
+      "rougeLsum": 0.4566226692884828,
+      "unterminated": 0.088,
+      "pred_words": 280.962
+    },
+    "expert_2_s2": {
+      "rougeLsum": 0.4592109449780329,
+      "unterminated": 0.076,
+      "pred_words": 282.174
+    },
+    "expert_2_s3": {
+      "rougeLsum": 0.4593091459365611,
+      "unterminated": 0.06,
+      "pred_words": 255.684
+    }
+  },
+  "iid": null,
+  "domain": {
+    "vs": "expert_2",
+    "delta": 0.0258,
+    "ci": [
+      0.0135,
+      0.0383
+    ],
+    "n": 500,
+    "usable": true
+  },
+  "per_shard": {}
+}

@@ -1,0 +1,84 @@
+{
+  "task": "bigpatent",
+  "metric": "rougeLsum",
+  "seed_spread_assumed": 0.0015,
+  "arms": {
+    "base": {
+      "rougeLsum": 0.3090892216255165,
+      "rouge_c": 0.2925951040699271,
+      "rouge_h": 0.3255833391811058,
+      "unterminated": 0.006,
+      "pred_words": 156.156
+    },
+    "full": {
+      "rougeLsum": 0.5017556301465342,
+      "rouge_c": 0.45534860351737905,
+      "rouge_h": 0.5481626567756894,
+      "unterminated": 0.024,
+      "pred_words": 111.2
+    },
+    "expert_c": {
+      "rougeLsum": 0.4895731757735703,
+      "rouge_c": 0.4503792064063685,
+      "rouge_h": 0.528767145140772,
+      "unterminated": 0.034,
+      "pred_words": 116.076
+    },
+    "expert_h": {
+      "rougeLsum": 0.4879512078517691,
+      "rouge_c": 0.4255063697814381,
+      "rouge_h": 0.5503960459221001,
+      "unterminated": 0.042,
+      "pred_words": 129.222
+    },
+    "iid_half": {
+      "rougeLsum": 0.4939669157296379,
+      "rouge_c": 0.44839051513481065,
+      "rouge_h": 0.5395433163244651,
+      "unterminated": 0.038,
+      "pred_words": 113.366
+    }
+  },
+  "iid": {
+    "vs": "iid_half",
+    "delta": 0.0078,
+    "ci": [
+      -0.0025,
+      0.0188
+    ],
+    "n": 500,
+    "usable": false
+  },
+  "domain": {
+    "vs": "expert_c",
+    "delta": 0.0122,
+    "ci": [
+      0.0015,
+      0.0234
+    ],
+    "n": 500,
+    "usable": false
+  },
+  "per_shard": {
+    "expert_c@c": {
+      "expert": 0.4503792064063685,
+      "full": 0.45534860351737905,
+      "where": "home"
+    },
+    "expert_c@h": {
+      "expert": 0.528767145140772,
+      "full": 0.5481626567756894,
+      "where": "away"
+    },
+    "expert_h@c": {
+      "expert": 0.4255063697814381,
+      "full": 0.45534860351737905,
+      "where": "away"
+    },
+    "expert_h@h": {
+      "expert": 0.5503960459221001,
+      "full": 0.5481626567756894,
+      "where": "home"
+    }
+  }
+}
