@@ -17,7 +17,12 @@ cd "$SLURM_SUBMIT_DIR"
 mapfile -t ARMS < "$DATA_ROOT/ARMS"
 ARM=${ARMS[${SLURM_ARRAY_TASK_ID:-0}]}
 DATASET_DIR="$DATA_ROOT/$ARM"
-OUTPUT_DIR="../models/gemma3-$TASK-$ARM-lora"
+# SEED (optional, via --export) reruns an arm on the same data with a different
+# training seed, to measure the run-to-run spread the screens' "x seed spread"
+# multiples assume. The adapter is renamed <arm>_s<seed> so it cannot overwrite
+# the original.
+SEED=${SEED:-}
+OUTPUT_DIR="../models/gemma3-$TASK-$ARM${SEED:+_s$SEED}-lora"
 mkdir -p "$OUTPUT_DIR"
 exec > "$OUTPUT_DIR/$TASK-${SLURM_JOB_ID:-0}.out" 2>&1
 echo "task=$TASK arm=$ARM dataset=$DATASET_DIR output=$OUTPUT_DIR"
@@ -34,6 +39,7 @@ from datasets import load_from_disk
 src, dst, output_dir, dataset_dir = sys.argv[1:]
 cfg = yaml.safe_load(open(src))
 cfg["output_dir"] = output_dir
+if os.environ.get("SEED"): cfg["seed"] = int(os.environ["SEED"])
 for key, split in (("datasets", "train"), ("test_datasets", "validation")):
     for ds in cfg[key]:
         ds["path"] = os.path.join(dataset_dir, split)
