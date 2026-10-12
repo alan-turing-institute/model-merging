@@ -1,0 +1,180 @@
+{
+  "task": "samsum",
+  "metric": "rouge1",
+  "max_tokens": 128,
+  "test_examples": 500,
+  "bootstrap_resamples": 2000,
+  "seed_spread_assumed": 0.005,
+  "note": "one run per arm; seed spread unmeasured here. On the crime task it was 0.004-0.005, so read any step below that as flat.",
+  "arms": [
+    {
+      "arm": "base",
+      "rows": 0,
+      "rouge1": 0.2926,
+      "rouge2": 0.101,
+      "rougeL": 0.216,
+      "rougeLsum": 0.2643,
+      "semantic": 0.7097,
+      "entity_support": 0.7256,
+      "pred_words": 68.286,
+      "ref_words": 19.548,
+      "unterminated": 0.218
+    },
+    {
+      "arm": "n100",
+      "rows": 100,
+      "rouge1": 0.5111,
+      "rouge2": 0.2596,
+      "rougeL": 0.428,
+      "rougeLsum": 0.4696,
+      "semantic": 0.8017,
+      "entity_support": 0.9371,
+      "pred_words": 17.21,
+      "ref_words": 19.548,
+      "unterminated": 0.0
+    },
+    {
+      "arm": "n200",
+      "rows": 200,
+      "rouge1": 0.5118,
+      "rouge2": 0.2589,
+      "rougeL": 0.4194,
+      "rougeLsum": 0.47,
+      "semantic": 0.8102,
+      "entity_support": 0.9351,
+      "pred_words": 18.638,
+      "ref_words": 19.548,
+      "unterminated": 0.0
+    },
+    {
+      "arm": "n400",
+      "rows": 400,
+      "rouge1": 0.521,
+      "rouge2": 0.2725,
+      "rougeL": 0.4289,
+      "rougeLsum": 0.4761,
+      "semantic": 0.8136,
+      "entity_support": 0.9238,
+      "pred_words": 19.76,
+      "ref_words": 19.548,
+      "unterminated": 0.0
+    },
+    {
+      "arm": "n800",
+      "rows": 800,
+      "rouge1": 0.5066,
+      "rouge2": 0.2518,
+      "rougeL": 0.4195,
+      "rougeLsum": 0.4633,
+      "semantic": 0.808,
+      "entity_support": 0.9305,
+      "pred_words": 19.474,
+      "ref_words": 19.548,
+      "unterminated": 0.0
+    },
+    {
+      "arm": "n1600",
+      "rows": 1600,
+      "rouge1": 0.5215,
+      "rouge2": 0.2689,
+      "rougeL": 0.4325,
+      "rougeLsum": 0.4813,
+      "semantic": 0.8171,
+      "entity_support": 0.9207,
+      "pred_words": 20.536,
+      "ref_words": 19.548,
+      "unterminated": 0.0
+    },
+    {
+      "arm": "n3200",
+      "rows": 3200,
+      "rouge1": 0.5179,
+      "rouge2": 0.2639,
+      "rougeL": 0.4262,
+      "rougeLsum": 0.474,
+      "semantic": 0.8168,
+      "entity_support": 0.9216,
+      "pred_words": 20.102,
+      "ref_words": 19.548,
+      "unterminated": 0.0
+    },
+    {
+      "arm": "n6400",
+      "rows": 6400,
+      "rouge1": 0.5152,
+      "rouge2": 0.2648,
+      "rougeL": 0.4265,
+      "rougeLsum": 0.4721,
+      "semantic": 0.8178,
+      "entity_support": 0.9225,
+      "pred_words": 19.868,
+      "ref_words": 19.548,
+      "unterminated": 0.0
+    }
+  ],
+  "steps": [
+    {
+      "from": "base",
+      "to": "n100",
+      "delta": 0.2185,
+      "ci_low": 0.2049,
+      "ci_high": 0.2336,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "n100",
+      "to": "n200",
+      "delta": 0.0007,
+      "ci_low": -0.0096,
+      "ci_high": 0.0111,
+      "n": 500,
+      "flat": true
+    },
+    {
+      "from": "n200",
+      "to": "n400",
+      "delta": 0.0092,
+      "ci_low": -0.0016,
+      "ci_high": 0.0198,
+      "n": 500,
+      "flat": true
+    },
+    {
+      "from": "n400",
+      "to": "n800",
+      "delta": -0.0144,
+      "ci_low": -0.0263,
+      "ci_high": -0.0029,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "n800",
+      "to": "n1600",
+      "delta": 0.0149,
+      "ci_low": 0.0045,
+      "ci_high": 0.0261,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "n1600",
+      "to": "n3200",
+      "delta": -0.0037,
+      "ci_low": -0.0143,
+      "ci_high": 0.007,
+      "n": 500,
+      "flat": true
+    },
+    {
+      "from": "n3200",
+      "to": "n6400",
+      "delta": -0.0026,
+      "ci_low": -0.0142,
+      "ci_high": 0.0095,
+      "n": 500,
+      "flat": true
+    }
+  ]
+}

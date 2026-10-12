@@ -1,0 +1,84 @@
+{
+  "task": "mt_domain",
+  "metric": "chrf",
+  "seed_spread_assumed": 0.5,
+  "arms": {
+    "base": {
+      "chrf": 18.86147714083705,
+      "chrf_medical": 17.461730544211974,
+      "chrf_law": 20.26122373746212,
+      "truncated": 0.0,
+      "length_ratio": 20.5704747305158
+    },
+    "full": {
+      "chrf": 59.538044503928894,
+      "chrf_medical": 60.801748440182635,
+      "chrf_law": 58.27434056767516,
+      "truncated": 0.0,
+      "length_ratio": 1.1325819838838762
+    },
+    "expert_law": {
+      "chrf": 57.10116619538582,
+      "chrf_medical": 55.745771019168146,
+      "chrf_law": 58.4565613716035,
+      "truncated": 0.0,
+      "length_ratio": 1.1674115995124963
+    },
+    "expert_medical": {
+      "chrf": 54.32177062921867,
+      "chrf_medical": 60.92003028593502,
+      "chrf_law": 47.72351097250232,
+      "truncated": 0.0,
+      "length_ratio": 1.1236872588610092
+    },
+    "iid_half": {
+      "chrf": 58.301151965627405,
+      "chrf_medical": 59.45748512687801,
+      "chrf_law": 57.1448188043768,
+      "truncated": 0.0,
+      "length_ratio": 1.1411013264811423
+    }
+  },
+  "iid": {
+    "vs": "iid_half",
+    "delta": 1.2369,
+    "ci": [
+      0.744,
+      1.7701
+    ],
+    "n": 2000,
+    "usable": false
+  },
+  "domain": {
+    "vs": "expert_law",
+    "delta": 2.4369,
+    "ci": [
+      1.83,
+      3.073
+    ],
+    "n": 2000,
+    "usable": false
+  },
+  "per_shard": {
+    "expert_medical@medical": {
+      "expert": 60.92003028593502,
+      "full": 60.801748440182635,
+      "where": "home"
+    },
+    "expert_medical@law": {
+      "expert": 47.72351097250232,
+      "full": 58.27434056767516,
+      "where": "away"
+    },
+    "expert_law@medical": {
+      "expert": 55.745771019168146,
+      "full": 60.801748440182635,
+      "where": "away"
+    },
+    "expert_law@law": {
+      "expert": 58.4565613716035,
+      "full": 58.27434056767516,
+      "where": "home"
+    }
+  }
+}
