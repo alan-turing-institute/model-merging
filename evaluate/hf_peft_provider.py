@@ -25,6 +25,7 @@ import is guarded so the failure is a clear message rather than an
 AttributeError deep inside a generate call.
 """
 
+from pathlib import Path
 from typing import Any
 
 from inspect_ai.model import GenerateConfig, modelapi
@@ -37,6 +38,27 @@ except ImportError as exc:  # pragma: no cover - only on an incompatible upgrade
         "This is a private module and may have moved in a newer inspect-ai; "
         "hf_peft_provider.py needs updating to match."
     ) from exc
+
+
+def adapter_vocab_size(adapter_path) -> int | None:
+    """Rows of the embedding matrix saved in a local adapter, if it saved one.
+
+    Axolotl resizes the embeddings to len(tokenizer) when the tokenizer is the
+    larger of the two, and PEFT then saves the whole embedding and output layers
+    with the adapter. Gemma 3 1B is such a model - 262,145 tokens against
+    262,144 embedding rows - while Gemma 3 4B's embedding is larger than its
+    tokenizer and its adapters save no embeddings at all.
+    """
+    file = Path(adapter_path) / "adapter_model.safetensors"
+    if not file.is_file():
+        return None
+    from safetensors import safe_open
+
+    with safe_open(str(file), "pt") as f:
+        for key in f.keys():
+            if key.endswith("embed_tokens.weight"):
+                return f.get_slice(key).get_shape()[0]
+    return None
 
 
 class HuggingFacePeftAPI(HuggingFaceAPI):
@@ -64,6 +86,14 @@ class HuggingFacePeftAPI(HuggingFaceAPI):
 
         if adapter_path:
             from peft import PeftModel
+
+            # Resize the base model to the adapter's vocabulary first, exactly
+            # as training did, or loading fails with a size mismatch on
+            # embed_tokens and lm_head. A no-op for adapters without saved
+            # embeddings.
+            vocab = adapter_vocab_size(adapter_path)
+            if vocab and vocab != self.model.get_input_embeddings().num_embeddings:
+                self.model.resize_token_embeddings(vocab)
 
             self.model = PeftModel.from_pretrained(self.model, str(adapter_path))
             self.model.eval()
