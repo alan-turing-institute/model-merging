@@ -215,8 +215,12 @@ def main():
             print(f"  {lower:>8} -> {upper:<8}  no shared examples")
             continue
         point, lo, hi, n = result
+        # A step whose interval excludes zero can go either way; a negative one
+        # is a fall, not a rise, and on a saturated curve it is usually noise in
+        # the training draw rather than data hurting.
+        direction = "rising" if point > 0 else "falling"
         verdict = "flat" if lo <= 0 <= hi else (
-            "rising, but below seed spread" if abs(point) < SEED_SPREAD else "rising")
+            f"{direction}, but below seed spread" if abs(point) < SEED_SPREAD else direction)
         print(f"  {lower:>8} -> {upper:<8}  {point:+.4f}  "
               f"CI [{lo:+.4f}, {hi:+.4f}]  n={n}  {verdict}")
 
