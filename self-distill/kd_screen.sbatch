@@ -7,7 +7,7 @@
 #SBATCH --time=04:00:00
 # The two GPU stages of the self-distilled LoRA, around main's own code:
 #   sbatch --job-name=kd-teacher kd_screen.sbatch teacher
-#   sbatch --job-name=kd-train   kd_screen.sbatch train
+#   sbatch --job-name=kd-train   kd_screen.sbatch train [config.yaml]
 # `teacher` runs generate_teacher_logprobs.py unchanged on the screen's prompts;
 # `train` runs axolotl with self-distillation_xsum_lora.yaml. A wrapper of our
 # own rather than generate_teacher_logprobs.sbatch / train_xsum.sbatch only for
@@ -27,11 +27,12 @@ case $STAGE in
       --prefix xsum_kd_screen --student-fields messages_short --max-seq-len 1024
     ;;
   train)
-    OUT=../models/gemma3-xsum_kd_screen-lora
+    # Optional second argument: the config to train (default: the 4-bit one).
+    CONFIG=${2:-self-distillation_xsum_lora.yaml}
+    OUT=$(awk '/^output_dir:/ {print $2}' "$CONFIG")
     mkdir -p "$OUT"
-    export MM_PREPARED="$OUT/prepared"
-    uv run axolotl preprocess self-distillation_xsum_lora.yaml
-    uv run axolotl train      self-distillation_xsum_lora.yaml
+    uv run axolotl preprocess "$CONFIG"
+    uv run axolotl train      "$CONFIG"
     ;;
   check)
     # Step-0 check on the eval rows axolotl prepared, at both weight formats.
