@@ -1,0 +1,149 @@
+{
+  "task": "cnndm",
+  "model": "gemma-3-4b-it",
+  "metric": "rougeLsum",
+  "max_tokens": 384,
+  "test_examples": 500,
+  "bootstrap_resamples": 2000,
+  "seed_spread_assumed": 0.005,
+  "note": "one run per arm; seed spread unmeasured here. On the crime task it was 0.004-0.005, so read any step below that as flat.",
+  "arms": [
+    {
+      "arm": "base",
+      "rows": 0,
+      "rouge1": 0.2633,
+      "rouge2": 0.0903,
+      "rougeLsum": 0.2422,
+      "pred_words": 204.578,
+      "unterminated": 0.174
+    },
+    {
+      "arm": "n125",
+      "rows": 125,
+      "rouge1": 0.3749,
+      "rouge2": 0.1275,
+      "rougeLsum": 0.3438,
+      "pred_words": 64.1,
+      "unterminated": 0.048
+    },
+    {
+      "arm": "n250",
+      "rows": 250,
+      "rouge1": 0.3926,
+      "rouge2": 0.1535,
+      "rougeLsum": 0.3635,
+      "pred_words": 67.488,
+      "unterminated": 0.064
+    },
+    {
+      "arm": "n500",
+      "rows": 500,
+      "rouge1": 0.4113,
+      "rouge2": 0.1786,
+      "rougeLsum": 0.3831,
+      "pred_words": 72.606,
+      "unterminated": 0.052
+    },
+    {
+      "arm": "n1000",
+      "rows": 1000,
+      "rouge1": 0.412,
+      "rouge2": 0.1786,
+      "rougeLsum": 0.3842,
+      "pred_words": 74.62,
+      "unterminated": 0.068
+    },
+    {
+      "arm": "n2000",
+      "rows": 2000,
+      "rouge1": 0.413,
+      "rouge2": 0.1783,
+      "rougeLsum": 0.3844,
+      "pred_words": 72.788,
+      "unterminated": 0.058
+    },
+    {
+      "arm": "n4000",
+      "rows": 4000,
+      "rouge1": 0.4225,
+      "rouge2": 0.1885,
+      "rougeLsum": 0.3946,
+      "pred_words": 67.052,
+      "unterminated": 0.054
+    },
+    {
+      "arm": "n8000",
+      "rows": 8000,
+      "rouge1": 0.4297,
+      "rouge2": 0.1892,
+      "rougeLsum": 0.3986,
+      "pred_words": 68.074,
+      "unterminated": 0.046
+    }
+  ],
+  "steps": [
+    {
+      "from": "base",
+      "to": "n125",
+      "delta": 0.1017,
+      "ci_low": 0.0938,
+      "ci_high": 0.1101,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "n125",
+      "to": "n250",
+      "delta": 0.0197,
+      "ci_low": 0.0108,
+      "ci_high": 0.028,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "n250",
+      "to": "n500",
+      "delta": 0.0195,
+      "ci_low": 0.0113,
+      "ci_high": 0.028,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "n500",
+      "to": "n1000",
+      "delta": 0.0011,
+      "ci_low": -0.006,
+      "ci_high": 0.0083,
+      "n": 500,
+      "flat": true
+    },
+    {
+      "from": "n1000",
+      "to": "n2000",
+      "delta": 0.0002,
+      "ci_low": -0.0072,
+      "ci_high": 0.0076,
+      "n": 500,
+      "flat": true
+    },
+    {
+      "from": "n2000",
+      "to": "n4000",
+      "delta": 0.0102,
+      "ci_low": 0.0023,
+      "ci_high": 0.0176,
+      "n": 500,
+      "flat": false
+    },
+    {
+      "from": "n4000",
+      "to": "n8000",
+      "delta": 0.004,
+      "ci_low": -0.0039,
+      "ci_high": 0.0122,
+      "n": 500,
+      "flat": true
+    }
+  ]
+}
