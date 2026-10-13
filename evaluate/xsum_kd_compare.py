@@ -65,8 +65,9 @@ def main():
               f"{mean('entity_support'):7.4f} {statistics.fmean(clean):9.4f} {mean('pred_words'):6.1f} "
               f"{len(looping) / len(log.samples):7.1%}")
 
-    pairs = [("self-distilled 8-bit", "self-distilled 4-bit"), ("self-distilled 8-bit", "reference LoRA"),
-             ("self-distilled bf16 (own loop)", "self-distilled 8-bit")]
+    pairs = [("self-distilled bf16 (own loop)", "self-distilled 4-bit"),
+             ("self-distilled bf16 (own loop)", "reference LoRA"),
+             ("self-distilled 8-bit", "self-distilled 4-bit")]
     for a, b in pairs:
         if a in picked and b in picked:
             for m in ("rouge1", "semantic", "entity_support"):
