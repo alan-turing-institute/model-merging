@@ -45,12 +45,14 @@ def merged(base: str, adapter: str) -> str:
     model = PeftModel.from_pretrained(model, adapter).merge_and_unload()
     out = tempfile.mkdtemp(prefix="dlg-merged-", dir=os.environ.get("TMPDIR"))
     src = Path(snapshot_download(base))
+    # copyfile, not copy: cache blobs are read-only, and copied permissions
+    # would stop the adapter's tokenizer from replacing the base one.
     for f in src.iterdir():                          # tokenizer, processor, chat template
         if not f.name.startswith("model") and f.is_file():
-            shutil.copy(f, out)
+            shutil.copyfile(f, Path(out) / f.name)
     model.save_pretrained(out)
     for f in Path(adapter).glob("tokenizer*"):
-        shutil.copy(f, out)
+        shutil.copyfile(f, Path(out) / f.name)
     del model
     return out
 
