@@ -1,0 +1,40 @@
+{
+  "task": "constrained",
+  "curve": "constrained_sft",
+  "size": "_1b",
+  "metric": "success",
+  "arms": {
+    "0": {
+      "success": 0.0174,
+      "length_ok": 0.0212,
+      "banned_ok": 0.944,
+      "word_error": 7.8089,
+      "f1": 0.1754
+    },
+    "125": {
+      "success": 0.0347,
+      "length_ok": 0.0656,
+      "banned_ok": 0.583,
+      "word_error": 4.2934,
+      "f1": 0.3589
+    },
+    "250": {
+      "success": 0.0502,
+      "length_ok": 0.0792,
+      "banned_ok": 0.6004,
+      "word_error": 4.1004,
+      "f1": 0.3727
+    }
+  },
+  "denominators": [
+    {
+      "full": 250,
+      "half": 125,
+      "delta": 0.0154,
+      "ci": [
+        -0.0097,
+        0.0405
+      ]
+    }
+  ]
+}

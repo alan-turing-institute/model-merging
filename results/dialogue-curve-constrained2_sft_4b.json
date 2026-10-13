@@ -1,0 +1,72 @@
+{
+  "task": "constrained2",
+  "curve": "constrained2_sft",
+  "size": "_4b",
+  "metric": "success",
+  "arms": {
+    "0": {
+      "success": 0.3359,
+      "length_ok": 0.3514,
+      "banned_ok": 0.9633,
+      "word_error": 3.695,
+      "f1": 0.1883
+    },
+    "125": {
+      "success": 0.3629,
+      "length_ok": 0.4305,
+      "banned_ok": 0.8436,
+      "word_error": 3.5541,
+      "f1": 0.3701
+    },
+    "250": {
+      "success": 0.3475,
+      "length_ok": 0.4807,
+      "banned_ok": 0.722,
+      "word_error": 3.195,
+      "f1": 0.3798
+    },
+    "500": {
+      "success": 0.361,
+      "length_ok": 0.4691,
+      "banned_ok": 0.7432,
+      "word_error": 3.3571,
+      "f1": 0.387
+    },
+    "1000": {
+      "success": 0.3552,
+      "length_ok": 0.4672,
+      "banned_ok": 0.7201,
+      "word_error": 3.2278,
+      "f1": 0.3944
+    }
+  },
+  "denominators": [
+    {
+      "full": 250,
+      "half": 125,
+      "delta": -0.0154,
+      "ci": [
+        -0.0676,
+        0.0386
+      ]
+    },
+    {
+      "full": 500,
+      "half": 250,
+      "delta": 0.0135,
+      "ci": [
+        -0.0367,
+        0.0637
+      ]
+    },
+    {
+      "full": 1000,
+      "half": 500,
+      "delta": -0.0058,
+      "ci": [
+        -0.0541,
+        0.0425
+      ]
+    }
+  ]
+}
