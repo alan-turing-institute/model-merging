@@ -49,5 +49,31 @@ case $STAGE in
     [[ -n $PREP ]] || PREP='${MM_PREPARED:-last_run_prepared}'
     uv run python kd_grad_check.py "$PREP"
     ;;
+  probe)
+    # Two optimiser steps of the bf16 config with one setting changed at a time,
+    # to find which change gives a finite first gradient. Reuses the prepared
+    # data; nothing is evaluated or saved.
+    for variant in nopad nockpt fp32; do
+      PROBE_CFG=$(mktemp --suffix=.yaml -p .)
+      uv run python - self-distillation_xsum_lora_bf16.yaml "$PROBE_CFG" "$variant" <<'EOF'
+import sys, yaml
+src, dst, variant = sys.argv[1:]
+cfg = yaml.safe_load(open(src))
+cfg.update(max_steps=2, logging_steps=1, eval_strategy="no", save_strategy="no",
+           output_dir=f"../models/kd-probe-{variant}")
+cfg.pop("evals_per_epoch", None)
+if variant == "nopad":
+    cfg.update(micro_batch_size=1, gradient_accumulation_steps=16)
+elif variant == "nockpt":
+    cfg["gradient_checkpointing"] = False
+elif variant == "fp32":
+    cfg.update(bf16=False, fp16=False)
+yaml.safe_dump(cfg, open(dst, "w"), sort_keys=False)
+EOF
+      echo "=== probe $variant ==="
+      uv run axolotl train "$PROBE_CFG" 2>&1 | grep -oE "\{.loss.: [^{}]*\}" | grep -oE "(loss|grad_norm).: .?[0-9a-z.e+-]+" | paste - -
+      rm -f "$PROBE_CFG"
+    done
+    ;;
   *) echo "unknown stage $STAGE" >&2; exit 1 ;;
 esac
