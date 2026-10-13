@@ -127,3 +127,84 @@ A longer student prompt is included as a check on whether the self-distillation 
 For details see the `prepare_data_XSum.py` file.
 
 Different variations on the teacher propmt were tried.  This one produced the most clean outputs: no preamble, no markdown, one sentence, 20-25 words.
+
+## Self-distilled LoRA (`kd_screen.sbatch`)
+
+A self-distilled LoRA built to match `../train/xsum_screen_gemma.yaml`'s
+reference-trained LoRA in everything except the training signal: the same 4,000
+XSum articles cut to 512 words, the same adapter, schedule and batch, scored on
+the same 1,000 test articles. The teacher, prompts and loss are main's:
+`generate_teacher_logprobs.py` unchanged, 0.5 KL + 0.5 cross-entropy,
+temperature 1, top-20.
+
+### Running it
+
+```bash
+cd self-distill
+uv run --project ../train --no-sync python prepare_kd_screen_prompts.py \
+    ../datasets/xsum_screen/full ../datasets/xsum_kd_screen_prompts          # login node
+sbatch --job-name=kd-teacher kd_screen.sbatch teacher                       # teacher targets and top-20 logprobs
+sbatch --job-name=kd-train   kd_screen.sbatch trainloop                     # bf16 LoRA, own loop (recommended)
+sbatch --job-name=kd-train   kd_screen.sbatch trainloop google/gemma-3-1b-it ../models/gemma3-xsum_kd_screen_1b_bf16loop-lora
+sbatch --job-name=kd-train   kd_screen.sbatch train self-distillation_xsum_lora.yaml   # axolotl, 4-bit
+cd ../evaluate && sbatch evaluate.sbatch xsum google/gemma-3-4b-it \
+    --adapter ../models/gemma3-xsum_kd_screen_bf16loop-lora \
+    -T prompt_variant=short -T dataset_path=../datasets/xsum_screen/test
+uv run python xsum_kd_compare.py logs
+```
+
+The job uses the self-distill environment at
+`$PROJECTDIR/$USER/mm/venvs/self-distill` (project storage, not home). Build it
+once with
+`UV_PROJECT_ENVIRONMENT=$PROJECTDIR/$USER/mm/venvs/self-distill uv sync --frozen`.
+Its teacher stage passes `--max-seq-len 1024`, which must equal the training
+`sequence_len`: anything truncated has its teacher logprobs misplaced.
+
+### Train with `kd_lora_train.py`, not axolotl
+
+Axolotl 0.18's KD trainer is unreliable with a LoRA on Gemma 3:
+
+| Configuration | Outcome |
+|---|---|
+| bf16 base (`self-distillation_xsum_lora_bf16.yaml`) | NaN gradient at step 1, in bf16 and fp32, with or without padding or gradient checkpointing |
+| 8-bit base | trained, but validation loss rose from 1.32 to 2.92 and the model collapsed (3.7-word outputs) |
+| 4-bit base | trained; raw gradient norms in the hundreds, 0.8% of outputs loop |
+
+The same step built by hand is finite (`kd_lora_nan_check.py`), so
+`kd_lora_train.py` trains the configuration outside axolotl. It reuses axolotl's
+prepared tensors, the same fused loss and the same optimiser and schedule. Two
+deliberate departures: the loss gets fp32 hidden states and an fp32 copy of the
+output layer, as axolotl's working 4-bit path effectively does; and a step with a
+non-finite gradient is skipped and logged, with an abort after ten. On XSum it
+trained smoothly (validation loss 5.00 → 0.175, 5 of 747 steps skipped) and
+produced no looping outputs. For a smaller student on the 4B teacher's data, it
+checks the largest teacher token id against the embedding and resizes it if
+needed.
+
+Axolotl's logged KD losses run about 1.44× higher than the per-token loss of the
+same rows, because of how it averages across batches. Compare runs by their test
+scores, not their logged losses.
+
+### Checks
+
+- **`kd_step0_check.py`** (`kd_screen.sbatch check`): with the untrained student,
+  the per-token KL at the data's alignment and one position either side; the
+  trainer's logit path against the model's; cross-entropy; axolotl's fused loss;
+  and the same rows scored behind the teacher's own prompt. Measured: alignment
+  correct (KL 0.003 nats in the teacher's context; 15–28 at ±1), logged loss
+  exactly 0.5 KL + 0.5 CE. Quantisation alone puts the student 0.066 (8-bit) and
+  0.50 (4-bit) nats from the teacher.
+- **`kd_grad_check.py`**, **`kd_lora_nan_check.py`**, and
+  `kd_screen.sbatch probe` located the axolotl NaN described above.
+
+The large step-0 loss is not a bug. The teacher writes under a strict system
+prompt, and the student reads the short one; closing that gap is what this
+training does. `self-distillation_xsum.yaml`'s comment that the step-0 KD loss
+should be near zero holds only when the student is given the teacher's prompt.
+
+### Results
+
+`../results/xsum-kd-compare.txt`. On 1,000 test articles, the bf16 self-distilled
+LoRA reaches ROUGE-1 0.241 (the teacher's own targets score 0.235 against the
+references) against 0.400 for the reference-trained LoRA. Its entity support is
+0.859 against 0.686: it invents far fewer names and numbers.

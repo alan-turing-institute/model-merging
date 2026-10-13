@@ -110,3 +110,102 @@ estimate put at ~3,700 tokens in fact produced examples of up to 6,948 and place
 tokens and verifies the fit on the rendered chat text, refusing to finish if any
 example would be dropped; `train_billsum.sbatch` prints the row count again before
 and after tokenisation.
+
+## Headroom screens
+
+Before spending merging runs on a dataset, a screen measures whether it has the
+headroom a merge needs: how far training lifts the model above the untrained
+base, and the denominator of the recovery fraction,
+`R = (merged − best expert) / (full − best expert)`. XSum and SAMSum failed this
+(the gain from more data is spent in the first few hundred examples); CLINC150
+and EN–DE medical/legal passed.
+
+### Before you start (Isambard-AI)
+
+- **Sync environments once, on a login node, add-only:**
+  `uv sync --frozen --inexact` in `train/` and `../evaluate/`. Jobs never sync
+  (`UV_NO_SYNC=1`): concurrent array tasks race on one venv, and a plain (non
+  `--inexact`) sync once removed a leftover cu12 wheel that shared files with the
+  cu13 cuDNN, breaking torch in every venv.
+- **Prepare data on a login node.** Compute nodes have no network.
+- **Hugging Face:** weights live in `$PROJECTDIR/$USER/mm/hf-cache`
+  (`HF_HUB_CACHE`, *not* `HF_HOME`, which also moves the token). Gemma and FLORES+
+  are gated; log in with
+  `ssh -t u6ui.aip2.isambard 'uvx --from huggingface_hub hf auth login --force'`.
+- **`cuda_env.sh`** is sourced by the job scripts. It prepends the CUDA 13.0
+  forward-compat libraries only when they are newer than the node driver: since
+  the October 2026 driver upgrade (580.173.02) they are older, and loading them
+  gives CUDA error 803 and no GPU. It also sets `UV_NO_SYNC`, `HF_HUB_CACHE` and
+  turns off telemetry.
+
+### The harness
+
+| File | Role |
+|---|---|
+| `prepare_<task>_data.py` | builds `../datasets/<task>/`: one `<arm>/{train,validation}` per training arm, a shared `test` split, and an `ARMS` file listing the arms (largest first) |
+| `<task>_gemma.yaml` | one axolotl config for every arm; the job overrides only paths and output |
+| `train_screen.sbatch` | job array over the `ARMS` file: array index *i* trains arm *i* |
+| `run_screen.sh <task>` | submits the training array, the untrained-model evaluation and one evaluation per arm, each gated on its own training task |
+| `../evaluate/split_screen.py` | reads the logs: both denominators (random split and natural split) and the per-shard table |
+| `../evaluate/scaling_curve.py` | the same for data-scaling curves (SAMSum, BillSum) |
+
+```bash
+cd train
+uv run --no-sync python prepare_mt_domain_data.py ../datasets/mt_domain   # login node
+./run_screen.sh mt_domain
+cd ../evaluate && uv run python split_screen.py logs --task mt_domain --json ../results/mt_domain-screen.json
+```
+
+Two optional arguments rerun one arm (array index *i*) without touching the
+original:
+
+```bash
+sbatch --array=3 train_screen.sbatch mt_domain 2                           # seed 2 -> expert_law_s2
+sbatch --array=0 train_screen.sbatch cnndm "" google/gemma-3-1b-it          # 1B base -> full_1b
+```
+
+Pass these as arguments, never through `sbatch --export=ALL`: that carries the
+login node's `TMPDIR` to compute nodes, where it does not exist. A 1B arm must be
+evaluated with the 1B base: `evaluate.sbatch <task> google/gemma-3-1b-it --adapter ../models/gemma3-<task>-<arm>_1b-lora`.
+
+### The screens
+
+| Task | Dataset | Arms (training rows) | Headline metric | Result |
+|---|---|---|---|---|
+| `samsum` | SAMSum | n100 … n6400, nested (own scripts: `run_samsum_curve.sh`) | ROUGE-1 | flat from 100 rows — saturated |
+| `billsum_split` | BillSum | full 1,000; two random halves of 500 | ROUGE-Lsum | denominator 0.026 (17× seed spread) |
+| `bigpatent` | BigPatent, CPC sections c vs h | full, random half, one expert per section (2,000 each) | ROUGE-Lsum | 0.012 — sections transfer well |
+| `cnndm` | CNN/DailyMail | full 4,000 | ROUGE-Lsum | base vs trained only |
+| `xsum_screen` | XSum, articles cut to 512 words | full 4,000 | ROUGE-1 | base vs trained only |
+| `clinc150` | CLINC150, 10 domains split 5/5 | full 15,000; random half; one expert per half | accuracy | 0.43 — mostly label coverage |
+| `mt_domain` | EMEA vs JRC-Acquis, EN→DE | full 8,000; random half; one expert per domain | chrF++ | 2.44 (54× seed spread) |
+| `mt_zh` | UN vs News Commentary, EN→ZH | full 8,000; random half; one expert per domain | chrF | 0.42 — UN expert covers news |
+
+Results are committed in `../results/` as `<task>-screen.json` (and
+`samsum-scaling-curve.json`); COMET-22 for the translation runs is in
+`mt-comet.json`.
+
+### Shared settings
+
+Every config: QLoRA, 4-bit base, LoRA r16 / α32 / dropout 0.05 on q, k, v, o;
+learning rate 2e-4, cosine with 10 warmup steps; effective batch 16; eager
+attention (Gemma 3 under sdpa produced NaNs); `<end_of_turn>` trained as the stop
+token; `excess_length_strategy: raise`; `dataset_num_proc: 8`. Three epochs,
+except SAMSum (six, so the 100-row arm gets enough steps). `sequence_len` per
+task, from the measured token lengths: 1,024 (CLINC150, translation, XSum), 1,536
+(SAMSum), 2,048 (CNN/DM), 4,096 (BillSum, BigPatent). Each prepare script checks
+every rendered example against `sequence_len` before anything is queued.
+
+### Known problems
+
+- **`dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}` is not expanded by
+  axolotl.** Prepared data lands in a directory literally named
+  `${MM_PREPARED:-last_run_prepared}` here and in `../self-distill/` (on home
+  quota), not on node-local scratch. Axolotl's cache key ignores the base model,
+  so 1B and 4B runs on one dataset share it — harmless for Gemma 3 1B and 4B,
+  which tokenise identically, but not safe for other model pairs. Not yet fixed.
+- **Gemma 3 1B** has 262,145 tokens against 262,144 embedding rows. Axolotl
+  resizes the embeddings and the adapter saves them; `../evaluate/hf_peft_provider.py`
+  resizes the base to match before loading.
+- **Self-distillation with LoRA** has its own problems in axolotl; see
+  `../self-distill/README.md`.
