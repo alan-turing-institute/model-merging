@@ -44,5 +44,10 @@ case $STAGE in
     uv run python kd_step0_check.py "$PREP"
     uv run python kd_step0_check.py "$PREP" --load-in-4bit
     ;;
+  gradcheck)
+    PREP=${2:-}
+    [[ -n $PREP ]] || PREP='${MM_PREPARED:-last_run_prepared}'
+    uv run python kd_grad_check.py "$PREP"
+    ;;
   *) echo "unknown stage $STAGE" >&2; exit 1 ;;
 esac
