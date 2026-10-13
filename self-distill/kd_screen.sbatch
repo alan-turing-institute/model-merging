@@ -81,5 +81,13 @@ EOF
     [[ -n $PREP ]] || PREP='${MM_PREPARED:-last_run_prepared}'
     uv run python kd_lora_nan_check.py "$PREP"
     ;;
+  trainloop)
+    # bf16 LoRA trained outside axolotl (kd_lora_train.py), on axolotl's own
+    # prepared tensors, because axolotl's KD trainer NaNs on this configuration.
+    PREP='${MM_PREPARED:-last_run_prepared}'
+    OUT=../models/gemma3-xsum_kd_screen_bf16loop-lora
+    mkdir -p "$OUT"
+    uv run python kd_lora_train.py "$PREP" "$OUT"
+    ;;
   *) echo "unknown stage $STAGE" >&2; exit 1 ;;
 esac

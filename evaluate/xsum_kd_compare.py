@@ -22,6 +22,7 @@ MODELS = {
     "reference LoRA": "gemma3-xsum_screen-full-lora",
     "self-distilled 4-bit": "gemma3-xsum_kd_screen-lora",
     "self-distilled 8-bit": "gemma3-xsum_kd_screen_8bit-lora",
+    "self-distilled bf16 (own loop)": "gemma3-xsum_kd_screen_bf16loop-lora",
 }
 REPEAT = re.compile(r"\b(\w+)\b(?:\W+\1\b){2,}", re.IGNORECASE)
 
@@ -51,20 +52,21 @@ def main():
                 if name not in picked or log.eval.created > picked[name].eval.created:
                     picked[name] = log
 
-    print(f"{'model':22} {'R1':>7} {'R2':>7} {'RL':>7} {'sem':>7} {'entity':>7} {'ent.clean':>9} {'words':>6} {'repeat':>7}")
+    print(f"{'model':32} {'R1':>7} {'R2':>7} {'RL':>7} {'sem':>7} {'entity':>7} {'ent.clean':>9} {'words':>6} {'repeat':>7}")
     for name in MODELS:
         log = picked.get(name)
         if not log:
-            print(f"{name:22} (no log yet)")
+            print(f"{name:32} (no log yet)")
             continue
         mean = lambda m: statistics.fmean(values(log, m).values())
         looping = {s.id for s in log.samples if REPEAT.search(s.output.completion or "")}
         clean = [v for i, v in values(log, "entity_support").items() if i not in looping]
-        print(f"{name:22} {mean('rouge1'):7.4f} {mean('rouge2'):7.4f} {mean('rougeL'):7.4f} {mean('semantic'):7.4f} "
+        print(f"{name:32} {mean('rouge1'):7.4f} {mean('rouge2'):7.4f} {mean('rougeL'):7.4f} {mean('semantic'):7.4f} "
               f"{mean('entity_support'):7.4f} {statistics.fmean(clean):9.4f} {mean('pred_words'):6.1f} "
               f"{len(looping) / len(log.samples):7.1%}")
 
-    pairs = [("self-distilled 8-bit", "self-distilled 4-bit"), ("self-distilled 8-bit", "reference LoRA")]
+    pairs = [("self-distilled 8-bit", "self-distilled 4-bit"), ("self-distilled 8-bit", "reference LoRA"),
+             ("self-distilled bf16 (own loop)", "self-distilled 8-bit")]
     for a, b in pairs:
         if a in picked and b in picked:
             for m in ("rouge1", "semantic", "entity_support"):
