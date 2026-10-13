@@ -30,11 +30,21 @@ steps and then hit a NaN gradient at step 379:
     schedule keeps time) and logged, and the run aborts after MAX_SKIPS, so a
     persistently unstable run cannot pass as finished.
 
-    python kd_lora_train.py <prepared_dir> <output_dir>
+    python kd_lora_train.py <prepared_dir> <output_dir> [--model google/gemma-3-1b-it]
+
+A smaller student than the teacher (e.g. Gemma 3 1B on the 4B teacher's data)
+must index every teacher token id: the 4B vocabulary (262,208) is larger than
+the 1B embedding (262,144). The largest id in the data is checked first; the
+embedding is resized to the tokenizer, as axolotl does, if that covers it, and
+the run stops if it does not.
 """
+
+import argparse
 
 import glob
 import json
+
+import pyarrow.compute as pc
 import math
 import sys
 import time
@@ -47,7 +57,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, get_cosine_schedul
 from axolotl.integrations.kd.kernels.liger import LigerFusedLinearKLTopKLogprobLoss
 from kd_step0_check import lm_head_of
 
-MODEL = "google/gemma-3-4b-it"
 MICRO, ACCUM, EPOCHS, LR, WARMUP, CLIP, SEED = 8, 2, 3, 2e-4, 10, 1.0, 42
 EVALS_PER_EPOCH = 2
 MAX_SKIPS = 10
@@ -90,10 +99,24 @@ def evaluate(model, head, fused, rows, pad_id):
     return total / tokens
 
 
+def max_id(dataset, column):
+    """Largest token id in a nested-list column, computed in Arrow."""
+    col = dataset.data.column(column).combine_chunks()
+    while hasattr(col, "flatten") and str(col.type).startswith("list"):
+        col = col.flatten()
+    return pc.max(col).as_py()
+
+
 def main():
-    prepared, out_dir = sys.argv[1], sys.argv[2]
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("prepared_dir")
+    ap.add_argument("output_dir")
+    ap.add_argument("--model", default="google/gemma-3-4b-it")
+    args = ap.parse_args()
+    prepared, out_dir, MODEL = args.prepared_dir, args.output_dir, args.model
     sets = [d for d in (load_from_disk(x) for x in glob.glob(f"{prepared}/*/")) if "target_logprobs" in d.column_names]
     train, val = max(sets, key=len), min(sets, key=len)
+    largest = max(max_id(d, c) for d in (train, val) for c in ("input_ids", "target_token_ids"))
     train_rows, val_rows = train.to_list(), val.to_list()
     print(f"train rows {len(train_rows)}, eval rows {len(val_rows)}", flush=True)
 
@@ -101,6 +124,15 @@ def main():
     tok = AutoTokenizer.from_pretrained(MODEL)
     base = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.bfloat16, attn_implementation="eager", device_map="cuda")
     base.config.use_cache = False
+    rows = base.get_input_embeddings().num_embeddings
+    if largest >= rows:
+        if largest < len(tok):
+            base.resize_token_embeddings(len(tok))
+            print(f"largest token id {largest} >= {rows} embedding rows: resized to {len(tok)}", flush=True)
+        else:
+            sys.exit(f"largest token id {largest} is beyond the tokenizer ({len(tok)}) - cannot train {MODEL} on this data")
+    else:
+        print(f"largest token id {largest} < {rows} embedding rows: no resize", flush=True)
     base.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     base.enable_input_require_grads()
     model = get_peft_model(base, LoraConfig(r=16, lora_alpha=32, lora_dropout=0.05, task_type="CAUSAL_LM",

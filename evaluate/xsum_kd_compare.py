@@ -17,12 +17,16 @@ from inspect_ai.log import list_eval_logs, read_eval_log
 
 from scaling_curve import paired_bootstrap
 
+# label -> (model size, adapter directory name, or "" for the untrained model)
 MODELS = {
-    "untrained 4B": "",
-    "reference LoRA": "gemma3-xsum_screen-full-lora",
-    "self-distilled 4-bit": "gemma3-xsum_kd_screen-lora",
-    "self-distilled 8-bit": "gemma3-xsum_kd_screen_8bit-lora",
-    "self-distilled bf16 (own loop)": "gemma3-xsum_kd_screen_bf16loop-lora",
+    "untrained 4B": ("4b", ""),
+    "reference LoRA": ("4b", "gemma3-xsum_screen-full-lora"),
+    "self-distilled 4-bit": ("4b", "gemma3-xsum_kd_screen-lora"),
+    "self-distilled 8-bit": ("4b", "gemma3-xsum_kd_screen_8bit-lora"),
+    "self-distilled bf16 (own loop)": ("4b", "gemma3-xsum_kd_screen_bf16loop-lora"),
+    "untrained 1B": ("1b", ""),
+    "reference LoRA 1B": ("1b", "gemma3-xsum_screen-full_1b-lora"),
+    "distilled 4B->1B (own loop)": ("1b", "gemma3-xsum_kd_screen_1b_bf16loop-lora"),
 }
 REPEAT = re.compile(r"\b(\w+)\b(?:\W+\1\b){2,}", re.IGNORECASE)
 
@@ -42,12 +46,15 @@ def main():
     picked = {}
     for info in list_eval_logs(log_dir):
         log = read_eval_log(info)
-        if log.status != "success" or log.eval.task.split("/")[-1] != "xsum" or "gemma-3-4b" not in log.eval.model:
+        if log.status != "success" or log.eval.task.split("/")[-1] != "xsum":
             continue
+        size = "1b" if "gemma-3-1b" in log.eval.model else "4b" if "gemma-3-4b" in log.eval.model else None
         if "xsum_screen" not in str((log.eval.task_args or {}).get("dataset_path", "")):
             continue
         adapter = str((log.eval.model_args or {}).get("adapter_path", "")).rstrip("/")
-        for name, stem in MODELS.items():
+        for name, (want_size, stem) in MODELS.items():
+            if size != want_size:
+                continue
             if (stem and adapter.endswith(stem)) or (not stem and not adapter):
                 if name not in picked or log.eval.created > picked[name].eval.created:
                     picked[name] = log
@@ -67,7 +74,9 @@ def main():
 
     pairs = [("self-distilled bf16 (own loop)", "self-distilled 4-bit"),
              ("self-distilled bf16 (own loop)", "reference LoRA"),
-             ("self-distilled 8-bit", "self-distilled 4-bit")]
+             ("self-distilled 8-bit", "self-distilled 4-bit"),
+             ("distilled 4B->1B (own loop)", "reference LoRA 1B"),
+             ("distilled 4B->1B (own loop)", "self-distilled bf16 (own loop)")]
     for a, b in pairs:
         if a in picked and b in picked:
             for m in ("rouge1", "semantic", "entity_support"):
