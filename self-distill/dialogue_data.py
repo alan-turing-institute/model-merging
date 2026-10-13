@@ -9,14 +9,14 @@
              ../datasets/dlg_<task>_curve/n<rows>/{train,validation} + ARMS.
              Reorder targets are the gold order; no teacher is involved.
 
-    python dialogue_data.py teacher google/gemma-3-27b-it ../datasets/samsum_raw ../results/dlg_teacher.jsonl --best-of 8
+    python dialogue_data.py teacher constrained google/gemma-3-27b-it ../datasets/samsum_raw ../results/dlg_teacher.jsonl --best-of 8
     python dialogue_data.py build reorder ../datasets/samsum_raw
     python dialogue_data.py build constrained ../datasets/samsum_raw --teacher ../results/dlg_teacher.jsonl
 
 A teacher can be base + adapter (--adapter), merged on scratch as for
 evaluation; e.g. the SAMSum full-data SFT model, trained on human summaries,
 written as a separate variant:
-    python dialogue_data.py teacher google/gemma-3-4b-it ../datasets/samsum_raw ../results/dlg_teacher_sft.jsonl \
+    python dialogue_data.py teacher constrained google/gemma-3-4b-it ../datasets/samsum_raw ../results/dlg_teacher_sft.jsonl \
         --adapter ../models/gemma3-samsum-n6400-lora
     python dialogue_data.py build constrained ../datasets/samsum_raw --teacher ../results/dlg_teacher_sft.jsonl --name constrained_sft
 """
@@ -38,7 +38,7 @@ def teacher(args):
     from vllm import LLM, SamplingParams
     parts = dt.splits(load_from_disk(args.samsum))
     rows = [("train", r) for r in parts["train"]] + [("validation", r) for r in parts["validation"]]
-    examples = [dt.constrained_example(r) for _, r in rows]
+    examples = [dt.BUILDERS[args.task](r) for _, r in rows]
     tok = AutoTokenizer.from_pretrained(args.model)
     mm = {} if "-1b-" in args.model else {"limit_mm_per_prompt": {"image": 0}}
     model_path = args.model
@@ -73,11 +73,12 @@ def build(args):
     parts = dt.splits(load_from_disk(args.samsum))
     tok = AutoTokenizer.from_pretrained("google/gemma-3-4b-it")
     targets = {}
-    if args.task == "constrained":
+    make = dt.BUILDERS[args.task]
+    if args.task.startswith("constrained"):
         targets = {r["id"]: r["target"] for r in map(json.loads, open(args.teacher)) if r["target"]}
-        make, answer = dt.constrained_example, lambda ex: targets.get(ex["id"])
+        answer = lambda ex: targets.get(ex["id"])
     else:
-        make, answer = dt.reorder_example, lambda ex: json.dumps(ex["gold"])
+        answer = lambda ex: json.dumps(ex["gold"])
 
     def rows(split):
         out = []
@@ -104,10 +105,11 @@ def build(args):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    t = sub.add_parser("teacher"); t.add_argument("model"); t.add_argument("samsum"); t.add_argument("out")
+    t = sub.add_parser("teacher"); t.add_argument("task", choices=["constrained", "constrained2"])
+    t.add_argument("model"); t.add_argument("samsum"); t.add_argument("out")
     t.add_argument("--best-of", type=int, default=8)
     t.add_argument("--adapter")
-    b = sub.add_parser("build"); b.add_argument("task", choices=["reorder", "constrained"])
+    b = sub.add_parser("build"); b.add_argument("task", choices=["reorder", "constrained", "constrained2"])
     b.add_argument("samsum"); b.add_argument("--teacher")
     b.add_argument("--name", help="arm directory dlg_<name>_curve; defaults to the task")
     args = ap.parse_args()

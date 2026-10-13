@@ -73,8 +73,7 @@ def main():
     samsum = load_from_disk(args.samsum)
     rows = (dt.splits(samsum)["test"] if args.rows == "test"
             else [r for r in samsum["validation"] if dt.eligible(r)][: args.n])
-    build = {"constrained": dt.constrained_example, "reorder": dt.reorder_example}
-    examples = [build[t](r) for t in args.tasks.split(",") for r in rows]
+    examples = [dt.BUILDERS[t](r) for t in args.tasks.split(",") for r in rows]
     tok = AutoTokenizer.from_pretrained(args.model)
     model_path = merged(args.model, args.adapter) if args.adapter else args.model
     text = lambda ex: tok.apply_chat_template([{"role": "user", "content": ex["prompt"]}],
@@ -90,7 +89,7 @@ def main():
         ex["check"] = dt.CHECKS[ex["task"]](ex, ex["prediction"])
 
     if args.best_of:
-        constrained = [ex for ex in examples if ex["task"] == "constrained"]
+        constrained = [ex for ex in examples if ex["task"].startswith("constrained")]
         sampled = llm.generate([text(ex) for ex in constrained],
                                SamplingParams(n=args.best_of, temperature=0.8, top_p=0.95,
                                               max_tokens=128, seed=42))

@@ -8,6 +8,9 @@ recover. These two tasks keep SAMSum's dialogues but ask for more:
                 banned words (the summary's own topic words). Checked by
                 program; the teacher's targets can be filtered to those that
                 pass, so the ceiling is a verified teacher.
+  constrained2  the same with the length relaxed to n +/- 2 words, stated
+                as a range in the prompt; exact counts proved unlearnable from
+                ~2,000 verified examples.
   reorder       the turns are shuffled and labelled; reply with the original
                 order as a JSON list of the labels. The gold order is known,
                 so no teacher is needed.
@@ -114,13 +117,15 @@ def unigram_f1(prediction: str, reference: str) -> float:
     return 0.0 if not common else 2 * common / (len(p) + len(r))
 
 
-def constrained_example(row) -> dict:
+def constrained_example(row, tolerance: int = 0) -> dict:
     rng = random.Random(f"constrained-{row['id']}")
     n, banned = rng.randint(12, 30), topic_words(row["summary"], row["dialogue"])
-    prompt = (f"Summarise the dialogue below in exactly {n} words. Do not use any of these words, "
+    length = f"exactly {n} words" if not tolerance else f"{n - tolerance} to {n + tolerance} words"
+    prompt = (f"Summarise the dialogue below in {length}. Do not use any of these words, "
               f"in any form: {', '.join(banned)}. Words are counted as whitespace-separated tokens. "
               f"Reply with the summary only.\n\n{row['dialogue'].strip()}")
-    return {"id": row["id"], "task": "constrained", "prompt": prompt, "n_words": n,
+    return {"id": row["id"], "task": "constrained2" if tolerance else "constrained",
+            "prompt": prompt, "n_words": n, "tolerance": tolerance,
             "banned": banned, "reference": row["summary"], "dialogue": row["dialogue"]}
 
 
@@ -141,9 +146,10 @@ def reorder_example(row) -> dict:
 def check_constrained(ex: dict, prediction: str) -> dict:
     count = word_count(prediction)
     used = [w for w in ex["banned"] if uses(prediction, w)]
-    return {"words": count, "length_ok": count == ex["n_words"], "word_error": abs(count - ex["n_words"]),
+    length_ok = abs(count - ex["n_words"]) <= ex.get("tolerance", 0)
+    return {"words": count, "length_ok": length_ok, "word_error": abs(count - ex["n_words"]),
             "banned_used": used, "banned_ok": not used,
-            "success": count == ex["n_words"] and not used,
+            "success": length_ok and not used,
             "f1": unigram_f1(prediction, ex["reference"])}
 
 
@@ -166,7 +172,10 @@ def check_reorder(ex: dict, prediction: str) -> dict:
             "first_ok": valid and order[0] == ex["gold"][0]}
 
 
-CHECKS = {"constrained": check_constrained, "reorder": check_reorder}
+BUILDERS = {"constrained": constrained_example,
+            "constrained2": lambda row: constrained_example(row, tolerance=2),
+            "reorder": reorder_example}
+CHECKS = {"constrained": check_constrained, "constrained2": check_constrained, "reorder": check_reorder}
 
 
 def score(out_dir: Path) -> None:
