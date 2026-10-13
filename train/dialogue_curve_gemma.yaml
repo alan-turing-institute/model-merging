@@ -1,0 +1,39 @@
+# Dialogue-task scaling curves (reorder, constrained): the CNN/DailyMail curve
+# recipe, with a 1,024-token window - every eligible SAMSum dialogue fits.
+# Small arms get at least 150 optimiser steps; see cnndm_curve_gemma.yaml.
+mm_min_optimiser_steps: 150
+base_model: google/gemma-3-4b-it
+load_in_4bit: true
+# Correctness settings carried over from samsum_gemma.yaml / billsum_gemma.yaml,
+# each a measured failure on an earlier arm - see the comments there.
+attn_implementation: eager
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj]
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+chat_template: tokenizer_default
+eot_tokens: ["<end_of_turn>"]
+train_on_eos: turn
+dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}
+excess_length_strategy: raise
+dataset_num_proc: 8
+train_on_inputs: false
+gradient_checkpointing: true
+warmup_steps: 10
+learning_rate: 2e-4
+evals_per_epoch: 2
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+num_epochs: 3
+datasets:
+  - path: ../datasets/cnndm/full/train
+    type: chat_template
+test_datasets:
+  - path: ../datasets/cnndm/full/validation
+    type: chat_template
+sequence_len: 1024
+output_dir: ../models/gemma3-dlg-curve-lora

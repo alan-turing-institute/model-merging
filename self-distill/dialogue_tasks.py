@@ -98,6 +98,22 @@ def eligible(row) -> bool:
             and len(topic_words(row["summary"], row["dialogue"])) == N_BANNED)
 
 
+def splits(samsum) -> dict[str, list]:
+    """Eligible SAMSum rows: train shuffled once (arms are prefixes of it), 100
+    validation rows for eval loss, and the other 518 held-out rows as test."""
+    train = [r for r in samsum["train"] if eligible(r)]
+    random.Random(0).shuffle(train)
+    val = [r for r in samsum["validation"] if eligible(r)]
+    return {"train": train, "validation": val[:100],
+            "test": val[100:] + [r for r in samsum["test"] if eligible(r)]}
+
+
+def unigram_f1(prediction: str, reference: str) -> float:
+    p, r = WORD.findall(prediction.lower()), WORD.findall(reference.lower())
+    common = sum(min(p.count(w), r.count(w)) for w in set(p))
+    return 0.0 if not common else 2 * common / (len(p) + len(r))
+
+
 def constrained_example(row) -> dict:
     rng = random.Random(f"constrained-{row['id']}")
     n, banned = rng.randint(12, 30), topic_words(row["summary"], row["dialogue"])
@@ -127,7 +143,8 @@ def check_constrained(ex: dict, prediction: str) -> dict:
     used = [w for w in ex["banned"] if uses(prediction, w)]
     return {"words": count, "length_ok": count == ex["n_words"], "word_error": abs(count - ex["n_words"]),
             "banned_used": used, "banned_ok": not used,
-            "success": count == ex["n_words"] and not used}
+            "success": count == ex["n_words"] and not used,
+            "f1": unigram_f1(prediction, ex["reference"])}
 
 
 def kendall_tau(order: list[int], gold: list[int]) -> float:
