@@ -1,0 +1,15 @@
+model                                 R1      R2      RL     sem  entity ent.clean  words  repeat
+untrained 4B                      0.2619  0.0663  0.1817  0.5770  0.7953    0.7953   41.1    0.0%
+reference LoRA                    0.4001  0.1660  0.3178  0.6301  0.6855    0.6855   19.5    0.0%
+self-distilled 4-bit              0.2277  0.0432  0.1682  0.5060  0.8726    0.8775   20.7    0.8%
+self-distilled 8-bit              0.0793  0.0062  0.0705  0.1496  0.4406    0.4342    3.7    4.5%
+self-distilled bf16 (own loop)    0.2414  0.0534  0.1800  0.5283  0.8585    0.8585   20.9    0.0%
+self-distilled bf16 (own loop) minus self-distilled 4-bit, rouge1: +0.0136 [+0.0084, +0.0192] n=1000
+self-distilled bf16 (own loop) minus self-distilled 4-bit, semantic: +0.0223 [+0.0155, +0.0291] n=1000
+self-distilled bf16 (own loop) minus self-distilled 4-bit, entity_support: -0.0162 [-0.0327, +0.0002] n=942
+self-distilled bf16 (own loop) minus reference LoRA, rouge1: -0.1588 [-0.1679, -0.1492] n=1000
+self-distilled bf16 (own loop) minus reference LoRA, semantic: -0.1018 [-0.1116, -0.0920] n=1000
+self-distilled bf16 (own loop) minus reference LoRA, entity_support: +0.1687 [+0.1447, +0.1919] n=926
+self-distilled 8-bit minus self-distilled 4-bit, rouge1: -0.1484 [-0.1560, -0.1400] n=1000
+self-distilled 8-bit minus self-distilled 4-bit, semantic: -0.3564 [-0.3702, -0.3426] n=1000
+self-distilled 8-bit minus self-distilled 4-bit, entity_support: -0.4196 [-0.4585, -0.3784] n=633
