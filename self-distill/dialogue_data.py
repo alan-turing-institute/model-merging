@@ -12,6 +12,13 @@
     python dialogue_data.py teacher google/gemma-3-27b-it ../datasets/samsum_raw ../results/dlg_teacher.jsonl --best-of 8
     python dialogue_data.py build reorder ../datasets/samsum_raw
     python dialogue_data.py build constrained ../datasets/samsum_raw --teacher ../results/dlg_teacher.jsonl
+
+A teacher can be base + adapter (--adapter), merged on scratch as for
+evaluation; e.g. the SAMSum full-data SFT model, trained on human summaries,
+written as a separate variant:
+    python dialogue_data.py teacher google/gemma-3-4b-it ../datasets/samsum_raw ../results/dlg_teacher_sft.jsonl \
+        --adapter ../models/gemma3-samsum-n6400-lora
+    python dialogue_data.py build constrained ../datasets/samsum_raw --teacher ../results/dlg_teacher_sft.jsonl --name constrained_sft
 """
 
 import argparse
@@ -34,22 +41,30 @@ def teacher(args):
     examples = [dt.constrained_example(r) for _, r in rows]
     tok = AutoTokenizer.from_pretrained(args.model)
     mm = {} if "-1b-" in args.model else {"limit_mm_per_prompt": {"image": 0}}
-    llm = LLM(model=args.model, dtype="bfloat16", max_model_len=4096, gpu_memory_utilization=0.88,
+    model_path = args.model
+    if args.adapter:
+        from dialogue_pilot import merged
+        model_path = merged(args.model, args.adapter)
+    llm = LLM(model=model_path, dtype="bfloat16", max_model_len=4096, gpu_memory_utilization=0.88,
               enforce_eager=True, seed=42, **mm)
     texts = [tok.apply_chat_template([{"role": "user", "content": ex["prompt"]}], tokenize=False,
                                      add_generation_prompt=True) for ex in examples]
     outs = llm.generate(texts, SamplingParams(n=args.best_of, temperature=0.8, top_p=0.95,
                                               max_tokens=128, seed=42))
-    kept = 0
+    kept, f1s = 0, []
     with open(args.out, "w") as f:
         for (split, _), ex, out in zip(rows, examples, outs):
             passing = [c.text.strip() for c in out.outputs if dt.check_constrained(ex, c.text.strip())["success"]]
             target = max(passing, key=lambda t: dt.unigram_f1(t, ex["reference"])) if passing else None
             kept += split == "train" and target is not None
+            if target is not None:
+                f1s.append(dt.unigram_f1(target, ex["reference"]))
             f.write(json.dumps({"id": ex["id"], "split": split, "target": target,
                                 "n_pass": len(passing)}, ensure_ascii=False) + "\n")
     n_train = sum(s == "train" for s, _ in rows)
-    print(f"{args.model}: {kept}/{n_train} train dialogues have a verified target ({kept / n_train:.3f})")
+    teacher_name = args.model + (f" + {args.adapter}" if args.adapter else "")
+    print(f"{teacher_name}: {kept}/{n_train} train dialogues have a verified target ({kept / n_train:.3f}); "
+          f"targets' unigram F1 with the reference {sum(f1s) / max(len(f1s), 1):.3f}")
 
 
 def build(args):
@@ -76,7 +91,7 @@ def build(args):
     train, val = rows("train"), rows("validation")
     longest = max(len(tok.apply_chat_template(r["messages"], tokenize=False)) for r in train + val)
     ladder = sorted((n for n in LADDER if n <= len(train)), reverse=True)
-    root = Path(args.samsum).parent / f"dlg_{args.task}_curve"
+    root = Path(args.samsum).parent / f"dlg_{args.name or args.task}_curve"
     for n in ladder:
         DatasetDict({"train": Dataset.from_list(train[:n]),
                      "validation": Dataset.from_list(val)}).save_to_disk(str(root / f"n{n}"))
@@ -91,7 +106,9 @@ if __name__ == "__main__":
     sub = ap.add_subparsers(dest="cmd", required=True)
     t = sub.add_parser("teacher"); t.add_argument("model"); t.add_argument("samsum"); t.add_argument("out")
     t.add_argument("--best-of", type=int, default=8)
+    t.add_argument("--adapter")
     b = sub.add_parser("build"); b.add_argument("task", choices=["reorder", "constrained"])
     b.add_argument("samsum"); b.add_argument("--teacher")
+    b.add_argument("--name", help="arm directory dlg_<name>_curve; defaults to the task")
     args = ap.parse_args()
     {"teacher": teacher, "build": build}[args.cmd](args)

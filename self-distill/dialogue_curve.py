@@ -34,13 +34,14 @@ def boot(a, b, metric, resamples=2000):
 
 def main():
     folder, size = Path(sys.argv[1]), sys.argv[2]
-    task, metric = folder.name, HEADLINE[folder.name]
+    task = folder.name.split("_")[0]          # constrained_sft -> constrained
+    metric = HEADLINE[task]
     arms = {}
     for p in folder.glob(f"*{size}.jsonl"):
         arm = p.stem[: -len(size)]
         rows = 0 if arm == "base" else int(re.fullmatch(r"n(\d+)", arm).group(1))
         arms[rows] = (arm, load(p))
-    print(f"{task}{size}: {len(next(iter(arms.values()))[1])} test dialogues")
+    print(f"{folder.name}{size}: {len(next(iter(arms.values()))[1])} test dialogues")
     print(f"{'rows':>6}  " + "".join(f"{m:>12}" for m in SHOWN[task]))
     for rows in sorted(arms):
         data = arms[rows][1]
@@ -56,7 +57,7 @@ def main():
         means = {rows: {m: round(statistics.fmean(v[m] for v in d.values()), 4) for m in SHOWN[task]}
                  for rows, (_, d) in sorted(arms.items())}
         Path(sys.argv[sys.argv.index("--json") + 1]).write_text(
-            json.dumps({"task": task, "size": size, "metric": metric, "arms": means, "denominators": out}, indent=2) + "\n")
+            json.dumps({"task": task, "curve": folder.name, "size": size, "metric": metric, "arms": means, "denominators": out}, indent=2) + "\n")
 
 
 if __name__ == "__main__":

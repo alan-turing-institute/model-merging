@@ -4,9 +4,10 @@
 # untrained model's score, and each arm's score once its array task finishes.
 #   ./run_dialogue_curve.sh reorder                         # gemma-3-4b-it
 #   ./run_dialogue_curve.sh constrained google/gemma-3-1b-it
+#   ./run_dialogue_curve.sh constrained_sft      # arms from dialogue_data.py build --name constrained_sft
 # Read with:  python dialogue_curve.py ../results/dialogue_curves/<task> _4b
 set -euo pipefail
-TASK=${1:?usage: run_dialogue_curve.sh <reorder|constrained> [base_model]}
+TASK=${1:?usage: run_dialogue_curve.sh <reorder|constrained|constrained_sft> [base_model]}
 BASE_MODEL=${2:-google/gemma-3-4b-it}
 cd "$(dirname "$0")"
 DATA=../datasets/dlg_${TASK}_curve
