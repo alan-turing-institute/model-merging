@@ -67,7 +67,8 @@ TASKS = {
     # rougeL are nearly identical and neither adds anything; rouge1 is what the
     # SAMSum literature quotes.
     "samsum": {"headline": "rouge1", "default_cap": 128, "fractions": None},
-    "cnndm": {"headline": "rouge1", "default_cap": 384, "fractions": None},
+    # rougeLsum for CNN/DailyMail: several highlights, one per line, as BillSum.
+    "cnndm": {"headline": "rougeLsum", "default_cap": 384, "fractions": None},
 }
 
 BOOTSTRAP_RESAMPLES = 2000

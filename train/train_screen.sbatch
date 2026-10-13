@@ -46,7 +46,7 @@ uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU - see 
 
 RUN_CONFIG="$OUTPUT_DIR/config.yaml"
 uv run python - "${TASK}_gemma.yaml" "$RUN_CONFIG" "$OUTPUT_DIR" "$DATASET_DIR" <<'EOF'
-import os, sys, yaml
+import math, os, sys, yaml
 from datasets import load_from_disk
 src, dst, output_dir, dataset_dir = sys.argv[1:]
 cfg = yaml.safe_load(open(src))
@@ -56,8 +56,15 @@ if os.environ.get("BASE_MODEL"): cfg["base_model"] = os.environ["BASE_MODEL"]
 for key, split in (("datasets", "train"), ("test_datasets", "validation")):
     for ds in cfg[key]:
         ds["path"] = os.path.join(dataset_dir, split)
+rows = len(load_from_disk(os.path.join(dataset_dir, "train")))
+# Our key, not axolotl's (popped before axolotl sees the config): raise the
+# epoch count until a small arm gets this many optimiser steps.
+min_steps = cfg.pop("mm_min_optimiser_steps", None)
+if min_steps:
+    batch = cfg["micro_batch_size"] * cfg["gradient_accumulation_steps"]
+    cfg["num_epochs"] = max(cfg["num_epochs"], math.ceil(min_steps * batch / rows))
 yaml.safe_dump(cfg, open(dst, "w"), sort_keys=False)
-print(f"train rows on disk: {len(load_from_disk(os.path.join(dataset_dir, 'train')))}")
+print(f"train rows on disk: {rows}; epochs: {cfg['num_epochs']}")
 EOF
 uv run axolotl preprocess "$RUN_CONFIG"
 uv run axolotl train      "$RUN_CONFIG"
