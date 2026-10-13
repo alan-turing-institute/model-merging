@@ -91,5 +91,13 @@ EOF
     mkdir -p "$OUT"
     uv run python kd_lora_train.py "$PREP" "$OUT" --model "$STUDENT"
     ;;
+  promptsweep)
+    # Teacher-prompt comparison on the XSum validation articles: generate in
+    # this (vLLM) environment, score in evaluate's, which has the entity scorer.
+    OUT=../results/teacher_prompt_sweep
+    export HF_HUB_OFFLINE=1
+    uv run python teacher_prompt_sweep.py ../datasets/xsum_screen/full "$OUT"
+    ../evaluate/.venv/bin/python ../evaluate/teacher_prompt_score.py "$OUT"
+    ;;
   *) echo "unknown stage $STAGE" >&2; exit 1 ;;
 esac
