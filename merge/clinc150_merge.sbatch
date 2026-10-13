@@ -22,6 +22,9 @@ SUF=${SEED:+_s$SEED}
 cd "$SLURM_SUBMIT_DIR"
 source ../train/cuda_env.sh
 export HF_HUB_OFFLINE=1
+# A bare repo id as base_model makes MergeKit list the repo tree, which fails
+# offline, so the task-vector methods take the cached snapshot directory.
+BASE_DIR=$(ls -d "$HF_HUB_CACHE"/models--google--gemma-3-4b-it/snapshots/*/ | head -1)
 OUT=$PROJECTDIR/$USER/mm/models/clinc150-merged-$METHOD$SUF
 [[ -f $OUT/config.json ]] && { echo "already merged: $OUT"; exit 0; }
 rm -rf "$OUT"
@@ -30,9 +33,9 @@ A="google/gemma-3-4b-it+../models/gemma3-clinc150-expert_a$SUF-lora"
 B="google/gemma-3-4b-it+../models/gemma3-clinc150-expert_b$SUF-lora"
 case $METHOD in
   linear)          BASE="";                                   PARAMS="weight: 0.5" ;;
-  ties)            BASE='base_model: "google/gemma-3-4b-it"'; PARAMS="weight: 0.5, density: 0.5" ;;
-  dare_ties)       BASE='base_model: "google/gemma-3-4b-it"'; PARAMS="weight: 0.5, density: 0.3" ;;
-  task_arithmetic) BASE='base_model: "google/gemma-3-4b-it"'; PARAMS="weight: 0.5" ;;
+  ties)            BASE="base_model: \"$BASE_DIR\""; PARAMS="weight: 0.5, density: 0.5" ;;
+  dare_ties)       BASE="base_model: \"$BASE_DIR\""; PARAMS="weight: 0.5, density: 0.3" ;;
+  task_arithmetic) BASE="base_model: \"$BASE_DIR\""; PARAMS="weight: 0.5" ;;
   *) echo "unknown method $METHOD" >&2; exit 1 ;;
 esac
 CFG=$(mktemp --suffix=.yaml -p .)
