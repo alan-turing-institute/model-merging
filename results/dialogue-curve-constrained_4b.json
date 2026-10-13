@@ -1,0 +1,87 @@
+{
+  "task": "constrained",
+  "size": "_4b",
+  "metric": "success",
+  "arms": {
+    "0": {
+      "success": 0.1158,
+      "length_ok": 0.1197,
+      "banned_ok": 0.9459,
+      "word_error": 2.8996,
+      "f1": 0.1862
+    },
+    "125": {
+      "success": 0.1486,
+      "length_ok": 0.1602,
+      "banned_ok": 0.9324,
+      "word_error": 2.1332,
+      "f1": 0.2009
+    },
+    "250": {
+      "success": 0.139,
+      "length_ok": 0.1467,
+      "banned_ok": 0.9015,
+      "word_error": 2.2085,
+      "f1": 0.2146
+    },
+    "500": {
+      "success": 0.1525,
+      "length_ok": 0.1602,
+      "banned_ok": 0.9247,
+      "word_error": 2.195,
+      "f1": 0.2044
+    },
+    "1000": {
+      "success": 0.168,
+      "length_ok": 0.1834,
+      "banned_ok": 0.9266,
+      "word_error": 2.2066,
+      "f1": 0.2053
+    },
+    "2000": {
+      "success": 0.166,
+      "length_ok": 0.1737,
+      "banned_ok": 0.9286,
+      "word_error": 2.0965,
+      "f1": 0.2067
+    }
+  },
+  "denominators": [
+    {
+      "full": 250,
+      "half": 125,
+      "delta": -0.0097,
+      "ci": [
+        -0.0483,
+        0.029
+      ]
+    },
+    {
+      "full": 500,
+      "half": 250,
+      "delta": 0.0135,
+      "ci": [
+        -0.0232,
+        0.0521
+      ]
+    },
+    {
+      "full": 1000,
+      "half": 500,
+      "delta": 0.0154,
+      "ci": [
+        -0.0212,
+        0.0541
+      ]
+    },
+    {
+      "full": 2000,
+      "half": 1000,
+      "delta": -0.0019,
+      "ci": [
+        -0.0405,
+        0.0347
+      ]
+    }
+  ]
+}
