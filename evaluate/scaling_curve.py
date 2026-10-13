@@ -2,6 +2,7 @@
 
     uv run python scaling_curve.py logs --task samsum
     uv run python scaling_curve.py logs --task billsum --metric rougeLsum
+    uv run python scaling_curve.py logs --task cnndm --model gemma-3-1b-it
 
 WHAT THIS IS FOR. A scaling curve exists to answer one question before a task is
 given forty arms the way XSum was: does the score still improve as training data
@@ -66,6 +67,7 @@ TASKS = {
     # rougeL are nearly identical and neither adds anything; rouge1 is what the
     # SAMSum literature quotes.
     "samsum": {"headline": "rouge1", "default_cap": 128, "fractions": None},
+    "cnndm": {"headline": "rouge1", "default_cap": 384, "fractions": None},
 }
 
 BOOTSTRAP_RESAMPLES = 2000
@@ -79,8 +81,16 @@ def arm_of(log, task: str) -> str | None:
     """Which curve arm a log belongs to, from the adapter or model name."""
     model_args = log.eval.model_args or {}
     text = str(model_args.get("adapter_path") or log.eval.model)
-    match = re.search(rf"{task}-([A-Za-z0-9]+)-lora", text)
+    # Adapter names are gemma3-<task>[_curve]-<arm>[_s<seed>][_<size>]-lora.
+    # A seed suffix marks a repeat run of the arm, not the arm, so it is skipped.
+    match = re.search(rf"{task}(?:_curve)?-([A-Za-z0-9]+)(_s\d+)?(?:_\d+b)?-lora", text)
     if match:
+        if match.group(2):
+            return None
+        # Ladder-named tasks take only n<rows> arms; a screen's `full` arm under
+        # the same task name is not a point on the curve.
+        if TASKS[task]["fractions"] is None and not re.fullmatch(r"n\d+", match.group(1)):
+            return None
         return match.group(1)
     # No adapter means the untrained base model: the n=0 point.
     if "adapter_path" not in model_args:
@@ -143,6 +153,9 @@ def main():
     parser.add_argument("log_dir", nargs="?", default="logs", type=Path)
     parser.add_argument("--task", default="samsum", choices=sorted(TASKS))
     parser.add_argument("--metric", default=None, help="defaults to the task's headline")
+    parser.add_argument("--model", default=None,
+                        help="keep only logs whose base model name contains this, e.g. "
+                             "gemma-3-1b-it, when one task has curves for several models")
     parser.add_argument("--train-size", type=int, default=4000,
                         help="rows in the full arm; only used for fraction-named arms")
     parser.add_argument("--json", type=Path,
@@ -155,6 +168,8 @@ def main():
     for info in list_eval_logs(str(args.log_dir)):
         log = read_eval_log(info)
         if log.eval.task.split("/")[-1] != args.task or log.status != "success":
+            continue
+        if args.model and args.model not in str(log.eval.model):
             continue
         arm = arm_of(log, args.task)
         if arm is None:
@@ -255,6 +270,7 @@ def main():
     if args.json:
         payload = {
             "task": args.task,
+            "model": args.model,
             "metric": metric,
             "max_tokens": next(iter(set(caps.values()))),
             "test_examples": len(next(iter(samples.values())).get(metric, {})),

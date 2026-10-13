@@ -13,8 +13,16 @@
 # abisee/cnn_dailymail 3.0.0, Apache-2.0. Train is streamed (it is large);
 # validation and test are small enough to shuffle exactly.
 #
+# With --ladder it instead writes a data-scaling curve: one arm per size, each
+# a PREFIX of the next larger one (nested, as in prepare_samsum_data.py), so
+# consecutive arms differ only in the rows the larger adds. The rows come from
+# the same shuffled stream as `full`, so the 4,000-row arm is the `full` arm.
+# Every arm shares one validation set; the test set is the screen's.
+#
 # Usage, ON A LOGIN NODE:
 #   uv run python prepare_cnndm_data.py ../datasets/cnndm
+#   uv run python prepare_cnndm_data.py ../datasets/cnndm_curve \
+#       --ladder 8000,4000,2000,1000,500,250,125
 import argparse
 from pathlib import Path
 
@@ -65,15 +73,25 @@ def main():
     parser.add_argument("--train-size", type=int, default=4000)
     parser.add_argument("--validation-size", type=int, default=250)
     parser.add_argument("--test-size", type=int, default=500)
+    parser.add_argument("--ladder", help="comma-separated arm sizes for a nested scaling curve")
     args = parser.parse_args()
     tok = AutoTokenizer.from_pretrained(TOKENIZER)
+    ladder = sorted({int(n) for n in args.ladder.split(",")}, reverse=True) if args.ladder else []
+    train_size = ladder[0] if ladder else args.train_size
 
     train_stream = load_dataset(DATASET, CONFIG, split="train", streaming=True).shuffle(seed=42, buffer_size=10_000)
-    train = collect(train_stream, args.train_size, tok, "train")
+    train = collect(train_stream, train_size, tok, "train")
+    if len(train) < train_size:
+        raise SystemExit(f"only {len(train)} training rows collected, wanted {train_size}")
     val = collect(load_dataset(DATASET, CONFIG, split="validation").shuffle(seed=42), args.validation_size, tok, "validation")
-    DatasetDict({"train": train.map(to_training_example),
-                 "validation": val.map(to_training_example)}).save_to_disk(str(args.output_dir / "full"))
-    (args.output_dir / "ARMS").write_text("full\n")
+    val = val.map(to_training_example)
+    # Largest first, so array index 0 is the arm hardest to infer from the others.
+    arms = {f"n{n}": n for n in ladder} if ladder else {"full": train_size}
+    for name, n in arms.items():
+        DatasetDict({"train": train.select(range(n)).map(to_training_example),
+                     "validation": val}).save_to_disk(str(args.output_dir / name))
+    (args.output_dir / "ARMS").write_text("".join(f"{name}\n" for name in arms))
+    print(f"  arms: {', '.join(arms)} (nested prefixes of one shuffled stream)")
 
     test = load_dataset(DATASET, CONFIG, split="test").shuffle(seed=42).select(range(args.test_size))
     test = Dataset.from_list([shape(r, tok) for r in test])
