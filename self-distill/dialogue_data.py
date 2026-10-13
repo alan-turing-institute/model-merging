@@ -109,6 +109,22 @@ def build(args):
           f"longest {max(lens)} tokens (chars {longest})")
 
 
+def split(args):
+    """Two disjoint halves of one curve arm, for data-parallel experts.
+
+    half_a is the first n/2 rows of arm n<n>, i.e. exactly the nested arm
+    n<n/2>; half_b is the rest. Same validation set as the curve."""
+    from datasets import DatasetDict, load_from_disk
+    root = Path(args.samsum).parent
+    src = load_from_disk(str(root / f"dlg_{args.curve}_curve" / f"n{args.n}"))
+    half = args.n // 2
+    out = root / f"dlg_{args.curve}_split"
+    for name, rows in (("half_a", range(half)), ("half_b", range(half, args.n))):
+        DatasetDict({"train": src["train"].select(rows), "validation": src["validation"]}).save_to_disk(str(out / name))
+    (out / "ARMS").write_text("half_a\nhalf_b\n")
+    print(f"{out}: half_a = rows 0-{half - 1} (= n{half}), half_b = rows {half}-{args.n - 1}")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -119,7 +135,8 @@ if __name__ == "__main__":
     b = sub.add_parser("build"); b.add_argument("task", choices=["reorder", "constrained", "constrained2"])
     b.add_argument("samsum"); b.add_argument("--teacher")
     b.add_argument("--name", help="arm directory dlg_<name>_curve; defaults to the task")
+    sp = sub.add_parser("split"); sp.add_argument("curve"); sp.add_argument("samsum"); sp.add_argument("n", type=int)
     b.add_argument("--rationale", action="store_true",
                    help="add a step-by-step working example per dialogue (constrained tasks)")
     args = ap.parse_args()
-    {"teacher": teacher, "build": build}[args.cmd](args)
+    {"teacher": teacher, "build": build, "split": split}[args.cmd](args)
