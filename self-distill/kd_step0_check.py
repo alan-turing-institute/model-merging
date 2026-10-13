@@ -92,6 +92,7 @@ def main():
     p.add_argument("--model", default="google/gemma-3-4b-it")
     p.add_argument("--rows", type=int, default=32)
     p.add_argument("--load-in-4bit", action="store_true")
+    p.add_argument("--load-in-8bit", action="store_true")
     a = p.parse_args()
 
     # The eval split is the smaller of axolotl's prepared datasets with KD columns.
@@ -106,11 +107,16 @@ def main():
     ds = min(candidates, key=len)
     print(f"eval rows available: {len(ds)}; using {min(a.rows, len(ds))}; columns: {ds.column_names}")
 
-    quant = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True,
-                               bnb_4bit_compute_dtype=torch.bfloat16) if a.load_in_4bit else None
+    if a.load_in_4bit:
+        quant = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True,
+                                   bnb_4bit_compute_dtype=torch.bfloat16)
+    elif a.load_in_8bit:
+        quant = BitsAndBytesConfig(load_in_8bit=True)
+    else:
+        quant = None
     model = AutoModelForCausalLM.from_pretrained(a.model, dtype=torch.bfloat16, attn_implementation="eager",
                                                  quantization_config=quant, device_map="cuda").eval()
-    print(f"model class: {type(model).__name__}; weights: {'4-bit nf4' if a.load_in_4bit else 'bf16'}")
+    print(f"model class: {type(model).__name__}; weights: {'4-bit nf4' if a.load_in_4bit else '8-bit' if a.load_in_8bit else 'bf16'}")
     head = lm_head_of(model)
     tokenizer = AutoTokenizer.from_pretrained(a.model)
 

@@ -35,14 +35,15 @@ case $STAGE in
     uv run axolotl train      "$CONFIG"
     ;;
   check)
-    # Step-0 check on the eval rows axolotl prepared, at both weight formats.
+    # Step-0 check on the eval rows axolotl prepared: bf16, 8-bit and 4-bit.
     # Axolotl never expanded the ${MM_PREPARED:-...} in the config, so its
     # prepared data is in a directory literally named that.
     PREP=${2:-}
     [[ -n $PREP ]] || PREP='${MM_PREPARED:-last_run_prepared}'
     [[ -d $PREP ]] || { echo "no prepared data at $PREP" >&2; exit 1; }
-    uv run python kd_step0_check.py "$PREP"
-    uv run python kd_step0_check.py "$PREP" --load-in-4bit
+    for mode in "" --load-in-8bit --load-in-4bit; do
+      uv run python kd_step0_check.py "$PREP" $mode
+    done
     ;;
   gradcheck)
     PREP=${2:-}
