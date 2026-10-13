@@ -19,8 +19,16 @@ reproduces self-distillation_xsum_lora_bf16.yaml as closely as possible:
 
 What cannot be identical: the order rows are drawn in (seeded, but not
 axolotl's sampler) and the padding collator (right-padded here; axolotl's pads
-the same way but is not reused). It stops at the first non-finite gradient
-rather than writing a broken adapter.
+the same way but is not reused).
+
+Two deliberate departures, after the first all-bf16 run trained cleanly for 378
+steps and then hit a NaN gradient at step 379:
+  * the fused KD loss gets fp32 hidden states and an fp32 copy of the frozen
+    output layer - what axolotl's working 4-bit path does, since
+    prepare_model_for_kbit_training upcasts those layers. The model is bf16.
+  * a step with a non-finite gradient is skipped (no optimiser update; the LR
+    schedule keeps time) and logged, and the run aborts after MAX_SKIPS, so a
+    persistently unstable run cannot pass as finished.
 
     python kd_lora_train.py <prepared_dir> <output_dir>
 """
@@ -42,6 +50,7 @@ from kd_step0_check import lm_head_of
 MODEL = "google/gemma-3-4b-it"
 MICRO, ACCUM, EPOCHS, LR, WARMUP, CLIP, SEED = 8, 2, 3, 2e-4, 10, 1.0, 42
 EVALS_PER_EPOCH = 2
+MAX_SKIPS = 10
 
 
 def collate(rows, pad_id, device):
@@ -62,11 +71,11 @@ def collate(rows, pad_id, device):
             t(tid, torch.long), t(tlp, torch.float32), t(tmask, torch.long))
 
 
-def kd_loss(model, head, fused, batch, n_items):
+def kd_loss(model, head_fp32, fused, batch, n_items):
     ids, att, lab, tid, tlp, tmask = batch
     out = model(input_ids=ids, attention_mask=att, output_hidden_states=True, return_dict=True, logits_to_keep=1)
-    hidden = out.hidden_states[-1].to(head.weight.dtype)
-    return fused(head.weight, hidden, tid, tlp, tmask, true_labels=lab) / n_items
+    hidden = out.hidden_states[-1].float()
+    return fused(head_fp32, hidden, tid, tlp, tmask, true_labels=lab) / n_items
 
 
 def evaluate(model, head, fused, rows, pad_id):
@@ -98,7 +107,8 @@ def main():
                                             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]))
     model.print_trainable_parameters()
     model.train()
-    head = lm_head_of(model)
+    # fp32 copy of the frozen output layer for the loss (see module docstring).
+    head = lm_head_of(model).weight.detach().float()
     fused = LigerFusedLinearKLTopKLogprobLoss(0.5, 0.5, 1.0, 0.0, compute_ce_loss=True, normalize_topk=True)
 
     params = [p for p in model.parameters() if p.requires_grad]
@@ -111,7 +121,7 @@ def main():
     print(f"optimiser steps {total_steps} ({steps_per_epoch}/epoch), eval every {eval_every}", flush=True)
     print(json.dumps({"step": 0, "eval_loss": round(evaluate(model, head, fused, val_rows, tok.pad_token_id), 4)}), flush=True)
 
-    gen, step, t0 = torch.Generator().manual_seed(SEED), 0, time.time()
+    gen, step, skipped, t0 = torch.Generator().manual_seed(SEED), 0, 0, time.time()
     for epoch in range(EPOCHS):
         order = torch.randperm(len(train_rows), generator=gen).tolist()
         micro_batches = [order[i:i + MICRO] for i in range(0, len(order), MICRO)]
@@ -124,9 +134,14 @@ def main():
                 loss.backward()
                 step_loss += loss.item()
             grad_norm = torch.nn.utils.clip_grad_norm_(params, CLIP)
-            if not torch.isfinite(grad_norm):
-                sys.exit(f"non-finite gradient at step {step + 1} (norm {grad_norm}) - stopping, no adapter written")
-            opt.step(); sched.step(); opt.zero_grad(set_to_none=True)
+            if torch.isfinite(grad_norm):
+                opt.step()
+            else:
+                skipped += 1
+                print(json.dumps({"step": step + 1, "skipped": "non-finite gradient", "skips_so_far": skipped}), flush=True)
+                if skipped > MAX_SKIPS:
+                    sys.exit(f"{skipped} non-finite steps - aborting, no adapter written")
+            sched.step(); opt.zero_grad(set_to_none=True)
             step += 1
             if step == 1 or step % 10 == 0:
                 print(json.dumps({"step": step, "epoch": round(step / steps_per_epoch, 3), "loss": round(step_loss, 4),
@@ -135,7 +150,7 @@ def main():
                 print(json.dumps({"step": step, "eval_loss": round(evaluate(model, head, fused, val_rows, tok.pad_token_id), 4)}), flush=True)
 
     model.save_pretrained(out_dir)
-    print(json.dumps({"train_runtime_s": round(time.time() - t0), "peak_memory_gib":
+    print(json.dumps({"train_runtime_s": round(time.time() - t0), "skipped_steps": skipped, "peak_memory_gib":
                       round(torch.cuda.max_memory_allocated() / 2**30, 2), "saved": out_dir}), flush=True)
 
 
