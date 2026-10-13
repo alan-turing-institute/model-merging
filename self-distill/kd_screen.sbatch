@@ -22,9 +22,12 @@ uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU'"
 
 case $STAGE in
   teacher)
+    # Optional: prompts dataset and output prefix (default: the original run).
+    PROMPTS=${2:-../datasets/xsum_kd_screen_prompts}
+    PREFIX=${3:-xsum_kd_screen}
     uv run python generate_teacher_logprobs.py google/gemma-3-4b-it \
-      ../datasets/xsum_kd_screen_prompts ../datasets \
-      --prefix xsum_kd_screen --student-fields messages_short --max-seq-len 1024
+      "$PROMPTS" ../datasets \
+      --prefix "$PREFIX" --student-fields messages_short --max-seq-len 1024
     ;;
   train)
     # Optional second argument: the config to train (default: the 4-bit one).
@@ -85,9 +88,10 @@ EOF
     # bf16 LoRA trained outside axolotl (kd_lora_train.py), on axolotl's own
     # prepared tensors, because axolotl's KD trainer NaNs on this configuration.
     # Optional: a student model and output directory (default: the 4B run).
-    PREP='${MM_PREPARED:-last_run_prepared}'
     STUDENT=${2:-google/gemma-3-4b-it}
     OUT=${3:-../models/gemma3-xsum_kd_screen_bf16loop-lora}
+    PREP=${4:-}
+    [[ -n $PREP ]] || PREP='${MM_PREPARED:-last_run_prepared}'
     mkdir -p "$OUT"
     uv run python kd_lora_train.py "$PREP" "$OUT" --model "$STUDENT"
     ;;
@@ -98,6 +102,9 @@ EOF
     export HF_HUB_OFFLINE=1
     uv run python teacher_prompt_sweep.py ../datasets/xsum_screen/full "$OUT"
     ../evaluate/.venv/bin/python ../evaluate/teacher_prompt_score.py "$OUT"
+    ;;
+  preprocess)
+    uv run axolotl preprocess "${2:?preprocess needs a config}"
     ;;
   *) echo "unknown stage $STAGE" >&2; exit 1 ;;
 esac

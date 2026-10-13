@@ -30,16 +30,11 @@ from vllm import LLM, SamplingParams
 
 spec = importlib.util.spec_from_file_location("prep", Path(__file__).with_name("prepare_data_XSum.py"))
 prep = importlib.util.module_from_spec(spec); spec.loader.exec_module(prep)
+_kd = importlib.util.spec_from_file_location("kdp", Path(__file__).with_name("prepare_kd_screen_prompts.py"))
+kdp = importlib.util.module_from_spec(_kd); _kd.loader.exec_module(kdp)
 
 MODEL = "google/gemma-3-4b-it"
 
-BBC_STYLE = (
-    "You write the one-sentence summary that appears above a BBC News article. It states "
-    "the story's main news in about 20 words, the way BBC summaries do: usually in the "
-    "past or present perfect tense (for example 'has died', 'were jailed', 'has been "
-    "approved'), naming the key people, places, organisations and numbers. Reply with "
-    "the sentence only, in plain text, with no preamble, label or quotation marks."
-)
 FEWSHOT = ("You write the one-sentence summary that appears above a BBC News article. "
            "Reply with the summary sentence only.")
 FAITHFUL = " Use only facts stated in the article."
@@ -64,8 +59,7 @@ def prompts(document, demos):
                   {"role": "assistant", "content": d["summary"]}]
     return {
         "P0_current": prep.convert_to_prompt({"document": document})["teacher_messages"],
-        "P1_bbc_style": [{"role": "system", "content": BBC_STYLE},
-                         {"role": "user", "content": f"Article:\n\n{document}\n\nSummarise the article above in one sentence of about 20 words."}],
+        "P1_bbc_style": kdp.bbc_teacher_messages(document),
         "P2_fewshot": [{"role": "system", "content": FEWSHOT}] + shots + [{"role": "user", "content": ask}],
         "P3_fewshot_faithful": [{"role": "system", "content": FEWSHOT + FAITHFUL}] + shots + [{"role": "user", "content": ask}],
         "P4_student_short": prep.convert_to_prompt({"document": document})["messages_short"],

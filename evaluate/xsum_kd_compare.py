@@ -24,6 +24,7 @@ MODELS = {
     "self-distilled 4-bit": ("4b", "gemma3-xsum_kd_screen-lora"),
     "self-distilled 8-bit": ("4b", "gemma3-xsum_kd_screen_8bit-lora"),
     "self-distilled bf16 (own loop)": ("4b", "gemma3-xsum_kd_screen_bf16loop-lora"),
+    "self-distilled bf16, BBC teacher": ("4b", "gemma3-xsum_kd_screen_bbc_bf16loop-lora"),
     "untrained 1B": ("1b", ""),
     "reference LoRA 1B": ("1b", "gemma3-xsum_screen-full_1b-lora"),
     "distilled 4B->1B (own loop)": ("1b", "gemma3-xsum_kd_screen_1b_bf16loop-lora"),
@@ -72,7 +73,9 @@ def main():
               f"{mean('entity_support'):7.4f} {statistics.fmean(clean):9.4f} {mean('pred_words'):6.1f} "
               f"{len(looping) / len(log.samples):7.1%}")
 
-    pairs = [("self-distilled bf16 (own loop)", "self-distilled 4-bit"),
+    pairs = [("self-distilled bf16, BBC teacher", "self-distilled bf16 (own loop)"),
+             ("self-distilled bf16, BBC teacher", "reference LoRA"),
+             ("self-distilled bf16 (own loop)", "self-distilled 4-bit"),
              ("self-distilled bf16 (own loop)", "reference LoRA"),
              ("self-distilled 8-bit", "self-distilled 4-bit"),
              ("distilled 4B->1B (own loop)", "reference LoRA 1B"),
