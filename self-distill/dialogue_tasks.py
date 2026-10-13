@@ -143,6 +143,25 @@ def reorder_example(row) -> dict:
     return {"id": row["id"], "task": "reorder", "prompt": prompt, "gold": gold}
 
 
+WORKING = ("Show your working for the task below instead of answering it: list the banned words, "
+           "write a draft, number the draft's words, give the count and check for banned words.\n\n")
+
+
+def working_example(ex: dict, target: str) -> dict:
+    """Distilling step-by-step (Hsieh et al., 2023): a second training task on
+    the same dialogue, asking for the rationale behind a verified target. Built
+    by program from the target, so it needs no teacher; never used at test time."""
+    words = [w for w in target.split() if re.search(r"[A-Za-z0-9]", w)]
+    lo, hi = ex["n_words"] - ex.get("tolerance", 0), ex["n_words"] + ex.get("tolerance", 0)
+    rationale = (f"Banned words: {', '.join(ex['banned'])}.\n"
+                 f"Draft: {target}\n"
+                 f"Words: {' '.join(f'[{i}] {w}' for i, w in enumerate(words, 1))}\n"
+                 f"Count: {len(words)}, within {lo} to {hi}.\n"
+                 f"Banned words used: none.")
+    return {"messages": [{"role": "user", "content": WORKING + ex["prompt"]},
+                         {"role": "assistant", "content": rationale}]}
+
+
 def check_constrained(ex: dict, prediction: str) -> dict:
     count = word_count(prediction)
     used = [w for w in ex["banned"] if uses(prediction, w)]

@@ -80,25 +80,32 @@ def build(args):
     else:
         answer = lambda ex: json.dumps(ex["gold"])
 
-    def rows(split):
+    def rows(split, working=False):
+        """One list per dialogue: the plain example, plus the working example
+        when --rationale is set (train only; validation stays the test format)."""
         out = []
         for r in parts[split]:
             ex = make(r)
             if (target := answer(ex)) is not None:
-                out.append({"messages": [{"role": "user", "content": ex["prompt"]},
-                                         {"role": "assistant", "content": target}]})
+                group = [{"messages": [{"role": "user", "content": ex["prompt"]},
+                                       {"role": "assistant", "content": target}]}]
+                if working:
+                    group.append(dt.working_example(ex, target))
+                out.append(group)
         return out
 
-    train, val = rows("train"), rows("validation")
-    longest = max(len(tok.apply_chat_template(r["messages"], tokenize=False)) for r in train + val)
+    train = rows("train", working=args.rationale)
+    val = [g[0] for g in rows("validation")]
+    flat = lambda groups: [row for g in groups for row in g]
+    longest = max(len(tok.apply_chat_template(r["messages"], tokenize=False)) for r in flat(train) + val)
     ladder = sorted((n for n in LADDER if n <= len(train)), reverse=True)
     root = Path(args.samsum).parent / f"dlg_{args.name or args.task}_curve"
     for n in ladder:
-        DatasetDict({"train": Dataset.from_list(train[:n]),
+        DatasetDict({"train": Dataset.from_list(flat(train[:n])),
                      "validation": Dataset.from_list(val)}).save_to_disk(str(root / f"n{n}"))
     (root / "ARMS").write_text("".join(f"n{n}\n" for n in ladder))
-    lens = [len(tok(tok.apply_chat_template(r["messages"], tokenize=False))["input_ids"]) for r in train + val]
-    print(f"{args.task}: {len(train)} train rows, {len(val)} validation; arms {ladder}; "
+    lens = [len(tok(tok.apply_chat_template(r["messages"], tokenize=False))["input_ids"]) for r in flat(train) + val]
+    print(f"{args.task}: {len(train)} train dialogues ({len(flat(train))} rows), {len(val)} validation; arms {ladder}; "
           f"longest {max(lens)} tokens (chars {longest})")
 
 
@@ -112,5 +119,7 @@ if __name__ == "__main__":
     b = sub.add_parser("build"); b.add_argument("task", choices=["reorder", "constrained", "constrained2"])
     b.add_argument("samsum"); b.add_argument("--teacher")
     b.add_argument("--name", help="arm directory dlg_<name>_curve; defaults to the task")
+    b.add_argument("--rationale", action="store_true",
+                   help="add a step-by-step working example per dialogue (constrained tasks)")
     args = ap.parse_args()
     {"teacher": teacher, "build": build}[args.cmd](args)
