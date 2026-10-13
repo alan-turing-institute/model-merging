@@ -1,12 +1,13 @@
-"""Recovery fraction R for the CLINC150 domain-expert merges.
+"""Recovery fraction R for the data-parallel domain-expert merges.
 
-    uv run python clinc150_merge_report.py logs [--json ../results/clinc150-merges.json]
+    uv run python merge_report.py logs --task clinc150 [--json ../results/clinc150-merges.json]
+    uv run python merge_report.py logs --task mt_domain [--json ../results/mt_domain-merges.json]
 
-For each seed pair of domain experts (expert_a / expert_b, original run and
-seeds 2 and 3) and each merge method, R = (merged - best expert) / (full -
-best expert) on the 4,500 in-scope test queries, with a paired bootstrap 95%
-interval over test queries. Also the experts' training-seed spread, which
-replaces the 0.005 the screen assumed.
+For each seed pair of domain experts (original run and seeds 2 and 3) and each
+merge method, R = (merged - best expert) / (full - best expert) on the task's
+test items, with a paired bootstrap 95% interval over items. Also the experts'
+training-seed spread. CLINC150 scores accuracy on the 4,500 in-scope queries;
+EN->DE scores sentence chrF++ on 2,000 sentences, with per-domain means.
 """
 
 import argparse
@@ -19,27 +20,33 @@ from pathlib import Path
 from inspect_ai.log import list_eval_logs, read_eval_log
 
 METHODS = ["linear", "ties", "dare_ties", "task_arithmetic"]
+TASKS = {
+    "clinc150": {"metric": "accuracy", "experts": ("expert_a", "expert_b"), "variant": "short", "domains": ()},
+    "mt_domain": {"metric": "chrf", "experts": ("expert_medical", "expert_law"), "variant": None,
+                  "domains": ("chrf_medical", "chrf_law")},
+}
 SEEDS = ["", "_s2", "_s3"]
 
 
-def label(log):
+def label(log, task):
     args = log.eval.model_args or {}
     adapter = Path(str(args.get("adapter_path", "")).rstrip("/")).name
     path = Path(str(args.get("model_path", "")).rstrip("/")).name
     if adapter:
-        m = re.fullmatch(r"gemma3-clinc150-(.+)-lora", adapter)
+        m = re.fullmatch(rf"gemma3-{task}-(.+)-lora", adapter)
         return m.group(1) if m else None
-    if path.startswith("clinc150-merged-"):
-        return "merged-" + path[len("clinc150-merged-"):]
+    if path.startswith(f"{task}-merged-"):
+        return "merged-" + path[len(f"{task}-merged-"):]
     return None
 
 
-def correct(log):
+def correct(log, metric):
+    """{sample id: value}; NaN (e.g. a per-domain metric outside its domain) dropped."""
     out = {}
     for s in log.samples:
         for sc in (s.scores or {}).values():
-            v = sc.value.get("accuracy") if isinstance(sc.value, dict) else None
-            if isinstance(v, (int, float)):
+            v = sc.value.get(metric) if isinstance(sc.value, dict) else None
+            if isinstance(v, (int, float)) and v == v:
                 out[s.id] = float(v)
     return out
 
@@ -47,19 +54,21 @@ def correct(log):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("log_dir", nargs="?", default="logs")
+    ap.add_argument("--task", choices=sorted(TASKS), default="clinc150")
     ap.add_argument("--json", type=Path)
     args = ap.parse_args()
+    spec = TASKS[args.task]
     logs = {}
     for info in list_eval_logs(args.log_dir):
         log = read_eval_log(info)
-        if log.status != "success" or log.eval.task.split("/")[-1] != "clinc150":
+        if log.status != "success" or log.eval.task.split("/")[-1] != args.task:
             continue
-        if (log.eval.task_args or {}).get("prompt_variant", "short") != "short":
+        if spec["variant"] and (log.eval.task_args or {}).get("prompt_variant", spec["variant"]) != spec["variant"]:
             continue
-        name = label(log)
+        name = label(log, args.task)
         if name and (name not in logs or log.eval.created > logs[name].eval.created):
             logs[name] = log
-    acc = {k: correct(v) for k, v in logs.items()}
+    acc = {k: correct(v, spec["metric"]) for k, v in logs.items()}
     mean = lambda d: statistics.fmean(d.values())
     if "full" not in acc:
         raise SystemExit("no full-data log")
@@ -67,7 +76,7 @@ def main():
 
     print("expert accuracy by seed:")
     spread = {}
-    for e in ("expert_a", "expert_b"):
+    for e in spec["experts"]:
         vals = [mean(acc[e + s]) for s in SEEDS if e + s in acc]
         spread[e] = statistics.stdev(vals) if len(vals) > 1 else None
         print(f"  {e}: " + ", ".join(f"{v:.4f}" for v in vals) + (f"  SD {spread[e]:.4f}" if spread[e] else ""))
@@ -78,7 +87,7 @@ def main():
     print(f"{'method':16} {'seed':5} {'merged':>8} {'best expert':>12} {'denominator':>12} {'R':>7}  95% CI")
     for method in METHODS:
         for s in SEEDS:
-            m, a, b = acc.get(f"merged-{method}{s}"), acc.get(f"expert_a{s}"), acc.get(f"expert_b{s}")
+            m, a, b = (acc.get(f"merged-{method}{s}"), *(acc.get(e + s) for e in spec["experts"]))
             if not (m and a and b):
                 continue
             best = a if mean(a) >= mean(b) else b
@@ -97,6 +106,13 @@ def main():
         rs = [x["R"] for x in report["merges"] if x["method"] == method]
         if len(rs) > 1:
             print(f"{method:16} mean R over {len(rs)} seeds {statistics.fmean(rs):+.3f}, SD {statistics.stdev(rs):.3f}")
+    if spec["domains"]:
+        print("\nper-domain " + " / ".join(spec["domains"]) + ", seed 1:")
+        dom = {k: [correct(logs[k], d) for d in spec["domains"]] for k in logs}
+        for k in ["full", *spec["experts"], *(f"merged-{m}" for m in METHODS)]:
+            if k in dom:
+                print(f"  {k:24} " + " / ".join(f"{mean(d):.2f}" for d in dom[k]))
+        report["per_domain_seed1"] = {k: [mean(d) for d in dom[k]] for k in dom if "_s" not in k}
     if args.json:
         args.json.write_text(json.dumps(report, indent=2) + "\n")
 
