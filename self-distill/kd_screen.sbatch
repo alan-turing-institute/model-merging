@@ -75,5 +75,10 @@ EOF
       rm -f "$PROBE_CFG"
     done
     ;;
+  nancheck)
+    PREP=${2:-}
+    [[ -n $PREP ]] || PREP='${MM_PREPARED:-last_run_prepared}'
+    uv run python kd_lora_nan_check.py "$PREP"
+    ;;
   *) echo "unknown stage $STAGE" >&2; exit 1 ;;
 esac
