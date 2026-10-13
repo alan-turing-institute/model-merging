@@ -22,12 +22,13 @@ uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU'"
 
 case $STAGE in
   teacher)
-    # Optional: prompts dataset and output prefix (default: the original run).
+    # Optional: prompts dataset and output prefix (default: the original run), then
+    # extra generate_teacher_logprobs.py flags, e.g. --targets gold.
     PROMPTS=${2:-../datasets/xsum_kd_screen_prompts}
     PREFIX=${3:-xsum_kd_screen}
     uv run python generate_teacher_logprobs.py google/gemma-3-4b-it \
       "$PROMPTS" ../datasets \
-      --prefix "$PREFIX" --student-fields messages_short --max-seq-len 1024
+      --prefix "$PREFIX" --student-fields messages_short --max-seq-len 1024 "${@:4}"
     ;;
   train)
     # Optional second argument: the config to train (default: the 4-bit one).
@@ -87,13 +88,14 @@ EOF
   trainloop)
     # bf16 LoRA trained outside axolotl (kd_lora_train.py), on axolotl's own
     # prepared tensors, because axolotl's KD trainer NaNs on this configuration.
-    # Optional: a student model and output directory (default: the 4B run).
+    # Optional: a student model, output directory and prepared data, then extra
+    # kd_lora_train.py flags, e.g. --ce-weight 0.75 --logit-adjust.
     STUDENT=${2:-google/gemma-3-4b-it}
     OUT=${3:-../models/gemma3-xsum_kd_screen_bf16loop-lora}
     PREP=${4:-}
     [[ -n $PREP ]] || PREP='${MM_PREPARED:-last_run_prepared}'
     mkdir -p "$OUT"
-    uv run python kd_lora_train.py "$PREP" "$OUT" --model "$STUDENT"
+    uv run python kd_lora_train.py "$PREP" "$OUT" --model "$STUDENT" "${@:5}"
     ;;
   promptsweep)
     # Teacher-prompt comparison on the XSum validation articles: generate in

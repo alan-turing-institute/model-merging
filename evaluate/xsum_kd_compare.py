@@ -29,6 +29,15 @@ MODELS = {
     "reference LoRA 1B": ("1b", "gemma3-xsum_screen-full_1b-lora"),
     "distilled 4B->1B (own loop)": ("1b", "gemma3-xsum_kd_screen_1b_bf16loop-lora"),
     "distilled 4B->1B, BBC teacher": ("1b", "gemma3-xsum_kd_screen_bbc_1b_bf16loop-lora"),
+    # Gold targets: CE on the reference, KD on the BBC-prompted teacher scoring
+    # it; CE weight swept, logit adjustment (LA) on and off, CE 1.00 = no KD.
+    "gold, CE 0.50": ("4b", "gemma3-xsum_kd_gold_ce50-lora"),
+    "gold, CE 0.50 + LA": ("4b", "gemma3-xsum_kd_gold_ce50_la-lora"),
+    "gold, CE 0.75": ("4b", "gemma3-xsum_kd_gold_ce75-lora"),
+    "gold, CE 0.75 + LA": ("4b", "gemma3-xsum_kd_gold_ce75_la-lora"),
+    "gold, CE 0.90": ("4b", "gemma3-xsum_kd_gold_ce90-lora"),
+    "gold, CE 0.90 + LA": ("4b", "gemma3-xsum_kd_gold_ce90_la-lora"),
+    "gold, CE 1.00": ("4b", "gemma3-xsum_kd_gold_ce100-lora"),
 }
 REPEAT = re.compile(r"\b(\w+)\b(?:\W+\1\b){2,}", re.IGNORECASE)
 
@@ -74,7 +83,10 @@ def main():
               f"{mean('entity_support'):7.4f} {statistics.fmean(clean):9.4f} {mean('pred_words'):6.1f} "
               f"{len(looping) / len(log.samples):7.1%}")
 
-    pairs = [("distilled 4B->1B, BBC teacher", "distilled 4B->1B (own loop)"),
+    pairs = [*[(f"gold, CE {w} + LA", f"gold, CE {w}") for w in ("0.50", "0.75", "0.90")],
+             *[(f"gold, CE {w}", "gold, CE 1.00") for w in ("0.50", "0.75", "0.90")],
+             ("gold, CE 1.00", "reference LoRA"),
+             ("distilled 4B->1B, BBC teacher", "distilled 4B->1B (own loop)"),
              ("distilled 4B->1B, BBC teacher", "reference LoRA 1B"),
              ("self-distilled bf16, BBC teacher", "self-distilled bf16 (own loop)"),
              ("self-distilled bf16, BBC teacher", "reference LoRA"),

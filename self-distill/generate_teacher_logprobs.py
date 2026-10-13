@@ -123,6 +123,13 @@ def parse_args():
         "--no-enforce-eager", dest="enforce_eager", action="store_false",
         help="Let vLLM compile and capture CUDA graphs (slow to start on a cold cache).",
     )
+    parser.add_argument(
+        "--targets", choices=["generated", "gold"], default="generated",
+        help="generated: the teacher writes the assistant turn. gold: the assistant turn is "
+             "the reference (--gold-field) and the teacher only scores it, via vLLM prompt "
+             "logprobs, so cross-entropy is on the reference and KD on the teacher's view of it.",
+    )
+    parser.add_argument("--gold-field", default="summary")
     return parser.parse_args()
 
 
@@ -228,6 +235,15 @@ def generate_split(llm, tokenizer, sampling_params, split, split_name, args):
         # Pass ids, not text: vLLM re-tokenises string prompts with
         # add_special_tokens=True, which would prepend a second <bos> to a
         # template that already emits one.
+        if args.targets == "gold":
+            # The reference plus <end_of_turn>, exactly as a stopped generation ends.
+            gold_ids = tokenizer(example[args.gold_field].strip(), add_special_tokens=False)["input_ids"]
+            gold_ids = gold_ids + [tokenizer.convert_tokens_to_ids("<end_of_turn>")]
+            if len(gold_ids) > args.max_tokens:
+                dropped["too_long"] += 1
+                continue
+            example = dict(example, _gold_ids=gold_ids, _n_teacher=len(teacher_ids))
+            teacher_ids = list(teacher_ids) + gold_ids
         prompts.append(TokensPrompt(prompt_token_ids=teacher_ids))
         kept.append(example)
 
@@ -235,20 +251,28 @@ def generate_split(llm, tokenizer, sampling_params, split, split_name, args):
 
     rows = {field: [] for field in args.student_fields}
     for example, output in zip(kept, outputs):
-        gen = output.outputs[0]
+        if args.targets == "gold":
+            # prompt_logprobs[i] is the teacher's distribution for prompt token i.
+            gen_token_ids = example["_gold_ids"]
+            n = example["_n_teacher"]
+            positions = output.prompt_logprobs[n : n + len(gen_token_ids)]
+            text = example[args.gold_field].strip()
+        else:
+            gen = output.outputs[0]
 
-        # A generation cut off by max_tokens has no <end_of_turn>, so the
-        # length relationship the KD plugin relies on no longer holds.
-        if gen.finish_reason != "stop" or not gen.logprobs:
-            dropped["truncated"] += 1
-            continue
+            # A generation cut off by max_tokens has no <end_of_turn>, so the
+            # length relationship the KD plugin relies on no longer holds.
+            if gen.finish_reason != "stop" or not gen.logprobs:
+                dropped["truncated"] += 1
+                continue
 
-        gen_token_ids = list(gen.token_ids)
-        text = tokenizer.decode(gen_token_ids, skip_special_tokens=True).strip()
+            gen_token_ids = list(gen.token_ids)
+            positions = gen.logprobs
+            text = tokenizer.decode(gen_token_ids, skip_special_tokens=True).strip()
 
         teacher_logprobs = []
         target_token_ids = []
-        for position_logprobs in gen.logprobs:
+        for position_logprobs in positions:
             # vLLM inserts the sampled token first and the top-k after it, so
             # the dict is not in rank order and can hold top_k + 1 entries.
             entries = sorted(
@@ -313,10 +337,10 @@ def main():
         gpu_memory_utilization=args.gpu_memory_utilization,
     )
 
-    sampling_params = SamplingParams(
-        temperature=args.temperature,
-        max_tokens=args.max_tokens,
-        logprobs=args.top_k,
+    sampling_params = (
+        SamplingParams(temperature=0.0, max_tokens=1, prompt_logprobs=args.top_k)
+        if args.targets == "gold" else
+        SamplingParams(temperature=args.temperature, max_tokens=args.max_tokens, logprobs=args.top_k)
     )
 
     per_dataset = {field: {} for field in args.student_fields}

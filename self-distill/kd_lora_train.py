@@ -80,8 +80,40 @@ def collate(rows, pad_id, device):
             t(tid, torch.long), t(tlp, torch.float32), t(tmask, torch.long))
 
 
-def kd_loss(model, head_fp32, fused, batch, n_items):
+ADJUSTED = {"rows": 0, "swapped": 0, "inserted": 0}
+ADJUST = False
+
+
+def logit_adjust(tid, tlp, tmask, lab):
+    """Make the label the teacher's top token wherever the teacher disagrees.
+
+    Logit adjustment (Wen et al., 2019) for gold targets. Teacher row t predicts
+    token t+1: the fused loss shifts the labels, not the targets. If the label is
+    in the teacher's top-k but not first, its logprob swaps with the top one; if
+    it is outside the top-k, it takes the top entry's slot and logprob.
+    """
+    gold = torch.nn.functional.pad(lab, (0, 1), value=-100)[:, 1:]
+    valid = ((gold != -100) & (tmask.sum(-1) > 0)).unsqueeze(-1)
+    top = tlp.masked_fill(tmask == 0, float("-inf")).argmax(-1, keepdim=True)
+    hit = tid == gold.clamp(min=0).unsqueeze(-1)
+    in_k = hit.any(-1, keepdim=True)
+    g = hit.float().argmax(-1, keepdim=True)
+    idx = torch.arange(tid.shape[-1], device=tid.device)
+    is_top, is_g = idx == top, idx == g
+    swap, insert = valid & in_k & (g != top), valid & ~in_k
+    top_lp, g_lp = tlp.gather(-1, top), tlp.gather(-1, g)
+    tlp = torch.where(swap & is_top, g_lp, torch.where(swap & is_g, top_lp, tlp))
+    tid = torch.where(insert & is_top, gold.clamp(min=0).unsqueeze(-1), tid)
+    ADJUSTED["rows"] += int(valid.sum())
+    ADJUSTED["swapped"] += int(swap.sum())
+    ADJUSTED["inserted"] += int(insert.sum())
+    return tid, tlp
+
+
+def kd_loss(model, head_fp32, fused, batch, n_items, adjust=False):
     ids, att, lab, tid, tlp, tmask = batch
+    if adjust:
+        tid, tlp = logit_adjust(tid, tlp, tmask, lab)
     out = model(input_ids=ids, attention_mask=att, output_hidden_states=True, return_dict=True, logits_to_keep=1)
     hidden = out.hidden_states[-1].float()
     return fused(head_fp32, hidden, tid, tlp, tmask, true_labels=lab) / n_items
@@ -94,7 +126,7 @@ def evaluate(model, head, fused, rows, pad_id):
         for i in range(0, len(rows), MICRO):
             batch = collate(rows[i:i + MICRO], pad_id, "cuda")
             n = int((batch[2] != -100).sum())
-            total += kd_loss(model, head, fused, batch, 1).item(); tokens += n
+            total += kd_loss(model, head, fused, batch, 1, ADJUST).item(); tokens += n
     model.train()
     return total / tokens
 
@@ -112,6 +144,10 @@ def main():
     ap.add_argument("prepared_dir")
     ap.add_argument("output_dir")
     ap.add_argument("--model", default="google/gemma-3-4b-it")
+    ap.add_argument("--ce-weight", type=float, default=0.5,
+                    help="weight on cross-entropy; the KD term gets 1 minus this")
+    ap.add_argument("--logit-adjust", action="store_true",
+                    help="correct teacher rows that disagree with the label (gold targets)")
     args = ap.parse_args()
     prepared, out_dir, MODEL = args.prepared_dir, args.output_dir, args.model
     sets = [d for d in (load_from_disk(x) for x in glob.glob(f"{prepared}/*/")) if "target_logprobs" in d.column_names]
@@ -141,7 +177,10 @@ def main():
     model.train()
     # fp32 copy of the frozen output layer for the loss (see module docstring).
     head = lm_head_of(model).weight.detach().float()
-    fused = LigerFusedLinearKLTopKLogprobLoss(0.5, 0.5, 1.0, 0.0, compute_ce_loss=True, normalize_topk=True)
+    global ADJUST
+    ADJUST = args.logit_adjust
+    fused = LigerFusedLinearKLTopKLogprobLoss(args.ce_weight, 1 - args.ce_weight, 1.0, 0.0,
+                                              compute_ce_loss=True, normalize_topk=True)
 
     params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=LR, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, fused=True)
@@ -162,7 +201,7 @@ def main():
             n_items = sum(int((b[2] != -100).sum()) for b in group)
             step_loss = 0.0
             for batch in group:
-                loss = kd_loss(model, head, fused, batch, n_items)
+                loss = kd_loss(model, head, fused, batch, n_items, ADJUST)
                 loss.backward()
                 step_loss += loss.item()
             grad_norm = torch.nn.utils.clip_grad_norm_(params, CLIP)
@@ -182,7 +221,12 @@ def main():
                 print(json.dumps({"step": step, "eval_loss": round(evaluate(model, head, fused, val_rows, tok.pad_token_id), 4)}), flush=True)
 
     model.save_pretrained(out_dir)
-    print(json.dumps({"train_runtime_s": round(time.time() - t0), "skipped_steps": skipped, "peak_memory_gib":
+    if ADJUST:
+        rows = max(ADJUSTED["rows"], 1)
+        print(json.dumps({"logit_adjust_rows": ADJUSTED["rows"], "swapped": round(ADJUSTED["swapped"] / rows, 4),
+                          "inserted": round(ADJUSTED["inserted"] / rows, 4)}), flush=True)
+    print(json.dumps({"ce_weight": args.ce_weight, "logit_adjust": ADJUST,
+                      "train_runtime_s": round(time.time() - t0), "skipped_steps": skipped, "peak_memory_gib":
                       round(torch.cuda.max_memory_allocated() / 2**30, 2), "saved": out_dir}), flush=True)
 
 
