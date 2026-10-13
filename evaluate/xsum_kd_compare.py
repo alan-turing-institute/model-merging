@@ -28,6 +28,7 @@ MODELS = {
     "untrained 1B": ("1b", ""),
     "reference LoRA 1B": ("1b", "gemma3-xsum_screen-full_1b-lora"),
     "distilled 4B->1B (own loop)": ("1b", "gemma3-xsum_kd_screen_1b_bf16loop-lora"),
+    "distilled 4B->1B, BBC teacher": ("1b", "gemma3-xsum_kd_screen_bbc_1b_bf16loop-lora"),
 }
 REPEAT = re.compile(r"\b(\w+)\b(?:\W+\1\b){2,}", re.IGNORECASE)
 
@@ -73,7 +74,9 @@ def main():
               f"{mean('entity_support'):7.4f} {statistics.fmean(clean):9.4f} {mean('pred_words'):6.1f} "
               f"{len(looping) / len(log.samples):7.1%}")
 
-    pairs = [("self-distilled bf16, BBC teacher", "self-distilled bf16 (own loop)"),
+    pairs = [("distilled 4B->1B, BBC teacher", "distilled 4B->1B (own loop)"),
+             ("distilled 4B->1B, BBC teacher", "reference LoRA 1B"),
+             ("self-distilled bf16, BBC teacher", "self-distilled bf16 (own loop)"),
              ("self-distilled bf16, BBC teacher", "reference LoRA"),
              ("self-distilled bf16 (own loop)", "self-distilled 4-bit"),
              ("self-distilled bf16 (own loop)", "reference LoRA"),
