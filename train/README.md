@@ -48,7 +48,7 @@ That is what the scaling curve does: train the same configuration on ⅛, ¼, ½
 all of the data, score each on the same held-out set, and look at whether the
 score is still rising at the top of the curve.
 
-Prepare the data **on a login node** — compute nodes have no outbound network:
+Prepare the data before submitting the training jobs:
 
 ```bash
 uv run python prepare_billsum_data.py ../datasets/billsum
@@ -127,7 +127,7 @@ and EN–DE medical/legal passed.
   (`UV_NO_SYNC=1`): concurrent array tasks race on one venv, and a plain (non
   `--inexact`) sync once removed a leftover cu12 wheel that shared files with the
   cu13 cuDNN, breaking torch in every venv.
-- **Prepare data on a login node.** Compute nodes have no network.
+- **Prepare data before training.** Compute nodes can reach the Hub (checked 14 October 2026), so preparation can also run as a job.
 - **Hugging Face:** weights live in `$PROJECTDIR/$USER/mm/hf-cache`
   (`HF_HUB_CACHE`, *not* `HF_HOME`, which also moves the token). Gemma and FLORES+
   are gated; log in with

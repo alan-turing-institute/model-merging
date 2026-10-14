@@ -104,7 +104,7 @@ export UV_NO_SYNC=1
 #
 # HF_HUB_CACHE, NOT HF_HOME. HF_HOME relocates the auth token as well as the
 # cache, which silently logs you out: gemma-3-4b-it is a gated repo, so the next
-# fetch 401s instead of failing closed, and on an offline compute node it simply
+# fetch 401s instead of failing closed, and with the Hub offline it simply
 # cannot find the weights. The token stays at ~/.cache/huggingface/token where
 # `hf auth login` put it. Checked on this machine: the models actually live in
 # $PROJECTDIR/$USER/mm/hf-cache (39 GB, gemma plus the scorer's encoders), and

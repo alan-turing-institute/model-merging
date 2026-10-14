@@ -32,8 +32,8 @@ ARMS=(full half quarter eighth)
 
 for arm in "${ARMS[@]}"; do
   [[ -d "../datasets/billsum/$arm/train" ]] || {
-    echo "../datasets/billsum/$arm not found. On a LOGIN node (compute nodes have" >&2
-    echo "no network), run:  cd train && uv run python prepare_billsum_data.py ../datasets/billsum" >&2
+    echo "../datasets/billsum/$arm not found. Prepare it first:" >&2
+    echo "  cd train && uv run python prepare_billsum_data.py ../datasets/billsum" >&2
     exit 1
   }
 done

@@ -36,8 +36,8 @@ ARMS=(n6400 n3200 n1600 n800 n400 n200 n100)
 
 for arm in "${ARMS[@]}"; do
   [[ -d "../datasets/samsum/$arm/train" ]] || {
-    echo "../datasets/samsum/$arm not found. On a LOGIN node (compute nodes have" >&2
-    echo "no network), run:  cd train && uv run python prepare_samsum_data.py ../datasets/samsum" >&2
+    echo "../datasets/samsum/$arm not found. Prepare it first:" >&2
+    echo "  cd train && uv run python prepare_samsum_data.py ../datasets/samsum" >&2
     exit 1
   }
 done

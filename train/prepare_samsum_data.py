@@ -46,7 +46,7 @@
 # the training pool - which also means growing the training arms can never eat
 # into it.
 #
-# Usage, ON A LOGIN NODE (compute nodes have no outbound network):
+# Usage, before training:
 #   uv run python prepare_samsum_data.py ../datasets/samsum
 #   uv run python prepare_samsum_data.py ../datasets/samsum --arms 500,1000,2000
 import argparse

@@ -29,7 +29,7 @@ export UV_NO_SYNC=1
 # HF_HUB_CACHE, NOT HF_HOME: HF_HOME also moves the auth token.
 export HF_HUB_CACHE=${HF_HUB_CACHE:-$PROJECTDIR/$USER/mm/hf-cache}
 
-# Air-gapped compute nodes: telemetry retries against the network regardless.
+# Telemetry off: it adds network calls to every run and nothing to the results.
 export DO_NOT_TRACK=1
 export AXOLOTL_DO_NOT_TRACK=1
 export HF_HUB_DISABLE_TELEMETRY=1

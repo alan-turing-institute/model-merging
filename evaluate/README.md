@@ -36,7 +36,7 @@ sbatch evaluate.sbatch crime google/gemma-3-4b-it --adapter ../models/gemma3-cri
 
 The script always uses greedy decoding and loads the weights in bfloat16, so every model is compared at the same precision whatever its `config.json` says.
 
-The `semantic` score needs `sentence-transformers/all-MiniLM-L6-v2` in the Hugging Face cache. Compute nodes have no outbound network, so download it once from a login node. If it is missing, `semantic` is reported as 0.0 with only a printed warning.
+The `semantic` score needs `sentence-transformers/all-MiniLM-L6-v2` in the Hugging Face cache. Download it once before running, so a run never depends on the Hub (compute nodes can reach it, but a cached copy keeps every run identical). If it is missing, `semantic` is reported as 0.0 with only a printed warning.
 
 ### Isambard Cuda technical details
 

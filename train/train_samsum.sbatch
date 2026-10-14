@@ -76,7 +76,7 @@ export UV_NO_SYNC=1
 
 # HF_HUB_CACHE, NOT HF_HOME. HF_HOME relocates the auth token as well as the
 # cache, which silently logs you out: gemma-3-4b-it is a gated repo, so the next
-# fetch 401s instead of failing closed, and on an offline compute node it simply
+# fetch 401s instead of failing closed, and with the Hub offline it simply
 # cannot find the weights.
 export HF_HUB_CACHE=${HF_HUB_CACHE:-$PROJECTDIR/$USER/mm/hf-cache}
 
@@ -84,9 +84,10 @@ export HF_HUB_CACHE=${HF_HUB_CACHE:-$PROJECTDIR/$USER/mm/hf-cache}
 export MM_PREPARED="${TMPDIR:-/tmp}/axolotl-prepared-samsum-$ARM"
 mkdir -p "$MM_PREPARED"
 
-# Air-gapped compute nodes: axolotl's telemetry retries against posthog.com
-# regardless, and on the XSum ctx arm that turned a 20-minute step into five
-# hours of retries before the wall clock killed it.
+# Telemetry off. On the XSum ctx arm a job logged telemetry connection errors and
+# then took five hours for a 20-minute step; whether or not telemetry was the
+# cause, it adds nothing to a run. (Compute nodes can reach the Hub (checked 14 October 2026); this is not a
+# workaround for missing network.)
 export DO_NOT_TRACK=1
 export AXOLOTL_DO_NOT_TRACK=1
 export HF_HUB_DISABLE_TELEMETRY=1
