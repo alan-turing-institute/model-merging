@@ -38,6 +38,10 @@ MODELS = {
     "gold, CE 0.90": ("4b", "gemma3-xsum_kd_gold_ce90-lora"),
     "gold, CE 0.90 + LA": ("4b", "gemma3-xsum_kd_gold_ce90_la-lora"),
     "gold, CE 1.00": ("4b", "gemma3-xsum_kd_gold_ce100-lora"),
+    # The 27B (a local snapshot directory), untrained and trained on the same
+    # 4,000 references with QLoRA - the strong XSum teacher candidate.
+    "untrained 27B": ("27b", ""),
+    "reference QLoRA 27B": ("27b", "gemma3-xsum_screen-full_27b-lora"),
 }
 REPEAT = re.compile(r"\b(\w+)\b(?:\W+\1\b){2,}", re.IGNORECASE)
 
@@ -59,7 +63,8 @@ def main():
         log = read_eval_log(info)
         if log.status != "success" or log.eval.task.split("/")[-1] != "xsum":
             continue
-        size = "1b" if "gemma-3-1b" in log.eval.model else "4b" if "gemma-3-4b" in log.eval.model else None
+        size = ("1b" if "gemma-3-1b" in log.eval.model else "4b" if "gemma-3-4b" in log.eval.model
+                else "27b" if "gemma-3-27b" in log.eval.model else None)
         if "xsum_screen" not in str((log.eval.task_args or {}).get("dataset_path", "")):
             continue
         adapter = str((log.eval.model_args or {}).get("adapter_path", "")).rstrip("/")
@@ -83,7 +88,8 @@ def main():
               f"{mean('entity_support'):7.4f} {statistics.fmean(clean):9.4f} {mean('pred_words'):6.1f} "
               f"{len(looping) / len(log.samples):7.1%}")
 
-    pairs = [*[(f"gold, CE {w} + LA", f"gold, CE {w}") for w in ("0.50", "0.75", "0.90")],
+    pairs = [("reference QLoRA 27B", "reference LoRA"), ("untrained 27B", "untrained 4B"),
+             *[(f"gold, CE {w} + LA", f"gold, CE {w}") for w in ("0.50", "0.75", "0.90")],
              *[(f"gold, CE {w}", "gold, CE 1.00") for w in ("0.50", "0.75", "0.90")],
              ("gold, CE 1.00", "reference LoRA"),
              ("distilled 4B->1B, BBC teacher", "distilled 4B->1B (own loop)"),
