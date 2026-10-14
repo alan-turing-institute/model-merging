@@ -1,0 +1,48 @@
+{
+  "tasks": [
+    "clinc150",
+    "mt_domain"
+  ],
+  "rows": {
+    "base": {
+      "retention": 0.0,
+      "clinc150": 0.051111111111111114,
+      "mt_domain": 18.86147714083705
+    },
+    "specialist:clinc150": {
+      "retention": 0.7942475647605809,
+      "clinc150": 0.9768888888888889,
+      "mt_domain": 42.799438919656055
+    },
+    "specialist:mt_domain": {
+      "retention": 0.5582093134901585,
+      "clinc150": 0.15888888888888889,
+      "mt_domain": 59.538044503928894
+    },
+    "ceiling": {
+      "retention": 0.9986204340149518,
+      "clinc150": 0.9731111111111111,
+      "mt_domain": 59.591799439237455
+    },
+    "merged-dare_ties": {
+      "retention": 0.9457271524282269,
+      "clinc150": 0.9195555555555556,
+      "mt_domain": 57.6418743299485
+    },
+    "merged-linear": {
+      "retention": 0.9467279655385832,
+      "clinc150": 0.9151111111111111,
+      "mt_domain": 57.91857238169676
+    },
+    "merged-task_arithmetic": {
+      "retention": 0.9474168609580988,
+      "clinc150": 0.9155555555555556,
+      "mt_domain": 57.95508830677829
+    },
+    "merged-ties": {
+      "retention": 0.963975074653708,
+      "clinc150": 0.9622222222222222,
+      "mt_domain": 57.25172383295215
+    }
+  }
+}
