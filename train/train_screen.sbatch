@@ -57,6 +57,12 @@ for key, split in (("datasets", "train"), ("test_datasets", "validation")):
     for ds in cfg[key]:
         ds["path"] = os.path.join(dataset_dir, split)
 rows = len(load_from_disk(os.path.join(dataset_dir, "train")))
+# MICRO_BATCH (environment) shrinks the micro-batch for a large model and raises
+# accumulation to keep the effective batch, so the recipe and step count hold.
+if os.environ.get("MICRO_BATCH"):
+    total = cfg["micro_batch_size"] * cfg["gradient_accumulation_steps"]
+    cfg["micro_batch_size"] = int(os.environ["MICRO_BATCH"])
+    cfg["gradient_accumulation_steps"] = total // cfg["micro_batch_size"]
 # Our key, not axolotl's (popped before axolotl sees the config): raise the
 # epoch count until a small arm gets this many optimiser steps.
 min_steps = cfg.pop("mm_min_optimiser_steps", None)
