@@ -120,7 +120,11 @@ def build(args):
                     if len(tok(tok.apply_chat_template(w["messages"], tokenize=False))["input_ids"]) <= 1000:
                         group.append(w)
                 elif working and args.task != "reorder":
-                    group.append(dt.working_example(ex, target))
+                    w = dt.working_example(ex, target)
+                    # Long XSum prompts plus the numbered draft can pass the
+                    # 1,024-token window; drop those rather than truncate.
+                    if len(tok(tok.apply_chat_template(w["messages"], tokenize=False))["input_ids"]) <= 1000:
+                        group.append(w)
                 out.append(group)
         return out
 
