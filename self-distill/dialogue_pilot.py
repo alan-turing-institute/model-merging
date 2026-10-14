@@ -31,30 +31,18 @@ import dialogue_tasks as dt
 
 
 def merged(base: str, adapter: str) -> str:
-    """base + adapter as a full bf16 model on scratch, for vLLM."""
-    import torch
-    from huggingface_hub import snapshot_download
-    from peft import PeftModel
-    from safetensors import safe_open
-    from transformers import AutoModelForCausalLM
-    model = AutoModelForCausalLM.from_pretrained(base, torch_dtype=torch.bfloat16)
-    with safe_open(str(Path(adapter) / "adapter_model.safetensors"), "pt") as f:
-        rows = [f.get_slice(k).get_shape()[0] for k in f.keys() if "embed_tokens" in k]
-    if rows and rows[0] != model.get_input_embeddings().weight.shape[0]:
-        model.resize_token_embeddings(rows[0])      # axolotl resized the 1B's vocab
-    model = PeftModel.from_pretrained(model, adapter).merge_and_unload()
-    out = tempfile.mkdtemp(prefix="dlg-merged-", dir=os.environ.get("TMPDIR"))
-    src = Path(snapshot_download(base))
-    # copyfile, not copy: cache blobs are read-only, and copied permissions
-    # would stop the adapter's tokenizer from replacing the base one.
-    for f in src.iterdir():                          # tokenizer, processor, chat template
-        if not f.name.startswith("model") and f.is_file():
-            shutil.copyfile(f, Path(out) / f.name)
-    model.save_pretrained(out)
-    for f in Path(adapter).glob("tokenizer*"):
-        shutil.copyfile(f, Path(out) / f.name)
-    del model
-    return out
+    """base + adapter as a full bf16 model on scratch, for vLLM.
+
+    Folded in a separate process (merge/premerge_peft.py) that exits before vLLM
+    starts: folding in this process left a CUDA context behind, and on nodes
+    whose GPUs run in exclusive-process mode vLLM's engine then failed with
+    "CUDA-capable device(s) is/are busy or unavailable"."""
+    import subprocess
+    import sys
+    out = Path(tempfile.mkdtemp(prefix="dlg-merged-", dir=os.environ.get("TMPDIR"))) / "model"
+    script = Path(__file__).resolve().parent.parent / "merge" / "premerge_peft.py"
+    subprocess.run([sys.executable, str(script), base, adapter, str(out)], check=True)
+    return str(out)
 
 
 def main():
@@ -103,7 +91,7 @@ def main():
     path.write_text("".join(json.dumps(ex, ensure_ascii=False) + "\n" for ex in examples))
     print(f"wrote {len(examples)} rows ({len(rows)} dialogues) to {path}")
     if args.adapter:
-        shutil.rmtree(model_path, ignore_errors=True)
+        shutil.rmtree(Path(model_path).parent, ignore_errors=True)
 
 
 if __name__ == "__main__":
