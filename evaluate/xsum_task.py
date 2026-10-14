@@ -28,12 +28,11 @@ The dataset therefore needs only `document` and `summary` (and ideally `id`):
 datasets/xsum_prompts/test works as it is, as does any XSum split saved with
 `save_to_disk`.
 
-NO PREPARED DATA NEEDED. If the default split is missing, it is rebuilt from
-the Hub - the same 1,000 test articles prepare_data_XSum.py selects
-(shuffle(seed=42), first 1,000) at a pinned revision - and saved there. Compute
-nodes have no network, so on Isambard build it once on a login node:
-
-    uv run python xsum_task.py
+THE TEST SPLIT COMES FROM THE DATA PREPARATION, NEVER FROM HERE. It is written
+by self-distill/prepare_data_XSum.py together with the training data, so the
+test articles are guaranteed not to overlap what the models were trained on.
+This file only reads a saved split; if the path is missing it fails and says
+which script writes it, rather than building a split of its own.
 
 DOCUMENT_WORDS, AND THE REPORT'S NUMBERS. The Isambard results in the report
 were produced from prepare_xsum_data.py on the xsum-summarisation branch, which
@@ -49,7 +48,7 @@ import math
 import re
 from pathlib import Path
 
-from datasets import load_dataset, load_from_disk
+from datasets import load_from_disk
 from inspect_ai import Task, task
 from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.model import ChatMessageSystem, ChatMessageUser, GenerateConfig
@@ -67,14 +66,6 @@ ROUGE_TYPES = ["rouge1", "rouge2", "rougeL"]
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATASET = REPO_ROOT / "datasets" / "xsum_prompts" / "test"
 PREPARE_SCRIPT = REPO_ROOT / "self-distill" / "prepare_data_XSum.py"
-
-# Where the default split is rebuilt from when it is missing. The revision is
-# pinned so the rebuild cannot drift if the Hub repo changes; at this revision
-# shuffle(seed=42) + select(range(1000)) gives the same ids, in the same order,
-# as the split the report's XSum results used.
-XSUM_HUB = "EdinburghNLP/xsum"
-XSUM_REVISION = "7d4d486c2f8ef850b1a11aead99b894ff3dd7da9"
-XSUM_TEST_SIZE = 1_000
 
 # prompt_variant -> the field of convert_to_prompt's output holding that chat.
 PROMPT_FIELDS = {
@@ -219,35 +210,16 @@ def to_chat(messages):
     return [roles[m["role"]](content=m["content"]) for m in messages]
 
 
-def build_default_split():
-    """Rebuild datasets/xsum_prompts/test from the Hub and save it.
-
-    Same selection as prepare_data_XSum.py. Needs network: on Isambard, run it
-    on a login node (`uv run python xsum_task.py`), not inside a job.
-    """
-    split = (load_dataset(XSUM_HUB, split="test", revision=XSUM_REVISION)
-             .shuffle(seed=42).select(range(XSUM_TEST_SIZE)))
-    split.save_to_disk(str(DEFAULT_DATASET))
-    return split
-
-
 def load_split(dataset_path):
-    """The saved split at dataset_path; for the default path only, rebuilt from
-    the Hub if it is missing. A wrong path passed explicitly fails loudly
-    rather than silently scoring something else."""
+    """The saved test split at dataset_path. Never built here: a split built
+    independently of the training data could share articles with it."""
     path = Path(dataset_path)
-    if path.exists():
-        return load_from_disk(str(path))
-    if path != DEFAULT_DATASET:
-        raise FileNotFoundError(f"no dataset at {path}")
-    try:
-        return build_default_split()
-    except Exception as error:
-        raise RuntimeError(
-            f"{path} is missing and could not be rebuilt from the Hub ({error}). "
-            "On a machine without network - an Isambard compute node - run "
-            "`uv run python xsum_task.py` on a login node first."
-        ) from error
+    if not path.exists():
+        raise FileNotFoundError(
+            f"no XSum test split at {path}. It is written with the training data by "
+            f"{PREPARE_SCRIPT.relative_to(REPO_ROOT)}; run that first, or pass "
+            "-T dataset_path=<a split saved by the same preparation>.")
+    return load_from_disk(str(path))
 
 
 def truncate_words(text, document_words):
@@ -459,8 +431,3 @@ def xsum(
         metadata={"prompt_variant": prompt_variant, "document_words": document_words},
     )
 
-
-if __name__ == "__main__":
-    # Build the default test split once, on a machine with network access.
-    rows = build_default_split()
-    print(f"saved {len(rows)} XSum test rows to {DEFAULT_DATASET}")
