@@ -57,6 +57,15 @@ sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
 
 Optional arguments (see `--help`): `--top-k` (default 20), `--temperature` (0, i.e. greedy), `--max-tokens` (128), `--max-seq-len` (4096, which must match `sequence_len` in the Axolotl config), `--seed`, `--prefix`, `--teacher-field` and `--student-fields` (for other column names), `--tensor-parallel-size`, `--gpu-memory-utilization` and `--no-enforce-eager`.
 
+To train against the XSum reference summaries instead of the teacher's own generations, add `--targets gold`. The assistant turn is then the gold `summary`, so the cross-entropy term trains on the reference text, and the teacher only *scores* it (vLLM `prompt_logprobs`), so the KD term carries the teacher's distribution at each gold token:
+
+```bash
+sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts \
+  $PROJECTDIR/$USER/model-merging/datasets \
+  gemma3_4b_xsum_gold_kd_data --targets gold
+```
+
 This needs a GPU. Note that vLLM is not exactly deterministic between runs, even when greedy: rerunning can give a slightly different generation for a few rows.
 
 We record the one sentence summarisation together with the `logprobs`.  This is a sequence of probability distributions, one for each token in the output.
@@ -71,8 +80,8 @@ NB On Isambard this should be submitted as a job, otherwise it will run out of m
 
 ```bash
 sbatch train_xsum.sbatch self-distillation_xsum.yaml \
-  $PROJECTDIR/$USER/model-merging/models/gemma3_xsum_short \
-  $PROJECTDIR/$USER/model-merging/datasets/xsum_kd_data_short
+  $PROJECTDIR/$USER/model-merging/models/gemma3_4b_xsum_short \
+  $PROJECTDIR/$USER/model-merging/datasets/gemma3_4b_xsum_kd_data_short
 ```
 
 This takes as parameters:

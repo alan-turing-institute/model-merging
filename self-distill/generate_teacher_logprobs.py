@@ -30,6 +30,12 @@
 # template token; without it every teacher distribution lands on the wrong
 # token and training learns noise.
 #
+# With --targets gold the assistant turn is the dataset's reference summary
+# instead of a generation, and the teacher only scores it (vLLM prompt_logprobs
+# over teacher prompt + gold summary). The KD plugin computes CE and KD on the
+# same sequence, so this is how CE trains on the gold text while KD still
+# carries the teacher's distribution at each of its tokens.
+#
 # Each student field gets its own output dataset,
 # <output_dir>/<prefix>_<field without "messages_">, e.g. by default
 # <output_dir>/kd_data_long and <output_dir>/kd_data_short.
@@ -86,6 +92,20 @@ def parse_args():
         "--student-fields", nargs="+", default=["messages_long", "messages_short"],
         help="Columns holding student prompts; one output dataset is written per field "
         "(default: %(default)s).",
+    )
+    # "gold" keeps the KD plugin's single-sequence layout but makes that sequence
+    # the dataset's reference summary: the CE term then trains on the gold text
+    # and the KD term on the teacher's distribution at each gold token (teacher
+    # forcing via vLLM's prompt_logprobs). --temperature and --max-tokens only
+    # affect "teacher" mode, though --max-tokens still bounds the length check.
+    parser.add_argument(
+        "--targets", choices=["teacher", "gold"], default="teacher",
+        help="Assistant turn to train on: the teacher's own generation, or the gold "
+        "summary scored by the teacher (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--gold-field", default="summary",
+        help="Column holding the gold summary for --targets gold (default: %(default)s).",
     )
     parser.add_argument(
         "--top-k", type=int, default=TOP_K,
@@ -206,10 +226,47 @@ def build_student_row(tokenizer, student_messages, gen_token_ids, teacher_logpro
     }
 
 
+def gold_token_ids(tokenizer, teacher_messages, teacher_ids, summary):
+    """The gold summary's assistant tokens as the teacher sees them, or None.
+
+    Returned in the same shape as a vLLM generation: the content tokens plus the
+    <end_of_turn> that closes them, without the template's trailing "\n" (which
+    build_student_row adds back as a one-hot row).
+    """
+    full_ids = token_ids_for(
+        tokenizer, list(teacher_messages) + [{"role": "assistant", "content": summary}]
+    )
+    if full_ids[: len(teacher_ids)] != list(teacher_ids):
+        return None
+    tail = full_ids[len(teacher_ids):]
+    end_of_turn = tokenizer.convert_tokens_to_ids("<end_of_turn>")
+    if end_of_turn not in tail:
+        return None
+    return tail[: tail.index(end_of_turn) + 1]
+
+
+def topk_rows(positions, top_k):
+    """Split vLLM's per-position {token_id: Logprob} dicts into sorted top-k rows."""
+    teacher_logprobs = []
+    target_token_ids = []
+    for position_logprobs in positions:
+        # vLLM inserts the sampled (or, for prompt_logprobs, the actual) token
+        # first and the top-k after it, so the dict is not in rank order and can
+        # hold top_k + 1 entries.
+        entries = sorted(
+            position_logprobs.items(), key=lambda kv: kv[1].logprob, reverse=True
+        )[:top_k]
+        teacher_logprobs.append([logprob.logprob for _, logprob in entries])
+        target_token_ids.append([token_id for token_id, _ in entries])
+    return teacher_logprobs, target_token_ids
+
+
 def generate_split(llm, tokenizer, sampling_params, split, split_name, args):
     prompts = []
     kept = []
-    dropped = {"too_long": 0, "truncated": 0, "retokenised": 0, "short_topk": 0}
+    dropped = {
+        "too_long": 0, "bad_gold": 0, "truncated": 0, "retokenised": 0, "short_topk": 0,
+    }
 
     for example in split:
         teacher_ids = token_ids_for(
@@ -225,37 +282,45 @@ def generate_split(llm, tokenizer, sampling_params, split, split_name, args):
         ):
             dropped["too_long"] += 1
             continue
+        gold_ids = None
+        if args.targets == "gold":
+            gold_ids = gold_token_ids(
+                tokenizer, example[args.teacher_field], teacher_ids,
+                example[args.gold_field].strip(),
+            )
+            if gold_ids is None or len(gold_ids) > args.max_tokens:
+                dropped["bad_gold"] += 1
+                continue
         # Pass ids, not text: vLLM re-tokenises string prompts with
         # add_special_tokens=True, which would prepend a second <bos> to a
-        # template that already emits one.
-        prompts.append(TokensPrompt(prompt_token_ids=teacher_ids))
-        kept.append(example)
+        # template that already emits one. In gold mode the prompt carries the
+        # gold summary too, so prompt_logprobs scores it under the teacher.
+        prompt_ids = list(teacher_ids) + (gold_ids or [])
+        prompts.append(TokensPrompt(prompt_token_ids=prompt_ids))
+        kept.append((example, len(teacher_ids), gold_ids))
 
     outputs = llm.generate(prompts, sampling_params)
 
     rows = {field: [] for field in args.student_fields}
-    for example, output in zip(kept, outputs):
-        gen = output.outputs[0]
+    for (example, n_teacher, gold_ids), output in zip(kept, outputs):
+        if gold_ids is not None:
+            # prompt_logprobs[i] is the teacher's distribution over token i
+            # given tokens < i -- the same meaning as gen.logprobs[i] for a
+            # generated token -- so the gold positions slot straight in.
+            gen_token_ids = gold_ids
+            positions = output.prompt_logprobs[n_teacher : n_teacher + len(gold_ids)]
+        else:
+            gen = output.outputs[0]
+            # A generation cut off by max_tokens has no <end_of_turn>, so the
+            # length relationship the KD plugin relies on no longer holds.
+            if gen.finish_reason != "stop" or not gen.logprobs:
+                dropped["truncated"] += 1
+                continue
+            gen_token_ids = list(gen.token_ids)
+            positions = gen.logprobs
 
-        # A generation cut off by max_tokens has no <end_of_turn>, so the
-        # length relationship the KD plugin relies on no longer holds.
-        if gen.finish_reason != "stop" or not gen.logprobs:
-            dropped["truncated"] += 1
-            continue
-
-        gen_token_ids = list(gen.token_ids)
         text = tokenizer.decode(gen_token_ids, skip_special_tokens=True).strip()
-
-        teacher_logprobs = []
-        target_token_ids = []
-        for position_logprobs in gen.logprobs:
-            # vLLM inserts the sampled token first and the top-k after it, so
-            # the dict is not in rank order and can hold top_k + 1 entries.
-            entries = sorted(
-                position_logprobs.items(), key=lambda kv: kv[1].logprob, reverse=True
-            )[: args.top_k]
-            teacher_logprobs.append([logprob.logprob for _, logprob in entries])
-            target_token_ids.append([token_id for token_id, _ in entries])
+        teacher_logprobs, target_token_ids = topk_rows(positions, args.top_k)
 
         # The plugin derives one top-k width for the row from the *least
         # frequent* row length, so a single short row collapses the whole
@@ -313,11 +378,17 @@ def main():
         gpu_memory_utilization=args.gpu_memory_utilization,
     )
 
-    sampling_params = SamplingParams(
-        temperature=args.temperature,
-        max_tokens=args.max_tokens,
-        logprobs=args.top_k,
-    )
+    if args.targets == "gold":
+        # Score only: the one generated token is discarded.
+        sampling_params = SamplingParams(
+            temperature=0.0, max_tokens=1, prompt_logprobs=args.top_k,
+        )
+    else:
+        sampling_params = SamplingParams(
+            temperature=args.temperature,
+            max_tokens=args.max_tokens,
+            logprobs=args.top_k,
+        )
 
     per_dataset = {field: {} for field in args.student_fields}
     for split in prompts_ds:
