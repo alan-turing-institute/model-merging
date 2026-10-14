@@ -76,7 +76,7 @@ def build(rationales_path):
                                               {"role": "assistant", "content": why[i]}]})
             DatasetDict({"train": Dataset.from_list(rows), "validation": val}).save_to_disk(str(root / f"n{n}"))
         (root / "ARMS").write_text("".join(f"n{n}\n" for n in sorted(SIZES, reverse=True)))
-        print(f"{root}: arms {sorted(SIZES, reverse=True)}; n4000 has {len(rows)} rows")
+        print(f"{root}: arms {sorted(SIZES, reverse=True)}; n{n} (the last built) has {len(rows)} rows")
 
 
 if __name__ == "__main__":
