@@ -1,0 +1,85 @@
+{
+  "task": "reorder",
+  "curve": "reorder_sbs27",
+  "size": "_1b",
+  "metric": "tau",
+  "arms": {
+    "0": {
+      "seeds": 1,
+      "tau": -0.0088,
+      "exact": 0.0,
+      "first_ok": 0.0676,
+      "valid": 0.7625,
+      "tau_sd": null
+    },
+    "125": {
+      "seeds": 1,
+      "tau": 0.0942,
+      "exact": 0.0019,
+      "first_ok": 0.2297,
+      "valid": 0.9363,
+      "tau_sd": null
+    },
+    "500": {
+      "seeds": 1,
+      "tau": 0.0945,
+      "exact": 0.0039,
+      "first_ok": 0.2471,
+      "valid": 0.9672,
+      "tau_sd": null
+    },
+    "1000": {
+      "seeds": 1,
+      "tau": 0.2015,
+      "exact": 0.0039,
+      "first_ok": 0.5019,
+      "valid": 0.9846,
+      "tau_sd": null
+    },
+    "2000": {
+      "seeds": 1,
+      "tau": 0.2985,
+      "exact": 0.0116,
+      "first_ok": 0.6042,
+      "valid": 0.9903,
+      "tau_sd": null
+    },
+    "4000": {
+      "seeds": 1,
+      "tau": 0.3575,
+      "exact": 0.0232,
+      "first_ok": 0.6815,
+      "valid": 0.9981,
+      "tau_sd": null
+    }
+  },
+  "denominators": [
+    {
+      "full": 1000,
+      "half": 500,
+      "delta_seed1": 0.107,
+      "ci_seed1": [
+        0.0832,
+        0.1311
+      ]
+    },
+    {
+      "full": 2000,
+      "half": 1000,
+      "delta_seed1": 0.097,
+      "ci_seed1": [
+        0.0775,
+        0.1172
+      ]
+    },
+    {
+      "full": 4000,
+      "half": 2000,
+      "delta_seed1": 0.059,
+      "ci_seed1": [
+        0.0384,
+        0.0804
+      ]
+    }
+  ]
+}
