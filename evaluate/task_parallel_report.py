@@ -3,6 +3,15 @@
     uv run python task_parallel_report.py logs --tasks clinc150 mt_domain \
         --merged-prefix tp-clinc150-mt_domain-merged- --ceiling tp_clinc150_mt_domain \
         [--json ../results/tp-clinc150-mt_domain.json]
+    uv run python task_parallel_report.py logs --tasks clinc150 xsumc \
+        --merged-prefix tp-clinc150-xsumc-merged- --ceiling tp_clinc150_xsumc
+
+xsumc (the constrained XSum summary) is scored by self-distill/dialogue_pilot.py,
+so its rows come from ../results/dialogue_curves/xsumc/<name>_4b.jsonl:
+base, n4000 (the specialist), spec-<task> (another task's specialist),
+ceiling-<ceiling> and <merged-prefix><method>. Its specialist adapter
+gemma3-dlg_xsumc_curve-n4000-lora is mapped to specialist:xsumc in the
+Inspect logs.
 
 Rows: the untrained base (floor), each task's specialist (the models going into
 the merge), the multi-task model trained on all tasks' data (ceiling), and each
@@ -20,7 +29,9 @@ from pathlib import Path
 
 from inspect_ai.log import list_eval_logs, read_eval_log
 
-METRIC = {"clinc150": "accuracy", "mt_domain": "chrf", "billsum_split": "rougeLsum"}
+METRIC = {"clinc150": "accuracy", "mt_domain": "chrf", "billsum_split": "rougeLsum", "xsumc": "success"}
+DIALOGUE = {"xsumc"}
+ALIASES = {"gemma3-dlg_xsumc_curve-n4000-lora": "specialist:xsumc"}
 VARIANT = {"clinc150": "short", "billsum_split": "short"}
 
 
@@ -29,6 +40,8 @@ def name_of(log, prefix, ceiling):
     adapter = Path(str(args.get("adapter_path", "")).rstrip("/")).name
     path = Path(str(args.get("model_path", "") or "").rstrip("/")).name
     if adapter:
+        if adapter in ALIASES:
+            return ALIASES[adapter]
         if adapter == f"gemma3-{ceiling}-full-lora":
             return "ceiling"
         m = re.fullmatch(r"gemma3-(.+)-full-lora", adapter)
@@ -72,6 +85,16 @@ def main():
         if name and (name not in table[task] or log.eval.created > table[task][name][0]):
             table[task][name] = (log.eval.created, info)
     data = {t: {n: scores(read_eval_log(i), METRIC[t]) for n, (_, i) in rows.items()} for t, rows in table.items()}
+    for t in set(args.tasks) & DIALOGUE:
+        folder = Path(__file__).resolve().parent.parent / "results" / "dialogue_curves" / t
+        stems = {"base": "base", f"specialist:{t}": "n4000", "ceiling": f"ceiling-{args.ceiling}",
+                 **{f"specialist:{o}": f"spec-{o}" for o in args.tasks if o != t},
+                 **{f"merged-{m}": f"{args.merged_prefix}{m}" for m in ("linear", "ties", "dare_ties", "task_arithmetic")}}
+        data[t] = {}
+        for name, stem in stems.items():
+            f = folder / f"{stem}_4b.jsonl"
+            if f.exists():
+                data[t][name] = {r["id"]: float(r["check"][METRIC[t]]) for r in map(json.loads, f.read_text().splitlines())}
     mean = lambda d: statistics.fmean(d.values()) if d else float("nan")
     names = ["base", *(f"specialist:{t}" for t in args.tasks), "ceiling",
              *sorted({n for t in data for n in data[t] if n.startswith("merged-")})]
