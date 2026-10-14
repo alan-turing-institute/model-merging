@@ -55,9 +55,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("log_dir", nargs="?", default="logs")
     ap.add_argument("--task", choices=sorted(TASKS), default="clinc150")
+    ap.add_argument("--size", choices=["4b", "1b"], default="4b",
+                    help="1b reads names with a _1b suffix (full_1b, expert_a_s2_1b, merged-ties_s2_1b)")
     ap.add_argument("--json", type=Path)
     args = ap.parse_args()
     spec = TASKS[args.task]
+    sz = "_1b" if args.size == "1b" else ""
     logs = {}
     for info in list_eval_logs(args.log_dir):
         log = read_eval_log(info)
@@ -65,7 +68,15 @@ def main():
             continue
         if spec["variant"] and (log.eval.task_args or {}).get("prompt_variant", spec["variant"]) != spec["variant"]:
             continue
+        if f"gemma-3-{args.size}-it" not in str(log.eval.model) and not (log.eval.model_args or {}).get("model_path"):
+            continue
         name = label(log, args.task)
+        if name and sz:
+            if not name.endswith(sz):
+                continue
+            name = name[: -len(sz)]
+        elif name and name.endswith("_1b"):
+            continue
         if name and (name not in logs or log.eval.created > logs[name].eval.created):
             logs[name] = log
     acc = {k: correct(v, spec["metric"]) for k, v in logs.items()}
