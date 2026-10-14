@@ -67,6 +67,30 @@ def teacher(args):
           f"targets' unigram F1 with the reference {sum(f1s) / max(len(f1s), 1):.3f}")
 
 
+def rationales(args):
+    """Rationales for the gold reorder answers from a teacher (best of k samples
+    whose steps match the gold order)."""
+    import os
+    os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
+    from transformers import AutoTokenizer
+    from vllm import LLM, SamplingParams
+    parts = dt.splits_for("reorder", args.samsum)
+    examples = [dt.reorder_example(r) for r in parts["train"]]
+    tok = AutoTokenizer.from_pretrained(args.model)
+    llm = LLM(model=args.model, dtype="bfloat16", max_model_len=4096, gpu_memory_utilization=0.88,
+              enforce_eager=True, seed=42, limit_mm_per_prompt={"image": 0})
+    texts = [tok.apply_chat_template([{"role": "user", "content": dt.reorder_rationale_request(ex)}],
+                                     tokenize=False, add_generation_prompt=True) for ex in examples]
+    outs = llm.generate(texts, SamplingParams(n=args.best_of, temperature=0.7, top_p=0.95, max_tokens=320, seed=42))
+    kept = 0
+    with open(args.out, "w") as f:
+        for ex, out in zip(examples, outs):
+            good = [c.text.strip() for c in out.outputs if dt.rationale_matches(c.text, ex["gold"])]
+            kept += bool(good)
+            f.write(json.dumps({"id": ex["id"], "rationale": min(good, key=len) if good else None}) + "\n")
+    print(f"{args.model}: {kept}/{len(examples)} train dialogues have a rationale matching the gold order")
+
+
 def build(args):
     from datasets import Dataset, DatasetDict, load_from_disk
     from transformers import AutoTokenizer
@@ -74,6 +98,8 @@ def build(args):
     tok = AutoTokenizer.from_pretrained("google/gemma-3-4b-it")
     targets = {}
     make = dt.BUILDERS[args.task]
+    reasons = ({r["id"]: r["rationale"] for r in map(json.loads, open(args.rationales)) if r["rationale"]}
+               if args.rationales else {})
     if args.task.startswith(("constrained", "xsumc")):
         targets = {r["id"]: r["target"] for r in map(json.loads, open(args.teacher)) if r["target"]}
         answer = lambda ex: targets.get(ex["id"])
@@ -89,12 +115,16 @@ def build(args):
             if (target := answer(ex)) is not None:
                 group = [{"messages": [{"role": "user", "content": ex["prompt"]},
                                        {"role": "assistant", "content": target}]}]
-                if working:
+                if working and args.task == "reorder" and ex["id"] in reasons:
+                    w = dt.reorder_working_example(ex, reasons[ex["id"]])
+                    if len(tok(tok.apply_chat_template(w["messages"], tokenize=False))["input_ids"]) <= 1000:
+                        group.append(w)
+                elif working and args.task != "reorder":
                     group.append(dt.working_example(ex, target))
                 out.append(group)
         return out
 
-    train = rows("train", working=args.rationale)
+    train = rows("train", working=args.rationale or bool(args.rationales))
     val = [g[0] for g in rows("validation")]
     flat = lambda groups: [row for g in groups for row in g]
     longest = max(len(tok.apply_chat_template(r["messages"], tokenize=False)) for r in flat(train) + val)
@@ -156,8 +186,11 @@ if __name__ == "__main__":
     b.add_argument("samsum"); b.add_argument("--teacher")
     b.add_argument("--name", help="arm directory dlg_<name>_curve; defaults to the task")
     kp = sub.add_parser("kdprompts"); kp.add_argument("curve"); kp.add_argument("samsum"); kp.add_argument("n", type=int)
+    ra = sub.add_parser("rationales"); ra.add_argument("model"); ra.add_argument("samsum"); ra.add_argument("out")
+    ra.add_argument("--best-of", type=int, default=4)
     sp = sub.add_parser("split"); sp.add_argument("curve"); sp.add_argument("samsum"); sp.add_argument("n", type=int)
+    b.add_argument("--rationales", help="teacher rationales (dialogue_data.py rationales) for reorder step-by-step")
     b.add_argument("--rationale", action="store_true",
                    help="add a step-by-step working example per dialogue (constrained tasks)")
     args = ap.parse_args()
-    {"teacher": teacher, "build": build, "split": split, "kdprompts": kdprompts}[args.cmd](args)
+    {"teacher": teacher, "build": build, "split": split, "kdprompts": kdprompts, "rationales": rationales}[args.cmd](args)

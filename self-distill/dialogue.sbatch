@@ -19,6 +19,8 @@ export HF_HUB_OFFLINE=1
 case $STAGE in
   teacher)
     uv run python dialogue_data.py teacher "$2" "$3" ../datasets/samsum_raw "$4" --best-of "${5:-8}" ${6:+--adapter "$6"} ;;
+  rationales)
+    uv run python dialogue_data.py rationales "$2" ../datasets/samsum_raw "$3" --best-of "${4:-4}" ;;
   eval)
     uv run python dialogue_pilot.py "$2" ../datasets/samsum_raw "../results/dialogue_curves/$3" \
       --rows test --tasks "${3%%_*}" --name "$4" ${5:+--adapter "$5"} ;;

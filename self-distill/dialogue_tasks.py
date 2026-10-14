@@ -196,6 +196,36 @@ def working_example(ex: dict, target: str) -> dict:
                          {"role": "assistant", "content": rationale}]}
 
 
+RATIONALE_ASK = (
+    "Below are the shuffled, labelled turns of a dialogue, followed by their correct original "
+    "order. For each step of that order, give in at most 12 words why the next turn follows the "
+    "previous one (it answers a question, replies to a greeting, continues a plan, and so on). "
+    "Write one line per step as '[a] -> [b]: reason', in the given order, and nothing else.")
+EXPLAIN = ("Explain the original order of the dialogue turns below instead of answering: one line "
+           "per step as '[a] -> [b]: reason'.\n\n")
+
+
+def reorder_rationale_request(ex: dict) -> str:
+    """Teacher prompt for a rationale of the GOLD order (rationalisation: the
+    teacher is shown the answer and explains it, so every kept rationale agrees
+    with the label)."""
+    lines = ex["prompt"].split("\n\n", 1)[1]
+    return f"{RATIONALE_ASK}\n\n{lines}\n\nCorrect order: {json.dumps(ex['gold'])}"
+
+
+def rationale_matches(text: str, gold: list[int]) -> bool:
+    """True when the rationale's steps are exactly the consecutive pairs of the gold order."""
+    steps = [(int(a), int(b)) for a, b in re.findall(r"\[(\d+)\]\s*->\s*\[(\d+)\]", text)]
+    return steps == list(zip(gold, gold[1:]))
+
+
+def reorder_working_example(ex: dict, rationale: str) -> dict:
+    """Distilling step-by-step's rationale task: same dialogue, asked for the
+    explanation. Never used at test time, which keeps the plain prompt."""
+    return {"messages": [{"role": "user", "content": EXPLAIN + ex["prompt"].split("\n\n", 1)[1]},
+                         {"role": "assistant", "content": rationale}]}
+
+
 def check_constrained(ex: dict, prediction: str) -> dict:
     count = word_count(prediction)
     used = [w for w in ex["banned"] if uses(prediction, w)]
