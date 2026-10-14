@@ -31,7 +31,10 @@ from inspect_ai.log import list_eval_logs, read_eval_log
 
 METRIC = {"clinc150": "accuracy", "mt_domain": "chrf", "billsum_split": "rougeLsum", "xsumc": "success"}
 DIALOGUE = {"xsumc"}
-ALIASES = {"gemma3-dlg_xsumc_curve-n4000-lora": "specialist:xsumc"}
+SIZE = "4b"                                 # set from --size
+def aliases():
+    sfx = "" if SIZE == "4b" else f"_{SIZE}"
+    return {f"gemma3-dlg_xsumc_curve-n4000{sfx}-lora": "specialist:xsumc"}
 VARIANT = {"clinc150": "short", "billsum_split": "short"}
 
 
@@ -39,16 +42,17 @@ def name_of(log, prefix, ceiling):
     args = log.eval.model_args or {}
     adapter = Path(str(args.get("adapter_path", "")).rstrip("/")).name
     path = Path(str(args.get("model_path", "") or "").rstrip("/")).name
+    sfx = "" if SIZE == "4b" else f"_{SIZE}"
     if adapter:
-        if adapter in ALIASES:
-            return ALIASES[adapter]
-        if adapter == f"gemma3-{ceiling}-full-lora":
+        if adapter in aliases():
+            return aliases()[adapter]
+        if adapter == f"gemma3-{ceiling}-full{sfx}-lora":
             return "ceiling"
-        m = re.fullmatch(r"gemma3-(.+)-full-lora", adapter)
+        m = re.fullmatch(rf"gemma3-(.+)-full{sfx}-lora", adapter)
         return f"specialist:{m.group(1)}" if m else None
     if path.startswith(prefix):
         return "merged-" + path[len(prefix):]
-    if "gemma-3-4b-it" in str(log.eval.model) and not path:
+    if f"gemma-3-{SIZE}-it" in str(log.eval.model) and not path:
         return "base"
     return None
 
@@ -69,8 +73,11 @@ def main():
     ap.add_argument("--tasks", nargs="+", required=True)
     ap.add_argument("--merged-prefix", required=True)
     ap.add_argument("--ceiling", required=True)
+    ap.add_argument("--size", choices=["4b", "1b"], default="4b")
     ap.add_argument("--json", type=Path)
     args = ap.parse_args()
+    global SIZE
+    SIZE = args.size
     table = {t: {} for t in args.tasks}
     for info in list_eval_logs(args.log_dir):
         log = read_eval_log(info, header_only=True)
@@ -92,7 +99,7 @@ def main():
                  **{f"merged-{m}": f"{args.merged_prefix}{m}" for m in ("linear", "ties", "dare_ties", "task_arithmetic")}}
         data[t] = {}
         for name, stem in stems.items():
-            f = folder / f"{stem}_4b.jsonl"
+            f = folder / f"{stem}_{SIZE}.jsonl"
             if f.exists():
                 data[t][name] = {r["id"]: float(r["check"][METRIC[t]]) for r in map(json.loads, f.read_text().splitlines())}
     mean = lambda d: statistics.fmean(d.values()) if d else float("nan")
