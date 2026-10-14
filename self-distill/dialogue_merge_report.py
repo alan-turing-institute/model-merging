@@ -39,11 +39,16 @@ def main():
             ids = sorted(set(m) & set(best) & set(f))
             r = lambda idx: (sum(m[ids[i]] - best[ids[i]] for i in idx)) / (sum(f[ids[i]] - best[ids[i]] for i in idx))
             point = r(range(len(ids)))
-            boots = sorted(r([rng.randrange(len(ids)) for _ in ids]) for _ in range(2000))
+            # A resample whose full-minus-best gap is exactly 0 has no defined R
+            # (possible with a pass/fail metric); drop it rather than divide by 0.
+            draws = ([rng.randrange(len(ids)) for _ in ids] for _ in range(2000))
+            boots = sorted(x for x in (r(d) if sum(f[ids[i]] - best[ids[i]] for i in d) else None
+                                       for d in draws) if x is not None)
+            boots = boots if len(boots) >= 1000 else [float("nan")] * 2000
             seed = s.strip("_s") or "1"
-            print(f"{method:16} {seed:4} {mean(m):7.3f} {mean(a):7.3f} {mean(b):7.3f} {mean(f):7.3f} {point:+7.3f}  [{boots[50]:+.3f}, {boots[1949]:+.3f}]")
+            print(f"{method:16} {seed:4} {mean(m):7.3f} {mean(a):7.3f} {mean(b):7.3f} {mean(f):7.3f} {point:+7.3f}  [{boots[int(.025 * len(boots))]:+.3f}, {boots[int(.975 * len(boots)) - 1]:+.3f}]")
             out.append({"method": method, "seed": seed, "merged": mean(m), "expert_a": mean(a), "expert_b": mean(b),
-                        "full": mean(f), "R": point, "ci": [boots[50], boots[1949]]})
+                        "full": mean(f), "R": point, "ci": [boots[int(.025 * len(boots))], boots[int(.975 * len(boots)) - 1]]})
     for method in METHODS:
         rs = [x["R"] for x in out if x["method"] == method]
         if len(rs) > 1:
