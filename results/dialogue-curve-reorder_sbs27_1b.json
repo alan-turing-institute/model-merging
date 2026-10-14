@@ -20,6 +20,14 @@
       "valid": 0.9363,
       "tau_sd": null
     },
+    "250": {
+      "seeds": 1,
+      "tau": 0.0765,
+      "exact": 0.0,
+      "first_ok": 0.2143,
+      "valid": 0.9672,
+      "tau_sd": null
+    },
     "500": {
       "seeds": 1,
       "tau": 0.0945,
@@ -54,6 +62,24 @@
     }
   },
   "denominators": [
+    {
+      "full": 250,
+      "half": 125,
+      "delta_seed1": -0.0177,
+      "ci_seed1": [
+        -0.0408,
+        0.0032
+      ]
+    },
+    {
+      "full": 500,
+      "half": 250,
+      "delta_seed1": 0.018,
+      "ci_seed1": [
+        -0.0016,
+        0.0385
+      ]
+    },
     {
       "full": 1000,
       "half": 500,
