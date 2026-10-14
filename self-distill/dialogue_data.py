@@ -27,7 +27,7 @@ from pathlib import Path
 
 import dialogue_tasks as dt
 
-LADDER = [125, 250, 500, 1000, 2000, 4000]
+LADDER = [125, 250, 500, 1000, 2000, 4000, 8000]
 
 
 def teacher(args):
