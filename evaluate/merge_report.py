@@ -2,6 +2,7 @@
 
     uv run python merge_report.py logs --task clinc150 [--json ../results/clinc150-merges.json]
     uv run python merge_report.py logs --task mt_domain [--json ../results/mt_domain-merges.json]
+    uv run python merge_report.py logs --task billsum_split [--json ../results/billsum_split-merges.json]
 
 For each seed pair of domain experts (original run and seeds 2 and 3) and each
 merge method, R = (merged - best expert) / (full - best expert) on the task's
@@ -24,6 +25,7 @@ TASKS = {
     "clinc150": {"metric": "accuracy", "experts": ("expert_a", "expert_b"), "variant": "short", "domains": ()},
     "mt_domain": {"metric": "chrf", "experts": ("expert_medical", "expert_law"), "variant": None,
                   "domains": ("chrf_medical", "chrf_law")},
+    "billsum_split": {"metric": "rougeLsum", "experts": ("expert_1", "expert_2"), "variant": "short", "domains": ()},
 }
 SEEDS = ["", "_s2", "_s3"]
 
