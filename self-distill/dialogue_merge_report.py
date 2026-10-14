@@ -1,6 +1,7 @@
 """Recovery fraction R for the data-parallel reorder merges (Gemma 3 1B).
 
     python dialogue_merge_report.py ../results/dialogue_curves/reorder _1b [--json out.json]
+    python dialogue_merge_report.py ../results/dialogue_curves/xsumc _1b --metric success
 
 Per seed: full = n4000, expert A = n2000 (the first half), expert B = half_b
 (the second half), merges = merged-<method>. R = (merged - best expert) /
@@ -16,8 +17,11 @@ from pathlib import Path
 METHODS = ["linear", "ties", "dare_ties", "task_arithmetic"]
 
 
+METRIC = sys.argv[sys.argv.index("--metric") + 1] if "--metric" in sys.argv else "tau"
+
+
 def load(path):
-    return {r["id"]: float(r["check"]["tau"]) for r in map(json.loads, path.read_text().splitlines())}
+    return {r["id"]: float(r["check"][METRIC]) for r in map(json.loads, path.read_text().splitlines())}
 
 
 def main():
