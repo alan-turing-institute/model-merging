@@ -63,6 +63,11 @@ if os.environ.get("MICRO_BATCH"):
     total = cfg["micro_batch_size"] * cfg["gradient_accumulation_steps"]
     cfg["micro_batch_size"] = int(os.environ["MICRO_BATCH"])
     cfg["gradient_accumulation_steps"] = total // cfg["micro_batch_size"]
+# PIN_GPU=1 loads the model straight onto the GPU. With device_map "auto",
+# axolotl left the 4-bit 27B on the CPU and the trainer's move to the GPU then
+# ran out of memory before quantisation.
+if os.environ.get("PIN_GPU"):
+    cfg["device_map"] = {"": 0}
 # Our key, not axolotl's (popped before axolotl sees the config): raise the
 # epoch count until a small arm gets this many optimiser steps.
 min_steps = cfg.pop("mm_min_optimiser_steps", None)
