@@ -125,6 +125,26 @@ def split(args):
     print(f"{out}: half_a = rows 0-{half - 1} (= n{half}), half_b = rows {half}-{args.n - 1}")
 
 
+def kdprompts(args):
+    """Prompts for gold-target KD on a curve arm (generate_teacher_logprobs.py
+    --targets gold): the teacher and the student see the same prompt, and the
+    gold answer is the `summary` the teacher scores."""
+    from datasets import Dataset, DatasetDict, load_from_disk
+    root = Path(args.samsum).parent
+    arm = load_from_disk(str(root / f"dlg_{args.curve}_curve" / f"n{args.n}"))
+
+    def rows(split):
+        out = []
+        for i, r in enumerate(arm[split]):
+            user, gold = r["messages"][0], r["messages"][1]["content"]
+            out.append({"id": f"{split}-{i}", "summary": gold, "teacher_messages": [user], "messages_short": [user]})
+        return Dataset.from_list(out)
+
+    dest = root / f"dlg_{args.curve}_kd_prompts"
+    DatasetDict({"train": rows("train"), "validation": rows("validation")}).save_to_disk(str(dest))
+    print(f"{dest}: {len(arm['train'])} train, {len(arm['validation'])} validation prompts with gold targets")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -135,8 +155,9 @@ if __name__ == "__main__":
     b = sub.add_parser("build"); b.add_argument("task", choices=["reorder", "constrained", "constrained2"])
     b.add_argument("samsum"); b.add_argument("--teacher")
     b.add_argument("--name", help="arm directory dlg_<name>_curve; defaults to the task")
+    kp = sub.add_parser("kdprompts"); kp.add_argument("curve"); kp.add_argument("samsum"); kp.add_argument("n", type=int)
     sp = sub.add_parser("split"); sp.add_argument("curve"); sp.add_argument("samsum"); sp.add_argument("n", type=int)
     b.add_argument("--rationale", action="store_true",
                    help="add a step-by-step working example per dialogue (constrained tasks)")
     args = ap.parse_args()
-    {"teacher": teacher, "build": build, "split": split}[args.cmd](args)
+    {"teacher": teacher, "build": build, "split": split, "kdprompts": kdprompts}[args.cmd](args)

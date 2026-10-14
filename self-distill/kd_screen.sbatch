@@ -26,7 +26,7 @@ case $STAGE in
     # extra generate_teacher_logprobs.py flags, e.g. --targets gold.
     PROMPTS=${2:-../datasets/xsum_kd_screen_prompts}
     PREFIX=${3:-xsum_kd_screen}
-    uv run python generate_teacher_logprobs.py google/gemma-3-4b-it \
+    uv run python generate_teacher_logprobs.py "${TEACHER_MODEL:-google/gemma-3-4b-it}" \
       "$PROMPTS" ../datasets \
       --prefix "$PREFIX" --student-fields messages_short --max-seq-len 1024 "${@:4}"
     ;;

@@ -41,7 +41,8 @@ if args.base_only:
 else:
     model = PeftModel.from_pretrained(model, args.adapter).merge_and_unload()
 out.mkdir(parents=True)
-for f in Path(snapshot_download(args.base)).iterdir():
+src = Path(args.base) if Path(args.base).is_dir() else Path(snapshot_download(args.base))
+for f in src.iterdir():
     if f.is_file() and not f.name.startswith("model"):
         shutil.copyfile(f, out / f.name)
 model.save_pretrained(out)
