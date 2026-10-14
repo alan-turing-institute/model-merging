@@ -36,7 +36,7 @@ def teacher(args):
     from datasets import load_from_disk
     from transformers import AutoTokenizer
     from vllm import LLM, SamplingParams
-    parts = dt.splits(load_from_disk(args.samsum))
+    parts = dt.splits_for(args.task, args.samsum)
     rows = [("train", r) for r in parts["train"]] + [("validation", r) for r in parts["validation"]]
     examples = [dt.BUILDERS[args.task](r) for _, r in rows]
     tok = AutoTokenizer.from_pretrained(args.model)
@@ -70,11 +70,11 @@ def teacher(args):
 def build(args):
     from datasets import Dataset, DatasetDict, load_from_disk
     from transformers import AutoTokenizer
-    parts = dt.splits(load_from_disk(args.samsum))
+    parts = dt.splits_for(args.task, args.samsum)
     tok = AutoTokenizer.from_pretrained("google/gemma-3-4b-it")
     targets = {}
     make = dt.BUILDERS[args.task]
-    if args.task.startswith("constrained"):
+    if args.task.startswith(("constrained", "xsumc")):
         targets = {r["id"]: r["target"] for r in map(json.loads, open(args.teacher)) if r["target"]}
         answer = lambda ex: targets.get(ex["id"])
     else:
@@ -148,11 +148,11 @@ def kdprompts(args):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    t = sub.add_parser("teacher"); t.add_argument("task", choices=["constrained", "constrained2"])
+    t = sub.add_parser("teacher"); t.add_argument("task", choices=["constrained", "constrained2", "xsumc"])
     t.add_argument("model"); t.add_argument("samsum"); t.add_argument("out")
     t.add_argument("--best-of", type=int, default=8)
     t.add_argument("--adapter")
-    b = sub.add_parser("build"); b.add_argument("task", choices=["reorder", "constrained", "constrained2"])
+    b = sub.add_parser("build"); b.add_argument("task", choices=["reorder", "constrained", "constrained2", "xsumc"])
     b.add_argument("samsum"); b.add_argument("--teacher")
     b.add_argument("--name", help="arm directory dlg_<name>_curve; defaults to the task")
     kp = sub.add_parser("kdprompts"); kp.add_argument("curve"); kp.add_argument("samsum"); kp.add_argument("n", type=int)

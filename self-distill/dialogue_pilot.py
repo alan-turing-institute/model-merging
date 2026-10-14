@@ -71,7 +71,7 @@ def main():
     args = ap.parse_args()
 
     samsum = load_from_disk(args.samsum)
-    rows = (dt.splits(samsum)["test"] if args.rows == "test"
+    rows = (dt.splits_for(args.tasks.split(",")[0], args.samsum)["test"] if args.rows == "test"
             else [r for r in samsum["validation"] if dt.eligible(r)][: args.n])
     examples = [dt.BUILDERS[t](r) for t in args.tasks.split(",") for r in rows]
     tok = AutoTokenizer.from_pretrained(args.model)
@@ -89,7 +89,7 @@ def main():
         ex["check"] = dt.CHECKS[ex["task"]](ex, ex["prediction"])
 
     if args.best_of:
-        constrained = [ex for ex in examples if ex["task"].startswith("constrained")]
+        constrained = [ex for ex in examples if ex["task"].startswith(("constrained", "xsumc"))]
         sampled = llm.generate([text(ex) for ex in constrained],
                                SamplingParams(n=args.best_of, temperature=0.8, top_p=0.95,
                                               max_tokens=128, seed=42))

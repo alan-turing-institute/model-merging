@@ -14,10 +14,10 @@ import statistics
 import sys
 from pathlib import Path
 
-HEADLINE = {"reorder": "tau", "constrained": "success", "constrained2": "success"}
+HEADLINE = {"reorder": "tau", "constrained": "success", "constrained2": "success", "xsumc": "success"}
 SHOWN = {"reorder": ["tau", "exact", "first_ok", "valid"],
          "constrained": ["success", "length_ok", "banned_ok", "word_error", "f1"]}
-SHOWN["constrained2"] = SHOWN["constrained"]
+SHOWN["constrained2"] = SHOWN["xsumc"] = SHOWN["constrained"]
 
 
 def load(path):

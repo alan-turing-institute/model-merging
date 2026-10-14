@@ -11,6 +11,10 @@ recover. These two tasks keep SAMSum's dialogues but ask for more:
   constrained2  the same with the length relaxed to n +/- 2 words, stated
                 as a range in the prompt; exact counts proved unlearnable from
                 ~2,000 verified examples.
+  xsumc         the constrained task on XSum articles with a relative
+                tolerance: n is drawn around the article's own reference length
+                (0.8-1.2x, 10-40 words) and the range is n +/- 10%, so short and
+                long summaries are held to the same proportional standard.
   reorder       the turns are shuffled and labelled; reply with the original
                 order as a JSON list of the labels. The gold order is known,
                 so no teacher is needed.
@@ -111,6 +115,36 @@ def splits(samsum) -> dict[str, list]:
             "test": val[100:] + [r for r in samsum["test"] if eligible(r)]}
 
 
+def splits_for(task: str, samsum_path: str) -> dict[str, list]:
+    """Train/validation/test rows for a task. XSum tasks read a 12,000-article
+    pool (prepare_xsum_screen_data.py --train-size 12000, beside samsum_raw);
+    everything else is SAMSum dialogues."""
+    from datasets import load_from_disk
+    if not task.startswith("xsum"):
+        return splits(load_from_disk(samsum_path))
+    pool = Path(samsum_path).parent / "xsum_pool"
+    full, test = load_from_disk(str(pool / "full")), load_from_disk(str(pool / "test"))
+    ok = lambda r: len(topic_words(r["summary"], r["document"])) == N_BANNED
+    train = [r for r in full["train"] if ok(r)]
+    random.Random(0).shuffle(train)
+    return {"train": train, "validation": [r for r in full["validation"] if ok(r)][:100],
+            "test": [r for r in test if ok(r)]}
+
+
+def xsum_constrained_example(row) -> dict:
+    """XSum version of constrained2 with a relative tolerance (+/- 10% of n)."""
+    rng = random.Random(f"xsumc-{row['id']}")
+    ref = word_count(row["summary"])
+    n = min(40, max(10, round(ref * rng.uniform(0.8, 1.2))))
+    tol = max(1, round(0.1 * n))
+    banned = topic_words(row["summary"], row["document"])
+    prompt = (f"Summarise the article below in {n - tol} to {n + tol} words. Do not use any of these "
+              f"words, in any form: {', '.join(banned)}. Words are counted as whitespace-separated "
+              f"tokens. Reply with the summary only.\n\n{row['document'].strip()}")
+    return {"id": row["id"], "task": "xsumc", "prompt": prompt, "n_words": n, "tolerance": tol,
+            "banned": banned, "reference": row["summary"], "dialogue": row["document"]}
+
+
 def unigram_f1(prediction: str, reference: str) -> float:
     p, r = WORD.findall(prediction.lower()), WORD.findall(reference.lower())
     common = sum(min(p.count(w), r.count(w)) for w in set(p))
@@ -193,8 +227,10 @@ def check_reorder(ex: dict, prediction: str) -> dict:
 
 BUILDERS = {"constrained": constrained_example,
             "constrained2": lambda row: constrained_example(row, tolerance=2),
+            "xsumc": xsum_constrained_example,
             "reorder": reorder_example}
-CHECKS = {"constrained": check_constrained, "constrained2": check_constrained, "reorder": check_reorder}
+CHECKS = {"constrained": check_constrained, "constrained2": check_constrained, "xsumc": check_constrained,
+          "reorder": check_reorder}
 
 
 def score(out_dir: Path) -> None:
