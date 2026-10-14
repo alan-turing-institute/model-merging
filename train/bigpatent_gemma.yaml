@@ -1,4 +1,5 @@
-# QLoRA fine-tune of gemma-3-4b-it for BigPatent abstract generation.
+# LoRA fine-tune of gemma-3-4b-it (fp32 base: `load_in_4bit` has no
+# effect with `adapter: lora` in axolotl 0.18; see train/README.md) for BigPatent abstract generation.
 # ONE config for every arm of the domain-split screen; train_screen.sbatch
 # overrides the dataset paths and output_dir per arm.
 base_model: google/gemma-3-4b-it

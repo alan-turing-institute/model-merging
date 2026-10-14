@@ -187,7 +187,12 @@ Results are committed in `../results/` as `<task>-screen.json` (and
 
 ### Shared settings
 
-Every config: QLoRA, 4-bit base, LoRA r16 / α32 / dropout 0.05 on q, k, v, o;
+Every config: LoRA r16 / α32 / dropout 0.05 on q, k, v, o over a frozen base
+held in fp32. The configs say `load_in_4bit: true`, but axolotl 0.18 quantises
+only for `adapter: qlora`; with `adapter: lora` it loads the base unquantised and
+`prepare_model_for_kbit_training` upcasts it to fp32. These are LoRA runs, not
+QLoRA (set `ADAPTER=qlora` when submitting `train_screen.sbatch` for real 4-bit,
+as the 27B needs). Also:
 learning rate 2e-4, cosine with 10 warmup steps; effective batch 16; eager
 attention (Gemma 3 under sdpa produced NaNs); `<end_of_turn>` trained as the stop
 token; `excess_length_strategy: raise`; `dataset_num_proc: 8`. Three epochs,

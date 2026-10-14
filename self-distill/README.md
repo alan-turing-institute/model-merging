@@ -146,7 +146,7 @@ uv run --project ../train --no-sync python prepare_kd_screen_prompts.py \
 sbatch --job-name=kd-teacher kd_screen.sbatch teacher                       # teacher targets and top-20 logprobs
 sbatch --job-name=kd-train   kd_screen.sbatch trainloop                     # bf16 LoRA, own loop (recommended)
 sbatch --job-name=kd-train   kd_screen.sbatch trainloop google/gemma-3-1b-it ../models/gemma3-xsum_kd_screen_1b_bf16loop-lora
-sbatch --job-name=kd-train   kd_screen.sbatch train self-distillation_xsum_lora.yaml   # axolotl, 4-bit
+sbatch --job-name=kd-train   kd_screen.sbatch train self-distillation_xsum_lora.yaml   # axolotl, fp32 base (see below)
 cd ../evaluate && sbatch evaluate.sbatch xsum google/gemma-3-4b-it \
     --adapter ../models/gemma3-xsum_kd_screen_bf16loop-lora \
     -T prompt_variant=short -T dataset_path=../datasets/xsum_screen/test
@@ -168,13 +168,19 @@ Axolotl 0.18's KD trainer is unreliable with a LoRA on Gemma 3:
 |---|---|
 | bf16 base (`self-distillation_xsum_lora_bf16.yaml`) | NaN gradient at step 1, in bf16 and fp32, with or without padding or gradient checkpointing |
 | 8-bit base | trained, but validation loss rose from 1.32 to 2.92 and the model collapsed (3.7-word outputs) |
-| 4-bit base | trained; raw gradient norms in the hundreds, 0.8% of outputs loop |
+| `load_in_4bit` config (in fact an fp32 base) | trained; raw gradient norms in the hundreds, 0.8% of outputs loop |
+
+The `load_in_4bit` config was never 4-bit: axolotl 0.18 quantises only for
+`adapter: qlora`, and with `adapter: lora` it upcasts the unquantised base to
+fp32. So the stable run differs from the NaN one by fp32 against bf16, not by
+quantisation. The 8-bit run was genuinely 8-bit: axolotl does quantise for
+`adapter: lora` with `load_in_8bit`.
 
 The same step built by hand is finite (`kd_lora_nan_check.py`), so
 `kd_lora_train.py` trains the configuration outside axolotl. It reuses axolotl's
 prepared tensors, the same fused loss and the same optimiser and schedule. Two
 deliberate departures: the loss gets fp32 hidden states and an fp32 copy of the
-output layer, as axolotl's working 4-bit path effectively does; and a step with a
+output layer, as axolotl's working (fp32) path effectively does; and a step with a
 non-finite gradient is skipped and logged, with an abort after ten. On XSum it
 trained smoothly (validation loss 5.00 → 0.175, 5 of 747 steps skipped) and
 produced no looping outputs. For a smaller student on the 4B teacher's data, it
@@ -193,7 +199,8 @@ scores, not their logged losses.
   and the same rows scored behind the teacher's own prompt. Measured: alignment
   correct (KL 0.003 nats in the teacher's context; 15–28 at ±1), logged loss
   exactly 0.5 KL + 0.5 CE. Quantisation alone puts the student 0.066 (8-bit) and
-  0.50 (4-bit) nats from the teacher.
+  0.50 (4-bit) nats from the teacher. (The check quantises with bitsandbytes
+  itself; the axolotl `load_in_4bit` training config did not quantise.)
 - **`kd_grad_check.py`**, **`kd_lora_nan_check.py`**, and
   `kd_screen.sbatch probe` located the axolotl NaN described above.
 

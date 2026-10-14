@@ -1,3 +1,6 @@
+# NOTE: with `adapter: lora`, axolotl 0.18 ignores load_in_4bit and trains on an
+# fp32 base (it quantises only for `adapter: qlora`); where comments below say
+# 4-bit, read fp32 for this config. See train/README.md.
 # bf16 variant of self-distillation_xsum_lora.yaml: identical in every setting
 # except that the frozen base stays in bf16 instead of 4-bit. The step-0 check
 # (kd_step0_check.py) found 4-bit quantisation alone puts the student 0.53 nats
@@ -6,7 +9,7 @@
 # full-parameter bf16 run on main never has. This removes it, so against main's
 # run only LoRA-vs-full (and its hyperparameters) differs, and against the 4-bit
 # run only quantisation does.
-# Self-distilled QLoRA of gemma-3-4b-it on XSum - the method of
+# Self-distilled LoRA of gemma-3-4b-it on XSum - the method of
 # self-distillation_xsum.yaml (axolotl KD plugin, teacher top-k logprobs, the
 # same loss weights), trained the way train/xsum_screen_gemma.yaml trains its
 # reference-summary LoRA: same rows, same 512-word articles, same adapter and

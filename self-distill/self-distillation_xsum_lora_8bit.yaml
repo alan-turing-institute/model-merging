@@ -6,7 +6,7 @@
 # finite - see kd_lora_nan_check.py. 8-bit goes through the quantised code path
 # that trains, with a far smaller quantisation gap than 4-bit's 0.53 nats per
 # token (kd_step0_check.py measures it).
-# Self-distilled QLoRA of gemma-3-4b-it on XSum - the method of
+# Self-distilled 8-bit LoRA of gemma-3-4b-it on XSum - the method of
 # self-distillation_xsum.yaml (axolotl KD plugin, teacher top-k logprobs, the
 # same loss weights), trained the way train/xsum_screen_gemma.yaml trains its
 # reference-summary LoRA: same rows, same 512-word articles, same adapter and

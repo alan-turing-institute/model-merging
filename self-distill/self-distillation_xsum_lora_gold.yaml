@@ -1,8 +1,11 @@
+# NOTE: with `adapter: lora`, axolotl 0.18 ignores load_in_4bit and trains on an
+# fp32 base (it quantises only for `adapter: qlora`); where comments below say
+# 4-bit, read fp32 for this config. See train/README.md.
 # Preprocessing config for gold-target distillation: the assistant turn is the
 # XSum reference and the BBC-prompted teacher only scores it
 # (generate_teacher_logprobs.py --targets gold). Only `axolotl preprocess` runs
 # on it; kd_lora_train.py trains from the prepared tensors.
-# Self-distilled QLoRA of gemma-3-4b-it on XSum - the method of
+# Self-distilled LoRA of gemma-3-4b-it on XSum - the method of
 # self-distillation_xsum.yaml (axolotl KD plugin, teacher top-k logprobs, the
 # same loss weights), trained the way train/xsum_screen_gemma.yaml trains its
 # reference-summary LoRA: same rows, same 512-word articles, same adapter and
