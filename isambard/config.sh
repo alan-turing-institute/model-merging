@@ -9,8 +9,10 @@ GPUS_PER_JOB="${GPUS_PER_JOB:-1}"               # a GH200 node exposes 4
 # Everything below derives from those, or from where you cloned the repo.
 REPO_ROOT="${REPO_ROOT:-$HOME/model-merging}"
 
-# Compute nodes have no outbound network on Isambard-AI, so every weight and
-# dataset has to be resident before a job starts. Point the Hugging Face cache
+# Jobs run with the Hub offline (HF_HUB_OFFLINE=1 below) so that every run reads
+# the same files; every weight and dataset therefore has to be resident before
+# a job starts. Compute nodes can reach the Hub (checked 14 October 2026): offline
+# is a choice for reproducibility, not a limit of the nodes. Point the Hugging Face cache
 # at project space and pre-fetch on the login node (01_prefetch.sh).
 #
 # HF_HUB_CACHE, not HF_HOME: HF_HOME moves the auth token as well as the cache,
@@ -29,11 +31,10 @@ export RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/results-isambard}"
 export MODELS_DIR="${MODELS_DIR:-$REPO_ROOT/models}"
 export DATASETS_DIR="${DATASETS_DIR:-$REPO_ROOT/../datasets}"
 
-# Compute nodes have no outbound network, and axolotl's telemetry retries
-# against posthog.com regardless - the ctx arm logged connection errors and then
+# Axolotl's telemetry retries against posthog.com - the ctx arm logged connection errors and then
 # sat in training for five hours before the wall clock killed it, against twenty
 # minutes for the same step on the shared-prompt arm. Whether the retries were
-# the whole cause or not, telemetry from an air-gapped node can only cost time.
+# the whole cause or not, telemetry can only cost time.
 export DO_NOT_TRACK=1
 export AXOLOTL_DO_NOT_TRACK=1
 export HF_HUB_DISABLE_TELEMETRY=1

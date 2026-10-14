@@ -23,7 +23,7 @@ dependencies = [
     # attempts whenever a model directory has no tokenizer.json.
     "sentencepiece",
     # Embedding similarity for the semantic scorer. all-MiniLM-L6-v2 is ~90 MB
-    # and must be cached before a run: compute nodes have no outbound network.
+    # and should be cached before a run, so scoring never depends on the Hub.
     # The scorer degrades to 0.0 rather than failing if it is missing.
     "sentence-transformers",
     "tqdm",
