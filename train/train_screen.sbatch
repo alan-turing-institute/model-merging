@@ -68,6 +68,11 @@ if os.environ.get("MICRO_BATCH"):
 # ran out of memory before quantisation.
 if os.environ.get("PIN_GPU"):
     cfg["device_map"] = {"": 0}
+# ADAPTER=qlora makes load_in_4bit real: axolotl quantises only for adapter
+# "qlora". With adapter "lora" (every config here) it loads the base unquantised
+# and prepare_model_for_kbit_training upcasts it to fp32 - LoRA on an fp32 base.
+if os.environ.get("ADAPTER"):
+    cfg["adapter"] = os.environ["ADAPTER"]
 # Our key, not axolotl's (popped before axolotl sees the config): raise the
 # epoch count until a small arm gets this many optimiser steps.
 min_steps = cfg.pop("mm_min_optimiser_steps", None)
