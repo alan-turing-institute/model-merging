@@ -12,6 +12,15 @@ This was split out of [`../train`](../train), which remains the crime-data
 fine-tuning project. The two have separate uv environments; this one also needs
 `vllm` (for teacher generation) and `torchao` (see below).
 
+**Patch Axolotl before training.** Axolotl 0.18.0's `normalize_logprobs` (in `axolotl/integrations/kd/utils.py`) renormalises the top-k logprobs by converting to probabilities and back. In fp32 an entry more than ~103 nats below the row's maximum underflows to `log(0) = -inf`, so whenever the teacher's top-k includes a token the student all but rules out, the KD loss becomes inf and the gradient NaN, which corrupts the weights. We replace it with the equivalent `logprobs - logsumexp(logprobs)`. Run this after every `uv sync`, since reinstalling Axolotl undoes it:
+
+```bash
+uv run python patch_axolotl_kd.py           # apply (safe to re-run)
+uv run python patch_axolotl_kd.py --check   # report only
+```
+
+The script refuses to change a file whose code it does not recognise, and checks the patched function gives finite values.
+
 ## Pipeline
 
 #### Data preparation

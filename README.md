@@ -136,6 +136,14 @@ This should be used if you have previously pulled the code from github, but are 
     uv run --project evaluate python
     ```
 
+4. Self-distillation (`self-distill/`) needs a one-line patch to Axolotl's KD plugin, without which the KD loss can become inf/NaN and corrupt the model. Apply it after every `uv sync` in `self-distill/`, since reinstalling Axolotl removes it:
+
+    ```bash
+    cd self-distill && uv run python patch_axolotl_kd.py && cd ..
+    ```
+
+    See [self-distill/README.md](self-distill/README.md) for details.
+
 ### Data and model storage on Isambard-AI
 
 Keep only the code in your home directory. Home has a 100 GB quota, which a few models and the Hugging Face cache fill quickly. Store models, datasets and the Hugging Face cache in the project area, `$PROJECTDIR/$USER`, which is Lustre storage with far more space.
