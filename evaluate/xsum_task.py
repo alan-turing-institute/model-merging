@@ -27,6 +27,20 @@ The variant is a task argument, so it is recorded in every .eval log.
 The dataset therefore needs only `document` and `summary` (and ideally `id`):
 datasets/xsum_prompts/test works as it is, as does any XSum split saved with
 `save_to_disk`.
+
+THE TEST SPLIT COMES FROM THE DATA PREPARATION, NEVER FROM HERE. It is written
+by self-distill/prepare_data_XSum.py together with the training data, so the
+test articles are guaranteed not to overlap what the models were trained on.
+This file only reads a saved split; if the path is missing it fails and says
+which script writes it, rather than building a split of its own.
+
+DOCUMENT_WORDS, AND THE REPORT'S NUMBERS. The Isambard results in the report
+were produced from prepare_xsum_data.py on the xsum-summarisation branch, which
+collapsed whitespace and cut each article to 512 words (211 of the 1,000 test
+articles are longer). prepare_data_XSum.py on main does neither. Pass
+-T document_words=512 to reproduce those inputs exactly - verified identical
+for all 1,000 rows against the split the report used. Like prompt_variant, it
+must match what the model was trained on, and it is recorded in every log.
 """
 
 import importlib.util
@@ -43,6 +57,7 @@ from inspect_ai.solver import TaskState, generate
 from rouge_score import rouge_scorer as rouge_scoring
 
 from semantic_metrics import score_one, unsupported_entities
+from xsum_faithfulness import faithfulness as _faithfulness
 
 ROUGE_TYPES = ["rouge1", "rouge2", "rougeL"]
 
@@ -196,11 +211,32 @@ def to_chat(messages):
     return [roles[m["role"]](content=m["content"]) for m in messages]
 
 
+def load_split(dataset_path):
+    """The saved test split at dataset_path. Never built here: a split built
+    independently of the training data could share articles with it."""
+    path = Path(dataset_path)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"no XSum test split at {path}. It is written with the training data by "
+            f"{PREPARE_SCRIPT.relative_to(REPO_ROOT)}; run that first, or pass "
+            "-T dataset_path=<a split saved by the same preparation>.")
+    return load_from_disk(str(path))
+
+
+def truncate_words(text, document_words):
+    """Collapse whitespace and keep the first document_words words: exactly what
+    prepare_xsum_data.py did to the articles behind the report's numbers."""
+    return " ".join(text.split()[:document_words]) if document_words else text
+
+
 def xsum_samples(dataset_path, prompt_variant, limit=None,
-                 reference_column="summary"):
+                 reference_column="summary", document_words=None):
     field = PROMPT_FIELDS[prompt_variant]
     convert_to_prompt = load_convert_to_prompt()
-    dataset = load_from_disk(str(dataset_path))
+    dataset = load_split(dataset_path)
+    if document_words:
+        dataset = dataset.map(
+            lambda row: {"document": truncate_words(row["document"], document_words)})
     if limit is not None:
         dataset = dataset.select(range(min(limit, len(dataset))))
     return [
@@ -345,11 +381,24 @@ def xsum(
     dataset_path: str = str(DEFAULT_DATASET),
     limit: int | None = None,
     reference_column: str = "summary",
+    faithfulness: bool = False,
+    document_words: int | None = None,
 ) -> Task:
     """XSum single-sentence summarisation, scored by ROUGE and grounding.
 
     prompt_variant: which prepare_data_XSum.py prompt to evaluate with - one of
     "short", "long" or "teacher". Must match what the model was trained on.
+
+    faithfulness: also run the reference-free grounding measures, the G-Eval
+    judge and UniEval's four dimensions (xsum_faithfulness.py). Off by default
+    because it loads about 6 GB of extra models; pass -T faithfulness=true to
+    enable. Scoring happens inline, so these land in the same .eval log as
+    ROUGE rather than needing a separate re-scoring pass over stored JSON.
+
+    document_words: collapse whitespace and cut each article to this many
+    words before prompting. 512 reproduces the inputs behind the report's
+    Isambard results; leave unset for prepare_data_XSum.py's full articles.
+    Must match what the model was trained on.
     """
     if prompt_variant not in PROMPT_FIELDS:
         raise ValueError(
@@ -359,11 +408,13 @@ def xsum(
 
     return Task(
         dataset=MemoryDataset(
-            xsum_samples(dataset_path, prompt_variant, limit, reference_column),
+            xsum_samples(dataset_path, prompt_variant, limit, reference_column,
+                         document_words),
             name="xsum",
         ),
         solver=generate(),
-        scorer=[rouge(), format_checks(), semantic()],
+        scorer=[rouge(), format_checks(), semantic()]
+               + ([_faithfulness()] if faithfulness else []),
         # The models were trained earlier with a teacher which had 128 tokens.
         # XSum references average ~21 words; 128 tokens leaves room for a
         # chattier model to show itself without truncating a real sentence.
@@ -375,6 +426,9 @@ def xsum(
         # 2: format_checks scorer (word range, one sentence, preamble,
         # repetition); pred_words/pred_sentences moved into it from rouge, and
         # sentences no longer counted at every full stop.
-        version=2,
-        metadata={"prompt_variant": prompt_variant},
+        # 3: document_words option, and the default split rebuilt from the Hub
+        # when missing. Scoring and default behaviour unchanged.
+        version=3,
+        metadata={"prompt_variant": prompt_variant, "document_words": document_words},
     )
+

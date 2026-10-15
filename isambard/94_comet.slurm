@@ -34,11 +34,21 @@ source isambard/config.sh
 mkdir -p logs "$RESULTS_DIR"
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || echo "  (no nvidia-smi)"
 
-export UV_PROJECT_ENVIRONMENT=/projects/u6ui/drmario.u6ui/mm/venvs/metrics
-[ -d "$UV_PROJECT_ENVIRONMENT" ] || { echo "metrics venv missing" >&2; exit 1; }
+# As in evaluate/evaluate.sbatch: the nodes' driver (580.173) now supports the
+# cu130 wheels natively, and the older CUDA 13.0 forward-compat libcuda (580.65)
+# breaks it with error 803. sbatch copies the submitting shell's
+# LD_LIBRARY_PATH, so strip any compat dir from it.
+LD_LIBRARY_PATH=$(tr ':' '
+' <<<"${LD_LIBRARY_PATH:-}" | { grep -v '/compat$' || true; } | paste -sd: -)
+export LD_LIBRARY_PATH
+
+# The venv lives wherever the caller keeps it. It used to be hardcoded to one
+# user's project directory, which meant the job only ran for that user.
+export UV_PROJECT_ENVIRONMENT="${METRICS_VENV:-$REPO_ROOT/metrics/.venv}"
 [ -f "$RESULTS_DIR/bakeoff-conditions.json" ] || { echo "no condition dump" >&2; exit 1; }
 [ -d "$HF_HUB_CACHE/models--Unbabel--wmt22-comet-da" ] || { echo "comet not prefetched" >&2; exit 1; }
 
+uv run --project metrics python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is a CUDA compat lib on LD_LIBRARY_PATH?'"
 uv run --project metrics python experiments/score_comet.py \
   --conditions "$RESULTS_DIR/bakeoff-conditions.json" \
   --output     "$RESULTS_DIR/comet-bakeoff.json"

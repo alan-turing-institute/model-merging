@@ -19,8 +19,8 @@
 # first question - but SOMETHING in the suite has to answer the second, and this
 # measures which does.
 #
-# Needs roberta-large and deberta-large-mnli in $HF_HUB_CACHE, prefetched from a
-# login node: compute nodes have no outbound network.
+# Needs roberta-large and deberta-large-mnli in $HF_HUB_CACHE, prefetched into the
+# cache: jobs run with the Hub offline (config.sh).
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
 source isambard/config.sh
