@@ -1,0 +1,48 @@
+{
+  "tasks": [
+    "mt_domain",
+    "xsumc"
+  ],
+  "rows": {
+    "base": {
+      "retention": 0.0,
+      "mt_domain": 19.178248381780783,
+      "xsumc": 0.08267270668176671
+    },
+    "specialist:mt_domain": {
+      "retention": 0.48717948717948717,
+      "mt_domain": 53.696323139276345,
+      "xsumc": 0.07021517553793885
+    },
+    "specialist:xsumc": {
+      "retention": 0.6210787119538168,
+      "mt_domain": 27.537056443307023,
+      "xsumc": 0.5685164212910532
+    },
+    "ceiling": {
+      "retention": 0.9542815714621089,
+      "mt_domain": 53.275797103672836,
+      "xsumc": 0.5300113250283126
+    },
+    "merged-dare_ties": {
+      "retention": 0.6118413050847492,
+      "mt_domain": 50.79647011982942,
+      "xsumc": 0.232163080407701
+    },
+    "merged-linear": {
+      "retention": 0.6068871383883427,
+      "mt_domain": 50.77630037793986,
+      "xsumc": 0.2276330690826727
+    },
+    "merged-task_arithmetic": {
+      "retention": 0.6184386439187565,
+      "mt_domain": 50.769154713646394,
+      "xsumc": 0.23895809739524349
+    },
+    "merged-ties": {
+      "retention": 0.581854799978313,
+      "mt_domain": 51.86432406600541,
+      "xsumc": 0.18799546998867497
+    }
+  }
+}
