@@ -34,7 +34,9 @@ export SEED
 BASE_MODEL=${3:-}
 export BASE_MODEL
 SIZE=${BASE_MODEL:+_$(grep -oiE '[0-9]+b' <<<"${BASE_MODEL##*/}" | head -1 | tr 'B' 'b')}
-OUTPUT_DIR="../models/gemma3-$TASK-$ARM${SEED:+_s$SEED}${SIZE}-lora"
+# ADAPTER (e.g. qlora, see below) changes the training, so it goes in the name
+# and cannot overwrite the default LoRA run of the same arm.
+OUTPUT_DIR="../models/gemma3-$TASK-$ARM${SEED:+_s$SEED}${SIZE}${ADAPTER:+_$ADAPTER}-lora"
 mkdir -p "$OUTPUT_DIR"
 exec > "$OUTPUT_DIR/$TASK-${SLURM_JOB_ID:-0}.out" 2>&1
 echo "task=$TASK arm=$ARM dataset=$DATASET_DIR output=$OUTPUT_DIR"

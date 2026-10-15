@@ -44,6 +44,12 @@ MODELS = {
     # of the untrained 4B; CE 1.00 has no KD term, so the 4B control is above.
     **{f"gold 27B, CE {w / 100:.2f}": ("4b", f"gemma3-xsum_kd_gold27b_ce{w}-lora") for w in (90, 75, 50)},
     **{f"gold 27B, CE {w / 100:.2f} 1B": ("1b", f"gemma3-xsum_kd_gold27b_ce{w}_1b-lora") for w in (100, 90, 75, 50)},
+    # QLoRA (4-bit NF4 base, adapter qlora) against the default LoRA (fp32 base)
+    # on the same 4,000 references, with a second seed of each for noise.
+    "reference LoRA seed 2": ("4b", "gemma3-xsum_screen-full_s2-lora"),
+    "QLoRA 4B": ("4b", "gemma3-xsum_screen-full_qlora-lora"),
+    "QLoRA 4B seed 2": ("4b", "gemma3-xsum_screen-full_s2_qlora-lora"),
+    "QLoRA 1B": ("1b", "gemma3-xsum_screen-full_1b_qlora-lora"),
     "untrained 27B": ("27b", ""),
     "reference QLoRA 27B": ("27b", "gemma3-xsum_screen-full_27b-lora"),
 }
@@ -92,7 +98,10 @@ def main():
               f"{mean('entity_support'):7.4f} {statistics.fmean(clean):9.4f} {mean('pred_words'):6.1f} "
               f"{len(looping) / len(log.samples):7.1%}")
 
-    pairs = [("reference QLoRA 27B", "reference LoRA"), ("untrained 27B", "untrained 4B"),
+    pairs = [("QLoRA 4B", "reference LoRA"), ("QLoRA 4B seed 2", "reference LoRA seed 2"),
+             ("reference LoRA seed 2", "reference LoRA"), ("QLoRA 4B seed 2", "QLoRA 4B"),
+             ("QLoRA 1B", "reference LoRA 1B"),
+             ("reference QLoRA 27B", "reference LoRA"), ("untrained 27B", "untrained 4B"),
              *[(f"gold 27B, CE {w}", "gold, CE 1.00") for w in ("0.90", "0.75", "0.50")],
              *[(f"gold 27B, CE {w} 1B", "gold 27B, CE 1.00 1B") for w in ("0.90", "0.75", "0.50")],
              ("gold 27B, CE 1.00 1B", "reference LoRA 1B"),
