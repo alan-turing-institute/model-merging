@@ -3,6 +3,7 @@
     uv run python merge_report.py logs --task clinc150 [--json ../results/clinc150-merges.json]
     uv run python merge_report.py logs --task mt_domain [--json ../results/mt_domain-merges.json]
     uv run python merge_report.py logs --task billsum_split [--json ../results/billsum_split-merges.json]
+    uv run python merge_report.py logs --task xsum [--json ../results/xsum-kdgold75-merges.json]
 
 For each seed pair of domain experts (original run and seeds 2 and 3) and each
 merge method, R = (merged - best expert) / (full - best expert) on the task's
@@ -26,6 +27,10 @@ TASKS = {
     "mt_domain": {"metric": "chrf", "experts": ("expert_medical", "expert_law"), "variant": None,
                   "domains": ("chrf_medical", "chrf_law")},
     "billsum_split": {"metric": "rougeLsum", "experts": ("expert_1", "expert_2"), "variant": "short", "domains": ()},
+    # Gold-target KD (CE 0.75, BBC-prompted 4B teacher) on plain XSum: two halves
+    # of the 4,000 articles; the full model is the existing 4,000-article run.
+    "xsum": {"metric": "rouge1", "experts": ("kdgold75_a", "kdgold75_b"), "variant": "short", "domains": (),
+             "full_adapter": "gemma3-xsum_kd_gold_ce75-lora", "merged_prefix": "xsum-kdgold75-merged-"},
 }
 SEEDS = ["", "_s2", "_s3"]
 
@@ -34,6 +39,12 @@ def label(log, task):
     args = log.eval.model_args or {}
     adapter = Path(str(args.get("adapter_path", "")).rstrip("/")).name
     path = Path(str(args.get("model_path", "")).rstrip("/")).name
+    spec = TASKS[task]
+    if adapter and adapter == spec.get("full_adapter"):
+        return "full"
+    prefix = spec.get("merged_prefix", f"{task}-merged-")
+    if path.startswith(prefix):
+        return "merged-" + path[len(prefix):]
     if adapter:
         m = re.fullmatch(rf"gemma3-{task}-(.+)-lora", adapter)
         return m.group(1) if m else None

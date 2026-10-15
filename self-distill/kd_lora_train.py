@@ -146,6 +146,7 @@ def main():
     ap.add_argument("--model", default="google/gemma-3-4b-it")
     ap.add_argument("--ce-weight", type=float, default=0.5,
                     help="weight on cross-entropy; the KD term gets 1 minus this")
+    ap.add_argument("--seed", type=int, default=SEED, help="LoRA initialisation and data order")
     ap.add_argument("--logit-adjust", action="store_true",
                     help="correct teacher rows that disagree with the label (gold targets)")
     args = ap.parse_args()
@@ -156,7 +157,7 @@ def main():
     train_rows, val_rows = train.to_list(), val.to_list()
     print(f"train rows {len(train_rows)}, eval rows {len(val_rows)}", flush=True)
 
-    torch.manual_seed(SEED)
+    torch.manual_seed(args.seed)
     tok = AutoTokenizer.from_pretrained(MODEL)
     base = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.bfloat16, attn_implementation="eager", device_map="cuda")
     base.config.use_cache = False
@@ -192,7 +193,7 @@ def main():
     print(f"optimiser steps {total_steps} ({steps_per_epoch}/epoch), eval every {eval_every}", flush=True)
     print(json.dumps({"step": 0, "eval_loss": round(evaluate(model, head, fused, val_rows, tok.pad_token_id), 4)}), flush=True)
 
-    gen, step, skipped, t0 = torch.Generator().manual_seed(SEED), 0, 0, time.time()
+    gen, step, skipped, t0 = torch.Generator().manual_seed(args.seed), 0, 0, time.time()
     for epoch in range(EPOCHS):
         order = torch.randperm(len(train_rows), generator=gen).tolist()
         micro_batches = [order[i:i + MICRO] for i in range(0, len(order), MICRO)]
