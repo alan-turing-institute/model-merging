@@ -40,6 +40,10 @@ MODELS = {
     "gold, CE 1.00": ("4b", "gemma3-xsum_kd_gold_ce100-lora"),
     # The 27B (a local snapshot directory), untrained and trained on the same
     # 4,000 references with QLoRA - the strong XSum teacher candidate.
+    # Gold targets scored by the reference-trained 27B (ROUGE-1 0.461) instead
+    # of the untrained 4B; CE 1.00 has no KD term, so the 4B control is above.
+    **{f"gold 27B, CE {w / 100:.2f}": ("4b", f"gemma3-xsum_kd_gold27b_ce{w}-lora") for w in (90, 75, 50)},
+    **{f"gold 27B, CE {w / 100:.2f} 1B": ("1b", f"gemma3-xsum_kd_gold27b_ce{w}_1b-lora") for w in (100, 90, 75, 50)},
     "untrained 27B": ("27b", ""),
     "reference QLoRA 27B": ("27b", "gemma3-xsum_screen-full_27b-lora"),
 }
@@ -89,6 +93,9 @@ def main():
               f"{len(looping) / len(log.samples):7.1%}")
 
     pairs = [("reference QLoRA 27B", "reference LoRA"), ("untrained 27B", "untrained 4B"),
+             *[(f"gold 27B, CE {w}", "gold, CE 1.00") for w in ("0.90", "0.75", "0.50")],
+             *[(f"gold 27B, CE {w} 1B", "gold 27B, CE 1.00 1B") for w in ("0.90", "0.75", "0.50")],
+             ("gold 27B, CE 1.00 1B", "reference LoRA 1B"),
              *[(f"gold, CE {w} + LA", f"gold, CE {w}") for w in ("0.50", "0.75", "0.90")],
              *[(f"gold, CE {w}", "gold, CE 1.00") for w in ("0.50", "0.75", "0.90")],
              ("gold, CE 1.00", "reference LoRA"),

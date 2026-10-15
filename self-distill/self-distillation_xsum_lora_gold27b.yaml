@@ -1,0 +1,80 @@
+# Gold-target KD from the reference-trained 27B (xsum-27b-sft), which scores the
+# references under the short prompt it was trained with (--teacher-field messages_short).
+# NOTE: with `adapter: lora`, axolotl 0.18 ignores load_in_4bit and trains on an
+# fp32 base (it quantises only for `adapter: qlora`); where comments below say
+# 4-bit, read fp32 for this config. See train/README.md.
+# Preprocessing config for gold-target distillation: the assistant turn is the
+# XSum reference and the BBC-prompted teacher only scores it
+# (generate_teacher_logprobs.py --targets gold). Only `axolotl preprocess` runs
+# on it; kd_lora_train.py trains from the prepared tensors.
+# Self-distilled LoRA of gemma-3-4b-it on XSum - the method of
+# self-distillation_xsum.yaml (axolotl KD plugin, teacher top-k logprobs, the
+# same loss weights), trained the way train/xsum_screen_gemma.yaml trains its
+# reference-summary LoRA: same rows, same 512-word articles, same adapter and
+# schedule. Read against that run, the only difference is the training signal -
+# the teacher's distribution and generations instead of the reference summary.
+#
+# Read against the full-parameter self-distillation_xsum.yaml run, what differs
+# is LoRA-vs-full and the hyperparameters that go with it (rate, epochs, rows,
+# article length), not the method.
+base_model: google/gemma-3-4b-it
+chat_template: tokenizer_default
+eot_tokens:
+  - "<end_of_turn>"
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+kd_trainer: true
+kd_ce_alpha: 0.5
+kd_alpha: 0.5
+kd_temperature: 1.0
+kd_normalize_topk: true
+
+# The adapter and schedule of train/xsum_screen_gemma.yaml.
+load_in_4bit: true
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj]
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+datasets:
+  - path: ../datasets/xsum_kd_gold27b_short/train
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    temperature: 1.0
+test_datasets:
+  - path: ../datasets/xsum_kd_gold27b_short/validation
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    temperature: 1.0
+val_set_size: 0.0
+
+dataset_num_proc: 8
+dataset_prepared_path: ../datasets/xsum_kd_gold27b_prepared
+# Must equal --max-seq-len given to generate_teacher_logprobs.py (kd_screen.sbatch
+# passes 1024): anything axolotl truncates has its teacher logprobs mangled.
+sequence_len: 1024
+sample_packing: false
+pad_to_sequence_len: false
+
+bf16: true
+tf32: true
+attn_implementation: eager
+gradient_checkpointing: true
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+num_epochs: 3
+learning_rate: 2e-4
+optimizer: adamw_torch_fused
+lr_scheduler: cosine
+warmup_steps: 10
+evals_per_epoch: 2
+logging_steps: 1
+
+output_dir: ../models/gemma3-xsum_kd_gold27b-axolotl-unused
