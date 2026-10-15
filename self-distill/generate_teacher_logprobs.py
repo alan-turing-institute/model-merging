@@ -16,7 +16,7 @@
 #     input_padding_len = len(input_ids) - len(teacher_logprobs)
 #
 # where `input_ids` is the *whole* templated conversation. Axolotl's own
-# convention is off by one against its loss kernel (see KD_ALIGNMENT_BUG.md), so
+# convention is off by one against its loss kernel (see build_student_row), so
 # we deliberately emit ONE MORE row than that convention calls for:
 #
 #     len(teacher_logprobs) == len(template(messages_combined))
@@ -30,9 +30,10 @@
 # template token; without it every teacher distribution lands on the wrong
 # token and training learns noise.
 #
-# With --targets gold the assistant turn is the dataset's reference summary
-# instead of a generation, and the teacher only scores it (vLLM prompt_logprobs
-# over teacher prompt + gold summary). The KD plugin computes CE and KD on the
+# With --targets gold the assistant turn is the dataset's reference answer (the
+# `reference` column the prepare_data_*.py scripts emit) instead of a
+# generation, and the teacher only scores it (vLLM prompt_logprobs over teacher
+# prompt + gold reference). The KD plugin computes CE and KD on the
 # same sequence, so this is how CE trains on the gold text while KD still
 # carries the teacher's distribution at each of its tokens.
 #
@@ -56,7 +57,7 @@ from pathlib import Path
 os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
 
 from datasets import Dataset, DatasetDict, load_from_disk
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, GenerationConfig
 from vllm import LLM, SamplingParams, TokensPrompt
 
 # Defaults for the command-line options; see parse_args for what each one does.
@@ -94,18 +95,20 @@ def parse_args():
         "(default: %(default)s).",
     )
     # "gold" keeps the KD plugin's single-sequence layout but makes that sequence
-    # the dataset's reference summary: the CE term then trains on the gold text
+    # the dataset's reference answer: the CE term then trains on the gold text
     # and the KD term on the teacher's distribution at each gold token (teacher
     # forcing via vLLM's prompt_logprobs). --temperature and --max-tokens only
     # affect "teacher" mode, though --max-tokens still bounds the length check.
     parser.add_argument(
         "--targets", choices=["teacher", "gold"], default="teacher",
         help="Assistant turn to train on: the teacher's own generation, or the gold "
-        "summary scored by the teacher (default: %(default)s).",
+        "reference scored by the teacher (default: %(default)s).",
     )
     parser.add_argument(
-        "--gold-field", default="summary",
-        help="Column holding the gold summary for --targets gold (default: %(default)s).",
+        "--gold-field", default="reference",
+        help="Column holding the gold answer for --targets gold. The prepare_data_*.py "
+        "scripts write it as `reference`; prompts datasets made before that have only "
+        "XSum's `summary` (default: %(default)s).",
     )
     parser.add_argument(
         "--top-k", type=int, default=TOP_K,
@@ -201,7 +204,7 @@ def build_student_row(tokenizer, student_messages, gen_token_ids, teacher_logpro
         logprobs.append(logprob_row)
         token_ids.append(token_id_row)
 
-    # OFF-BY-ONE CORRECTION -- see KD_ALIGNMENT_BUG.md.
+    # OFF-BY-ONE CORRECTION.
     # Axolotl places teacher row j at index (len(input_ids) - len(logprobs)) + j,
     # but a causal LM's hidden state at index i predicts token i+1. Emitting one
     # extra row makes input_padding_len one smaller, so row j lands at P+j-1,
@@ -226,23 +229,40 @@ def build_student_row(tokenizer, student_messages, gen_token_ids, teacher_logpro
     }
 
 
-def gold_token_ids(tokenizer, teacher_messages, teacher_ids, summary):
-    """The gold summary's assistant tokens as the teacher sees them, or None.
+def stop_token_ids(model, tokenizer):
+    """The token ids vLLM stops generation on: generation_config's eos_token_id(s).
+
+    For Gemma 3 that is <eos> and <end_of_turn>. Gold mode cuts the templated
+    gold answer at the same place, so gold rows and generated rows share one
+    layout for any model family.
+    """
+    try:
+        eos = GenerationConfig.from_pretrained(model).eos_token_id
+    except OSError:  # no generation_config.json
+        eos = None
+    if eos is None:
+        eos = tokenizer.eos_token_id
+    return set(eos if isinstance(eos, list) else [eos])
+
+
+def gold_token_ids(tokenizer, teacher_messages, teacher_ids, reference, stop_ids):
+    """The gold reference's assistant tokens as the teacher sees them, or None.
 
     Returned in the same shape as a vLLM generation: the content tokens plus the
-    <end_of_turn> that closes them, without the template's trailing "\n" (which
-    build_student_row adds back as a one-hot row).
+    stop token that closes them (for Gemma, <end_of_turn>), without whatever the
+    template emits after it (Gemma's trailing "\n", which build_student_row adds
+    back as a one-hot row).
     """
     full_ids = token_ids_for(
-        tokenizer, list(teacher_messages) + [{"role": "assistant", "content": summary}]
+        tokenizer, list(teacher_messages) + [{"role": "assistant", "content": reference}]
     )
     if full_ids[: len(teacher_ids)] != list(teacher_ids):
         return None
     tail = full_ids[len(teacher_ids):]
-    end_of_turn = tokenizer.convert_tokens_to_ids("<end_of_turn>")
-    if end_of_turn not in tail:
+    cut = next((i for i, t in enumerate(tail) if t in stop_ids), None)
+    if cut is None:
         return None
-    return tail[: tail.index(end_of_turn) + 1]
+    return tail[: cut + 1]
 
 
 def topk_rows(positions, top_k):
@@ -261,7 +281,7 @@ def topk_rows(positions, top_k):
     return teacher_logprobs, target_token_ids
 
 
-def generate_split(llm, tokenizer, sampling_params, split, split_name, args):
+def generate_split(llm, tokenizer, sampling_params, split, split_name, args, stop_ids):
     prompts = []
     kept = []
     dropped = {
@@ -286,7 +306,7 @@ def generate_split(llm, tokenizer, sampling_params, split, split_name, args):
         if args.targets == "gold":
             gold_ids = gold_token_ids(
                 tokenizer, example[args.teacher_field], teacher_ids,
-                example[args.gold_field].strip(),
+                example[args.gold_field].strip(), stop_ids,
             )
             if gold_ids is None or len(gold_ids) > args.max_tokens:
                 dropped["bad_gold"] += 1
@@ -294,7 +314,7 @@ def generate_split(llm, tokenizer, sampling_params, split, split_name, args):
         # Pass ids, not text: vLLM re-tokenises string prompts with
         # add_special_tokens=True, which would prepend a second <bos> to a
         # template that already emits one. In gold mode the prompt carries the
-        # gold summary too, so prompt_logprobs scores it under the teacher.
+        # gold reference too, so prompt_logprobs scores it under the teacher.
         prompt_ids = list(teacher_ids) + (gold_ids or [])
         prompts.append(TokensPrompt(prompt_token_ids=prompt_ids))
         kept.append((example, len(teacher_ids), gold_ids))
@@ -361,14 +381,15 @@ def main():
     if isinstance(prompts_ds, Dataset):
         prompts_ds = DatasetDict({"train": prompts_ds})
     first_split = next(iter(prompts_ds.values()))
-    missing = [
-        f for f in [args.teacher_field, *args.student_fields]
-        if f not in first_split.column_names
-    ]
+    needed = [args.teacher_field, *args.student_fields]
+    if args.targets == "gold":
+        needed.append(args.gold_field)
+    missing = [f for f in needed if f not in first_split.column_names]
     if missing:
         raise ValueError(f"{args.dataset_dir} has no column(s) {missing}")
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
+    stop_ids = stop_token_ids(args.model, tokenizer)
     llm = LLM(
         model=args.model,
         max_model_len=args.max_seq_len,
@@ -393,7 +414,7 @@ def main():
     per_dataset = {field: {} for field in args.student_fields}
     for split in prompts_ds:
         rows = generate_split(
-            llm, tokenizer, sampling_params, prompts_ds[split], split, args
+            llm, tokenizer, sampling_params, prompts_ds[split], split, args, stop_ids
         )
         for field, split_rows in rows.items():
             per_dataset[field][split] = Dataset.from_list(split_rows)

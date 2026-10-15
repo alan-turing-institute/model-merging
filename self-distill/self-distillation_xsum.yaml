@@ -25,7 +25,7 @@ kd_normalize_topk: true
 # both paths below with <dataset_dir>/train and <dataset_dir>/validation, so one
 # config covers every split (xsum_kd_data_long, xsum_kd_data_1_of_2_short, ...).
 datasets:
-  - path: ../datasets/xsum_kd_data_short/train
+  - path: ../datasets/gemma3_4b_xsum_kd_data_short/train
     type: "axolotl.integrations.kd.chat_template"
     field_messages: "messages_combined"
     logprobs_field: "teacher_logprobs"
@@ -35,7 +35,7 @@ datasets:
     temperature: 1.0
 
 test_datasets:
-  - path: ../datasets/xsum_kd_data_short/validation
+  - path: ../datasets/gemma3_4b_xsum_kd_data_short/validation
     type: "axolotl.integrations.kd.chat_template"
     field_messages: "messages_combined"
     logprobs_field: "teacher_logprobs"
@@ -71,7 +71,8 @@ micro_batch_size: 4
 gradient_accumulation_steps: 8
 gradient_checkpointing: true
 # 1 epoch to start: the previous 3-epoch curves were shaped by a KD term that
-# was pure noise (see KD_ALIGNMENT_BUG.md), so they say nothing about the right
+# was pure noise (the off-by-one alignment bug, since fixed in
+# generate_teacher_logprobs.py), so they say nothing about the right
 # schedule. Check the eval curve before increasing this.
 num_epochs: 1
 learning_rate: 1e-5
@@ -89,4 +90,4 @@ save_only_model: true
 
 torch_compile: true
 # Overridden by train_xsum.sbatch's output_dir argument.
-output_dir: ../models/gemma3-xsum-self-dist
+output_dir: ../models/gemma3_4b_xsum_short

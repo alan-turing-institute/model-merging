@@ -76,7 +76,8 @@ def load_convert_to_prompt():
 #
 # The self-distillation target is one sentence of 20-25 words with no preamble.
 # These measure each of those directly, plus the word repetition that the KD
-# alignment bug produced (self-distill/KD_ALIGNMENT_BUG.md).
+# alignment bug produced (see the off-by-one correction in
+# self-distill/generate_teacher_logprobs.py).
 
 TARGET_WORDS = (20, 25)
 

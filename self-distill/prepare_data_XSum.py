@@ -9,10 +9,13 @@
 # gives the KD term something to teach -- with an identical prompt on both
 # sides, self-distillation sits at a fixed point and teaches nothing.
 #
-# Three fields are emitted:
+# Four fields are emitted:
 #   teacher_messages - what the teacher generates from (strict, system turn)
 #   messages_long    - student prompt, the original instruction-heavy version
 #   messages_short   - student prompt, terse; the intended end state
+#   reference        - the gold summary, under the dataset-independent name that
+#                      generate_teacher_logprobs.py --targets gold reads
+# The original columns (document, summary, id) are kept too, for evaluation.
 #
 # The teacher prompt is the "B2_strict" winner of a four-way bake-off: it scored
 # 92.5% clean output (no preamble, no markdown, one sentence, 20-25 words)
@@ -62,6 +65,7 @@ def convert_to_prompt(example):
         "messages_short": [
             {"role": "user", "content": f"{STUDENT_SHORT}\n\n{document}"},
         ],
+        "reference": example["summary"],
     }
 
 
