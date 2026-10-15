@@ -42,6 +42,7 @@ the run stops if it does not.
 import argparse
 
 import glob
+import os
 import json
 
 import pyarrow.compute as pc
@@ -147,12 +148,21 @@ def main():
     ap.add_argument("--ce-weight", type=float, default=0.5,
                     help="weight on cross-entropy; the KD term gets 1 minus this")
     ap.add_argument("--seed", type=int, default=SEED, help="LoRA initialisation and data order")
+    ap.add_argument("--min-steps", type=int, default=0,
+                    help="add whole epochs until the run has at least this many optimiser steps "
+                         "(the mm_min_optimiser_steps of the SFT curve configs)")
     ap.add_argument("--logit-adjust", action="store_true",
                     help="correct teacher rows that disagree with the label (gold targets)")
     args = ap.parse_args()
     prepared, out_dir, MODEL = args.prepared_dir, args.output_dir, args.model
-    sets = [d for d in (load_from_disk(x) for x in glob.glob(f"{prepared}/*/")) if "target_logprobs" in d.column_names]
-    train, val = max(sets, key=len), min(sets, key=len)
+    if os.path.isdir(f"{prepared}/train") and os.path.isdir(f"{prepared}/validation"):
+        # split_prepared.py's halves, named because a half can be no larger than
+        # the validation set it shares with the full run.
+        train, val = load_from_disk(f"{prepared}/train"), load_from_disk(f"{prepared}/validation")
+    else:
+        # axolotl's prepared directories are named by hash: training is the larger.
+        sets = [d for d in (load_from_disk(x) for x in glob.glob(f"{prepared}/*/")) if "target_logprobs" in d.column_names]
+        train, val = max(sets, key=len), min(sets, key=len)
     largest = max(max_id(d, c) for d in (train, val) for c in ("input_ids", "target_token_ids"))
     train_rows, val_rows = train.to_list(), val.to_list()
     print(f"train rows {len(train_rows)}, eval rows {len(val_rows)}", flush=True)
@@ -187,14 +197,15 @@ def main():
     opt = torch.optim.AdamW(params, lr=LR, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, fused=True)
     micro_per_epoch = math.ceil(len(train_rows) / MICRO)
     steps_per_epoch = math.ceil(micro_per_epoch / ACCUM)
-    total_steps = steps_per_epoch * EPOCHS
+    epochs = max(EPOCHS, math.ceil(args.min_steps / steps_per_epoch))
+    total_steps = steps_per_epoch * epochs
     sched = get_cosine_schedule_with_warmup(opt, WARMUP, total_steps)
     eval_every = max(1, steps_per_epoch // EVALS_PER_EPOCH)
-    print(f"optimiser steps {total_steps} ({steps_per_epoch}/epoch), eval every {eval_every}", flush=True)
+    print(f"optimiser steps {total_steps} ({steps_per_epoch}/epoch x {epochs}), eval every {eval_every}", flush=True)
     print(json.dumps({"step": 0, "eval_loss": round(evaluate(model, head, fused, val_rows, tok.pad_token_id), 4)}), flush=True)
 
     gen, step, skipped, t0 = torch.Generator().manual_seed(args.seed), 0, 0, time.time()
-    for epoch in range(EPOCHS):
+    for epoch in range(epochs):
         order = torch.randperm(len(train_rows), generator=gen).tolist()
         micro_batches = [order[i:i + MICRO] for i in range(0, len(order), MICRO)]
         for s in range(0, len(micro_batches), ACCUM):

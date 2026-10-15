@@ -2,9 +2,9 @@
 
     python split_prepared.py ../datasets/xsum_kd_screen_gold_prepared ../datasets/xsum_kd_gold_half
 
-kd_lora_train.py takes the largest prepared set as training and the smallest
-as validation, so each half is written as <out>_a/train + <out>_a/validation
-(and _b). Halves are the first and second 2,000 rows of the prepared order;
+kd_lora_train.py reads <out>_a/train and <out>_a/validation by name (a half can be
+no larger than the validation set), so each half is written as those two
+(and _b). Halves are the first and second half of the prepared order;
 both keep the full validation set.
 """
 import glob

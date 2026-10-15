@@ -4,6 +4,7 @@
     uv run python merge_report.py logs --task mt_domain [--json ../results/mt_domain-merges.json]
     uv run python merge_report.py logs --task billsum_split [--json ../results/billsum_split-merges.json]
     uv run python merge_report.py logs --task xsum [--json ../results/xsum-kdgold75-merges.json]
+    uv run python merge_report.py logs --task cnndm_kdgold75 [--json ../results/cnndm-kdgold75-merges.json]
 
 For each seed pair of domain experts (original run and seeds 2 and 3) and each
 merge method, R = (merged - best expert) / (full - best expert) on the task's
@@ -31,26 +32,36 @@ TASKS = {
     # of the 4,000 articles; the full model is the existing 4,000-article run.
     "xsum": {"metric": "rouge1", "experts": ("kdgold75_a", "kdgold75_b"), "variant": "short", "domains": (),
              "full_adapter": "gemma3-xsum_kd_gold_ce75-lora", "merged_prefix": "xsum-kdgold75-merged-"},
+    # The same recipe on the other summarisation tasks (self-distill/run_gold_kd_merges.sh);
+    # `task` is the Inspect task the logs carry.
+    **{f"{t}_kdgold75": {"task": t, "metric": metric, "experts": ("kdgold75_a", "kdgold75_b"), "variant": variant,
+                         "domains": (), "full_adapter": f"gemma3-{t}-kdgold75_full-lora",
+                         "merged_prefix": f"{t}-kdgold75-merged-"}
+       for t, metric, variant in (("billsum_split", "rougeLsum", "short"), ("cnndm", "rougeLsum", None),
+                                  ("samsum", "rouge1", "short"))},
 }
 SEEDS = ["", "_s2", "_s3"]
 
 
 def label(log, task):
+    """full, an expert, merged-<method>, base (untrained) or sft_full (the reference-
+    trained full run, when the full model here is a distilled one)."""
     args = log.eval.model_args or {}
     adapter = Path(str(args.get("adapter_path", "")).rstrip("/")).name
     path = Path(str(args.get("model_path", "")).rstrip("/")).name
     spec = TASKS[task]
+    name = spec.get("task", task)
     if adapter and adapter == spec.get("full_adapter"):
         return "full"
-    prefix = spec.get("merged_prefix", f"{task}-merged-")
+    prefix = spec.get("merged_prefix", f"{name}-merged-")
     if path.startswith(prefix):
         return "merged-" + path[len(prefix):]
     if adapter:
-        m = re.fullmatch(rf"gemma3-{task}-(.+)-lora", adapter)
+        m = re.fullmatch(rf"gemma3-{name}-(.+)-lora", adapter)
+        if m and m.group(1) == "full" and "full_adapter" in spec:
+            return "sft_full"
         return m.group(1) if m else None
-    if path.startswith(f"{task}-merged-"):
-        return "merged-" + path[len(f"{task}-merged-"):]
-    return None
+    return None if path else "base"
 
 
 def correct(log, metric):
@@ -77,7 +88,7 @@ def main():
     logs = {}
     for info in list_eval_logs(args.log_dir):
         log = read_eval_log(info)
-        if log.status != "success" or log.eval.task.split("/")[-1] != args.task:
+        if log.status != "success" or log.eval.task.split("/")[-1] != spec.get("task", args.task):
             continue
         if spec["variant"] and (log.eval.task_args or {}).get("prompt_variant", spec["variant"]) != spec["variant"]:
             continue
@@ -107,6 +118,10 @@ def main():
 
     rng = random.Random(0)
     report = {"full": mean(full), "expert_seed_sd": spread, "merges": []}
+    report.update({k: mean(acc[k]) for k in ("base", "sft_full") if k in acc})
+    for k, what in (("base", "untrained model"), ("sft_full", "full-data model, reference-trained")):
+        if k in acc:
+            print(f"{what} {mean(acc[k]):.4f}")
     print(f"\nfull-data model {mean(full):.4f}\n")
     print(f"{'method':16} {'seed':5} {'merged':>8} {'best expert':>12} {'denominator':>12} {'R':>7}  95% CI")
     for method in METHODS:

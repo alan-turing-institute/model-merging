@@ -108,5 +108,9 @@ EOF
   preprocess)
     uv run axolotl preprocess "${2:?preprocess needs a config}"
     ;;
+  split)
+    # Halves of a prepared KD dataset for data-parallel experts (split_prepared.py).
+    uv run python split_prepared.py "${2:?split needs a prepared dir}" "${3:?and an output prefix}"
+    ;;
   *) echo "unknown stage $STAGE" >&2; exit 1 ;;
 esac

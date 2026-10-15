@@ -1,0 +1,62 @@
+# Preprocessing config for gold-target distillation on billsum_split (prepare_gold_kd_prompts.py,
+# run_gold_kd_merges.sh). Only `axolotl preprocess` runs on it; kd_lora_train.py
+# trains from the prepared tensors. sequence_len equals the --max-seq-len the
+# teacher stage is given.
+base_model: google/gemma-3-4b-it
+chat_template: tokenizer_default
+eot_tokens:
+  - "<end_of_turn>"
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+kd_trainer: true
+kd_ce_alpha: 0.5
+kd_alpha: 0.5
+kd_temperature: 1.0
+kd_normalize_topk: true
+
+load_in_4bit: true
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj]
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+datasets:
+  - path: ../datasets/billsum_split_kdgold_short/train
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    temperature: 1.0
+test_datasets:
+  - path: ../datasets/billsum_split_kdgold_short/validation
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    temperature: 1.0
+val_set_size: 0.0
+
+dataset_num_proc: 8
+dataset_prepared_path: ../datasets/billsum_split_kdgold_prepared
+sequence_len: 6144
+sample_packing: false
+pad_to_sequence_len: false
+
+bf16: true
+tf32: true
+attn_implementation: eager
+gradient_checkpointing: true
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+num_epochs: 3
+learning_rate: 2e-4
+optimizer: adamw_torch_fused
+lr_scheduler: cosine
+warmup_steps: 10
+evals_per_epoch: 2
+logging_steps: 1
+
+output_dir: ../models/gemma3-billsum_split_kdgold-axolotl-unused
