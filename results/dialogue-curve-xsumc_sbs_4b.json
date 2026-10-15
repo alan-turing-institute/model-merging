@@ -1,0 +1,136 @@
+{
+  "task": "xsumc",
+  "curve": "xsumc_sbs",
+  "size": "_4b",
+  "metric": "success",
+  "arms": {
+    "0": {
+      "seeds": 1,
+      "success": 0.5878,
+      "length_ok": 0.6806,
+      "banned_ok": 0.8596,
+      "word_error": 2.171,
+      "f1": 0.1497,
+      "success_sd": null
+    },
+    "125": {
+      "seeds": 1,
+      "success": 0.5912,
+      "length_ok": 0.6965,
+      "banned_ok": 0.8437,
+      "word_error": 2.0838,
+      "f1": 0.164,
+      "success_sd": null
+    },
+    "250": {
+      "seeds": 1,
+      "success": 0.6942,
+      "length_ok": 0.7735,
+      "banned_ok": 0.9026,
+      "word_error": 1.8369,
+      "f1": 0.1573,
+      "success_sd": null
+    },
+    "500": {
+      "seeds": 1,
+      "success": 0.7112,
+      "length_ok": 0.7758,
+      "banned_ok": 0.9117,
+      "word_error": 1.8075,
+      "f1": 0.153,
+      "success_sd": null
+    },
+    "1000": {
+      "seeds": 1,
+      "success": 0.7248,
+      "length_ok": 0.7848,
+      "banned_ok": 0.923,
+      "word_error": 1.7078,
+      "f1": 0.1578,
+      "success_sd": null
+    },
+    "2000": {
+      "seeds": 1,
+      "success": 0.7916,
+      "length_ok": 0.8358,
+      "banned_ok": 0.9536,
+      "word_error": 1.5663,
+      "f1": 0.1537,
+      "success_sd": null
+    },
+    "4000": {
+      "seeds": 1,
+      "success": 0.7712,
+      "length_ok": 0.8018,
+      "banned_ok": 0.9558,
+      "word_error": 1.6489,
+      "f1": 0.1534,
+      "success_sd": null
+    },
+    "8000": {
+      "seeds": 1,
+      "success": 0.8075,
+      "length_ok": 0.8301,
+      "banned_ok": 0.9694,
+      "word_error": 1.504,
+      "f1": 0.153,
+      "success_sd": null
+    }
+  },
+  "denominators": [
+    {
+      "full": 250,
+      "half": 125,
+      "delta_seed1": 0.1031,
+      "ci_seed1": [
+        0.0657,
+        0.1427
+      ]
+    },
+    {
+      "full": 500,
+      "half": 250,
+      "delta_seed1": 0.017,
+      "ci_seed1": [
+        -0.0193,
+        0.0544
+      ]
+    },
+    {
+      "full": 1000,
+      "half": 500,
+      "delta_seed1": 0.0136,
+      "ci_seed1": [
+        -0.0227,
+        0.0521
+      ]
+    },
+    {
+      "full": 2000,
+      "half": 1000,
+      "delta_seed1": 0.0668,
+      "ci_seed1": [
+        0.034,
+        0.1019
+      ]
+    },
+    {
+      "full": 4000,
+      "half": 2000,
+      "delta_seed1": -0.0204,
+      "ci_seed1": [
+        -0.0544,
+        0.0125
+      ]
+    },
+    {
+      "full": 8000,
+      "half": 4000,
+      "delta_seed1": 0.0362,
+      "ci_seed1": [
+        0.0023,
+        0.0691
+      ]
+    }
+  ]
+}

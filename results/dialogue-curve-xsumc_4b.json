@@ -66,6 +66,15 @@
       "word_error": 1.6025,
       "f1": 0.1553,
       "success_sd": null
+    },
+    "8000": {
+      "seeds": 1,
+      "success": 0.8199,
+      "length_ok": 0.846,
+      "banned_ok": 0.9706,
+      "word_error": 1.4802,
+      "f1": 0.1612,
+      "success_sd": null
     }
   },
   "denominators": [
@@ -112,6 +121,15 @@
       "ci_seed1": [
         0.0091,
         0.0781
+      ]
+    },
+    {
+      "full": 8000,
+      "half": 4000,
+      "delta_seed1": 0.0294,
+      "ci_seed1": [
+        -0.0034,
+        0.0623
       ]
     }
   ]
