@@ -187,6 +187,21 @@ produced no looping outputs. For a smaller student on the 4B teacher's data, it
 checks the largest teacher token id against the embedding and resizes it if
 needed.
 
+**Patch axolotl first.** The skipped steps were axolotl 0.18's `normalize_logprobs`
+(`axolotl/integrations/kd/utils.py`), which the fused loss applies to the
+student's top-k. It renormalises through probabilities, so an entry about 103
+nats below the row's maximum becomes `log(0) = -inf`, the loss inf and the
+gradient NaN. `patch_axolotl_kd.py` (from main) rewrites it as the equivalent
+`logprobs - logsumexp(logprobs)`; `kd_lora_train.py` refuses to start without it.
+Re-run it after every `uv sync`:
+
+```bash
+UV_PROJECT_ENVIRONMENT=$PROJECTDIR/$USER/mm/venvs/self-distill uv run --no-sync python patch_axolotl_kd.py
+```
+
+Where the original was finite the patched function gives the same values, so a
+run before the patch differs from one after only by the steps it skipped.
+
 Axolotl's logged KD losses run about 1.44× higher than the per-token loss of the
 same rows, because of how it averages across batches. Compare runs by their test
 scores, not their logged losses.

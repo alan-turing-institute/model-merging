@@ -30,6 +30,13 @@ steps and then hit a NaN gradient at step 379:
     schedule keeps time) and logged, and the run aborts after MAX_SKIPS, so a
     persistently unstable run cannot pass as finished.
 
+The step-379 NaN was axolotl 0.18's normalize_logprobs, which the fused loss
+applies to the student's top-k (normalize_topk=True): it renormalises through
+probabilities, so an entry ~103 nats below the row maximum becomes log(0) =
+-inf and the loss inf. patch_axolotl_kd.py (from main) rewrites it in log space;
+this script refuses to start on an unpatched install. Runs before the patch
+lost each such step to the skip above rather than taking a corrupted update.
+
     python kd_lora_train.py <prepared_dir> <output_dir> [--model google/gemma-3-1b-it]
 
 A smaller student than the teacher (e.g. Gemma 3 1B on the 4B teacher's data)
@@ -56,6 +63,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_cosine_schedule_with_warmup
 
 from axolotl.integrations.kd.kernels.liger import LigerFusedLinearKLTopKLogprobLoss
+from axolotl.integrations.kd.utils import normalize_logprobs
 from kd_step0_check import lm_head_of
 
 MICRO, ACCUM, EPOCHS, LR, WARMUP, CLIP, SEED = 8, 2, 3, 2e-4, 10, 1.0, 42
@@ -154,6 +162,8 @@ def main():
     ap.add_argument("--logit-adjust", action="store_true",
                     help="correct teacher rows that disagree with the label (gold targets)")
     args = ap.parse_args()
+    if not torch.isfinite(normalize_logprobs(torch.tensor([[0.0, -1.0, -120.0]]), 3)).all():
+        sys.exit("axolotl's normalize_logprobs underflows to -inf: run patch_axolotl_kd.py first")
     prepared, out_dir, MODEL = args.prepared_dir, args.output_dir, args.model
     if os.path.isdir(f"{prepared}/train") and os.path.isdir(f"{prepared}/validation"):
         # split_prepared.py's halves, named because a half can be no larger than
