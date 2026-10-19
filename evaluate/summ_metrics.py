@@ -224,6 +224,9 @@ def shared_metric_class():
                 return await make(text)
             return await self._shared(text, "answers", lambda: make(text))
 
+    # deepeval finds its prompt templates by self.__class__.__name__, so the
+    # subclass must carry the parent's name or the verdict steps find none.
+    SharedSummarization.__name__ = SharedSummarization.__qualname__ = "SummarizationMetric"
     return SharedSummarization
 
 
