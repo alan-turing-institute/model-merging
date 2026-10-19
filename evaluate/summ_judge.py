@@ -28,7 +28,9 @@ names neither "Peter" nor the age - XSum's characteristic failure, and the one
 entity_support catches. So the judge first lists every name, number, date,
 place and organisation in the summary with a verbatim quote from the source
 that supports it (or none), the scorer checks each quote is really in the
-source, and any fact left without one caps consistency at 2. The facts and
+source and contains every capitalised word and number of the fact (version 2
+let "Lally" support "Liam Lally"), and any fact left without one caps
+consistency at 2. The facts and
 their quotes are kept in the score's metadata.
 
 The judge is the `grader` model role, or `model` if given; it answers in a
@@ -40,6 +42,7 @@ it to a task's scorers like any other.
 """
 
 import math
+import re
 
 from inspect_ai.model import GenerateConfig, ResponseSchema, get_model
 from inspect_ai.scorer import Score, Target, mean, scorer, stderr
@@ -50,7 +53,7 @@ from pydantic import BaseModel, Field, ValidationError
 DIMENSIONS = ("coherence", "consistency", "fluency", "relevance")
 # Bump with any change to the prompt or scoring: summ_metrics.py puts it in its
 # file names, so judgements from different versions are never mixed or reused.
-VERSION = 2
+VERSION = 3
 
 STYLE = {
     "xsum": "a single sentence of about 20 words, like the summary above a BBC News article",
@@ -103,6 +106,20 @@ not an answer key):
 """
 
 
+_NAME_OR_NUMBER = re.compile(r"\b(?:[A-Z][\w'’-]*|\d[\d,.]*)")
+
+
+def supported(fact, quote, source):
+    """The quote is verbatim in the source AND carries every capitalised word and
+    number of the fact: quoting "Lally" does not support "Liam Lally"."""
+    if not quote:
+        return False
+    q = " ".join(quote.split()).lower()
+    if q not in source:
+        return False
+    return all(tok.lower() in q for tok in _NAME_OR_NUMBER.findall(fact))
+
+
 class Fact(BaseModel):
     fact: str
     source_quote: str | None
@@ -143,8 +160,7 @@ def summ_judge(task: str = "xsum", with_reference: bool = False, model: str | No
             except ValidationError:
                 continue
             source = " ".join(document.split()).lower()
-            unsupported = [f.fact for f in j.facts
-                           if not f.source_quote or " ".join(f.source_quote.split()).lower() not in source]
+            unsupported = [f.fact for f in j.facts if not supported(f.fact, f.source_quote, source)]
             value = {d: float(getattr(j, d)) for d in DIMENSIONS}
             if unsupported:
                 value["consistency"] = min(value["consistency"], 2.0)
