@@ -82,12 +82,17 @@ def main():
     ap.add_argument("--size", choices=["4b", "1b"], default="4b",
                     help="1b reads names with a _1b suffix (full_1b, expert_a_s2_1b, merged-ties_s2_1b)")
     ap.add_argument("--json", type=Path)
+    ap.add_argument("--before", help="only logs created before this ISO time, e.g. to read a superseded run")
     args = ap.parse_args()
     spec = TASKS[args.task]
     sz = "_1b" if args.size == "1b" else ""
-    logs = {}
+    logs, infos = {}, {}
     for info in list_eval_logs(args.log_dir):
-        log = read_eval_log(info)
+        # Headers only while choosing: reading every log's samples took longer
+        # than an hour once logs/ held a few hundred evals.
+        log = read_eval_log(info, header_only=True)
+        if args.before and log.eval.created >= args.before:
+            continue
         if log.status != "success" or log.eval.task.split("/")[-1] != spec.get("task", args.task):
             continue
         if spec["variant"] and (log.eval.task_args or {}).get("prompt_variant", spec["variant"]) != spec["variant"]:
@@ -102,7 +107,8 @@ def main():
         elif name and name.endswith("_1b"):
             continue
         if name and (name not in logs or log.eval.created > logs[name].eval.created):
-            logs[name] = log
+            logs[name], infos[name] = log, info
+    logs = {name: read_eval_log(info) for name, info in infos.items()}
     acc = {k: correct(v, spec["metric"]) for k, v in logs.items()}
     mean = lambda d: statistics.fmean(d.values())
     if "full" not in acc:

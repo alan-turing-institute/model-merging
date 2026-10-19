@@ -68,9 +68,9 @@ def values(log, metric):
 
 def main():
     log_dir = sys.argv[1] if len(sys.argv) > 1 else "logs"
-    picked = {}
+    picked, infos = {}, {}
     for info in list_eval_logs(log_dir):
-        log = read_eval_log(info)
+        log = read_eval_log(info, header_only=True)  # samples only for the picked logs
         if log.status != "success" or log.eval.task.split("/")[-1] != "xsum":
             continue
         size = ("1b" if "gemma-3-1b" in log.eval.model else "4b" if "gemma-3-4b" in log.eval.model
@@ -83,7 +83,8 @@ def main():
                 continue
             if (stem and adapter.endswith(stem)) or (not stem and not adapter):
                 if name not in picked or log.eval.created > picked[name].eval.created:
-                    picked[name] = log
+                    picked[name], infos[name] = log, info
+    picked = {name: read_eval_log(info) for name, info in infos.items()}
 
     print(f"{'model':32} {'R1':>7} {'R2':>7} {'RL':>7} {'sem':>7} {'entity':>7} {'ent.clean':>9} {'words':>6} {'repeat':>7}")
     for name in MODELS:
