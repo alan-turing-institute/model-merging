@@ -1,0 +1,95 @@
+# Self-distillation of gemma-3-4b-it on Chinese-to-English translation (WMT News
+# Commentary; prompts from prepare_data_NewsCommentary_zh_en.py, KD data from
+# generate_teacher_logprobs.py).
+#
+# Every training setting below matches self-distillation_xsum.yaml - and so
+# every XSum student, gold and 27B-teacher runs included - so the two tasks
+# differ only in their data. Only the dataset paths, output_dir and comments
+# differ. 10k rows at an effective batch of 32 is ~312 optimiser steps, the
+# same schedule as XSum.
+#
+# The student MUST share the teacher's tokeniser: the KD loss gathers student
+# logprobs at the teacher's token ids, so a different vocabulary indexes out of
+# bounds. gemma-3-27b-it shares gemma-3-4b-it's.
+base_model: google/gemma-3-4b-it
+# Use the tokeniser's own template so training tokenisation is byte-identical to
+# what the generation script assumed.
+chat_template: tokenizer_default
+eot_tokens:
+  - "<end_of_turn>"
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+
+kd_trainer: true
+kd_ce_alpha: 0.5
+kd_alpha: 0.5
+kd_temperature: 1.0
+# Renormalises the student over the teacher's top-k. Needed for the sanity check:
+# with student == teacher and correct alignment, step-0 KD loss ~= 0.
+kd_normalize_topk: true
+
+# Default dataset: teacher-generated targets, short student prompt.
+# train_xsum.sbatch's optional dataset_dir argument replaces both paths with
+# <dataset_dir>/train and <dataset_dir>/validation, so this one config covers
+# gemma3_4b_nc_zh_en_kd_data_long, a gold variant, a 27B-teacher variant, ...
+datasets:
+  - path: ../datasets/gemma3_4b_nc_zh_en_kd_data_short/train
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    # The temperature the teacher's *logprobs* are at, not the sampling
+    # temperature. vLLM's default logprobs_mode is raw_logprobs, i.e. computed
+    # from the unscaled logits, so this is 1.0 regardless of how we sampled.
+    temperature: 1.0
+
+test_datasets:
+  - path: ../datasets/gemma3_4b_nc_zh_en_kd_data_short/validation
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    temperature: 1.0
+
+val_set_size: 0.0
+# Axolotl defaults this to os.cpu_count(), which on an Isambard node reports all
+# 288 cores even though a 1-GPU job is allocated 72; that OOM-killed XSum runs.
+dataset_num_proc: 8
+# Not safe to share between concurrent runs (Axolotl's cache hash ignores the
+# base model). train_xsum.sbatch overrides this with <output_dir>/prepared.
+dataset_prepared_path: ../datasets/last_run_prepared
+
+# Must match --max-seq-len in generate_teacher_logprobs.py (default 4096).
+# Anything Axolotl truncates here has its teacher logprobs silently mangled.
+# Translation rows are far shorter than XSum's (mean ~72 tokens short / ~101
+# long, max ~300), so nothing comes near it.
+sequence_len: 4096
+# Off, as for XSum: packing concatenates the KD tensors across sub-sequences
+# and is one more thing that can hide a misalignment.
+sample_packing: false
+# Pad each micro-batch to its own longest sequence, not to sequence_len.
+pad_to_sequence_len: false
+
+bf16: true
+tf32: true
+attn_implementation: eager  # recommended for Gemma 3
+
+micro_batch_size: 4
+gradient_accumulation_steps: 8
+gradient_checkpointing: true
+num_epochs: 1
+learning_rate: 1e-5
+optimizer: adamw_torch_fused
+lr_scheduler: cosine
+warmup_steps: 50
+
+logging_steps: 1  # so the step-0 KD loss is visible
+eval_strategy: steps
+eval_steps: 50
+save_strategy: steps
+save_steps: 200
+# skip AdamW optimiser state in checkpoints: ~43 GB -> ~9 GB each (4B)
+save_only_model: true
+
+torch_compile: true
+# Overridden by train_xsum.sbatch's output_dir argument.
+output_dir: ../models/gemma3_4b_nc_zh_en_short

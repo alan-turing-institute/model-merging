@@ -1,7 +1,7 @@
 [project]
 name = "evaluate"
 version = "0.1.0"
-description = "Inspect AI tasks to evaluate models as a crime classifier (crime_task.py) or an XSum summariser (xsum_task.py)"
+description = "Inspect AI tasks to evaluate models as a crime classifier (crime_task.py), an XSum summariser (xsum_task.py) or a zh-en translator (translation_task.py)"
 readme = "README.md"
 authors = [
     { name = "Justin McInroy", email = "jmcinroy@turing.ac.uk" },
@@ -27,6 +27,9 @@ dependencies = [
     # The scorer degrades to 0.0 rather than failing if it is missing.
     "sentence-transformers",
     "tqdm",
+    # BLEU and chrF for translation_task.py. COMET is NOT here: unbabel-comet
+    # pins transformers<5 and numpy<2, so it has its own project in comet/.
+    "sacrebleu",
 ]
 
 # Registers the hf-peft model provider with Inspect, so a plain

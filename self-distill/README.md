@@ -1,6 +1,6 @@
 # Self-distillation on XSum
 
-We perform self-distillation using the kd plugin in Axolotl to train Gemma 3 to perform one sentence summarisation of BBC News articles using (some of) the XSum dataset.
+We perform self-distillation using the kd plugin in Axolotl to train Gemma 3 to perform one sentence summarisation of BBC News articles using (some of) the XSum dataset.  For Chinese-to-English translation with the same pipeline, see [`README_translation.md`](README_translation.md).
 
 The aim is to get an output which is
 
@@ -8,16 +8,24 @@ The aim is to get an output which is
 - between 20-25 words
 - no preamble, i.e. no "My one sentence summarisation is: ..."
 
-NB this uses
 This was split out of [`../train`](../train), which remains the crime-data
 fine-tuning project. The two have separate uv environments; this one also needs
 `vllm` (for teacher generation) and `torchao` (see below).
+
+**Patch Axolotl before training.** Axolotl 0.18.0's `normalize_logprobs` (in `axolotl/integrations/kd/utils.py`) renormalises the top-k logprobs by converting to probabilities and back. In fp32 an entry more than ~103 nats below the row's maximum underflows to `log(0) = -inf`, so whenever the teacher's top-k includes a token the student all but rules out, the KD loss becomes inf and the gradient NaN, which corrupts the weights. We replace it with the equivalent `logprobs - logsumexp(logprobs)`. Run this after every `uv sync`, since reinstalling Axolotl undoes it:
+
+```bash
+uv run python patch_axolotl_kd.py           # apply (safe to re-run)
+uv run python patch_axolotl_kd.py --check   # report only
+```
+
+The script refuses to change a file whose code it does not recognise, and checks the patched function gives finite values.
 
 ## Pipeline
 
 #### Data preparation
 
-We first need to prepare the data.  The XSum dataset is 200k rows.  We take a 10k sample of this for our use and generate suitable prompts.  We output the teacher prompts together with a short student prompt and a longer student prompt (the long version is just to check the self-distillation is working correctly).
+We first need to prepare the data.  The XSum dataset is 200k rows.  We take a 10k sample of this for our use and generate suitable prompts.  We output four fields per article: `teacher_messages` (the teacher prompt), `messages_short` and `messages_long` (a short and a longer student prompt; the long version is just to check the self-distillation is working correctly) and `reference` (the gold summary, copied from XSum's `summary`, for `--targets gold`).  XSum's own columns (`document`, `summary`, `id`) are kept too.
 
 ```bash
 uv run python prepare_data_XSum.py EdinburghNLP/xsum ../datasets/xsum_prompts  # build prompt variants
@@ -30,14 +38,14 @@ The first argument is the dataset to load, either a Hugging Face address or a lo
 To train several students on disjoint parts of the data and then merge them, split the prompts dataset into `n` pieces:
 
 ```bash
-uv run python split_dataset.py n <input_dir> <output_dir>
+uv run python ../split_dataset.py n <input_dir> <output_dir>
 ```
 
-which with split your dataset into `n` peices and saves them in the output directory as `<dataset_name>_i_of_n`.  It will handle `DatasetDicts`, but deliberately drops the `test` paertition and only splits the `train` and `validation` parts.  Pieces are contiguous blocks in the existing order (the prompts are already shuffled); pass `--seed` to shuffle first.
+which will split your dataset into `n` pieces and saves them in the output directory as `<dataset_name>_i_of_n`.  It will handle `DatasetDicts`, but deliberately drops the `test` partition and only splits the `train` and `validation` parts.  Pieces are contiguous blocks in the existing order (the prompts are already shuffled); pass `--seed` to shuffle first.
 
 #### Teacher training
 
-For self-distillation, we need a teacher and a student.  First, we train the teacher with a strict prompt and a system prompt detailing the summarisation task.  We provide an sbatch script as a wrapper to `generate_teacher_longprobs.py`.
+For self-distillation, we need a teacher and a student.  First, we train the teacher with a strict prompt and a system prompt detailing the summarisation task.  We provide an sbatch script as a wrapper to `generate_teacher_logprobs.py`.
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
@@ -57,38 +65,52 @@ sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
 
 Optional arguments (see `--help`): `--top-k` (default 20), `--temperature` (0, i.e. greedy), `--max-tokens` (128), `--max-seq-len` (4096, which must match `sequence_len` in the Axolotl config), `--seed`, `--prefix`, `--teacher-field` and `--student-fields` (for other column names), `--tensor-parallel-size`, `--gpu-memory-utilization` and `--no-enforce-eager`.
 
+To train against the XSum reference summaries instead of the teacher's own generations, add `--targets gold`. The assistant turn is then the gold `reference` column (which `prepare_data_XSum.py` copies from XSum's `summary`; for a prompts dataset built before that column existed, add `--gold-field summary`), so the cross-entropy term trains on the reference text, and the teacher only *scores* it (vLLM `prompt_logprobs`), so the KD term carries the teacher's distribution at each gold token:
+
+```bash
+sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts \
+  $PROJECTDIR/$USER/model-merging/datasets \
+  gemma3_4b_xsum_gold_kd_data --targets gold
+```
+
 This needs a GPU. Note that vLLM is not exactly deterministic between runs, even when greedy: rerunning can give a slightly different generation for a few rows.
 
 We record the one sentence summarisation together with the `logprobs`.  This is a sequence of probability distributions, one for each token in the output.
 
-- `tok_k=20` takes the highest 20 probabilities in the probability distribution only.
+- `--top-k 20` (the default) keeps the highest 20 probabilities in the probability distribution only.
 
 #### Student training
 
-The student is trained on both the `longprobs` and the output of the teacher.
+The student is trained on both the `logprobs` and the output of the teacher.
 
 NB On Isambard this should be submitted as a job, otherwise it will run out of memory and cause your session to be killed.  We provide a short bash script for this.
 
 ```bash
 sbatch train_xsum.sbatch self-distillation_xsum.yaml \
-  $PROJECTDIR/$USER/model-merging/models/gemma3_xsum_short \
-  $PROJECTDIR/$USER/model-merging/datasets/xsum_kd_data_short
+  $PROJECTDIR/$USER/model-merging/models/gemma3_4b_xsum_short \
+  $PROJECTDIR/$USER/model-merging/datasets/gemma3_4b_xsum_kd_data_short
 ```
 
 This takes as parameters:
 
 - a yaml config file for the Axolotl training using the kd plugin
 - an output directory for the model
-- optionally a dataset directory.  If the dataset directory is given, the script writes a new yaml idenitcal to the one given, except for the dataset location.
+- optionally a dataset directory.  If the dataset directory is given, the script writes a new yaml identical to the one given, except for the dataset location.
 
 ### The alignment problem in the kd plugin
 
 The KD plugin never receives an explicit offset. It infers where the teacher
-distributions belong from lengths alone, so every row must satisfy exactly:
+distributions belong from lengths alone. Axolotl's own convention for that
+length is off by one against its loss kernel: it places teacher row j one
+position late, so the KD term trains the model to predict the token it has just
+emitted. We therefore deliberately emit one more row than that convention calls
+for, and every row must satisfy exactly:
 
 ```
 len(teacher_logprobs) == len(template(messages_combined))
                          - len(template(student_messages, add_generation_prompt=True))
+                         + 1
 ```
 
 Gemma's chat template emits a `\n` after `<end_of_turn>`, so the templated
@@ -107,4 +129,4 @@ and has to learn the format from its weights instead of reading it each time.
 A longer student prompt is included as a check on whether the self-distillation is operating correctly.
 For details see the `prepare_data_XSum.py` file.
 
-Different variations on the teacher propmt were tried.  This one produced the most clean outputs: no preamble, no markdown, one sentence, 20-25 words.
+Different variations on the teacher prompt were tried.  This one produced the most clean outputs: no preamble, no markdown, one sentence, 20-25 words.
