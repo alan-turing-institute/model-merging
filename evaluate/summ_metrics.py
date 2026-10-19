@@ -287,9 +287,16 @@ async def run_judge(name, log, rows, path, out_log, args):
                            config=GenerateConfig(max_connections=args.concurrency))
         # model= as well as the role: left unset, score_async instantiates the
         # log's own model (the evaluated 4B), which scoring never calls.
-        scored = await score_async(part, [summ_judge(task=args.task, with_reference=args.judge_reference)],
+        scored = await score_async(part, [summ_judge(task=args.task, with_reference=args.judge_reference,
+                                                     max_tokens=args.judge_max_tokens)],
                                    model=grader, model_roles={"grader": grader}, action="append", display="none")
         out_log.parent.mkdir(parents=True, exist_ok=True)
+        # A retry scores only the samples still missing; keep the earlier judged
+        # log and write the retry beside it rather than over it.
+        n = 0
+        while out_log.exists():
+            n += 1
+            out_log = out_log.with_name(out_log.name.removesuffix(".eval").split(".retry")[0] + f".retry{n}.eval")
         write_eval_log(scored, str(out_log))
         with path.open("a") as fh:
             for s in scored.samples:

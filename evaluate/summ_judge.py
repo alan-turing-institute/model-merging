@@ -167,7 +167,11 @@ class Fact(BaseModel):
 
 
 class Judgement(BaseModel):
-    facts: list[Fact]
+    # At most 40: the judge can loop on the list, and an unbounded loop runs into
+    # max_tokens and leaves unparsable JSON (2.4% of XSum and 25% of BillSum
+    # judgements in the first full run, at max_tokens 1024). The schema only
+    # acts at a 41st fact, so a judgement that finished before is unchanged.
+    facts: list[Fact] = Field(max_length=40)
     justification: str
     coherence: int = Field(ge=1, le=5)
     consistency: int = Field(ge=1, le=5)
@@ -177,7 +181,7 @@ class Judgement(BaseModel):
 
 @scorer(metrics={d: [mean(), stderr()] for d in (*DIMENSIONS, "judge_mean")})
 def summ_judge(task: str = "xsum", with_reference: bool = False, model: str | None = None,
-               max_tokens: int = 1024):
+               max_tokens: int = 4096):
     """SummEval-style 1-5 ratings from an LLM judge (see module docstring)."""
     config = GenerateConfig(
         temperature=0.0, max_tokens=max_tokens,
