@@ -10,7 +10,7 @@
 #     "openai",
 # ]
 # ///
-"""BERTScore and DeepEval's SummarizationMetric on finished summarisation evals.
+"""BERTScore, DeepEval's SummarizationMetric and an Inspect LLM judge on finished summarisation evals.
 
     uv run --script summ_metrics.py logs --task xsum --models 'kdgold75|^base' \
         --metrics bertscore deepeval --judge-url http://127.0.0.1:8000/v1 --judge-model judge
@@ -41,6 +41,11 @@ contradiction); coverage = of n yes/no questions generated from the source that
 the source answers "yes", the share the summary also answers "yes". Score =
 min(alignment, coverage). The judge sees the document the model saw (the task's
 `document`, already truncated as in training).
+
+INSPECT LLM JUDGE (summ_judge.py): SummEval's four dimensions rated 1-5 by the
+same judge, through Inspect's own scoring (inspect_ai.score_async on the log, the
+judge as the `grader` model role). The judged logs are kept in <out>/<task>/judged/
+for `inspect view`; relevance is rated against each dataset's expected length.
 
 PAIRED ACROSS MODELS. Left alone, the metric re-derives the source's facts,
 questions and answers for every summary, so two models' coverage would be
@@ -262,6 +267,44 @@ async def run_deepeval(rows, path, judge, cache, locks, args):
     return [done[t[0]] for t in rows if t[0] in done]
 
 
+async def run_judge(name, log, rows, path, out_log, args):
+    """Re-score the log's samples with the Inspect LLM judge (summ_judge.py)."""
+    from inspect_ai import score_async
+    from inspect_ai.log import write_eval_log
+    from inspect_ai.model import GenerateConfig, get_model
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from summ_judge import DIMENSIONS, summ_judge
+
+    done = load_done(path)
+    docs = {r[0]: r[1] for r in rows}
+    todo = [s for s in log.samples if str(s.id) in docs and str(s.id) not in done]
+    if todo:
+        for s in todo:  # cnndm keeps only a row index; give the judge the document itself
+            s.metadata = {**(s.metadata or {}), "document": docs[str(s.id)]}
+        part = log.model_copy(update={"samples": todo})
+        grader = get_model(f"openai-api/local/{args.judge_model}", base_url=args.judge_url, api_key="none",
+                           config=GenerateConfig(max_connections=args.concurrency))
+        scored = await score_async(part, [summ_judge(task=args.task, with_reference=args.judge_reference)],
+                                   model_roles={"grader": grader}, action="append", display="none")
+        out_log.parent.mkdir(parents=True, exist_ok=True)
+        write_eval_log(scored, str(out_log))
+        with path.open("a") as fh:
+            for s in scored.samples:
+                sc = next((v for k, v in (s.scores or {}).items() if "summ_judge" in k), None)
+                value = sc.value if sc and isinstance(sc.value, dict) else {}
+                rec = {"id": str(s.id), **{d: value.get(d) for d in (*DIMENSIONS, "judge_mean")}}
+                if rec["judge_mean"] is None or rec["judge_mean"] != rec["judge_mean"]:
+                    rec = {"id": str(s.id), "error": (sc.explanation if sc else "no judge score")[:300]}
+                fh.write(json.dumps(rec) + "\n")
+                if rec.get("error") is None:
+                    done[rec["id"]] = rec
+        failed = sum(1 for s in todo if str(s.id) not in done)
+        if failed:
+            print(f"  {failed} samples got no usable judgement; re-run to retry them", file=sys.stderr)
+    return [done[i] for i in docs if i in done]
+
+
 def mean(recs, key):
     vals = [r[key] for r in recs if r.get(key) is not None]
     return statistics.fmean(vals) if vals else None
@@ -275,7 +318,8 @@ def main():
     ap.add_argument("--size", choices=["4b", "1b", "27b"], default="4b")
     ap.add_argument("--prompt-variant", default="short", help="only logs run with this prompt_variant ('' for any)")
     ap.add_argument("--dataset", help="only logs whose dataset_path contains this, e.g. xsum_screen/test")
-    ap.add_argument("--metrics", nargs="+", choices=["bertscore", "deepeval"], default=["bertscore", "deepeval"])
+    ap.add_argument("--metrics", nargs="+", choices=["bertscore", "deepeval", "judge"],
+                    default=["bertscore", "deepeval", "judge"])
     ap.add_argument("--limit", type=int, help="first N samples of each log (for a quick check)")
     ap.add_argument("--out", type=Path, default=Path("../results/summ_metrics"))
     ap.add_argument("--bertscore-model", default="roberta-large")
@@ -286,6 +330,8 @@ def main():
     ap.add_argument("--questions", type=int, default=5, help="DeepEval's n: assessment questions per document")
     ap.add_argument("--truths-limit", type=int, help="DeepEval's truths_extraction_limit (default: none)")
     ap.add_argument("--concurrency", type=int, default=32, help="summaries judged at once")
+    ap.add_argument("--judge-reference", action="store_true",
+                    help="show the Inspect judge the reference as a style example (summ_judge.py)")
     args = ap.parse_args()
 
     out = args.out / args.task
@@ -296,6 +342,7 @@ def main():
     jl = re.sub(r"[^A-Za-z0-9_.-]+", "_", args.judge_label or args.judge_model)
     de_tag = f"deepeval-{jl}-n{args.questions}" + (f"-t{args.truths_limit}" if args.truths_limit else "")
     bs_tag = "bertscore-" + re.sub(r"[^A-Za-z0-9_.-]+", "_", args.bertscore_model)
+    jg_tag = f"judge-{jl}" + ("-ref" if args.judge_reference else "")
 
     judge = cache = None
     cache_path = out / f"judge-cache-{de_tag}.json"
@@ -321,14 +368,21 @@ def main():
                 recs = await run_deepeval(rows, out / f"{name}.{de_tag}.jsonl", judge, cache, locks, args)
                 entry[de_tag] = {k: mean(recs, k) for k in ("deepeval", "alignment", "coverage")} | {"scored": len(recs)}
                 cache_path.write_text(json.dumps(cache))
+            if "judge" in args.metrics:
+                recs = await run_judge(name, log, rows, out / f"{name}.{jg_tag}.jsonl",
+                                       out / "judged" / f"{name}.{jg_tag}.eval", args)
+                entry[jg_tag] = {k: mean(recs, k) for k in
+                                 ("coherence", "consistency", "fluency", "relevance", "judge_mean")} | {"scored": len(recs)}
             summary_path.write_text(json.dumps(summary, indent=2) + "\n")
-            print(name, json.dumps({k: v for k, v in entry.items() if k.startswith(("bertscore", "deepeval"))}), flush=True)
+            print(name, json.dumps({k: v for k, v in entry.items() if k.startswith(("bertscore", "deepeval", "judge"))}), flush=True)
 
     asyncio.run(score_logs())
 
     cols = [(bs_tag, "bertscore_f1", "BERTScore F1")] * ("bertscore" in args.metrics) + \
            [(de_tag, k, h) for k, h in (("deepeval", "DeepEval"), ("alignment", "align"), ("coverage", "cover"))
-            if "deepeval" in args.metrics]
+            if "deepeval" in args.metrics] + \
+           [(jg_tag, k, h) for k, h in (("coherence", "coher"), ("consistency", "consist"), ("fluency", "fluency"),
+                                         ("relevance", "relev")) if "judge" in args.metrics]
     print(f"\n{'model':44} {'n':>5} " + " ".join(f"{h:>12}" for _, _, h in cols))
     for name in logs:
         e = summary[name]

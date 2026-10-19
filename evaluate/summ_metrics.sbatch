@@ -29,7 +29,7 @@ export DEEPEVAL_TELEMETRY_OPT_OUT=1
 JUDGE=${JUDGE_MODEL:-$PROJECTDIR/$USER/mm/models/qwen3-32b}
 JUDGE_LABEL=${JUDGE_LABEL:-$(basename "$JUDGE")}
 PORT=$((20000 + SLURM_JOB_ID % 20000))
-if [[ " $* " != *" --metrics "* || " $* " == *" deepeval"* ]]; then
+if [[ " $* " != *" --metrics "* || " $* " == *" deepeval"* || " $* " == *" judge"* ]]; then
   # The nodes have no CUDA toolkit: FlashInfer's sampler JIT-compiles with nvcc,
   # and torch.compile / CUDA graphs did not work either - the settings
   # generate_teacher_logprobs.py runs vLLM with.
