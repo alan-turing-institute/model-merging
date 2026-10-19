@@ -7,7 +7,7 @@ browsable log, per-sample introspection, and the provider's batching rather
 than old/evaluate.py's one-example-at-a-time loop.
 
 PROMPT PARITY: the user turn is built here, from the post, by the same
-`convert` that train/prepare_data.py uses to build the training data -
+`convert` that train/prepare_data_crime.py uses to build the training data -
 imported, not copied, so training and evaluation wording cannot drift apart.
 
 The negation handling in convert_to_label ("not really about crime") is the
@@ -48,17 +48,17 @@ from inspect_ai.solver import TaskState, generate
 # hold wherever `inspect eval` is run from.
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATASET = REPO_ROOT / "datasets" / "crime_dataset" / "test"
-PREPARE_SCRIPT = REPO_ROOT / "train" / "prepare_data.py"
+PREPARE_SCRIPT = REPO_ROOT / "train" / "prepare_data_crime.py"
 LABELS = {0: "not_crime", 1: "crime"}
 
 
 def load_convert():
-    """convert from train/prepare_data.py.
+    """convert from train/prepare_data_crime.py.
 
     Loaded by path because train/ is a directory of scripts, not an importable
     package.
     """
-    spec = importlib.util.spec_from_file_location("prepare_data", PREPARE_SCRIPT)
+    spec = importlib.util.spec_from_file_location("prepare_data_crime", PREPARE_SCRIPT)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module.convert
@@ -208,7 +208,7 @@ def crime(
         # started explaining itself. do_sample is not a generation option for
         # the hf provider - pass -M do_sample=false for greedy decoding.
         config=GenerateConfig(max_tokens=16),
-        # 1: prompt from train/prepare_data.py's convert; precision, recall,
+        # 1: prompt from train/prepare_data_crime.py's convert; precision, recall,
         # F1 and confusion counts computed in the task.
         version=1,
     )

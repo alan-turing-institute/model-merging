@@ -11,7 +11,7 @@
 #   e.g. sbatch train_crime.sbatch crime_gemma.yaml \
 #            ../datasets/crime_dataset_1_of_2 ../models/gemma3-4b-crime-1-of-2-lora
 #
-# dataset_dir must hold train/ and validation/ (the layout prepare_data.py
+# dataset_dir must hold train/ and validation/ (the layout prepare_data_crime.py
 # writes); they replace the datasets/test_datasets paths in the config, and
 # output_dir replaces its output_dir. dataset_num_proc is capped at 16 if the
 # config does not set it. Everything else in the config is used
@@ -25,7 +25,7 @@ OUTPUT_DIR=${3:?$USAGE}
 
 # Submit from train/: uv needs its pyproject.toml to find the environment.
 cd "$SLURM_SUBMIT_DIR"
-[[ -f pyproject.toml && -f prepare_data.py ]] || { echo "submit from train/, not $PWD" >&2; exit 1; }
+[[ -f pyproject.toml && -f prepare_data_crime.py ]] || { echo "submit from train/, not $PWD" >&2; exit 1; }
 [[ -f $CONFIG ]] || { echo "$CONFIG not found" >&2; exit 1; }
 
 # #SBATCH directives can't see script arguments, so send stdout/stderr to the

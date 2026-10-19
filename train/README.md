@@ -4,19 +4,21 @@ Here we give details and code of how to train a model to be a classifier on crim
 
 ## Data preparation
 
-First we use the `prepare_data.py` script to split the crime dataset into three parts, for training, validation and testing, saved to `../datasets/crime_dataset`.
+First we use the `prepare_data_crime.py` script to split the crime dataset into three parts, for training, validation and testing, saved to `../datasets/crime_dataset`.
 
 ```bash
-uv run python prepare_data.py
+uv run python prepare_data_crime.py
 ```
 
 To train several models on disjoint parts of the data (e.g. for merging), split it into `n` pieces with [split_dataset.py](../split_dataset.py). This splits the `train` and `validation` parts and drops `test`, keeping it held out for evaluating the merged model:
 
 ```bash
-uv run python ../split_dataset.py n ../datasets/crime_dataset ../datasets
+uv run python ../split_dataset.py n ../datasets/crime_dataset datasets
 ```
 
-which saves `../datasets/crime_dataset_<i>_of_<n>`.
+which saves `datasets/crime_dataset_<i>_of_<n>`.
+
+[prepare_data_wine.py](prepare_data_wine.py) does the same for wine reviews (predicting the 80–100 points rating from the review text), sampling 10k/1k/1k rows to `../datasets/wine_dataset` after removing duplicate reviews (`--help` for options).
 
 To run with other datasets etc, edit the python script.
 

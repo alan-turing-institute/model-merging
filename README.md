@@ -124,16 +124,16 @@ This should be used if you have previously pulled the code from github, but are 
     uv run --project evaluate huggingface-cli login
     ```
 
-3. The root-level [prepare_data.py](prepare_data.py) and [Convert_to_full_model.py](Convert_to_full_model.py) scripts aren't tied to a project of their own — run them with the `evaluate` environment, which already has `datasets`/`transformers`/`peft`:
+3. The root-level [Convert_to_full_model.py](Convert_to_full_model.py) script isn't tied to a project of its own — run it with the `evaluate` environment, which already has `datasets`/`transformers`/`peft`:
 
     ```bash
     uv run --project evaluate python Convert_to_full_model.py BASE_MODEL LORA_PATH OUTPUT_PATH
     ```
 
-    [prepare_data.py](prepare_data.py) is more ad hoc, since different models expect inputs in different forms (conversational etc.) and also the question asked depends on the task and give dataset.  For this, run python in the environment and then copy/paste your own code into it:
+    The `prepare_data_*.py` scripts in [train/](train/) (e.g. [train/prepare_data_crime.py](train/prepare_data_crime.py)) are more ad hoc, since different models expect inputs in different forms (conversational etc.) and also the question asked depends on the task and give dataset.  Run them with the `train` environment, editing them for your own task:
 
     ```bash
-    uv run --project evaluate python
+    cd train && uv run python prepare_data_crime.py && cd ..
     ```
 
 4. Self-distillation (`self-distill/`) needs a one-line patch to Axolotl's KD plugin, without which the KD loss can become inf/NaN and corrupt the model. Apply it after every `uv sync` in `self-distill/`, since reinstalling Axolotl removes it:
@@ -172,7 +172,7 @@ source ~/.bashrc
 
 Overview of the process for a `poor-mans parallelism' model merging to train a classifier:
 
-1. Split your dataset $D$ into parts $D_i$ - see [prepare data python script](prepare_data.py), or [split_dataset.py](self-distill/split_dataset.py) for a dataset saved with `save_to_disk`.
+1. Split your dataset $D$ into parts $D_i$ - see [prepare data python script](train/prepare_data_crime.py), or [split_dataset.py](split_dataset.py) for a dataset saved with `save_to_disk`.
 2. Train different copies of your base model on the $D_i$ to produce a LoRA adapter $L_i$ - see [train readme](train/README.md).
 3. Use mergekit to combine the different $M_i$ into one model $\tilde{M}$ - see [merge readme](merge/README.md).
 4. Test performance of $\tilde{M}$. - see [evaluate readme](evaluate/README.md).
