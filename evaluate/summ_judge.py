@@ -27,9 +27,12 @@ GROUNDED CONSISTENCY. Asked for a 1-5 consistency rating alone, Qwen3-32B gave
 names neither "Peter" nor the age - XSum's characteristic failure, and the one
 entity_support catches. So the judge first lists every name, number, date,
 place and organisation in the summary with a verbatim quote from the source
-that supports it (or none), the scorer checks each quote is really in the
-source and contains every capitalised word and number of the fact (version 2
-let "Lally" support "Liam Lally"), and any fact left without one caps
+that supports it (or none). The scorer then checks two things itself, without
+the judge: the quote is in the source (Source.quoted - the judge abbreviates
+with "..." and joins fragments, so this is a trigram match, not exact; version 3's
+exact match rejected correct facts such as "Fiji" and "YouGov survey"), and every
+name and number of the fact is in the source by entity_support's rules (version 2
+let the quote "Lally" support "Liam Lally"). Any fact failing either caps
 consistency at 2. The facts and
 their quotes are kept in the score's metadata.
 
@@ -50,10 +53,12 @@ from inspect_ai.solver import TaskState
 from inspect_ai.util import json_schema
 from pydantic import BaseModel, Field, ValidationError
 
+from semantic_metrics import entities
+
 DIMENSIONS = ("coherence", "consistency", "fluency", "relevance")
 # Bump with any change to the prompt or scoring: summ_metrics.py puts it in its
 # file names, so judgements from different versions are never mixed or reused.
-VERSION = 3
+VERSION = 4
 
 STYLE = {
     "xsum": "a single sentence of about 20 words, like the summary above a BBC News article",
@@ -106,18 +111,54 @@ not an answer key):
 """
 
 
-_NAME_OR_NUMBER = re.compile(r"\b(?:[A-Z][\w'’-]*|\d[\d,.]*)")
+_PUNCT = str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-"})
 
 
-def supported(fact, quote, source):
-    """The quote is verbatim in the source AND carries every capitalised word and
-    number of the fact: quoting "Lally" does not support "Liam Lally"."""
-    if not quote:
-        return False
-    q = " ".join(quote.split()).lower()
-    if q not in source:
-        return False
-    return all(tok.lower() in q for tok in _NAME_OR_NUMBER.findall(fact))
+def _words(text):
+    return re.findall(r"[\w'-]+", " ".join((text or "").translate(_PUNCT).split()).lower())
+
+
+def _trigrams(words):
+    return {tuple(words[i:i + 3]) for i in range(len(words) - 2)}
+
+
+class Source:
+    """The document, tokenised once for every fact checked against it."""
+
+    def __init__(self, document):
+        self.document = document
+        self.words = _words(document)
+        self.text = " ".join(self.words)
+        self.trigrams = _trigrams(self.words)
+
+    def quoted(self, quote):
+        """The quote is in the source, allowing for the judge's habits: "..."
+        between fragments and the odd changed word. A fragment of three or more
+        words needs 75% of its word trigrams in the source; a shorter one must
+        appear as it is."""
+        fragments = [_words(f) for f in re.split(r"\.\.\.|…", quote or "")]
+        fragments = [f for f in fragments if f]
+        for f in fragments:
+            if len(f) < 3:
+                if " ".join(f) not in self.text:
+                    return False
+            elif len(_trigrams(f) & self.trigrams) < 0.75 * len(_trigrams(f)):
+                return False
+        return bool(fragments)
+
+    def names_present(self, fact):
+        """Every name and number of the fact is in the source, by entity_support's
+        rules (semantic_metrics.entities, case-insensitive substring), allowing a
+        plural or possessive ending: "Ethiopians" is supported by "Ethiopian"."""
+        doc = self.document.translate(_PUNCT).lower()
+        for e in entities(fact):
+            e = e.translate(_PUNCT).lower()
+            if not any(c and c in doc for c in (e, e.removesuffix("'s"), e.removesuffix("s"))):
+                return False
+        return True
+
+    def supports(self, fact, quote):
+        return self.quoted(quote) and self.names_present(fact)
 
 
 class Fact(BaseModel):
@@ -159,8 +200,8 @@ def summ_judge(task: str = "xsum", with_reference: bool = False, model: str | No
                 j = Judgement.model_validate_json(text)
             except ValidationError:
                 continue
-            source = " ".join(document.split()).lower()
-            unsupported = [f.fact for f in j.facts if not supported(f.fact, f.source_quote, source)]
+            source = Source(document)
+            unsupported = [f.fact for f in j.facts if not source.supports(f.fact, f.source_quote)]
             value = {d: float(getattr(j, d)) for d in DIMENSIONS}
             if unsupported:
                 value["consistency"] = min(value["consistency"], 2.0)
