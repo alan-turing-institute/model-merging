@@ -30,8 +30,11 @@ JUDGE=${JUDGE_MODEL:-$PROJECTDIR/$USER/mm/models/qwen3-32b}
 JUDGE_LABEL=${JUDGE_LABEL:-$(basename "$JUDGE")}
 PORT=$((20000 + SLURM_JOB_ID % 20000))
 if [[ " $* " != *" --metrics "* || " $* " == *" deepeval"* ]]; then
-  UV_PROJECT_ENVIRONMENT=${SELF_DISTILL_VENV:-$PROJECTDIR/$USER/mm/venvs/self-distill} \
-    uv run --no-sync --project ../self-distill vllm serve "$JUDGE" --served-model-name judge \
+  # The nodes have no CUDA toolkit: FlashInfer's sampler JIT-compiles with nvcc,
+  # and torch.compile / CUDA graphs did not work either - the settings
+  # generate_teacher_logprobs.py runs vLLM with.
+  VLLM_USE_FLASHINFER_SAMPLER=0 UV_PROJECT_ENVIRONMENT=${SELF_DISTILL_VENV:-$PROJECTDIR/$USER/mm/venvs/self-distill} \
+    uv run --no-sync --project ../self-distill vllm serve "$JUDGE" --served-model-name judge --enforce-eager \
       --host 127.0.0.1 --port "$PORT" --max-model-len "${JUDGE_MAX_LEN:-16384}" \
       --gpu-memory-utilization "${JUDGE_GPU_SHARE:-0.85}" --seed 0 > "judge-$SLURM_JOB_ID.log" 2>&1 &
   SERVER=$!
