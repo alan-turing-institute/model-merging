@@ -22,6 +22,15 @@ reference, so a summary is not marked down for differing from one valid
 summary. `with_reference=True` shows the reference as an example of the
 expected style, not as an answer key.
 
+GROUNDED CONSISTENCY. Asked for a 1-5 consistency rating alone, Qwen3-32B gave
+5 to "Actor and broadcaster Peter Lally has died aged 73." for an article that
+names neither "Peter" nor the age - XSum's characteristic failure, and the one
+entity_support catches. So the judge first lists every name, number, date,
+place and organisation in the summary with a verbatim quote from the source
+that supports it (or none), the scorer checks each quote is really in the
+source, and any fact left without one caps consistency at 2. The facts and
+their quotes are kept in the score's metadata.
+
 The judge is the `grader` model role, or `model` if given; it answers in a
 JSON schema (structured output), with Qwen3's thinking switched off since a
 schema-constrained answer cannot open with a <think> block. Run it on finished
@@ -39,6 +48,9 @@ from inspect_ai.util import json_schema
 from pydantic import BaseModel, Field, ValidationError
 
 DIMENSIONS = ("coherence", "consistency", "fluency", "relevance")
+# Bump with any change to the prompt or scoring: summ_metrics.py puts it in its
+# file names, so judgements from different versions are never mixed or reused.
+VERSION = 2
 
 STYLE = {
     "xsum": "a single sentence of about 20 words, like the summary above a BBC News article",
@@ -62,10 +74,16 @@ Rate each dimension from 1 (very poor) to 5 (excellent):
   is an error; a summary with a fabricated fact scores at most 2.
 - fluency: each sentence is grammatical and easy to read, with no repetition or
   formatting problems.
-- relevance: the summary keeps the SOURCE's most important information and
-  leaves out the unimportant, given the length the task allows.
+- relevance: the summary spends its length on the SOURCE's most important
+  information. Do not penalise omissions the length budget forces: a
+  one-sentence summary is judged on whether it states the main point. A summary
+  much longer than the task asks for has included more than the most important
+  content, so rate it lower.
 
-First give a brief justification (at most three sentences), then the four ratings.
+First list, under "facts", EVERY name, number, date, place and organisation in
+the SUMMARY. For each, copy a short verbatim quote from the SOURCE that states
+it, or give null if the SOURCE does not state it. Do not paraphrase the quote.
+Then give a brief justification (at most three sentences) and the four ratings.
 
 [SOURCE]
 {document}
@@ -85,7 +103,13 @@ not an answer key):
 """
 
 
+class Fact(BaseModel):
+    fact: str
+    source_quote: str | None
+
+
 class Judgement(BaseModel):
+    facts: list[Fact]
     justification: str
     coherence: int = Field(ge=1, le=5)
     consistency: int = Field(ge=1, le=5)
@@ -118,9 +142,16 @@ def summ_judge(task: str = "xsum", with_reference: bool = False, model: str | No
                 j = Judgement.model_validate_json(text)
             except ValidationError:
                 continue
+            source = " ".join(document.split()).lower()
+            unsupported = [f.fact for f in j.facts
+                           if not f.source_quote or " ".join(f.source_quote.split()).lower() not in source]
             value = {d: float(getattr(j, d)) for d in DIMENSIONS}
+            if unsupported:
+                value["consistency"] = min(value["consistency"], 2.0)
             value["judge_mean"] = sum(value.values()) / len(DIMENSIONS)
-            return Score(value=value, answer=state.output.completion, explanation=j.justification)
+            note = f" Unsupported: {'; '.join(unsupported)}." if unsupported else ""
+            return Score(value=value, answer=state.output.completion, explanation=j.justification + note,
+                         metadata={"facts": [f.model_dump() for f in j.facts], "unsupported": unsupported})
         return Score(value={d: math.nan for d in (*DIMENSIONS, "judge_mean")},
                      explanation=f"unparsable judge output: {text[:300]!r}")
 

@@ -344,7 +344,9 @@ def main():
     jl = re.sub(r"[^A-Za-z0-9_.-]+", "_", args.judge_label or args.judge_model)
     de_tag = f"deepeval-{jl}-n{args.questions}" + (f"-t{args.truths_limit}" if args.truths_limit else "")
     bs_tag = "bertscore-" + re.sub(r"[^A-Za-z0-9_.-]+", "_", args.bertscore_model)
-    jg_tag = f"judge-{jl}" + ("-ref" if args.judge_reference else "")
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from summ_judge import VERSION as JUDGE_VERSION
+    jg_tag = f"judge{JUDGE_VERSION}-{jl}" + ("-ref" if args.judge_reference else "")
 
     judge = cache = None
     cache_path = out / f"judge-cache-{de_tag}.json"
