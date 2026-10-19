@@ -14,7 +14,8 @@
 #
 # With deepeval in --metrics (the default), the judge is served by vLLM from the
 # self-distill environment, on this job's GPU, as an OpenAI-compatible endpoint
-# on localhost; JUDGE_MODEL picks it (default: the local Gemma 3 27B). vLLM takes
+# on localhost; JUDGE_MODEL picks it (default: Qwen3-32B, downloaded by
+# jobs/dl_qwen3_32b.sh at a pinned revision; bf16, 65 GB). vLLM takes
 # JUDGE_GPU_SHARE of the GPU, leaving the rest for BERTScore's encoder. The
 # scorer runs in its own script environment (summ_metrics.py.lock); build it once
 # on a login node first:  uv sync --script summ_metrics.py
@@ -25,14 +26,14 @@ source ../train/cuda_env.sh
 export HF_HUB_CACHE=${HF_HUB_CACHE:-$PROJECTDIR/$USER/mm/hf-cache}
 export DEEPEVAL_TELEMETRY_OPT_OUT=1
 
-JUDGE=${JUDGE_MODEL:-$PROJECTDIR/$USER/mm/models/gemma-3-27b-it}
+JUDGE=${JUDGE_MODEL:-$PROJECTDIR/$USER/mm/models/qwen3-32b}
 JUDGE_LABEL=${JUDGE_LABEL:-$(basename "$JUDGE")}
 PORT=$((20000 + SLURM_JOB_ID % 20000))
 if [[ " $* " != *" --metrics "* || " $* " == *" deepeval"* ]]; then
   UV_PROJECT_ENVIRONMENT=${SELF_DISTILL_VENV:-$PROJECTDIR/$USER/mm/venvs/self-distill} \
     uv run --no-sync --project ../self-distill vllm serve "$JUDGE" --served-model-name judge \
       --host 127.0.0.1 --port "$PORT" --max-model-len "${JUDGE_MAX_LEN:-16384}" \
-      --gpu-memory-utilization "${JUDGE_GPU_SHARE:-0.8}" --seed 0 > "judge-$SLURM_JOB_ID.log" 2>&1 &
+      --gpu-memory-utilization "${JUDGE_GPU_SHARE:-0.85}" --seed 0 > "judge-$SLURM_JOB_ID.log" 2>&1 &
   SERVER=$!
   trap 'kill $SERVER 2>/dev/null || true' EXIT
   for _ in $(seq 120); do

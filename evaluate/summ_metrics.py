@@ -15,7 +15,9 @@
     uv run --script summ_metrics.py logs --task xsum --models 'kdgold75|^base' \
         --metrics bertscore deepeval --judge-url http://127.0.0.1:8000/v1 --judge-model judge
 
-summ_metrics.sbatch runs this with a vLLM server for the judge on the same GPU.
+summ_metrics.sbatch runs this with a vLLM server for the judge on the same GPU:
+Qwen3-32B by default, outside the Gemma family it judges, so it has no
+same-family preference for the students' style.
 Its environment is its own (the inline metadata above, locked in
 summ_metrics.py.lock): deepeval pins click, rich, tabulate and, through typer,
 huggingface-hub below what the evaluate project uses, so it stays out of that lock.
@@ -161,7 +163,11 @@ def judge_class():
 
         def _request(self, prompt, schema):
             kw = {"model": self.name, "messages": [{"role": "user", "content": prompt}],
-                  "temperature": 0.0, "max_tokens": self.max_tokens}
+                  "temperature": 0.0, "max_tokens": self.max_tokens,
+                  # Qwen3 opens every answer with a <think> block unless told not
+                  # to, which a JSON-constrained reply cannot hold. Templates
+                  # without the switch ignore it.
+                  "extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
             if schema is not None:
                 kw["response_format"] = {"type": "json_schema", "json_schema": {
                     "name": schema.__name__, "schema": schema.model_json_schema()}}
