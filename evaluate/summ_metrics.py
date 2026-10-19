@@ -377,7 +377,11 @@ def main():
                                        out / "judged" / f"{name}.{jg_tag}.eval", args)
                 entry[jg_tag] = {k: mean(recs, k) for k in
                                  ("coherence", "consistency", "fluency", "relevance", "judge_mean")} | {"scored": len(recs)}
-            summary_path.write_text(json.dumps(summary, indent=2) + "\n")
+            # Re-read before writing: several jobs (one per group of models) may
+            # share this file, and each must only replace its own models' entries.
+            disk = json.loads(summary_path.read_text()) if summary_path.exists() else {}
+            disk[name] = entry
+            summary_path.write_text(json.dumps(disk, indent=2) + "\n")
             print(name, json.dumps({k: v for k, v in entry.items() if k.startswith(("bertscore", "deepeval", "judge"))}), flush=True)
 
     asyncio.run(score_logs())
