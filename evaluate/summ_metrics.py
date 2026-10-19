@@ -285,8 +285,10 @@ async def run_judge(name, log, rows, path, out_log, args):
         part = log.model_copy(update={"samples": todo})
         grader = get_model(f"openai-api/local/{args.judge_model}", base_url=args.judge_url, api_key="none",
                            config=GenerateConfig(max_connections=args.concurrency))
+        # model= as well as the role: left unset, score_async instantiates the
+        # log's own model (the evaluated 4B), which scoring never calls.
         scored = await score_async(part, [summ_judge(task=args.task, with_reference=args.judge_reference)],
-                                   model_roles={"grader": grader}, action="append", display="none")
+                                   model=grader, model_roles={"grader": grader}, action="append", display="none")
         out_log.parent.mkdir(parents=True, exist_ok=True)
         write_eval_log(scored, str(out_log))
         with path.open("a") as fh:
