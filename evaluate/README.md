@@ -43,7 +43,7 @@ The `semantic` score needs `sentence-transformers/all-MiniLM-L6-v2` in the Huggi
 `Azure/evaluate.sh` runs the same command on the Azure ML compute instance:
 
 ```bash
-Azure/evaluate.sh <crime|xsum> <model> [--adapter <ref>] [inspect eval args...]
+Azure/evaluate.sh <crime|wine|xsum|translation> <model> [--adapter <ref>] [inspect eval args...]
 ```
 
 `<model>` and `--adapter` additionally accept an Azure ML registered model reference, `azureml:<name>:<version>`. The script downloads it into `evaluate/.azureml_models/` (skipped if already cached there) and records the reference in the log's metadata. The registry defaults to resource group `tire-1` and workspace `tire-2`; override them with `AZUREML_RG`, `AZUREML_WS` and `AZUREML_SUBSCRIPTION`.

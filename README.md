@@ -59,14 +59,16 @@ This is somewhat specific to getting setup on Azure at the Turing.
     mkdir ~/venvs/model-merging/train
     mkdir ~/venvs/model-merging/merge
     mkdir ~/venvs/model-merging/evaluate
+    mkdir ~/venvs/model-merging/self-distill
     ```
 
     Now make the symlinks from the model-merging directory:
 
     ```bash
-    ln –s ~/venvs/model-merging/train train/.venv
-    ln –s ~/venvs/model-merging/merge merge/.venv
-    ln –s ~/venvs/model-merging/evaluate evaluate/.venv
+    ln -s ~/venvs/model-merging/train train/.venv
+    ln -s ~/venvs/model-merging/merge merge/.venv
+    ln -s ~/venvs/model-merging/evaluate evaluate/.venv
+    ln -s ~/venvs/model-merging/self-distill self-distill/.venv
     ```
 
 3. This repo isn't one Python project — `train/`, `merge/`, and `evaluate/` are each a separate uv-managed environment (with different, sometimes conflicting, dependency versions — e.g. `merge/` needs a patched `transformers` that `train/` doesn't). Sync each one you plan to use:
@@ -75,6 +77,7 @@ This is somewhat specific to getting setup on Azure at the Turing.
     cd train    && uv sync && cd ..
     cd merge    && uv sync && cd ..
     cd evaluate && uv sync && cd ..
+    cd self-distill && uv sync && cd ..
     ```
 
     Commands in each sub-project's README assume you're running them via that sub-project's environment, e.g. `uv run axolotl train crime_gemma.yaml` from inside `train/`.

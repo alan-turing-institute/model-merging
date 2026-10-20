@@ -7,14 +7,20 @@
 #            --adapter azureml:gemma3-crime-full-lora:1
 #        Azure/evaluate.sh xsum azureml:gemma3-xsum-self-dist-short:1 \
 #            -T prompt_variant=short --limit 50
+#        Azure/evaluate.sh wine google/gemma-3-4b-it --limit 50
+#        Azure/evaluate.sh translation google/gemma-3-4b-it \
+#            -T prompt_variant=short -T split=validation
 #
 # The Azure counterpart of evaluate.sbatch: the same `inspect eval` command,
-# plus resolving Azure ML model-registry references. task is crime or xsum
-# (runs <task>_task.py). model and --adapter each take a local path, a Hugging
-# Face hub id, or azureml:<name>:<version>; a registry reference is downloaded
-# into evaluate/.azureml_models/ (skipped if already there). xsum needs
-# -T prompt_variant=short|long|teacher, matching the prompt the model was
-# trained on.
+# plus resolving Azure ML model-registry references. task is crime, wine, xsum
+# or translation (runs <task>_task.py). model and --adapter each take a local
+# path, a Hugging Face hub id, or azureml:<name>:<version>; a registry reference
+# is downloaded into evaluate/.azureml_models/ (skipped if already there). xsum
+# and translation need -T prompt_variant=short|long|teacher, matching the
+# prompt the model was trained on. For translation, COMET is a second step, run
+# from evaluate/ (the counterpart of comet_score.sbatch):
+#   uv run --project comet inspect score logs/<log>.eval \
+#     --scorer translation_task.py@comet --action append --overwrite
 #
 # Registry settings, overridable from the environment:
 #   AZUREML_RG (default tire-1), AZUREML_WS (default tire-2),
@@ -22,7 +28,7 @@
 #
 # The .eval log is written to evaluate/logs/; read it with `uv run inspect view`.
 set -euo pipefail
-USAGE="usage: Azure/evaluate.sh <crime|xsum> <model> [--adapter <ref>] [inspect eval args...]"
+USAGE="usage: Azure/evaluate.sh <crime|wine|xsum|translation> <model> [--adapter <ref>] [inspect eval args...]"
 TASK=${1:?$USAGE}
 MODEL=${2:?$USAGE}
 shift 2
@@ -45,8 +51,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 TASK_FILE=${TASK}_task.py
 [[ -f $TASK_FILE ]] || { echo "no $TASK_FILE in $PWD" >&2; exit 1; }
 
-if [[ $TASK == xsum && " $* " != *" prompt_variant="* ]]; then
-  echo "xsum needs -T prompt_variant=short|long|teacher (the prompt the model was trained on)" >&2
+if [[ $TASK != crime && $TASK != wine && " $* " != *" prompt_variant="* ]]; then
+  echo "$TASK needs -T prompt_variant=short|long|teacher (the prompt the model was trained on)" >&2
   exit 1
 fi
 
