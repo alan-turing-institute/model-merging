@@ -25,22 +25,21 @@ source ../train/cuda_env.sh
 # The cache, not HF_HOME: HF_HOME would move the auth token too (see evaluate.sbatch).
 export HF_HUB_CACHE=${HF_HUB_CACHE:-$PROJECTDIR/$USER/mm/hf-cache}
 export DEEPEVAL_TELEMETRY_OPT_OUT=1
-# Some nodes give TMPDIR a node-local /local/user/<uid> this job cannot write;
-# vLLM's server then dies creating torch's inductor cache there. Fall back to a
-# job-private directory on the project filesystem.
-if ! { mkdir -p "${TMPDIR:-/tmp}" && [[ -w ${TMPDIR:-/tmp} ]]; } 2>/dev/null; then
-  export TMPDIR=$PROJECTDIR/$USER/mm/tmp/$SLURM_JOB_ID
-  mkdir -p "$TMPDIR"
-  OWN_TMP=1
-fi
+# TMPDIR is /local/user/<uid>, a symlink to the per-user /run/user/<uid> that
+# systemd creates with a session and removes when the user's last session on the
+# node ends - so it can exist when this script starts and be gone when vLLM
+# creates torch's inductor cache there (PermissionError: two rounds of retries
+# died at start-up this way). Use a job-private directory instead.
+export TMPDIR=$PROJECTDIR/$USER/mm/tmp/$SLURM_JOB_ID
+mkdir -p "$TMPDIR"
+export TORCHINDUCTOR_CACHE_DIR=$TMPDIR/torchinductor
 SERVER=
 cleanup() {
   [[ -n $SERVER ]] && kill "$SERVER" 2>/dev/null
-  [[ -n ${OWN_TMP:-} ]] && rm -rf "$TMPDIR"
+  rm -rf "$TMPDIR"
   return 0
 }
 trap cleanup EXIT
-export TORCHINDUCTOR_CACHE_DIR=${TORCHINDUCTOR_CACHE_DIR:-${TMPDIR:-/tmp}/torchinductor-$USER}
 
 JUDGE=${JUDGE_MODEL:-$PROJECTDIR/$USER/mm/models/qwen3-32b}
 JUDGE_LABEL=${JUDGE_LABEL:-$(basename "$JUDGE")}
