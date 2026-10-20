@@ -1,0 +1,665 @@
+{
+  "billsum_split-kdgold75-merged-dare_ties": {
+    "log": "2026-10-15T08-55-09-00-00_billsum-split_fYHunRgBkgxccdDctnCps6.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3131303174570203,
+      "bertscore_r": 0.34312242340482774,
+      "bertscore_f1": 0.32506557075679304
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.76,
+      "consistency": 3.52,
+      "fluency": 4.85,
+      "relevance": 4.724,
+      "judge_mean": 4.4635,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-expert_1-lora": {
+    "log": "2026-10-12T06-25-41-00-00_billsum-split_52HScS6Dc5nxvDS22HckJ7.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.30542279297485947,
+      "bertscore_r": 0.34104257942247207,
+      "bertscore_f1": 0.3197466861975845
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.658,
+      "consistency": 3.618,
+      "fluency": 4.802,
+      "relevance": 4.638,
+      "judge_mean": 4.429,
+      "scored": 500
+    }
+  },
+  "billsum_split-merged-dare_ties": {
+    "log": "2026-10-14T09-44-52-00-00_billsum-split_89cA8zSmtr9ovbPRK5Ymvv.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.30847301040170716,
+      "bertscore_r": 0.34861784058995543,
+      "bertscore_f1": 0.3252343763959361
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.627254509018036,
+      "consistency": 3.623246492985972,
+      "fluency": 4.753507014028056,
+      "relevance": 4.6072144288577155,
+      "judge_mean": 4.402805611222445,
+      "scored": 499
+    }
+  },
+  "base-gemma-3-4b-it": {
+    "log": "2026-10-15T07-53-14-00-00_billsum-split_3AheyPnCKXL7CWh9qUutmG.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": -0.13101913721259917,
+      "bertscore_r": 0.2094307368886657,
+      "bertscore_f1": 0.0336679874433321
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.991967871485944,
+      "consistency": 3.4397590361445785,
+      "fluency": 4.995983935742972,
+      "relevance": 4.983935742971887,
+      "judge_mean": 4.602911646586345,
+      "scored": 498
+    }
+  },
+  "billsum_split-kdgold75-merged-dare_ties_s2": {
+    "log": "2026-10-15T08-55-11-00-00_billsum-split_jXP2shf99TQt7o8QcM2AXT.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3557536734424066,
+      "bertscore_r": 0.32644038401125,
+      "bertscore_f1": 0.33730259332619605
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.783567134268537,
+      "consistency": 3.5771543086172346,
+      "fluency": 4.9118236472945895,
+      "relevance": 4.729458917835672,
+      "judge_mean": 4.500501002004008,
+      "scored": 499
+    }
+  },
+  "billsum_split-merged-dare_ties_s2": {
+    "log": "2026-10-14T10-13-21-00-00_billsum-split_5ukCdTyYacQLcAdeMYNwLC.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3071140260372176,
+      "bertscore_r": 0.3539213637476787,
+      "bertscore_f1": 0.3272199670486152
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.658,
+      "consistency": 3.606,
+      "fluency": 4.784,
+      "relevance": 4.62,
+      "judge_mean": 4.417,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-expert_1_s2-lora": {
+    "log": "2026-10-14T10-11-11-00-00_billsum-split_McGsWizw72UX7FsZwXHo4C.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.2969413357640151,
+      "bertscore_r": 0.3520006442819722,
+      "bertscore_f1": 0.32099053710186853
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.64,
+      "consistency": 3.73,
+      "fluency": 4.768,
+      "relevance": 4.602,
+      "judge_mean": 4.435,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-kdgold75_a-lora": {
+    "log": "2026-10-15T08-53-14-00-00_billsum-split_2jmYFH5EpxepBzHnv8hwkS.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3273376768838498,
+      "bertscore_r": 0.32496853191801345,
+      "bertscore_f1": 0.32269364629685876
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.71,
+      "consistency": 3.57,
+      "fluency": 4.846,
+      "relevance": 4.652,
+      "judge_mean": 4.4445,
+      "scored": 500
+    }
+  },
+  "billsum_split-kdgold75-merged-dare_ties_s3": {
+    "log": "2026-10-15T08-55-19-00-00_billsum-split_mrVzUYHzY5FxGTbjgiwFmv.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3400700750946999,
+      "bertscore_r": 0.3306119696376845,
+      "bertscore_f1": 0.33183550465642475
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.784,
+      "consistency": 3.574,
+      "fluency": 4.892,
+      "relevance": 4.746,
+      "judge_mean": 4.499,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-kdgold75_a_s2-lora": {
+    "log": "2026-10-15T08-53-25-00-00_billsum-split_XcLBCMBqZgGHvWUMAXKVak.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3400250001200475,
+      "bertscore_r": 0.3262964105987921,
+      "bertscore_f1": 0.3298929180455161
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.751503006012024,
+      "consistency": 3.529058116232465,
+      "fluency": 4.859719438877756,
+      "relevance": 4.717434869739479,
+      "judge_mean": 4.464428857715431,
+      "scored": 499
+    }
+  },
+  "billsum_split-merged-dare_ties_s3": {
+    "log": "2026-10-14T10-14-13-00-00_billsum-split_dGMLEo4hKQjrs7MZngXcCW.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.34888563173171133,
+      "bertscore_r": 0.33694194731721655,
+      "bertscore_f1": 0.3393068198710771
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.656,
+      "consistency": 3.668,
+      "fluency": 4.794,
+      "relevance": 4.59,
+      "judge_mean": 4.427,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-expert_1_s3-lora": {
+    "log": "2026-10-14T10-11-54-00-00_billsum-split_MJqPsAxnEbmvq52bn3aXhN.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3430659001539461,
+      "bertscore_r": 0.32421168571244924,
+      "bertscore_f1": 0.3297753315589507
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.627254509018036,
+      "consistency": 3.6713426853707416,
+      "fluency": 4.797595190380761,
+      "relevance": 4.573146292585171,
+      "judge_mean": 4.417334669338677,
+      "scored": 499
+    }
+  },
+  "billsum_split-kdgold75-merged-linear": {
+    "log": "2026-10-15T08-55-08-00-00_billsum-split_dBbq7hUi8ZCV93eYBaQTq9.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.32070223824470306,
+      "bertscore_r": 0.3416538629941642,
+      "bertscore_f1": 0.327756803770666
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.779559118236473,
+      "consistency": 3.56312625250501,
+      "fluency": 4.877755511022044,
+      "relevance": 4.741482965931864,
+      "judge_mean": 4.490480961923848,
+      "scored": 499
+    }
+  },
+  "gemma3-billsum_split-kdgold75_a_s3-lora": {
+    "log": "2026-10-15T08-53-13-00-00_billsum-split_nTzdjUr2D5RLUYTYNYvwNx.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3552764159352519,
+      "bertscore_r": 0.31918026702525093,
+      "bertscore_f1": 0.3335572571442463
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.808,
+      "consistency": 3.648,
+      "fluency": 4.948,
+      "relevance": 4.736,
+      "judge_mean": 4.535,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-expert_2-lora": {
+    "log": "2026-10-12T06-27-04-00-00_billsum-split_U8qUtDs88PVLdNsLx96ofs.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.31761343114241025,
+      "bertscore_r": 0.3398331989075523,
+      "bertscore_f1": 0.3253035242193146
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.557114228456914,
+      "consistency": 3.6673346693386772,
+      "fluency": 4.693386773547094,
+      "relevance": 4.519038076152305,
+      "judge_mean": 4.359218436873747,
+      "scored": 499
+    }
+  },
+  "billsum_split-merged-linear": {
+    "log": "2026-10-14T09-42-30-00-00_billsum-split_UWiyd9kGcTSFa7J7jQ7aMS.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.31801066325604915,
+      "bertscore_r": 0.3445309675887693,
+      "bertscore_f1": 0.3276633730097674
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.678,
+      "consistency": 3.618,
+      "fluency": 4.802,
+      "relevance": 4.654,
+      "judge_mean": 4.438,
+      "scored": 500
+    }
+  },
+  "billsum_split-kdgold75-merged-linear_s2": {
+    "log": "2026-10-15T08-55-12-00-00_billsum-split_a65hyFawpadyzJHzy4uqcg.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.35071113918407354,
+      "bertscore_r": 0.32265882645733657,
+      "bertscore_f1": 0.33306171384686606
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.813627254509018,
+      "consistency": 3.6312625250501003,
+      "fluency": 4.925851703406813,
+      "relevance": 4.765531062124248,
+      "judge_mean": 4.534068136272545,
+      "scored": 499
+    }
+  },
+  "gemma3-billsum_split-kdgold75_b-lora": {
+    "log": "2026-10-15T08-52-44-00-00_billsum-split_GVYBk8XP8VkDi3KzFecRB4.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3070104530038079,
+      "bertscore_r": 0.3504986973691266,
+      "bertscore_f1": 0.3256223037494346
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.762,
+      "consistency": 3.592,
+      "fluency": 4.872,
+      "relevance": 4.742,
+      "judge_mean": 4.492,
+      "scored": 500
+    }
+  },
+  "billsum_split-kdgold75-merged-linear_s3": {
+    "log": "2026-10-15T08-55-30-00-00_billsum-split_4jBqpzsAQekohAmNQXc3Zz.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3418684028075077,
+      "bertscore_r": 0.33378122091293333,
+      "bertscore_f1": 0.33419721842580474
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.752,
+      "consistency": 3.682,
+      "fluency": 4.898,
+      "relevance": 4.702,
+      "judge_mean": 4.5085,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-expert_2_s2-lora": {
+    "log": "2026-10-12T09-18-12-00-00_billsum-split_WzCW4FbVrRrDMfYnvk59vp.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3069004837879911,
+      "bertscore_r": 0.3435223473031074,
+      "bertscore_f1": 0.32214570898283273
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.562,
+      "consistency": 3.546,
+      "fluency": 4.704,
+      "relevance": 4.518,
+      "judge_mean": 4.3325,
+      "scored": 500
+    }
+  },
+  "billsum_split-merged-linear_s2": {
+    "log": "2026-10-14T10-13-22-00-00_billsum-split_2DnpEkQQuK6mJwoqAu9fN9.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.29894581353547983,
+      "bertscore_r": 0.3540666763586923,
+      "bertscore_f1": 0.3232524287411943
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.626,
+      "consistency": 3.59,
+      "fluency": 4.754,
+      "relevance": 4.604,
+      "judge_mean": 4.3935,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-kdgold75_b_s2-lora": {
+    "log": "2026-10-15T08-53-54-00-00_billsum-split_UXZTBQHQgdmkERD7aktAtW.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.34754550012305846,
+      "bertscore_r": 0.3225389763971325,
+      "bertscore_f1": 0.33117693079821764
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.7565392354124745,
+      "consistency": 3.62374245472837,
+      "fluency": 4.887323943661972,
+      "relevance": 4.712273641851106,
+      "judge_mean": 4.494969818913481,
+      "scored": 497
+    }
+  },
+  "billsum_split-kdgold75-merged-task_arithmetic": {
+    "log": "2026-10-15T08-55-16-00-00_billsum-split_bnJtQecbG8Ne6u33uaQPDV.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.31906202719546856,
+      "bertscore_r": 0.3392698252219707,
+      "bertscore_f1": 0.32580469298482057
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.776,
+      "consistency": 3.58,
+      "fluency": 4.858,
+      "relevance": 4.74,
+      "judge_mean": 4.4885,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-expert_2_s3-lora": {
+    "log": "2026-10-12T09-22-02-00-00_billsum-split_JfoKxNL7EMrhHshGvWNLvx.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3393539186347043,
+      "bertscore_r": 0.3289595650287811,
+      "bertscore_f1": 0.3303489614510909
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.634,
+      "consistency": 3.666,
+      "fluency": 4.764,
+      "relevance": 4.582,
+      "judge_mean": 4.4115,
+      "scored": 500
+    }
+  },
+  "gemma3-billsum_split-kdgold75_b_s3-lora": {
+    "log": "2026-10-15T08-53-13-00-00_billsum-split_dqW3PCc4MUqdDEvzJD5DEm.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.316206572291092,
+      "bertscore_r": 0.3419968601844739,
+      "bertscore_f1": 0.32571743032103406
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.734,
+      "consistency": 3.564,
+      "fluency": 4.864,
+      "relevance": 4.734,
+      "judge_mean": 4.474,
+      "scored": 500
+    }
+  },
+  "billsum_split-merged-linear_s3": {
+    "log": "2026-10-14T10-14-17-00-00_billsum-split_6tNL5JQwBW4nQGp9565jeW.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3439498258037493,
+      "bertscore_r": 0.3351030445857905,
+      "bertscore_f1": 0.3357883475422859
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.674,
+      "consistency": 3.736,
+      "fluency": 4.806,
+      "relevance": 4.612,
+      "judge_mean": 4.457,
+      "scored": 500
+    }
+  },
+  "billsum_split-kdgold75-merged-task_arithmetic_s2": {
+    "log": "2026-10-15T08-55-36-00-00_billsum-split_95PJ9toR5SrcqqsWdFNzSm.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.345086449162668,
+      "bertscore_r": 0.3220416240673512,
+      "bertscore_f1": 0.32970966455340384
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.791583166332665,
+      "consistency": 3.649298597194389,
+      "fluency": 4.913827655310621,
+      "relevance": 4.739478957915832,
+      "judge_mean": 4.523547094188377,
+      "scored": 499
+    }
+  },
+  "gemma3-billsum_split-kdgold75_full-lora": {
+    "log": "2026-10-15T09-17-44-00-00_billsum-split_hT8LNnnm9dGcB5T2Gnj3gR.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3300128401555121,
+      "bertscore_r": 0.36526001488231125,
+      "bertscore_f1": 0.3448313389122486
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.833333333333333,
+      "consistency": 3.5,
+      "fluency": 4.899598393574297,
+      "relevance": 4.829317269076305,
+      "judge_mean": 4.515562248995984,
+      "scored": 498
+    }
+  },
+  "gemma3-billsum_split-full-lora": {
+    "log": "2026-10-12T06-33-58-00-00_billsum-split_U8qDQwS3L2NFhk4biuFZoo.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3578159403190948,
+      "bertscore_r": 0.36514651602320375,
+      "bertscore_f1": 0.35844262277334926
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.706,
+      "consistency": 3.724,
+      "fluency": 4.834,
+      "relevance": 4.656,
+      "judge_mean": 4.48,
+      "scored": 500
+    }
+  },
+  "billsum_split-merged-task_arithmetic": {
+    "log": "2026-10-14T09-45-22-00-00_billsum-split_6LcyfZe8DQw4NTusnLuRia.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.31111951656951714,
+      "bertscore_r": 0.3467171982091386,
+      "bertscore_f1": 0.32544939390104266
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.662,
+      "consistency": 3.602,
+      "fluency": 4.784,
+      "relevance": 4.608,
+      "judge_mean": 4.414,
+      "scored": 500
+    }
+  },
+  "billsum_split-kdgold75-merged-task_arithmetic_s3": {
+    "log": "2026-10-15T08-55-19-00-00_billsum-split_WsS9hD8HYqYrsXoQHbsder.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.34405508983228356,
+      "bertscore_r": 0.33224167203949767,
+      "bertscore_f1": 0.3346985221970826
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.764,
+      "consistency": 3.62,
+      "fluency": 4.898,
+      "relevance": 4.716,
+      "judge_mean": 4.4995,
+      "scored": 500
+    }
+  },
+  "billsum_split-merged-task_arithmetic_s2": {
+    "log": "2026-10-14T10-13-22-00-00_billsum-split_FtjjptKNeLpkfpaQF5Lfvb.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.30507033755554586,
+      "bertscore_r": 0.3494170037573203,
+      "bertscore_f1": 0.32396458493033425
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.66,
+      "consistency": 3.658,
+      "fluency": 4.814,
+      "relevance": 4.612,
+      "judge_mean": 4.436,
+      "scored": 500
+    }
+  },
+  "billsum_split-kdgold75-merged-ties": {
+    "log": "2026-10-15T08-54-58-00-00_billsum-split_Yiram4zqVZDEiaEM46NAkd.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3234569877493195,
+      "bertscore_r": 0.34519464130233973,
+      "bertscore_f1": 0.33095086640585214
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.796,
+      "consistency": 3.534,
+      "fluency": 4.896,
+      "relevance": 4.736,
+      "judge_mean": 4.4905,
+      "scored": 500
+    }
+  },
+  "billsum_split-merged-task_arithmetic_s3": {
+    "log": "2026-10-14T10-14-24-00-00_billsum-split_HdoopmqGrvhzMnjNgvKJwN.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.34636386463884267,
+      "bertscore_r": 0.33722126732720065,
+      "bertscore_f1": 0.33810125828674065
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.686,
+      "consistency": 3.712,
+      "fluency": 4.816,
+      "relevance": 4.632,
+      "judge_mean": 4.4615,
+      "scored": 500
+    }
+  },
+  "billsum_split-kdgold75-merged-ties_s2": {
+    "log": "2026-10-15T08-55-36-00-00_billsum-split_jbsjhwETJoUDkKs3pPT3MF.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.33948235712072344,
+      "bertscore_r": 0.3259516771622002,
+      "bertscore_f1": 0.3288409028928727
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.777555110220441,
+      "consistency": 3.623246492985972,
+      "fluency": 4.919839679358717,
+      "relevance": 4.729458917835672,
+      "judge_mean": 4.5125250501002006,
+      "scored": 499
+    }
+  },
+  "billsum_split-merged-ties": {
+    "log": "2026-10-14T09-44-18-00-00_billsum-split_5ygqdTiMiZXZeyCLSwU65A.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.3216636434475659,
+      "bertscore_r": 0.3311004993277602,
+      "bertscore_f1": 0.3225526256537996
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.531062124248497,
+      "consistency": 3.50501002004008,
+      "fluency": 4.697394789579159,
+      "relevance": 4.452905811623246,
+      "judge_mean": 4.296593186372745,
+      "scored": 499
+    }
+  },
+  "billsum_split-kdgold75-merged-ties_s3": {
+    "log": "2026-10-15T08-55-16-00-00_billsum-split_3GNvwZu29CyNxafJ5Z5eYA.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.34992332531977444,
+      "bertscore_r": 0.3380665216804482,
+      "bertscore_f1": 0.34033732512500137
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.754,
+      "consistency": 3.63,
+      "fluency": 4.894,
+      "relevance": 4.712,
+      "judge_mean": 4.4975,
+      "scored": 500
+    }
+  },
+  "billsum_split-merged-ties_s2": {
+    "log": "2026-10-14T10-13-22-00-00_billsum-split_CkteKwme5Cbk7z34kpGxzN.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.30554603054816837,
+      "bertscore_r": 0.33537971378781367,
+      "bertscore_f1": 0.31702462416223715
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.374749498997996,
+      "consistency": 3.523046092184369,
+      "fluency": 4.567134268537074,
+      "relevance": 4.336673346693387,
+      "judge_mean": 4.200400801603206,
+      "scored": 499
+    }
+  },
+  "billsum_split-merged-ties_s3": {
+    "log": "2026-10-14T10-14-18-00-00_billsum-split_nnKUXaX3mmK5V7wAjdrgZo.eval",
+    "samples": 500,
+    "bertscore-roberta-large": {
+      "bertscore_p": 0.37343439809419215,
+      "bertscore_r": 0.318432420254685,
+      "bertscore_f1": 0.34209285205043855
+    },
+    "judge4-qwen3-32b": {
+      "coherence": 4.498997995991984,
+      "consistency": 3.62124248496994,
+      "fluency": 4.7434869739478955,
+      "relevance": 4.426853707414829,
+      "judge_mean": 4.322645290581162,
+      "scored": 499
+    }
+  }
+}
