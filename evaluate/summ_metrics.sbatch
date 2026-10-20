@@ -33,10 +33,16 @@ if [[ " $* " != *" --metrics "* || " $* " == *" deepeval"* || " $* " == *" judge
   # The nodes have no CUDA toolkit: FlashInfer's sampler JIT-compiles with nvcc,
   # and torch.compile / CUDA graphs did not work either - the settings
   # generate_teacher_logprobs.py runs vLLM with.
+  # JUDGE_COMPACT_JSON=1: no free whitespace in schema-constrained output. The
+  # grammar otherwise lets the judge emit newlines until max_tokens, which was
+  # most of the 2% of XSum judgements still unparsable after the first retry.
+  # Opt-in, so a retry does not change how the bulk of a run was decoded.
+  EXTRA=()
+  [[ -n ${JUDGE_COMPACT_JSON:-} ]] && EXTRA=(--structured-outputs-config '{"backend": "xgrammar", "disable_any_whitespace": true}')
   VLLM_USE_FLASHINFER_SAMPLER=0 UV_PROJECT_ENVIRONMENT=${SELF_DISTILL_VENV:-$PROJECTDIR/$USER/mm/venvs/self-distill} \
     uv run --no-sync --project ../self-distill vllm serve "$JUDGE" --served-model-name judge --enforce-eager \
       --host 127.0.0.1 --port "$PORT" --max-model-len "${JUDGE_MAX_LEN:-16384}" \
-      --gpu-memory-utilization "${JUDGE_GPU_SHARE:-0.85}" --seed 0 > "judge-$SLURM_JOB_ID.log" 2>&1 &
+      --gpu-memory-utilization "${JUDGE_GPU_SHARE:-0.85}" --seed 0 "${EXTRA[@]}" > "judge-$SLURM_JOB_ID.log" 2>&1 &
   SERVER=$!
   trap 'kill $SERVER 2>/dev/null || true' EXIT
   for _ in $(seq 120); do
