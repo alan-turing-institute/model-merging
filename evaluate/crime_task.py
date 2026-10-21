@@ -1,27 +1,44 @@
-"""Reddit crime classification as an Inspect AI task.
+"""Reddit crime classification (crime / not_crime) as an Inspect AI task.
 
-The Inspect equivalent of old/evaluate.py, and the evaluator the KD and cross-task
-arms use for this dataset. Same prompt, same label parsing, same metric
-definitions - what changes is that it runs through Inspect, so it gets a
-browsable log, per-sample introspection, and the provider's batching rather
-than old/evaluate.py's one-example-at-a-time loop.
+Each test post (datasets/crime_dataset/test, 1,077 posts) is put to the model
+with the instruction to answer in one word, and the answer is scored against
+the gold label. Generation is capped at 16 tokens: enough for the label, and
+enough to see a model that has started explaining itself.
 
-PROMPT PARITY: the user turn is built here, from the post, by the same
-`convert` that train/prepare_data_crime.py uses to build the training data -
-imported, not copied, so training and evaluation wording cannot drift apart.
+PROMPT. The user turn is built by `convert` from train/prepare_data_crime.py,
+the same function that built the training data. It is imported, not copied,
+so training and evaluation wording cannot drift apart.
 
-The negation handling in convert_to_label ("not really about crime") is the
-difference between a plausible-looking accuracy and a correct one.
+PARSING (convert_to_label). Case-insensitive, over the whole answer:
+  - "not_crime", "non-crime", "non_crime", "non crime" or "noncrime" -> not_crime
+  - otherwise "crime" with a negation before it ("not a crime",
+    "not really about crime") -> not_crime
+  - otherwise "crime" -> crime
+  - no "crime" at all -> unparsed
+An unparsed answer is scored as the wrong label, never dropped, so every
+metric's denominator is the whole test set. The `unparsed` rate is reported
+alongside so a model that stops answering is visible.
+
+METRICS, with crime as the positive class: accuracy (with stderr), precision,
+recall, specificity, F1 and the confusion counts (tp, fp, fn, tn). The
+predicted and actual label of every sample are kept in the log, so two runs
+can be paired (e.g. McNemar) without re-running either.
+
+USAGE. From evaluate/. A base model:
 
     inspect eval crime_task.py --model hf/google/gemma-3-4b-it \
       -M batch_size=8 -M do_sample=false -M dtype=bfloat16
 
-A LoRA adapter on a base model uses the hf-peft provider (hf_peft_provider.py,
+A LoRA adapter on a base model, via the hf-peft provider (hf_peft_provider.py,
 registered as an Inspect plugin by this project's pyproject.toml):
 
     inspect eval crime_task.py --model hf-peft/google/gemma-3-4b-it \
       -M adapter_path=../models/gemma3-crime-full-lora \
       -M batch_size=8 -M do_sample=false -M dtype=bfloat16
+
+or on the cluster, `sbatch evaluate.sbatch crime <model> [--adapter <dir>]`.
+
+Task arguments (-T): dataset_path, limit, text_column, label_column.
 """
 
 import importlib.util
@@ -65,11 +82,14 @@ def load_convert():
 
 
 NEGATION_RE = re.compile(r"\b(not|no|never)\b|n't")
+# "non-crime", "non_crime" (the dataset's own ClassLabel name) and "noncrime":
+# NEGATION_RE needs a whole word, so without this they parse as crime.
+NOT_CRIME_RE = re.compile(r"not_crime|\bnon[-_ ]?crime")
 
 
 def convert_to_label(text):
     text = text.lower()
-    if "not_crime" in text:
+    if NOT_CRIME_RE.search(text):
         return 0
     crime_index = text.find("crime")
     if crime_index == -1:
@@ -104,8 +124,8 @@ def crime_samples(dataset_path, limit=None, text_column="posts_name",
 def scored_prediction(sample_score: SampleScore) -> tuple[int, int]:
     """(predicted, actual), with an unparsed generation as the wrong label.
 
-    Matches old/evaluate.py: an unparsed generation is scored wrong rather than
-    dropped, so the denominator of every metric is the whole test set.
+    An unparsed generation is scored wrong rather than dropped, so the
+    denominator of every metric is the whole test set.
     """
     meta = sample_score.score.metadata
     actual = meta["actual"]
@@ -150,6 +170,16 @@ def recall() -> Metric:
 
 
 @metric
+def specificity() -> Metric:
+    def compute(scores: list[SampleScore]) -> float:
+        c = confusion()(scores)
+        actual_negative = c["tn"] + c["fp"]
+        return c["tn"] / actual_negative if actual_negative else 0.0
+
+    return compute
+
+
+@metric
 def f1() -> Metric:
     def compute(scores: list[SampleScore]) -> float:
         c = confusion()(scores)
@@ -159,11 +189,13 @@ def f1() -> Metric:
     return compute
 
 
-# precision/recall/f1/confusion read the per-sample labels from metadata, so
-# which value key they hang off is arbitrary; accuracy is the natural home.
+# precision/recall/specificity/f1/confusion read the per-sample labels from
+# metadata, so which value key they hang off is arbitrary; accuracy is the
+# natural home.
 @scorer(
     metrics={
-        "accuracy": [mean(), stderr(), precision(), recall(), f1(), confusion()],
+        "accuracy": [mean(), stderr(), precision(), recall(), specificity(), f1(),
+                     confusion()],
         "unparsed": [mean()],
     }
 )
@@ -181,8 +213,8 @@ def crime_label():
         return Score(
             value={"accuracy": float(correct), "unparsed": float(predicted is None)},
             answer=completion,
-            # Read by precision/recall/f1/confusion, and kept per sample so two
-            # runs can be paired (e.g. McNemar) from the log alone.
+            # Read by precision/recall/specificity/f1/confusion, and kept per
+            # sample so two runs can be paired (e.g. McNemar) from the log alone.
             metadata={"predicted": predicted, "actual": actual},
         )
 
@@ -210,5 +242,7 @@ def crime(
         config=GenerateConfig(max_tokens=16),
         # 1: prompt from train/prepare_data_crime.py's convert; precision, recall,
         # F1 and confusion counts computed in the task.
-        version=1,
+        # 2: "non-crime" and its variants parse as not_crime, not crime; adds
+        # specificity.
+        version=2,
     )
