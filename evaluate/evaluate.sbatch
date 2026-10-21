@@ -17,7 +17,7 @@
 #        sbatch evaluate.sbatch translation google/gemma-3-4b-it \
 #            -T prompt_variant=short -T split=validation
 #
-# task is crime, xsum or translation (runs <task>_task.py). model is a Hugging Face hub id or
+# task is crime, wine, xsum or translation (runs <task>_task.py). model is a Hugging Face hub id or
 # a full model saved on disk (config.json + model.safetensors); --adapter puts a
 # PEFT/LoRA adapter on top of it via the hf-peft provider. Everything after that
 # goes to `inspect eval` unchanged. xsum and translation need
@@ -27,7 +27,7 @@
 #
 # The .eval log is written to logs/; read it with `uv run inspect view`.
 set -euo pipefail
-USAGE="usage: sbatch evaluate.sbatch <crime|xsum|translation> <model> [--adapter <dir>] [inspect eval args...]"
+USAGE="usage: sbatch evaluate.sbatch <crime|wine|xsum|translation> <model> [--adapter <dir>] [inspect eval args...]"
 TASK=${1:?$USAGE}
 MODEL=${2:?$USAGE}
 shift 2
@@ -44,7 +44,7 @@ cd "$SLURM_SUBMIT_DIR"
 TASK_FILE=${TASK}_task.py
 [[ -f $TASK_FILE ]] || { echo "no $TASK_FILE in $PWD - submit from evaluate/" >&2; exit 1; }
 
-if [[ $TASK != crime && " $* " != *" prompt_variant="* ]]; then
+if [[ $TASK != crime && $TASK != wine && " $* " != *" prompt_variant="* ]]; then
   echo "$TASK needs -T prompt_variant=short|long|teacher (the prompt the model was trained on)" >&2
   exit 1
 fi

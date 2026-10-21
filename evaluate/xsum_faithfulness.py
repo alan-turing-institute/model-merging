@@ -22,7 +22,8 @@ and it carried three defects that this file removes by construction:
 WHAT IT DOES NOT COVER. COMET is deliberately absent. unbabel-comet pins
 transformers back to 4.x, which would downgrade the library every result in
 this programme was measured under; it keeps its own environment and job (see
-metrics/). It is in any case a diagnostic rather than a ranking measure: it
+evaluate/comet/ and evaluate/comet_score.sbatch). It is in any case a diagnostic
+rather than a ranking measure: it
 rates a factually corrupted reference above a correct machine translation.
 
 COST. Four extra models load on first use (~6 GB). Scoring is off by default;
