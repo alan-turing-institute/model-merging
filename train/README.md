@@ -31,15 +31,17 @@ The key parameters are:
 - `base_model` - this can be a HF address, or a path to a model on disk
 - `datasets` - again can be a HF address, or a path to a dataset on disk.  You can also specify different training and validation datasets here.
 
-We provide an sbatch script and yaml config file to run training on the crime data.
+We provide an sbatch script, and yaml config files for the crime ([crime_gemma.yaml](crime_gemma.yaml)) and wine ([wine_gemma.yaml](wine_gemma.yaml)) tasks, to run training.
 
 ```bash
-sbatch train_crime.sbatch <config.yaml> <dataset_dir> <output_dir>
-#   e.g. sbatch train_crime.sbatch crime_gemma.yaml \
+sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>
+#   e.g. sbatch train.sbatch crime_gemma.yaml \
 #            ../datasets/crime_dataset_1_of_2 ../models/gemma3-4b-crime-1-of-2-lora
+#        sbatch train.sbatch wine_gemma.yaml \
+#            ../datasets/wine_dataset ../models/gemma3-4b-wine-full
 ```
 
-which trains the model detailed in `<config.yaml>` (and the parameters given their), on the dataset `<dataset_dit>` and writes the output to `<output_dir>`.
+which trains the model detailed in `<config.yaml>` (and the parameters given there), on the dataset `<dataset_dir>` and writes the output to `<output_dir>`. The log is saved in `<output_dir>` as `<config name>-<jobid>.out`, e.g. `wine_gemma-1234567.out`.
 
 Alternatively, to run the training directly, write a properly configured yaml and run
 
