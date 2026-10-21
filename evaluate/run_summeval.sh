@@ -17,7 +17,9 @@ P=$PROJECTDIR/$USER/mm/models
 (cd ../train && uv run --no-sync python ../evaluate/prepare_summeval.py "$DS")
 
 systems=$(cd ../train && uv run --no-sync python -c "from datasets import load_from_disk; print(' '.join(sorted(set(load_from_disk('$DS/pairs')['system']))))")
-R=$(sbatch --parsable --job-name=summeval-replay --time=01:00:00 --wrap "export UV_NO_SYNC=1; for s in $systems; do uv run inspect eval summeval_task.py -T system=\$s --model mockllm/model --log-dir logs --display none || exit 1; done")
+# Sized like the other small jobs: with no --gres the partition left it pending on
+# Resources behind whole-node allocations.
+R=$(sbatch --parsable --job-name=summeval-replay --time=01:00:00 --gres=gpu:1 --cpus-per-task=4 --mem=16000M --wrap "export UV_NO_SYNC=1; for s in $systems; do uv run inspect eval summeval_task.py -T system=\$s --model mockllm/model --log-dir logs --display none || exit 1; done")
 echo "replay $R ($systems)"
 
 ids=()
