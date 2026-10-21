@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [evaluate, metrics, train, self-distill, merge]
+        project: [evaluate, evaluate/comet, train, self-distill, merge]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
