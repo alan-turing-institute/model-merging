@@ -20,8 +20,6 @@ and load them into pandas with `inspect_ai.analysis.samples_df("logs")` / `evals
 
 `xsum_task.py` reads `datasets/xsum_prompts/test`, which `self-distill/prepare_data_XSum.py` writes together with the training data, so test articles cannot overlap training ones. It never builds a split itself: if the path is missing it fails and names that script. Run the preparation first, or pass `-T dataset_path=` a split saved by the same preparation.
 
-**Reproducing the report's XSum numbers.** Those were produced from `prepare_xsum_data.py` on the `xsum-summarisation` branch, which collapsed whitespace and cut each article to 512 words; `prepare_data_XSum.py` on `main` does neither. Add `-T document_words=512` to score exactly the inputs the report used (checked identical for all 1,000 rows). Like `prompt_variant`, it must match what the model was trained on.
-
 The optional reference-free metrics (`-T faithfulness=true`, see `xsum_faithfulness.py`) load about 6 GB of extra models and are off by default.
 
 `crime_task.py` reads the split written by `train/prepare_data.py`.

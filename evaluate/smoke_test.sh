@@ -47,7 +47,7 @@ PY
 
 run() { uv run --frozen inspect eval "$@" --model mockllm/model --log-dir "$WORK/logs"; }
 run xsum_task.py  -T prompt_variant=short -T dataset_path="$WORK/xsum"
-run xsum_task.py  -T prompt_variant=long  -T dataset_path="$WORK/xsum" -T document_words=8
+run xsum_task.py  -T prompt_variant=long  -T dataset_path="$WORK/xsum"
 run crime_task.py -T dataset_path="$WORK/crime"
 
 uv run --frozen python -c "import hf_peft_provider, xsum_faithfulness; print('hf_peft_provider and xsum_faithfulness import')"
