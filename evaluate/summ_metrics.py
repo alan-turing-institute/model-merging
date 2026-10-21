@@ -8,6 +8,10 @@
 #     "bert-score>=0.3.13",
 #     "deepeval==4.3.1",
 #     "openai",
+#     "rouge-score",
+#     "sacrebleu",
+#     "nltk",
+#     "pycocoevalcap",
 # ]
 # ///
 """BERTScore, DeepEval's SummarizationMetric and an Inspect LLM judge on finished summarisation evals.
@@ -78,6 +82,9 @@ TASK_DATASETS = {"cnndm": Path(__file__).resolve().parent.parent / "datasets" / 
 
 
 def label(log):
+    system = (log.eval.task_args or {}).get("system")
+    if system:  # summeval_task.py replays one SummEval system's summaries
+        return f"summeval-{system}"
     args = log.eval.model_args or {}
     for key in ("adapter_path", "model_path"):
         if args.get(key):
@@ -96,7 +103,9 @@ def latest_logs(log_dir, task, pattern, size, variant, dataset):
             continue
         if dataset and dataset not in str(targs.get("dataset_path", "")):
             continue
-        if f"gemma-3-{size}-it" not in str(log.eval.model) and not (log.eval.model_args or {}).get("model_path"):
+        replayed = bool(targs.get("system"))  # summeval_task.py: no model of ours
+        if not replayed and f"gemma-3-{size}-it" not in str(log.eval.model) \
+                and not (log.eval.model_args or {}).get("model_path"):
             continue
         name = label(log)
         if pattern and not re.search(pattern, name):
@@ -314,6 +323,28 @@ async def run_judge(name, log, rows, path, out_log, args):
     return [done[i] for i in docs if i in done]
 
 
+def run_summeval(rows, path):
+    """SummEval's toolkit metrics (summ_extra.py) and BERTScore in the toolkit's
+    default configuration (bert-base-uncased, layer 8, no baseline rescaling).
+    Cheap and deterministic, so recomputed in full each time."""
+    from bert_score import BERTScorer
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from summ_extra import summeval_scores
+
+    preds, refs, docs = [r[3] for r in rows], [r[2] for r in rows], [r[1] for r in rows]
+    per, corpus = summeval_scores(preds, refs, docs)
+    scorer = run_summeval.scorer = getattr(run_summeval, "scorer", None) or BERTScorer(
+        model_type="bert-base-uncased", num_layers=8, lang="en", rescale_with_baseline=False)
+    p, r, f = scorer.score(preds, refs, batch_size=32)
+    with path.open("w") as fh:
+        for row, rec, pi, ri, fi in zip(rows, per, p.tolist(), r.tolist(), f.tolist()):
+            rec.update(id=row[0], bertscore_se_p=pi, bertscore_se_r=ri, bertscore_se_f1=fi)
+            fh.write(json.dumps(rec) + "\n")
+    keys = sorted({k for rec in per for k in rec} - {"id"})
+    return {k: mean(per, k) for k in keys} | corpus
+
+
 def mean(recs, key):
     vals = [r[key] for r in recs if r.get(key) is not None]
     return statistics.fmean(vals) if vals else None
@@ -322,12 +353,12 @@ def mean(recs, key):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("log_dir", nargs="?", default="logs")
-    ap.add_argument("--task", required=True, choices=["xsum", "billsum", "billsum_split", "cnndm", "samsum"])
+    ap.add_argument("--task", required=True, choices=["xsum", "billsum", "billsum_split", "cnndm", "samsum", "summeval"])
     ap.add_argument("--models", help="regex on the model label (adapter or merged directory, or base-...)")
     ap.add_argument("--size", choices=["4b", "1b", "27b"], default="4b")
     ap.add_argument("--prompt-variant", default="short", help="only logs run with this prompt_variant ('' for any)")
     ap.add_argument("--dataset", help="only logs whose dataset_path contains this, e.g. xsum_screen/test")
-    ap.add_argument("--metrics", nargs="+", choices=["bertscore", "deepeval", "judge"],
+    ap.add_argument("--metrics", nargs="+", choices=["bertscore", "deepeval", "judge", "summeval"],
                     default=["bertscore", "deepeval", "judge"])
     ap.add_argument("--limit", type=int, help="first N samples of each log (for a quick check)")
     ap.add_argument("--out", type=Path, default=Path("../results/summ_metrics"))
@@ -379,6 +410,8 @@ def main():
                 recs = await run_deepeval(rows, out / f"{name}.{de_tag}.jsonl", judge, cache, locks, args)
                 entry[de_tag] = {k: mean(recs, k) for k in ("deepeval", "alignment", "coverage")} | {"scored": len(recs)}
                 cache_path.write_text(json.dumps(cache))
+            if "summeval" in args.metrics:
+                entry["summeval-toolkit"] = run_summeval(rows, out / f"{name}.summeval-toolkit.jsonl")
             if "judge" in args.metrics:
                 recs = await run_judge(name, log, rows, out / f"{name}.{jg_tag}.jsonl",
                                        out / "judged" / f"{name}.{jg_tag}.eval", args)
@@ -389,7 +422,7 @@ def main():
             disk = json.loads(summary_path.read_text()) if summary_path.exists() else {}
             disk[name] = entry
             summary_path.write_text(json.dumps(disk, indent=2) + "\n")
-            print(name, json.dumps({k: v for k, v in entry.items() if k.startswith(("bertscore", "deepeval", "judge"))}), flush=True)
+            print(name, json.dumps({k: v for k, v in entry.items() if k.startswith(("bertscore", "deepeval", "judge", "summeval"))}), flush=True)
 
     asyncio.run(score_logs())
 

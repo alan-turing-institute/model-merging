@@ -63,6 +63,8 @@ VERSION = 4
 STYLE = {
     "xsum": "a single sentence of about 20 words, like the summary above a BBC News article",
     "cnndm": "three or four short highlight sentences, like those at the top of a CNN or Daily Mail article",
+    # SummEval's 100 CNN/DailyMail test articles (summeval_task.py replays its systems' outputs)
+    "summeval": "three or four short highlight sentences, like those at the top of a CNN or Daily Mail article",
     "billsum": "a summary of a US bill in the style of the Congressional Research Service, usually 100-250 words",
     "billsum_split": "a summary of a US bill in the style of the Congressional Research Service, usually 100-250 words",
     "samsum": "one or two sentences in the third person saying what the participants did, decided or will do",
