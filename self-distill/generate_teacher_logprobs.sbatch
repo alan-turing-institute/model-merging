@@ -19,9 +19,10 @@
 # <output_dir>/<prefix>_long and <output_dir>/<prefix>_short. Anything after
 # prefix goes to generate_teacher_logprobs.py unchanged (see its --help); to pass
 # extra args without a prefix, give "" as the prefix. Relative paths resolve
-# against self-distill/. The log is saved as <output_dir>/<prefix>-<jobid>.out,
-# next to the datasets; with no prefix it is named after the last part of
-# dataset_dir instead (e.g. xsum_prompts-<jobid>.out).
+# against self-distill/. The log is saved as
+# <output_dir>/slurm/<prefix>-<jobid>.out, keeping the datasets dir tidy; with
+# no prefix it is named after the last part of dataset_dir instead (e.g.
+# xsum_prompts-<jobid>.out).
 set -euo pipefail
 USAGE="usage: sbatch generate_teacher_logprobs.sbatch <model> <dataset_dir> <output_dir> [prefix] [extra args...]"
 MODEL=${1:?$USAGE}
@@ -41,9 +42,9 @@ PREFIX_ARGS=()
 # #SBATCH directives can't see script arguments, so send stdout/stderr to the
 # output dir from here. Anything printed before this line (e.g. a usage error)
 # lands in Slurm's default slurm-<jobid>.out in the submit dir.
-mkdir -p "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR/slurm"
 LOG_NAME=${PREFIX:-$(basename "$DATASET_DIR")}
-exec > "$OUTPUT_DIR/${LOG_NAME}-${SLURM_JOB_ID}.out" 2>&1
+exec > "$OUTPUT_DIR/slurm/${LOG_NAME}-${SLURM_JOB_ID}.out" 2>&1
 # Nothing more goes to slurm-<jobid>.out, so on exit delete it if it is empty.
 # Kept if it holds an early error or a message from Slurm (e.g. out of memory).
 trap '[[ -s slurm-$SLURM_JOB_ID.out ]] || rm -f "slurm-$SLURM_JOB_ID.out"' EXIT
