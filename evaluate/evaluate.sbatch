@@ -5,8 +5,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=16
 #SBATCH --time=01:00:00
-#SBATCH --output=%x-%j.out
-#SBATCH --error=%x-%j.out
+#SBATCH --output=slurm/%x-%j.out
+#SBATCH --error=slurm/%x-%j.out
 # Usage, from evaluate/:
 #   sbatch evaluate.sbatch <task> <model> [--adapter <dir>] [inspect eval args...]
 #   e.g. sbatch evaluate.sbatch xsum google/gemma-3-4b-it -T prompt_variant=short

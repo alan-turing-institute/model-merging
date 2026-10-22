@@ -320,6 +320,10 @@ COMETKIWI_MODEL = "Unbabel/wmt22-cometkiwi-da"
 COMET_BATCH = 64
 # How long a partial batch waits for more samples before it runs anyway.
 COMET_WAIT = 0.5
+# One predict at a time, across both models: each predict builds a Lightning
+# trainer whose teardown moves the model back to the CPU, so two overlapping
+# predicts on one model leave the later one with a CPU model and CUDA inputs.
+_PREDICT_LOCK = asyncio.Lock()
 
 
 class _CometBatcher:
@@ -356,13 +360,19 @@ class _CometBatcher:
         try:
             import torch
 
-            output = await asyncio.to_thread(
-                self.model.predict,
-                [item for item, _ in batch],
-                batch_size=COMET_BATCH,
-                gpus=1 if torch.cuda.is_available() else 0,
-                progress_bar=False,
-            )
+            async with _PREDICT_LOCK:
+                output = await asyncio.to_thread(
+                    self.model.predict,
+                    [item for item, _ in batch],
+                    batch_size=COMET_BATCH,
+                    gpus=1 if torch.cuda.is_available() else 0,
+                    progress_bar=False,
+                    # COMET defaults to forked DataLoader workers; forking from
+                    # this worker thread is refused by filelock ("os.fork is
+                    # unsafe"). The batch is already in memory, so workers gain
+                    # nothing.
+                    num_workers=0,
+                )
             for (_, future), value in zip(batch, output.scores):
                 future.set_result(float(value))
         except Exception as exc:  # noqa: BLE001 - surface it on every sample

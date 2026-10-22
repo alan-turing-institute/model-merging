@@ -6,8 +6,6 @@
 #SBATCH --cpus-per-task=72
 #SBATCH --mem=115000M
 #SBATCH --time=06:00:00
-#SBATCH --output=%x-%j.out
-#SBATCH --error=%x-%j.out
 # Usage, from self-distill/:
 #   sbatch generate_teacher_logprobs.sbatch <model> <dataset_dir> <output_dir> [prefix] [extra args...]
 #   e.g. sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
@@ -21,7 +19,9 @@
 # <output_dir>/<prefix>_long and <output_dir>/<prefix>_short. Anything after
 # prefix goes to generate_teacher_logprobs.py unchanged (see its --help); to pass
 # extra args without a prefix, give "" as the prefix. Relative paths resolve
-# against self-distill/.
+# against self-distill/. The log is saved as <output_dir>/<prefix>-<jobid>.out,
+# next to the datasets; with no prefix it is named after the last part of
+# dataset_dir instead (e.g. xsum_prompts-<jobid>.out).
 set -euo pipefail
 USAGE="usage: sbatch generate_teacher_logprobs.sbatch <model> <dataset_dir> <output_dir> [prefix] [extra args...]"
 MODEL=${1:?$USAGE}
@@ -37,6 +37,16 @@ cd "$SLURM_SUBMIT_DIR"
 
 PREFIX_ARGS=()
 [[ -n $PREFIX ]] && PREFIX_ARGS=(--prefix "$PREFIX")
+
+# #SBATCH directives can't see script arguments, so send stdout/stderr to the
+# output dir from here. Anything printed before this line (e.g. a usage error)
+# lands in Slurm's default slurm-<jobid>.out in the submit dir.
+mkdir -p "$OUTPUT_DIR"
+LOG_NAME=${PREFIX:-$(basename "$DATASET_DIR")}
+exec > "$OUTPUT_DIR/${LOG_NAME}-${SLURM_JOB_ID}.out" 2>&1
+# Nothing more goes to slurm-<jobid>.out, so on exit delete it if it is empty.
+# Kept if it holds an early error or a message from Slurm (e.g. out of memory).
+trap '[[ -s slurm-$SLURM_JOB_ID.out ]] || rm -f "slurm-$SLURM_JOB_ID.out"' EXIT
 
 # The nodes' driver (580.173) now supports the cu130 wheels natively, and the
 # older CUDA 13.0 forward-compat libcuda (580.65) breaks it with error 803. sbatch

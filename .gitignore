@@ -6,4 +6,6 @@ __pycache__/
 .uv-cache/
 evaluate/.azureml_models/
 evaluate/logs/
+evaluate/slurm/*
+!evaluate/slurm/.gitkeep
 *.egg-info/

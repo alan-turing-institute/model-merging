@@ -5,8 +5,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=16
 #SBATCH --time=00:30:00
-#SBATCH --output=%x-%j.out
-#SBATCH --error=%x-%j.out
+#SBATCH --output=slurm/%x-%j.out
+#SBATCH --error=slurm/%x-%j.out
 # Usage, from evaluate/:
 #   sbatch comet_score.sbatch <log.eval> [inspect score args...]
 #   e.g. sbatch comet_score.sbatch logs/2026-10-16T10-00-00-00-00_translation_abc.eval
@@ -43,5 +43,8 @@ export HF_HUB_OFFLINE=1
 
 uv run --project comet python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is a CUDA compat lib on LD_LIBRARY_PATH?'"
 
+# Without --model, inspect score reloads the model recorded in the log, which
+# fails here (no accelerate) and is not needed: the COMET scorer only reads the
+# logged outputs. mockllm is a built-in stand-in; the log keeps its own model name.
 uv run --project comet inspect score "$LOG" --scorer translation_task.py@comet \
-  --action append --overwrite --display plain "$@"
+  --model mockllm/model --action append --overwrite --display plain "$@"
