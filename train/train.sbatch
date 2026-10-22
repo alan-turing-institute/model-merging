@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=crime-train
+#SBATCH --job-name=train
 #SBATCH --partition=workq
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
@@ -7,32 +7,44 @@
 #SBATCH --mem=115000M
 #SBATCH --time=06:00:00
 # Usage, from train/:
-#   sbatch train_crime.sbatch <config.yaml> <dataset_dir> <output_dir>
-#   e.g. sbatch train_crime.sbatch crime_gemma.yaml \
+#   sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>
+#   e.g. sbatch train.sbatch crime_gemma.yaml \
 #            ../datasets/crime_dataset_1_of_2 ../models/gemma3-4b-crime-1-of-2-lora
+#        sbatch train.sbatch wine_gemma.yaml \
+#            ../datasets/wine_dataset ../models/gemma3-4b-wine-full
 #
 # dataset_dir must hold train/ and validation/ (the layout prepare_data_crime.py
-# writes); they replace the datasets/test_datasets paths in the config, and
+# and prepare_data_wine.py write); they replace the datasets/test_datasets paths in the config, and
 # output_dir replaces its output_dir. dataset_num_proc is capped at 16 if the
 # config does not set it. Everything else in the config is used
 # unchanged. The config actually used is saved as <output_dir>/config.yaml.
-# Relative paths resolve against train/.
+# Relative paths resolve against train/. The log is saved as
+# <output_dir>/<config name>-<jobid>.out, e.g. wine_gemma-1234567.out. Once
+# training succeeds, <output_dir>/provenance.json records what made the model
+# (see ../provenance.py).
 set -euo pipefail
-USAGE="usage: sbatch train_crime.sbatch <config.yaml> <dataset_dir> <output_dir>"
+USAGE="usage: sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>"
 CONFIG=${1:?$USAGE}
 DATASET_DIR=${2:?$USAGE}
 OUTPUT_DIR=${3:?$USAGE}
 
 # Submit from train/: uv needs its pyproject.toml to find the environment.
 cd "$SLURM_SUBMIT_DIR"
-[[ -f pyproject.toml && -f prepare_data_crime.py ]] || { echo "submit from train/, not $PWD" >&2; exit 1; }
+[[ -f pyproject.toml && -f train.sbatch ]] || { echo "submit from train/, not $PWD" >&2; exit 1; }
 [[ -f $CONFIG ]] || { echo "$CONFIG not found" >&2; exit 1; }
 
 # #SBATCH directives can't see script arguments, so send stdout/stderr to the
 # output dir from here. Anything printed before this line (e.g. a usage error)
 # lands in Slurm's default slurm-<jobid>.out in the submit dir.
+# Name the log after the config (crime_gemma.yaml -> crime_gemma-<jobid>.out).
 mkdir -p "$OUTPUT_DIR"
-exec > "$OUTPUT_DIR/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.out" 2>&1
+RUN_NAME=$(basename "$CONFIG")
+RUN_NAME=${RUN_NAME%.yaml}
+RUN_NAME=${RUN_NAME%.yml}
+exec > "$OUTPUT_DIR/${RUN_NAME}-${SLURM_JOB_ID}.out" 2>&1
+# Nothing more goes to slurm-<jobid>.out, so on exit delete it if it is empty.
+# Kept if it holds an early error or a message from Slurm (e.g. out of memory).
+trap '[[ -s slurm-$SLURM_JOB_ID.out ]] || rm -f "slurm-$SLURM_JOB_ID.out"' EXIT
 
 # The nodes' driver (580.173) now supports the cu130 wheels natively, and the
 # older CUDA 13.0 forward-compat libcuda (580.65) breaks it with error 803. sbatch
@@ -77,3 +89,5 @@ EOF
 # memory-hungry tokenisation pass out of the training process.
 uv run axolotl preprocess "$RUN_CONFIG"
 uv run axolotl train      "$RUN_CONFIG"
+
+uv run python ../provenance.py model "$OUTPUT_DIR" --script train.sbatch

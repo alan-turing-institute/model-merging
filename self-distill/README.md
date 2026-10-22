@@ -41,7 +41,7 @@ To train several students on disjoint parts of the data and then merge them, spl
 uv run python ../split_dataset.py n <input_dir> <output_dir>
 ```
 
-which will split your dataset into `n` pieces and saves them in the output directory as `<dataset_name>_i_of_n`.  It will handle `DatasetDicts`, but deliberately drops the `test` partition and only splits the `train` and `validation` parts.  Pieces are contiguous blocks in the existing order (the prompts are already shuffled); pass `--seed` to shuffle first.
+which will split your dataset into `n` pieces and saves them in the output directory as `<dataset_name>_i_of_n`.  It will handle `DatasetDicts`, but deliberately drops the `test` partition and only splits the `train` and `validation` parts.  Pieces are contiguous blocks in the existing order (the prompts are already shuffled); pass `--seed` to shuffle first.  Every dataset here has a `provenance.json` (see [`../provenance.py`](../provenance.py)) whose `coverage` is `"full"` for a `prepare_data_*.py` output and e.g. `"1 of 2"` for a piece; the teacher step below copies its source's `coverage` and record into the KD dataset's own, so you can tell whether a student saw all of the data or part of it.
 
 #### Teacher training
 
@@ -54,7 +54,7 @@ sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
   gemma3_4b_xsum_kd_data
 ```
 
-The arguments are the teacher model (a Hugging Face address or a local folder), the prompts dataset, the output directory and optionally a prefix `<prefix>`. One dataset is written per student prompt, named `<prefix>_long` and `<prefix>_short` into the output directory. For a split dataset, run it once per piece, e.g.
+The arguments are the teacher model (a Hugging Face address or a local folder), the prompts dataset, the output directory and optionally a prefix `<prefix>`. One dataset is written per student prompt, named `<prefix>_long` and `<prefix>_short` into the output directory. Each holds a `provenance.json` recording how it was made (teacher model, `teacher` or `gold` targets, source prompts dataset, all arguments, git commit and Slurm job), since unlike training there is no config file to say so. For a split dataset, run it once per piece, e.g.
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
@@ -82,7 +82,7 @@ We record the one sentence summarisation together with the `logprobs`.  This is 
 
 #### Student training
 
-The student is trained on both the `logprobs` and the output of the teacher.
+The student is trained on both the `logprobs` and the output of the teacher. Once training succeeds, `<output_dir>/provenance.json` records the base model, method, key hyperparameters (including the KD weights), final train/eval loss and the KD dataset with its own record (teacher, targets, coverage; see [`../provenance.py`](../provenance.py)).
 
 NB On Isambard this should be submitted as a job, otherwise it will run out of memory and cause your session to be killed.  We provide a short bash script for this.
 

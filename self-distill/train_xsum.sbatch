@@ -15,7 +15,9 @@
 # <dataset_dir>/validation (the layout generate_teacher_logprobs.py writes).
 # The tokenised dataset is cached per run in <output_dir>/prepared.
 # The config actually used is saved as <output_dir>/config.yaml. Relative paths
-# resolve against the directory sbatch was run from.
+# resolve against the directory sbatch was run from, which must be self-distill/.
+# Once training succeeds, <output_dir>/provenance.json records what made the
+# model (see ../provenance.py).
 set -euo pipefail
 USAGE="usage: sbatch train_xsum.sbatch <config.yaml> <output_dir> [dataset_dir]"
 CONFIG=${1:?$USAGE}
@@ -23,12 +25,16 @@ OUTPUT_DIR=${2:?$USAGE}
 DATASET_DIR=${3:-}
 
 cd "$SLURM_SUBMIT_DIR"
+[[ -f train_xsum.sbatch ]] || { echo "submit from self-distill/, not $PWD" >&2; exit 1; }
 
 # #SBATCH directives can't see script arguments, so send stdout/stderr to the
 # output dir from here. Anything printed before this line (e.g. a usage error)
 # lands in Slurm's default slurm-<jobid>.out in the submit dir.
 mkdir -p "$OUTPUT_DIR"
 exec > "$OUTPUT_DIR/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.out" 2>&1
+# Nothing more goes to slurm-<jobid>.out, so on exit delete it if it is empty.
+# Kept if it holds an early error or a message from Slurm (e.g. out of memory).
+trap '[[ -s slurm-$SLURM_JOB_ID.out ]] || rm -f "slurm-$SLURM_JOB_ID.out"' EXIT
 
 # The nodes' driver (580.173) now supports the cu130 wheels natively, and the
 # older CUDA 13.0 forward-compat libcuda (580.65) breaks it with error 803. sbatch
@@ -75,3 +81,5 @@ EOF
 # memory-hungry tokenisation pass out of the training process.
 uv run axolotl preprocess "$RUN_CONFIG"
 uv run axolotl train      "$RUN_CONFIG"
+
+uv run python ../provenance.py model "$OUTPUT_DIR" --script train_xsum.sbatch

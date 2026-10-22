@@ -1,7 +1,17 @@
 # This file prepares the Reddit crime dataset for training.
 # It loads the dataset, splits it into training, validation, and test sets,
 # and converts the data into a format suitable for training a model.
+# A provenance.json (see ../provenance.py) records it as the full dataset.
+import sys
+from pathlib import Path
+
 from datasets import ClassLabel, DatasetDict, load_dataset
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import provenance  # noqa: E402  (repo root, shared with split_dataset.py etc.)
+
+SOURCE = "Binaryy/crime_posts_reddit"
+OUTPUT_DIR = "../datasets/crime_dataset"
 
 PROMPT = (
     "Is the following Reddit post about crime? Answer with exactly one word, "
@@ -27,7 +37,7 @@ def convert(example):
 
 
 def main():
-    ds = load_dataset("Binaryy/crime_posts_reddit")
+    ds = load_dataset(SOURCE)
 
     # Cast the label column to a ClassLabel type
     train_dataset = ds["train"].cast_column(
@@ -63,7 +73,12 @@ def main():
 
     # Map the conversion function to the dataset and save it to disk
     dataset = dataset.map(convert)
-    dataset.save_to_disk("../datasets/crime_dataset")
+    dataset.save_to_disk(OUTPUT_DIR)
+    provenance.write(
+        OUTPUT_DIR, __file__, "full", dataset,
+        source=SOURCE,
+        sampling="all rows; 80/10/10 train/validation/test, stratified by label, seed 42",
+    )
 
 
 if __name__ == "__main__":

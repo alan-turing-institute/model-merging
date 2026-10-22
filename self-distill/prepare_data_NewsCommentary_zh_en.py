@@ -47,6 +47,9 @@
 # English references are short: mean 28 Gemma 3 tokens, p99.9 87, so
 # generate_teacher_logprobs.py's default --max-tokens 128 drops almost nothing.
 #
+# A provenance.json (see ../provenance.py) records the source, arguments and git
+# commit, with coverage "full": split_dataset.py pieces of it say "i of n".
+#
 # Usage:
 #   python prepare_data_NewsCommentary_zh_en.py \
 #       https://data.statmt.org/news-commentary/v18/training/news-commentary-v18.en-zh.tsv.gz \
@@ -57,10 +60,14 @@ import gzip
 import io
 import random
 import re
+import sys
 import urllib.request
 from pathlib import Path
 
 from datasets import Dataset, DatasetDict
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import provenance  # noqa: E402  (repo root, shared with split_dataset.py etc.)
 
 SEED = 42
 
@@ -220,6 +227,12 @@ def main():
     # generate_teacher_logprobs.py loads this to run teacher generation.
     prompts_ds = DatasetDict(splits).map(convert_to_prompt)
     prompts_ds.save_to_disk(str(args.output_dir))
+    provenance.write(
+        args.output_dir, __file__, "full", prompts_ds, args,
+        source=args.dataset,
+        sampling=f"cleaned corpus split by article (seed {SEED}), then a seed-{SEED} "
+                 "sample of --train-size/--validation-size/--test-size rows per split",
+    )
     print(prompts_ds)
 
 

@@ -16,9 +16,11 @@ uv run inspect view --log-dir logs
 
 and load them into pandas with `inspect_ai.analysis.samples_df("logs")` / `evals_df("logs")`.
 
+`evaluate.sbatch` also stores what the model is in each log's metadata, from the model's (or adapter's) `provenance.json`: `model_kind` (`trained`, `merged` or `base`), method, base model, training data and its hash, teacher and targets, `model_coverage`, hyperparameters, final losses, or for a merge its method, inputs and weights (see [`../provenance.py`](../provenance.py)). In `evals_df` they are in the `metadata` column, e.g. `df.metadata.str["targets"]`.
+
 ## Test data
 
-`xsum_task.py` reads `datasets/xsum_prompts/test`, which `self-distill/prepare_data_XSum.py` writes together with the training data, so test articles cannot overlap training ones. It never builds a split itself: if the path is missing it fails and names that script. Run the preparation first, or pass `-T dataset_path=` a split saved by the same preparation.
+`xsum_task.py` reads `datasets/xsum_prompts/test`, which `self-distill/prepare_data_XSum.py` writes together with the training data, so test articles cannot overlap training ones. It only reads a saved split, like the other tasks: run the preparation first, or pass `-T dataset_path=` a split saved by the same preparation.
 
 The optional reference-free metrics (`-T faithfulness=true`, see `xsum_faithfulness.py`) load about 6 GB of extra models and are off by default.
 
