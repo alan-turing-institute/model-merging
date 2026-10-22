@@ -169,7 +169,7 @@ echo 'export HF_HOME=$PROJECTDIR/$USER/hf_cache' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-`evaluate/evaluate.sbatch` and `self-distill/train_xsum.sbatch` set `HF_HOME` to the same place themselves if it isn't already set.
+`evaluate/evaluate.sbatch` and `self-distill/train_kd.sbatch` set `HF_HOME` to the same place themselves if it isn't already set.
 
 ## Model merging using mergekit
 

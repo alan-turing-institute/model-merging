@@ -87,7 +87,7 @@ The student is trained on both the `logprobs` and the output of the teacher. Onc
 NB On Isambard this should be submitted as a job, otherwise it will run out of memory and cause your session to be killed.  We provide a short bash script for this.
 
 ```bash
-sbatch train_xsum.sbatch self-distillation_xsum.yaml \
+sbatch train_kd.sbatch self-distillation_xsum.yaml \
   $PROJECTDIR/$USER/model-merging/models/gemma3_4b_xsum_short \
   $PROJECTDIR/$USER/model-merging/datasets/gemma3_4b_xsum_kd_data_short
 ```

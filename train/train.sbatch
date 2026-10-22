@@ -16,7 +16,8 @@
 # dataset_dir must hold train/ and validation/ (the layout prepare_data_crime.py
 # and prepare_data_wine.py write); they replace the datasets/test_datasets paths in the config, and
 # output_dir replaces its output_dir. dataset_num_proc is capped at 16 if the
-# config does not set it. Everything else in the config is used
+# config does not set it, and the tokenised dataset is cached per run in
+# <output_dir>/prepared. Everything else in the config is used
 # unchanged. The config actually used is saved as <output_dir>/config.yaml.
 # Relative paths resolve against train/. The log is saved as
 # <output_dir>/<config name>-<jobid>.out, e.g. wine_gemma-1234567.out. Once
@@ -67,6 +68,10 @@ src, dst, dataset_dir, output_dir = sys.argv[1:]
 with open(src) as f:
     cfg = yaml.safe_load(f)
 cfg["output_dir"] = output_dir
+# A per-run cache: Axolotl's default (last_run_prepared/) is shared, and runs on
+# the same data at the same time overwrite each other's mmapped arrow files,
+# crashing the dataloader (segfault/SIGBUS).
+cfg["dataset_prepared_path"] = os.path.join(output_dir, "prepared")
 for key, split in (("datasets", "train"), ("test_datasets", "validation")):
     path = os.path.join(dataset_dir, split)
     if not os.path.isdir(path):
@@ -80,6 +85,7 @@ cfg.setdefault("dataset_num_proc", min(16, int(os.environ.get("SLURM_CPUS_PER_TA
 with open(dst, "w") as f:
     yaml.safe_dump(cfg, f, sort_keys=False)
 print(f"output_dir: {cfg['output_dir']}")
+print(f"prepared:   {cfg['dataset_prepared_path']}")
 print(f"train:      {[d['path'] for d in cfg['datasets']]}")
 print(f"validation: {[d['path'] for d in cfg['test_datasets']]}")
 print(f"dataset_num_proc: {cfg['dataset_num_proc']}")

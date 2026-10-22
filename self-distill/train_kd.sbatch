@@ -1,37 +1,49 @@
 #!/bin/bash
-#SBATCH --job-name=xsum-kd
+#SBATCH --job-name=kd-train
 #SBATCH --partition=workq
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=72
 #SBATCH --mem=115000M
 #SBATCH --time=06:00:00
-# Usage: sbatch train_xsum.sbatch <config.yaml> <output_dir> [dataset_dir]
-#   e.g. sbatch examples/train_xsum.sbatch examples/self-distillation_xsum.yaml \
-#            ../models/xsum-1_of_2-short ../datasets/xsum_kd_data_1_of_2_short
+# Usage, from self-distill/:
+#   sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir]
+#   e.g. sbatch train_kd.sbatch self-distillation_xsum.yaml \
+#            ../models/gemma3_4b_xsum_short ../datasets/gemma3_4b_xsum_kd_data_short
+#        sbatch train_kd.sbatch self-distillation_nc_zh_en.yaml \
+#            ../models/gemma3_4b_nc_zh_en_short ../datasets/gemma3_4b_nc_zh_en_kd_data_short
 #
+# Trains a student with Axolotl's KD plugin on any dataset written by
+# generate_teacher_logprobs.py; the task (XSum, translation, ...) is set only by
+# the config and dataset given.
 # output_dir overrides the one in the YAML. dataset_dir, if given, overrides the
 # datasets/test_datasets paths with <dataset_dir>/train and
 # <dataset_dir>/validation (the layout generate_teacher_logprobs.py writes).
 # The tokenised dataset is cached per run in <output_dir>/prepared.
 # The config actually used is saved as <output_dir>/config.yaml. Relative paths
 # resolve against the directory sbatch was run from, which must be self-distill/.
-# Once training succeeds, <output_dir>/provenance.json records what made the
+# The log is saved as <output_dir>/<config name>-<jobid>.out, e.g.
+# self-distillation_nc_zh_en-1234567.out. Once training succeeds, <output_dir>/provenance.json records what made the
 # model (see ../provenance.py).
 set -euo pipefail
-USAGE="usage: sbatch train_xsum.sbatch <config.yaml> <output_dir> [dataset_dir]"
+USAGE="usage: sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir]"
 CONFIG=${1:?$USAGE}
 OUTPUT_DIR=${2:?$USAGE}
 DATASET_DIR=${3:-}
 
 cd "$SLURM_SUBMIT_DIR"
-[[ -f train_xsum.sbatch ]] || { echo "submit from self-distill/, not $PWD" >&2; exit 1; }
+[[ -f train_kd.sbatch ]] || { echo "submit from self-distill/, not $PWD" >&2; exit 1; }
 
 # #SBATCH directives can't see script arguments, so send stdout/stderr to the
 # output dir from here. Anything printed before this line (e.g. a usage error)
 # lands in Slurm's default slurm-<jobid>.out in the submit dir.
+# Name the log after the config (self-distillation_xsum.yaml ->
+# self-distillation_xsum-<jobid>.out), so it says which task ran.
 mkdir -p "$OUTPUT_DIR"
-exec > "$OUTPUT_DIR/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.out" 2>&1
+RUN_NAME=$(basename "$CONFIG")
+RUN_NAME=${RUN_NAME%.yaml}
+RUN_NAME=${RUN_NAME%.yml}
+exec > "$OUTPUT_DIR/${RUN_NAME}-${SLURM_JOB_ID}.out" 2>&1
 # Nothing more goes to slurm-<jobid>.out, so on exit delete it if it is empty.
 # Kept if it holds an early error or a message from Slurm (e.g. out of memory).
 trap '[[ -s slurm-$SLURM_JOB_ID.out ]] || rm -f "slurm-$SLURM_JOB_ID.out"' EXIT
@@ -82,4 +94,4 @@ EOF
 uv run axolotl preprocess "$RUN_CONFIG"
 uv run axolotl train      "$RUN_CONFIG"
 
-uv run python ../provenance.py model "$OUTPUT_DIR" --script train_xsum.sbatch
+uv run python ../provenance.py model "$OUTPUT_DIR" --script train_kd.sbatch

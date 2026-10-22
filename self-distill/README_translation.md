@@ -43,12 +43,12 @@ Add `--targets gold` (and a `_gold` prefix) to train against the reference trans
 #### Student training
 
 ```bash
-sbatch train_xsum.sbatch self-distillation_nc_zh_en.yaml \
+sbatch train_kd.sbatch self-distillation_nc_zh_en.yaml \
   $PROJECTDIR/$USER/model-merging/models/gemma3_4b_nc_zh_en_short \
   $PROJECTDIR/$USER/model-merging/datasets/gemma3_4b_nc_zh_en_kd_data_short
 ```
 
-`self-distillation_nc_zh_en.yaml` has exactly the training settings of `self-distillation_xsum.yaml`, so the two tasks differ only in their data.  Despite its name, `train_xsum.sbatch` is not specific to XSum.
+`self-distillation_nc_zh_en.yaml` has exactly the training settings of `self-distillation_xsum.yaml`, so the two tasks differ only in their data.  `train_kd.sbatch` is the same script for both.
 
 #### Evaluation
 

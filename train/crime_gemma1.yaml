@@ -32,6 +32,10 @@ test_datasets:
 
 sequence_len: 2048
 
+# Gemma 3's default attention gives NaN gradients in bf16 from the first step,
+# and the run never recovers (the loss is then logged as 0.0); eager is stable.
+attn_implementation: eager
+
 micro_batch_size: 16
 gradient_accumulation_steps: 1
 

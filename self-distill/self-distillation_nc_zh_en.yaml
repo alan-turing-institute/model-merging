@@ -30,7 +30,7 @@ kd_temperature: 1.0
 kd_normalize_topk: true
 
 # Default dataset: teacher-generated targets, short student prompt.
-# train_xsum.sbatch's optional dataset_dir argument replaces both paths with
+# train_kd.sbatch's optional dataset_dir argument replaces both paths with
 # <dataset_dir>/train and <dataset_dir>/validation, so this one config covers
 # gemma3_4b_nc_zh_en_kd_data_long, a gold variant, a 27B-teacher variant, ...
 datasets:
@@ -55,7 +55,7 @@ val_set_size: 0.0
 # 288 cores even though a 1-GPU job is allocated 72; that OOM-killed XSum runs.
 dataset_num_proc: 8
 # Not safe to share between concurrent runs (Axolotl's cache hash ignores the
-# base model). train_xsum.sbatch overrides this with <output_dir>/prepared.
+# base model). train_kd.sbatch overrides this with <output_dir>/prepared.
 dataset_prepared_path: ../datasets/last_run_prepared
 
 # Must match --max-seq-len in generate_teacher_logprobs.py (default 4096).
@@ -91,5 +91,5 @@ save_steps: 200
 save_only_model: true
 
 torch_compile: true
-# Overridden by train_xsum.sbatch's output_dir argument.
+# Overridden by train_kd.sbatch's output_dir argument.
 output_dir: ../models/gemma3_4b_nc_zh_en_short

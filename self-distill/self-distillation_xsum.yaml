@@ -21,7 +21,7 @@ kd_temperature: 1.0
 # below: with student == teacher and correct alignment, step-0 KD loss ~= 0.
 kd_normalize_topk: true
 
-# Default dataset. train_xsum.sbatch's optional dataset_dir argument replaces
+# Default dataset. train_kd.sbatch's optional dataset_dir argument replaces
 # both paths below with <dataset_dir>/train and <dataset_dir>/validation, so one
 # config covers every split (xsum_kd_data_long, xsum_kd_data_1_of_2_short, ...).
 datasets:
@@ -48,7 +48,7 @@ val_set_size: 0.0
 dataset_num_proc: 8
 # Not safe to share between concurrent runs: Axolotl's cache hash ignores the
 # base model, so e.g. a 1B and a 4B run on the same dataset rewrite each other's
-# arrow files mid-training (SIGBUS). train_xsum.sbatch overrides this with
+# arrow files mid-training (SIGBUS). train_kd.sbatch overrides this with
 # <output_dir>/prepared.
 dataset_prepared_path: ../datasets/last_run_prepared
 
@@ -89,5 +89,5 @@ save_steps: 200
 save_only_model: true
 
 torch_compile: true
-# Overridden by train_xsum.sbatch's output_dir argument.
+# Overridden by train_kd.sbatch's output_dir argument.
 output_dir: ../models/gemma3_4b_xsum_short
