@@ -6,12 +6,20 @@
 # test split is dropped, so that it stays held out for evaluating the merged
 # model rather than being scattered across the pieces.
 #
+# Each piece also gets a provenance.json (see provenance.py) with coverage
+# "<i> of <n>", the source dataset and its record, the shuffle seed and the
+# source's row counts, so a dataset (and anything trained on it) can be checked
+# for full vs partial data.
+#
 # Usage:
 #   python split_dataset.py 4 ../datasets/xsum_prompts ../datasets/xsum_splits
 import argparse
+import os
 from pathlib import Path
 
 from datasets import Dataset, DatasetDict, load_from_disk
+
+import provenance
 
 DROPPED_SPLITS = {"test"}
 
@@ -45,7 +53,11 @@ def main():
 
     ds = load_from_disk(str(args.dataset_dir))
     name = args.dataset_dir.resolve().name
+    source_record = provenance.read(args.dataset_dir)
+    # Splitting a piece again nests, e.g. "1 of 2 of 2 of 3".
+    source_coverage = source_record["coverage"] if source_record else "unknown"
 
+    dropped = []
     if isinstance(ds, DatasetDict):
         kept = [split for split in ds if split not in DROPPED_SPLITS]
         dropped = [split for split in ds if split in DROPPED_SPLITS]
@@ -66,6 +78,16 @@ def main():
 
         out_path = args.output_dir / f"{name}_{i + 1}_of_{args.n}"
         piece.save_to_disk(str(out_path))
+        coverage = f"{i + 1} of {args.n}"
+        if source_coverage != "full":
+            coverage += f" of {source_coverage}"
+        provenance.write(
+            out_path, __file__, coverage, piece, args,
+            source_dataset=os.path.abspath(args.dataset_dir),
+            source_provenance=source_record,
+            source_rows=provenance.rows(ds),
+            dropped_splits=dropped,
+        )
         print(f"Saved {out_path} ({sizes})")
 
 

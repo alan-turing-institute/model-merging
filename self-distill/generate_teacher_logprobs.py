@@ -40,9 +40,10 @@
 # Each student field gets its own output dataset,
 # <output_dir>/<prefix>_<field without "messages_">, e.g. by default
 # <output_dir>/kd_data_long and <output_dir>/kd_data_short. Each also gets a
-# provenance.json recording the arguments, git commit and Slurm job that made
-# it: unlike training, generation has no config file to say how a dataset was
-# built (teacher, gold or teacher targets, source prompts).
+# provenance.json (see ../provenance.py) recording the teacher, targets, source
+# prompts and their own record, the arguments, git commit and Slurm job: unlike
+# training, generation has no config file to say how a dataset was built. Its
+# coverage is the prompts dataset's ("full", or e.g. "1 of 2" for a piece).
 #
 # Usage:
 #   python generate_teacher_logprobs.py google/gemma-3-4b-it \
@@ -50,10 +51,8 @@
 #   python generate_teacher_logprobs.py path/to/teacher \
 #       ../datasets/xsum_splits/xsum_prompts_1_of_3 ../datasets/xsum_kd_1_of_3 --top-k 50
 import argparse
-import json
 import os
-import subprocess
-from datetime import datetime, timezone
+import sys
 from pathlib import Path
 
 # Isambard has no CUDA toolkit, so FlashInfer cannot JIT-compile its sampling
@@ -65,6 +64,9 @@ os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
 from datasets import Dataset, DatasetDict, load_from_disk
 from transformers import AutoTokenizer, GenerationConfig
 from vllm import LLM, SamplingParams, TokensPrompt
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import provenance  # noqa: E402  (repo root, shared with split_dataset.py etc.)
 
 # Defaults for the command-line options; see parse_args for what each one does.
 TOP_K = 20
@@ -157,36 +159,6 @@ def parse_args():
 
 def output_name(prefix, field):
     return f"{prefix}_{field.removeprefix('messages_')}"
-
-
-def git_state():
-    """(commit, dirty) of the repo holding this script, or (None, None) outside git."""
-    def git(*cmd):
-        return subprocess.run(
-            ["git", *cmd], cwd=Path(__file__).parent, capture_output=True, text=True, check=True
-        ).stdout.strip()
-    try:
-        return git("rev-parse", "HEAD"), bool(git("status", "--porcelain"))
-    except (OSError, subprocess.CalledProcessError):
-        return None, None
-
-
-def provenance(args, field, splits):
-    """What made one output dataset, as written to its provenance.json."""
-    commit, dirty = git_state()
-    return {
-        "script": "self-distill/generate_teacher_logprobs.py",
-        "created": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "teacher_model": args.model,
-        "targets": args.targets,
-        "source_dataset": os.path.abspath(args.dataset_dir),
-        "student_field": field,
-        "rows": {split: len(ds) for split, ds in splits.items()},
-        "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
-        "git_commit": commit,
-        "git_dirty": dirty,
-        "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
-    }
 
 
 def token_ids_for(tokenizer, messages, add_generation_prompt=False):
@@ -459,8 +431,15 @@ def main():
     for field, splits in per_dataset.items():
         out = args.output_dir / output_name(args.prefix, field)
         DatasetDict(splits).save_to_disk(str(out))
-        (out / "provenance.json").write_text(
-            json.dumps(provenance(args, field, splits), indent=2) + "\n"
+        source_record = provenance.read(args.dataset_dir)
+        provenance.write(
+            out, __file__, source_record["coverage"] if source_record else "unknown",
+            DatasetDict(splits), args,
+            teacher_model=args.model,
+            targets=args.targets,
+            student_field=field,
+            source_dataset=os.path.abspath(args.dataset_dir),
+            source_provenance=source_record,
         )
         print(f"wrote {out}")
 

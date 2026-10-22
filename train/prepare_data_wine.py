@@ -11,13 +11,20 @@
 # description is in train or validation. That leaves ~137k train, ~12k
 # validation and ~20k test rows to sample from.
 #
+# A provenance.json (see ../provenance.py) records the source, arguments and git
+# commit, with coverage "full": split_dataset.py pieces of it say "i of n".
+#
 # Usage (from train/):
 #   uv run python prepare_data_wine.py
 #   uv run python prepare_data_wine.py path/to/local/wine out_dir --train-size 20000
 import argparse
+import sys
 from pathlib import Path
 
 from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import provenance  # noqa: E402  (repo root, shared with split_dataset.py etc.)
 
 PROMPT = (
     "The following is a wine review from Wine Enthusiast magazine. Wines are "
@@ -113,6 +120,12 @@ def main():
     # Map the conversion function to the dataset and save it to disk
     dataset = small_ds.map(convert)
     dataset.save_to_disk(str(args.output_dir))
+    provenance.write(
+        args.output_dir, __file__, "full", dataset, args,
+        source=args.dataset,
+        sampling="deduplicated descriptions across splits, then a seed-42 sample of "
+                 "--train-size/--validation-size/--test-size rows per split",
+    )
 
 
 if __name__ == "__main__":

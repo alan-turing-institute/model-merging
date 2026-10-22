@@ -41,7 +41,7 @@ To train several students on disjoint parts of the data and then merge them, spl
 uv run python ../split_dataset.py n <input_dir> <output_dir>
 ```
 
-which will split your dataset into `n` pieces and saves them in the output directory as `<dataset_name>_i_of_n`.  It will handle `DatasetDicts`, but deliberately drops the `test` partition and only splits the `train` and `validation` parts.  Pieces are contiguous blocks in the existing order (the prompts are already shuffled); pass `--seed` to shuffle first.
+which will split your dataset into `n` pieces and saves them in the output directory as `<dataset_name>_i_of_n`.  It will handle `DatasetDicts`, but deliberately drops the `test` partition and only splits the `train` and `validation` parts.  Pieces are contiguous blocks in the existing order (the prompts are already shuffled); pass `--seed` to shuffle first.  Every dataset here has a `provenance.json` (see [`../provenance.py`](../provenance.py)) whose `coverage` is `"full"` for a `prepare_data_*.py` output and e.g. `"1 of 2"` for a piece; the teacher step below copies its source's `coverage` and record into the KD dataset's own, so you can tell whether a student saw all of the data or part of it.
 
 #### Teacher training
 

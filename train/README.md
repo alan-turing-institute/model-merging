@@ -16,7 +16,7 @@ To train several models on disjoint parts of the data (e.g. for merging), split 
 uv run python ../split_dataset.py n ../datasets/crime_dataset datasets
 ```
 
-which saves `datasets/crime_dataset_<i>_of_<n>`.
+which saves `datasets/crime_dataset_<i>_of_<n>`. The prepare scripts write a `provenance.json` with `coverage: "full"`, and each piece gets one with e.g. `coverage: "1 of 2"`, the source dataset and its record, the seed and the source's row counts (see [`../provenance.py`](../provenance.py)).
 
 [prepare_data_wine.py](prepare_data_wine.py) does the same for wine reviews (predicting the 80–100 points rating from the review text), sampling 10k/1k/1k rows to `../datasets/wine_dataset` after removing duplicate reviews (`--help` for options).
 

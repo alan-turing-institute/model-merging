@@ -17,13 +17,20 @@
 #                      generate_teacher_logprobs.py --targets gold reads
 # The original columns (document, summary, id) are kept too, for evaluation.
 #
+# A provenance.json (see ../provenance.py) records the source, arguments and git
+# commit, with coverage "full": split_dataset.py pieces of it say "i of n".
+#
 # Usage:
 #   python prepare_data_XSum.py EdinburghNLP/xsum ../datasets/xsum_prompts
 #   python prepare_data_XSum.py path/to/local/xsum out_dir --train-size 20000
 import argparse
+import sys
 from pathlib import Path
 
 from datasets import DatasetDict, load_dataset, load_from_disk
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import provenance  # noqa: E402  (repo root, shared with split_dataset.py etc.)
 
 # Constraints live in a system turn, as prose. An earlier version used a
 # "Rules:" heading with a bullet list and the model echoed the literal label
@@ -108,6 +115,12 @@ def main():
     # generate_teacher_logprobs_XSum.py loads this to run teacher generation.
     prompts_ds = small_ds.map(convert_to_prompt)
     prompts_ds.save_to_disk(str(args.output_dir))
+    provenance.write(
+        args.output_dir, __file__, "full", prompts_ds, args,
+        source=args.dataset,
+        sampling="a seed-42 sample of --train-size/--validation-size/--test-size rows "
+                 "from each of the source's own splits",
+    )
 
 
 if __name__ == "__main__":
