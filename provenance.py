@@ -18,10 +18,17 @@
 # the bottom). A trained model's record names its base model, method, the key
 # hyperparameters, its final train/eval loss and its train/validation datasets
 # with their whole records; its coverage is its training data's. A merged
-# model's names the merge method and each input model with its weight and
+# model's record names the merge method and each input model with its weight and
 # whole record; its coverage lists the inputs'. The full configs stay where
-# Axolotl and mergekit put them (config.yaml, mergekit_config.yml). Weights are
-# not hashed: the configs and data hashes already say how a model was made.
+# Axolotl and mergekit put them (config.yaml, mergekit_config.yml).
+#
+# Every model record also has a "health" check, since a run that diverges can
+# look fine: once a bf16 step produces NaN, gradient clipping and the optimizer
+# spread it into the weights, every later loss is NaN, and the Trainer's
+# logging_nan_inf_filter logs those losses as exactly 0.0. health records the
+# first step with a non-finite grad_norm/loss/eval_loss and counts saved weight
+# tensors holding NaN/inf. `provenance.py model` writes the record either way,
+# then exits non-zero when health.ok is false, so the Slurm job is marked FAILED.
 #
 # describe() flattens a model's record into the --metadata evaluate.sbatch
 # passes to Inspect, so every .eval log says what its model is.
@@ -146,13 +153,20 @@ def resolve(path, base_dir):
     return os.path.normpath(os.path.join(os.path.abspath(base_dir), path))
 
 
-def final_losses(model_dir):
-    """The last logged train and eval loss, from the latest checkpoint's trainer state."""
+def _trainer_state(model_dir):
+    """(path, state) of the latest checkpoint's trainer_state.json, or (None, None)."""
     states = glob.glob(os.path.join(model_dir, "checkpoint-*", "trainer_state.json"))
     if not states:
-        return None
+        return None, None
     latest = max(states, key=lambda p: int(re.search(r"checkpoint-(\d+)", p).group(1)))
-    state = json.loads(Path(latest).read_text())
+    return latest, json.loads(Path(latest).read_text())
+
+
+def final_losses(model_dir):
+    """The last logged train and eval loss, from the latest checkpoint's trainer state."""
+    latest, state = _trainer_state(model_dir)
+    if state is None:
+        return None
     train = [e for e in state["log_history"] if "loss" in e]
     evals = [e for e in state["log_history"] if "eval_loss" in e]
     return {
@@ -162,6 +176,55 @@ def final_losses(model_dir):
         "final_eval_step": evals[-1]["step"] if evals else None,
         "max_steps": state.get("max_steps"),
         "source": os.path.relpath(latest, model_dir),
+    }
+
+
+def _finite(x):
+    return not isinstance(x, float) or math.isfinite(x)
+
+
+def _first_nonfinite_step(state):
+    """The first training step with a non-finite grad_norm or loss, else the
+    final eval's step if its eval_loss is non-finite, else None. Earlier evals
+    don't count: the eval before any training (step 0) can be inf without the
+    run diverging, as in the early KD runs."""
+    history = (state or {}).get("log_history", [])
+    for entry in history:
+        if "loss" in entry and not (_finite(entry["loss"]) and _finite(entry.get("grad_norm"))):
+            return entry["step"]
+    evals = [e for e in history if "eval_loss" in e]
+    if evals and not _finite(evals[-1]["eval_loss"]):
+        return evals[-1]["step"]
+    return None
+
+
+def check_health(model_dir):
+    """Whether the run stayed finite: the first logged step with a non-finite
+    grad_norm, loss or eval_loss, and the saved weight tensors holding NaN/inf."""
+    import torch
+    from safetensors import safe_open
+
+    _, state = _trainer_state(model_dir)
+    first_bad = _first_nonfinite_step(state)
+
+    # An adapter dir also holds no full weights; a full model may be sharded.
+    files = glob.glob(os.path.join(model_dir, "adapter_model.safetensors")) or sorted(
+        glob.glob(os.path.join(model_dir, "*.safetensors")))
+    bad, total = [], 0
+    for f in files:
+        with safe_open(f, framework="pt") as weights:
+            for name in weights.keys():
+                tensor = weights.get_tensor(name)
+                total += 1
+                if tensor.is_floating_point() and not torch.isfinite(tensor).all():
+                    bad.append(name)
+    return {
+        "ok": first_bad is None and not bad and total > 0,
+        "first_nonfinite_step": first_bad,
+        "nonfinite_tensors": len(bad),
+        "tensors": total,
+        "nonfinite_examples": bad[:3],
+        "weight_files": [os.path.basename(f) for f in files],
     }
 
 
@@ -242,10 +305,12 @@ def write_model(model_dir, script, base_dir=".", **overrides):
         "script": str(Path(script).resolve().relative_to(REPO)),
         "created": _now(),
         **body,
+        "health": check_health(model_dir),
         **_run_fields(),
     }
     record.update(overrides)
     _save(model_dir, record)
+    return record
 
 
 def describe(model):
@@ -256,6 +321,7 @@ def describe(model):
         return {"model_kind": "base" if not os.path.isdir(model) else "unknown"}
     meta = {
         "model_kind": record["kind"],
+        "model_ok": (record.get("health") or {}).get("ok"),
         "model_provenance": os.path.join(os.path.abspath(model), FILENAME),
         "model_coverage": record["coverage"],
         "model_git_commit": record.get("git_commit"),
@@ -281,6 +347,9 @@ def describe(model):
             "merge_method": record["merge_method"],
             "merged_models": [os.path.basename(i.get("path") or i["hub_id"]) for i in record["inputs"]],
             "merge_weights": [(i["parameters"] or {}).get("weight") for i in record["inputs"]],
+            "merged_models_ok": [
+                ((i["provenance"] or {}).get("health") or {}).get("ok") for i in record["inputs"]
+            ],
         })
     return meta
 
@@ -303,8 +372,15 @@ def main():
     args = parser.parse_args()
 
     if args.command == "model":
-        write_model(args.model_dir, args.script, args.base_dir)
+        record = write_model(args.model_dir, args.script, args.base_dir)
         print(f"wrote {Path(args.model_dir) / FILENAME}")
+        health = record["health"]
+        if not health["ok"]:
+            print(f"MODEL IS BROKEN: first non-finite step {health['first_nonfinite_step']}, "
+                  f"{health['nonfinite_tensors']}/{health['tensors']} weight tensors hold NaN/inf "
+                  f"(e.g. {health['nonfinite_examples']}). See health in its provenance.json.",
+                  file=sys.stderr)
+            return 1
     else:
         # JSON values survive Inspect's YAML parsing of --metadata intact (a
         # bare string would be split at commas).

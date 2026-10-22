@@ -30,6 +30,8 @@
 # provenance.json, its kind, method, base model, training data, teacher and
 # targets, coverage, hyperparameters and final losses (see ../provenance.py);
 # for a Hub id, model_kind=base. eval_slurm_job links it to slurm/<job>.out.
+# A model whose record says its run went NaN (health.ok false) is refused, as
+# it can only score NaN; set ALLOW_BROKEN_MODEL=1 to evaluate it anyway.
 set -euo pipefail
 USAGE="usage: sbatch evaluate.sbatch <crime|wine|xsum|translation> <model> [--adapter <dir>] [inspect eval args...]"
 TASK=${1:?$USAGE}
@@ -88,6 +90,11 @@ DESCRIPTION=$(uv run python ../provenance.py describe "${ADAPTER:-$MODEL}")
 while IFS= read -r line; do
   METADATA+=(--metadata "$line")
 done <<<"$DESCRIPTION"
+if grep -qx 'model_ok=false' <<<"$DESCRIPTION" && [[ ${ALLOW_BROKEN_MODEL:-} != 1 ]]; then
+  echo "${ADAPTER:-$MODEL} is broken (NaN in training or its weights; see health in its" \
+    "provenance.json). Set ALLOW_BROKEN_MODEL=1 to evaluate it anyway." >&2
+  exit 1
+fi
 
 # Greedy decoding and bf16 weights for every model, whatever its config.json
 # says: Inspect's hf provider defaults do_sample to true, and a checkpoint whose
