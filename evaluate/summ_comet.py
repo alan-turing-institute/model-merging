@@ -29,8 +29,12 @@ def main():
         rows = [json.loads(line) for line in path.read_text().splitlines()]
         # num_workers=0: with article-length sources the DataLoader workers'
         # shared-memory batches died with a bus error (SIGBUS) on the GH200 nodes.
-        out = model.predict([{"src": r["src"], "mt": r["mt"], "ref": r["ref"]} for r in rows],
-                            batch_size=32, gpus=1, progress_bar=False, num_workers=0)
+        # The source is cut to its first 300 words (about COMET's 512-token
+        # window, which would truncate it anyway) and length batching is off:
+        # with whole articles the job died with a bus error at the first batch,
+        # with or without DataLoader workers.
+        out = model.predict([{"src": " ".join(r["src"].split()[:300]), "mt": r["mt"], "ref": r["ref"]} for r in rows],
+                            batch_size=32, gpus=1, progress_bar=False, num_workers=0, length_batching=False)
         (out_dir / f"{path.stem}.comet-wmt22.jsonl").write_text(
             "".join(json.dumps({"id": r["id"], "comet": 100 * float(s)}) + "\n" for r, s in zip(rows, out.scores)))
         print(f"{path.stem:24} COMET {100 * out.system_score:6.2f}  (n={len(rows)})", flush=True)
