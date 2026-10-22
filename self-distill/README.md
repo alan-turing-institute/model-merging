@@ -54,7 +54,7 @@ sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
   gemma3_4b_xsum_kd_data
 ```
 
-The arguments are the teacher model (a Hugging Face address or a local folder), the prompts dataset, the output directory and optionally a prefix `<prefix>`. One dataset is written per student prompt, named `<prefix>_long` and `<prefix>_short` into the output directory. For a split dataset, run it once per piece, e.g.
+The arguments are the teacher model (a Hugging Face address or a local folder), the prompts dataset, the output directory and optionally a prefix `<prefix>`. One dataset is written per student prompt, named `<prefix>_long` and `<prefix>_short` into the output directory. Each holds a `provenance.json` recording how it was made (teacher model, `teacher` or `gold` targets, source prompts dataset, all arguments, git commit and Slurm job), since unlike training there is no config file to say so. For a split dataset, run it once per piece, e.g.
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
