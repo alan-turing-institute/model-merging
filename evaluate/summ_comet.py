@@ -27,8 +27,10 @@ def main():
     model = load_from_checkpoint(download_model(MODEL))
     for path in sorted(in_dir.glob("*.jsonl")):
         rows = [json.loads(line) for line in path.read_text().splitlines()]
+        # num_workers=0: with article-length sources the DataLoader workers'
+        # shared-memory batches died with a bus error (SIGBUS) on the GH200 nodes.
         out = model.predict([{"src": r["src"], "mt": r["mt"], "ref": r["ref"]} for r in rows],
-                            batch_size=32, gpus=1, progress_bar=False)
+                            batch_size=32, gpus=1, progress_bar=False, num_workers=0)
         (out_dir / f"{path.stem}.comet-wmt22.jsonl").write_text(
             "".join(json.dumps({"id": r["id"], "comet": 100 * float(s)}) + "\n" for r, s in zip(rows, out.scores)))
         print(f"{path.stem:24} COMET {100 * out.system_score:6.2f}  (n={len(rows)})", flush=True)
