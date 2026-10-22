@@ -1,0 +1,919 @@
+{
+  "model": "Unbabel/wmt22-comet-da",
+  "runs": {
+    "base-gemma-3-1b-it": {
+      "comet": 44.57339300587773,
+      "comet_medical": 45.03892759531736,
+      "comet_law": 44.107858416438106,
+      "chrf": 19.178248381780783,
+      "n": 2000
+    },
+    "base-gemma-3-4b-it": {
+      "comet": 45.56288668885827,
+      "comet_medical": 45.66588246077299,
+      "comet_law": 45.45989091694355,
+      "chrf": 18.86147714083705,
+      "n": 2000
+    },
+    "gemma3-clinc150-full-lora": {
+      "comet": 72.10921101570129,
+      "comet_medical": 71.53910671174526,
+      "comet_law": 72.67931531965732,
+      "chrf": 42.799438919656055,
+      "n": 2000
+    },
+    "gemma3-clinc150-full_1b-lora": {
+      "comet": 53.779001197218896,
+      "comet_medical": 55.615678107738496,
+      "comet_law": 51.9423242866993,
+      "chrf": 27.835087372166832,
+      "n": 2000
+    },
+    "gemma3-dlg_xsumc_curve-n4000-lora": {
+      "comet": 46.23633290827274,
+      "comet_medical": 46.504135152697565,
+      "comet_law": 45.96853066384792,
+      "chrf": 19.358809093746373,
+      "n": 2000
+    },
+    "gemma3-dlg_xsumc_curve-n4000_1b-lora": {
+      "comet": 55.05840503498912,
+      "comet_medical": 56.079627461731434,
+      "comet_law": 54.0371826082468,
+      "chrf": 27.537056443307023,
+      "n": 2000
+    },
+    "gemma3-mt_domain-expert_law-lora": {
+      "comet": 83.4262090422213,
+      "comet_medical": 81.8804143384099,
+      "comet_law": 84.97200374603271,
+      "chrf": 57.10116619538582,
+      "n": 2000
+    },
+    "gemma3-mt_domain-expert_law_1b-lora": {
+      "comet": 79.11717574521899,
+      "comet_medical": 77.90613499581814,
+      "comet_law": 80.32821649461985,
+      "chrf": 50.26706839719958,
+      "n": 2000
+    },
+    "gemma3-mt_domain-expert_law_s2-lora": {
+      "comet": 83.4217875815928,
+      "comet_medical": 81.94558700174093,
+      "comet_law": 84.89798816144466,
+      "chrf": 57.117682417882314,
+      "n": 2000
+    },
+    "gemma3-mt_domain-expert_law_s3-lora": {
+      "comet": 83.3725924141705,
+      "comet_medical": 81.90102955847979,
+      "comet_law": 84.84415526986122,
+      "chrf": 57.03304536400306,
+      "n": 2000
+    },
+    "gemma3-mt_domain-expert_medical-lora": {
+      "comet": 80.86708975657821,
+      "comet_medical": 82.53037745356559,
+      "comet_law": 79.20380205959081,
+      "chrf": 54.32177062921867,
+      "n": 2000
+    },
+    "gemma3-mt_domain-expert_medical_1b-lora": {
+      "comet": 76.577221134305,
+      "comet_medical": 79.525286257267,
+      "comet_law": 73.629156011343,
+      "chrf": 47.95328848093496,
+      "n": 2000
+    },
+    "gemma3-mt_domain-expert_medical_s2-lora": {
+      "comet": 80.70613178685308,
+      "comet_medical": 82.45340485423803,
+      "comet_law": 78.95885871946811,
+      "chrf": 54.55189095095138,
+      "n": 2000
+    },
+    "gemma3-mt_domain-expert_medical_s3-lora": {
+      "comet": 80.6897170677781,
+      "comet_medical": 82.3438691020012,
+      "comet_law": 79.03556503355503,
+      "chrf": 54.377330483574944,
+      "n": 2000
+    },
+    "gemma3-mt_domain-full-lora": {
+      "comet": 83.59144402444363,
+      "comet_medical": 82.44939428269863,
+      "comet_law": 84.73349376618862,
+      "chrf": 59.538044503928894,
+      "n": 2000
+    },
+    "gemma3-mt_domain-full_1b-lora": {
+      "comet": 80.26360050737858,
+      "comet_medical": 80.23009744733572,
+      "comet_law": 80.29710356742143,
+      "chrf": 53.696323139276345,
+      "n": 2000
+    },
+    "gemma3-mt_domain-iid_half-lora": {
+      "comet": 83.58883614242077,
+      "comet_medical": 82.52964898347855,
+      "comet_law": 84.648023301363,
+      "chrf": 58.301151965627405,
+      "n": 2000
+    },
+    "gemma3-mt_domain_kdgold_ce100-lora": {
+      "comet": 83.87651284337043,
+      "comet_medical": 82.87449705898761,
+      "comet_law": 84.87852862775325,
+      "chrf": 59.88851853491244,
+      "n": 2000
+    },
+    "gemma3-mt_domain_kdgold_ce50-lora": {
+      "comet": 83.99167238399386,
+      "comet_medical": 82.96207488030196,
+      "comet_law": 85.02126988768578,
+      "chrf": 58.439500924697604,
+      "n": 2000
+    },
+    "gemma3-mt_domain_kdgold_ce75-lora": {
+      "comet": 84.16716999262572,
+      "comet_medical": 83.11427328288555,
+      "comet_law": 85.22006670236587,
+      "chrf": 60.048735343391556,
+      "n": 2000
+    },
+    "gemma3-mt_domain_kdgold_ce90-lora": {
+      "comet": 84.09850256890059,
+      "comet_medical": 82.87499884665013,
+      "comet_law": 85.32200629115104,
+      "chrf": 60.12325343843616,
+      "n": 2000
+    },
+    "gemma3-tp_clinc150_mt_domain-full-lora": {
+      "comet": 83.61727199628949,
+      "comet_medical": 82.6910327732563,
+      "comet_law": 84.54351121932268,
+      "chrf": 59.591799439237455,
+      "n": 2000
+    },
+    "gemma3-tp_clinc150_mt_domain-full_1b-lora": {
+      "comet": 80.26541378572583,
+      "comet_medical": 80.28659381866456,
+      "comet_law": 80.24423375278711,
+      "chrf": 54.13457073305705,
+      "n": 2000
+    },
+    "gemma3-tp_clinc150_mt_domain_xsumc-full-lora": {
+      "comet": 83.80602087229491,
+      "comet_medical": 82.7160323381424,
+      "comet_law": 84.8960094064474,
+      "chrf": 59.600997838806016,
+      "n": 2000
+    },
+    "gemma3-tp_clinc150_mt_domain_xsumc-full_1b-lora": {
+      "comet": 79.89824110418559,
+      "comet_medical": 79.92004772126674,
+      "comet_law": 79.87643448710442,
+      "chrf": 53.56188620634017,
+      "n": 2000
+    },
+    "gemma3-tp_mt_domain_xsumc-full-lora": {
+      "comet": 83.80237989723682,
+      "comet_medical": 82.7693367600441,
+      "comet_law": 84.83542303442955,
+      "chrf": 59.83263478380829,
+      "n": 2000
+    },
+    "gemma3-tp_mt_domain_xsumc-full_1b-lora": {
+      "comet": 80.09086896777153,
+      "comet_medical": 80.26792974174023,
+      "comet_law": 79.91380819380284,
+      "chrf": 53.275797103672836,
+      "n": 2000
+    },
+    "mt_domain-merged-dare_ties": {
+      "comet": 83.9875683993101,
+      "comet_medical": 82.9831527352333,
+      "comet_law": 84.99198406338692,
+      "chrf": 58.54831761459856,
+      "n": 2000
+    },
+    "mt_domain-merged-dare_ties_s2": {
+      "comet": 83.9532080307603,
+      "comet_medical": 83.03583581447602,
+      "comet_law": 84.87058024704456,
+      "chrf": 58.6025002855114,
+      "n": 2000
+    },
+    "mt_domain-merged-dare_ties_s3": {
+      "comet": 83.85638814345002,
+      "comet_medical": 82.90957225114107,
+      "comet_law": 84.80320403575897,
+      "chrf": 58.24359855913017,
+      "n": 2000
+    },
+    "mt_domain-merged-linear": {
+      "comet": 84.04815421849489,
+      "comet_medical": 83.04397391378879,
+      "comet_law": 85.05233452320098,
+      "chrf": 58.56143070589943,
+      "n": 2000
+    },
+    "mt_domain-merged-linear_s2": {
+      "comet": 84.04948668330908,
+      "comet_medical": 83.08432835638523,
+      "comet_law": 85.01464501023293,
+      "chrf": 58.76449667715296,
+      "n": 2000
+    },
+    "mt_domain-merged-linear_s3": {
+      "comet": 83.95139530077577,
+      "comet_medical": 82.96147780567408,
+      "comet_law": 84.94131279587745,
+      "chrf": 58.45745805969451,
+      "n": 2000
+    },
+    "mt_domain-merged-task_arithmetic": {
+      "comet": 84.02075425237418,
+      "comet_medical": 83.02503669857978,
+      "comet_law": 85.01647180616855,
+      "chrf": 58.57874000525622,
+      "n": 2000
+    },
+    "mt_domain-merged-task_arithmetic_s2": {
+      "comet": 84.08483861535788,
+      "comet_medical": 83.05809273123741,
+      "comet_law": 85.11158449947834,
+      "chrf": 58.794187318238755,
+      "n": 2000
+    },
+    "mt_domain-merged-task_arithmetic_s3": {
+      "comet": 83.88809633329511,
+      "comet_medical": 82.97441065460444,
+      "comet_law": 84.80178201198578,
+      "chrf": 58.415147620335595,
+      "n": 2000
+    },
+    "mt_domain-merged-ties": {
+      "comet": 81.57605558186769,
+      "comet_medical": 82.30731573700905,
+      "comet_law": 80.84479542672634,
+      "chrf": 55.985561888994184,
+      "n": 2000
+    },
+    "mt_domain-merged-ties_s2": {
+      "comet": 82.1404534459114,
+      "comet_medical": 82.3627730101347,
+      "comet_law": 81.91813388168812,
+      "chrf": 56.46510830843909,
+      "n": 2000
+    },
+    "mt_domain-merged-ties_s3": {
+      "comet": 81.70308277085424,
+      "comet_medical": 82.33351148813964,
+      "comet_law": 81.07265405356884,
+      "chrf": 56.20398515787436,
+      "n": 2000
+    },
+    "tp-1b-clinc150-mt_domain-merged-dare_ties": {
+      "comet": 79.64087517187,
+      "comet_medical": 79.4698837414384,
+      "comet_law": 79.81186660230159,
+      "chrf": 50.007047914484275,
+      "n": 2000
+    },
+    "tp-1b-clinc150-mt_domain-merged-linear": {
+      "comet": 80.01161069720983,
+      "comet_medical": 79.75782308280468,
+      "comet_law": 80.26539831161499,
+      "chrf": 50.61231137969245,
+      "n": 2000
+    },
+    "tp-1b-clinc150-mt_domain-merged-task_arithmetic": {
+      "comet": 80.05184114798904,
+      "comet_medical": 79.81889745593071,
+      "comet_law": 80.28478484004737,
+      "chrf": 50.54285111728025,
+      "n": 2000
+    },
+    "tp-1b-clinc150-mt_domain-merged-ties": {
+      "comet": 78.91813410669565,
+      "comet_medical": 78.58880642056465,
+      "comet_law": 79.24746179282666,
+      "chrf": 50.41830078946867,
+      "n": 2000
+    },
+    "tp-1b-clinc150-mt_domain-xsumc-merged-dare_ties": {
+      "comet": 79.00762549936772,
+      "comet_medical": 78.63542676866055,
+      "comet_law": 79.37982423007489,
+      "chrf": 48.162381719608405,
+      "n": 2000
+    },
+    "tp-1b-clinc150-mt_domain-xsumc-merged-linear": {
+      "comet": 79.33083145543932,
+      "comet_medical": 79.02136611193419,
+      "comet_law": 79.64029679894448,
+      "chrf": 48.59271606718482,
+      "n": 2000
+    },
+    "tp-1b-clinc150-mt_domain-xsumc-merged-task_arithmetic": {
+      "comet": 79.357203207165,
+      "comet_medical": 78.90914449542761,
+      "comet_law": 79.8052619189024,
+      "chrf": 48.48767072334916,
+      "n": 2000
+    },
+    "tp-1b-clinc150-mt_domain-xsumc-merged-ties": {
+      "comet": 78.59327169954777,
+      "comet_medical": 78.34390287101269,
+      "comet_law": 78.84264052808285,
+      "chrf": 48.952520569959184,
+      "n": 2000
+    },
+    "tp-1b-mt_domain-xsumc-merged-dare_ties": {
+      "comet": 80.14790218323469,
+      "comet_medical": 79.89331459254026,
+      "comet_law": 80.40248977392912,
+      "chrf": 50.79647011982942,
+      "n": 2000
+    },
+    "tp-1b-mt_domain-xsumc-merged-linear": {
+      "comet": 80.09464668706059,
+      "comet_medical": 79.76882107704878,
+      "comet_law": 80.42047229707241,
+      "chrf": 50.77630037793986,
+      "n": 2000
+    },
+    "tp-1b-mt_domain-xsumc-merged-task_arithmetic": {
+      "comet": 80.25401413813233,
+      "comet_medical": 79.79270440489054,
+      "comet_law": 80.71532387137412,
+      "chrf": 50.769154713646394,
+      "n": 2000
+    },
+    "tp-1b-mt_domain-xsumc-merged-ties": {
+      "comet": 80.21264949142933,
+      "comet_medical": 80.08818466365338,
+      "comet_law": 80.33711431920528,
+      "chrf": 51.86432406600541,
+      "n": 2000
+    },
+    "tp-clinc150-mt_domain-merged-dare_ties": {
+      "comet": 83.8911324031651,
+      "comet_medical": 82.7049561187625,
+      "comet_law": 85.07730868756771,
+      "chrf": 57.6418743299485,
+      "n": 2000
+    },
+    "tp-clinc150-mt_domain-merged-linear": {
+      "comet": 83.89007707610726,
+      "comet_medical": 82.75221132487059,
+      "comet_law": 85.02794282734394,
+      "chrf": 57.91857238169676,
+      "n": 2000
+    },
+    "tp-clinc150-mt_domain-merged-task_arithmetic": {
+      "comet": 83.92036759182811,
+      "comet_medical": 82.75273929685355,
+      "comet_law": 85.08799588680267,
+      "chrf": 57.95508830677829,
+      "n": 2000
+    },
+    "tp-clinc150-mt_domain-merged-ties": {
+      "comet": 83.13463979661465,
+      "comet_medical": 82.00679495334626,
+      "comet_law": 84.26248463988304,
+      "chrf": 57.25172383295215,
+      "n": 2000
+    },
+    "tp-clinc150-mt_domain-xsumc-merged-dare_ties": {
+      "comet": 83.7323240108788,
+      "comet_medical": 82.69996485859156,
+      "comet_law": 84.76468316316604,
+      "chrf": 56.70952361279752,
+      "n": 2000
+    },
+    "tp-clinc150-mt_domain-xsumc-merged-linear": {
+      "comet": 83.74856773838401,
+      "comet_medical": 82.72684548050165,
+      "comet_law": 84.77028999626637,
+      "chrf": 56.603912570197224,
+      "n": 2000
+    },
+    "tp-clinc150-mt_domain-xsumc-merged-task_arithmetic": {
+      "comet": 83.72946387603879,
+      "comet_medical": 82.69718007594346,
+      "comet_law": 84.7617476761341,
+      "chrf": 56.50780390522075,
+      "n": 2000
+    },
+    "tp-clinc150-mt_domain-xsumc-merged-ties": {
+      "comet": 83.33851152062417,
+      "comet_medical": 82.32550540864467,
+      "comet_law": 84.35151763260365,
+      "chrf": 57.26094482654432,
+      "n": 2000
+    },
+    "tp-mt_domain-xsumc-merged-dare_ties": {
+      "comet": 84.21517951712012,
+      "comet_medical": 83.26196230798959,
+      "comet_law": 85.16839672625065,
+      "chrf": 58.77674319960816,
+      "n": 2000
+    },
+    "tp-mt_domain-xsumc-merged-linear": {
+      "comet": 84.25175445005297,
+      "comet_medical": 83.26436323076487,
+      "comet_law": 85.23914566934108,
+      "chrf": 58.81531516577596,
+      "n": 2000
+    },
+    "tp-mt_domain-xsumc-merged-task_arithmetic": {
+      "comet": 84.27101470306516,
+      "comet_medical": 83.27216799408197,
+      "comet_law": 85.26986141204834,
+      "chrf": 58.830946701575954,
+      "n": 2000
+    },
+    "tp-mt_domain-xsumc-merged-ties": {
+      "comet": 83.9882508866489,
+      "comet_medical": 83.09655643701554,
+      "comet_law": 84.87994533628225,
+      "chrf": 59.56068396282922,
+      "n": 2000
+    }
+  },
+  "data_parallel_4b": [
+    {
+      "method": "linear",
+      "seed": "1",
+      "merged": 84.04815421849489,
+      "better_expert": 83.4262090422213,
+      "full": 83.59144402444363,
+      "R": 3.7640042556892297,
+      "ci": [
+        -34.8017702401001,
+        27.074502024122218
+      ]
+    },
+    {
+      "method": "linear",
+      "seed": "2",
+      "merged": 84.04948668330908,
+      "better_expert": 83.4217875815928,
+      "full": 83.59144402444363,
+      "R": 3.699824723238873,
+      "ci": [
+        -30.990528683871585,
+        38.79072301119084
+      ]
+    },
+    {
+      "method": "linear",
+      "seed": "3",
+      "merged": 83.95139530077577,
+      "better_expert": 83.3725924141705,
+      "full": 83.59144402444363,
+      "R": 2.644727566239557,
+      "ci": [
+        -16.542593856802895,
+        20.551139459297847
+      ]
+    },
+    {
+      "method": "ties",
+      "seed": "1",
+      "merged": 81.57605558186769,
+      "better_expert": 83.4262090422213,
+      "full": 83.59144402444363,
+      "R": -11.197105089188423,
+      "ci": [
+        -119.57933394359827,
+        82.31274685992577
+      ]
+    },
+    {
+      "method": "ties",
+      "seed": "2",
+      "merged": 82.1404534459114,
+      "better_expert": 83.4217875815928,
+      "full": 83.59144402444363,
+      "R": -7.552522699111109,
+      "ci": [
+        -82.20787188330641,
+        68.30460618406599
+      ]
+    },
+    {
+      "method": "ties",
+      "seed": "3",
+      "merged": 81.70308277085424,
+      "better_expert": 83.3725924141705,
+      "full": 83.59144402444363,
+      "R": -7.628500613875568,
+      "ci": [
+        -73.78022775804722,
+        51.54364725822994
+      ]
+    },
+    {
+      "method": "dare_ties",
+      "seed": "1",
+      "merged": 83.9875683993101,
+      "better_expert": 83.4262090422213,
+      "full": 83.59144402444363,
+      "R": 3.3973396525287463,
+      "ci": [
+        -27.600299357768733,
+        31.442498089414013
+      ]
+    },
+    {
+      "method": "dare_ties",
+      "seed": "2",
+      "merged": 83.9532080307603,
+      "better_expert": 83.4217875815928,
+      "full": 83.59144402444363,
+      "R": 3.132332850068816,
+      "ci": [
+        -26.13497610461866,
+        30.354688093533248
+      ]
+    },
+    {
+      "method": "dare_ties",
+      "seed": "3",
+      "merged": 83.85638814345002,
+      "better_expert": 83.3725924141705,
+      "full": 83.59144402444363,
+      "R": 2.210610781779159,
+      "ci": [
+        -9.900566987891727,
+        14.954874598399492
+      ]
+    },
+    {
+      "method": "task_arithmetic",
+      "seed": "1",
+      "merged": 84.02075425237418,
+      "better_expert": 83.4262090422213,
+      "full": 83.59144402444363,
+      "R": 3.5981800110154007,
+      "ci": [
+        -27.6966259711518,
+        34.326869165822814
+      ]
+    },
+    {
+      "method": "task_arithmetic",
+      "seed": "2",
+      "merged": 84.08483861535788,
+      "better_expert": 83.4217875815928,
+      "full": 83.59144402444363,
+      "R": 3.9081983720951046,
+      "ci": [
+        -32.64362158419507,
+        38.81505649047824
+      ]
+    },
+    {
+      "method": "task_arithmetic",
+      "seed": "3",
+      "merged": 83.88809633329511,
+      "better_expert": 83.3725924141705,
+      "full": 83.59144402444363,
+      "R": 2.3554952073747395,
+      "ci": [
+        -17.471178684065027,
+        20.25087343305692
+      ]
+    }
+  ],
+  "task_parallel": [
+    {
+      "size": "4b",
+      "combo": "clinc150-mt_domain",
+      "method": "linear",
+      "comet": 83.89007707610726,
+      "retention": 1.007852863021553,
+      "minus_specialist": 0.2986330516636372,
+      "ci": [
+        -0.005163658913224934,
+        0.602811408881098
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "clinc150-mt_domain",
+      "method": "ties",
+      "comet": 83.13463979661465,
+      "retention": 0.9879878633365478,
+      "minus_specialist": -0.4568042278289795,
+      "ci": [
+        -0.8036124225705862,
+        -0.1442700892873109
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "clinc150-mt_domain",
+      "method": "dare_ties",
+      "comet": 83.8911324031651,
+      "retention": 1.0078806139311793,
+      "minus_specialist": 0.2996883787214756,
+      "ci": [
+        -0.0018433967977762218,
+        0.6170789515040815
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "clinc150-mt_domain",
+      "method": "task_arithmetic",
+      "comet": 83.92036759182811,
+      "retention": 1.0086493832643155,
+      "minus_specialist": 0.3289235673844814,
+      "ci": [
+        0.0319440078176558,
+        0.6579352847486734
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "mt_domain-xsumc",
+      "method": "linear",
+      "comet": 84.25175445005297,
+      "retention": 1.0173635412929918,
+      "minus_specialist": 0.6603104256093502,
+      "ci": [
+        0.37567951090633867,
+        0.9493208148889244
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "mt_domain-xsumc",
+      "method": "ties",
+      "comet": 83.9882508866489,
+      "retention": 1.0104344442704891,
+      "minus_specialist": 0.39680686220526695,
+      "ci": [
+        0.17758730886504054,
+        0.6300838374905288
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "mt_domain-xsumc",
+      "method": "dare_ties",
+      "comet": 84.21517951712012,
+      "retention": 1.0164017658406628,
+      "minus_specialist": 0.6237354926764965,
+      "ci": [
+        0.34242661541327835,
+        0.9089176547899841
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "mt_domain-xsumc",
+      "method": "task_arithmetic",
+      "comet": 84.27101470306516,
+      "retention": 1.0178700094411843,
+      "minus_specialist": 0.6795706786215305,
+      "ci": [
+        0.40189263701438904,
+        0.9545835148729384
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "clinc150-mt_domain-xsumc",
+      "method": "linear",
+      "comet": 83.74856773838401,
+      "retention": 1.0041317295461363,
+      "minus_specialist": 0.157123713940382,
+      "ci": [
+        -0.1727117588184774,
+        0.48983238911256166
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "clinc150-mt_domain-xsumc",
+      "method": "ties",
+      "comet": 83.33851152062417,
+      "retention": 0.9933488798539621,
+      "minus_specialist": -0.25293250381946564,
+      "ci": [
+        -0.5675705395452678,
+        0.0661599511839447
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "clinc150-mt_domain-xsumc",
+      "method": "dare_ties",
+      "comet": 83.7323240108788,
+      "retention": 1.003704584036464,
+      "minus_specialist": 0.14087998643517494,
+      "ci": [
+        -0.17707647588104009,
+        0.47237204289063783
+      ]
+    },
+    {
+      "size": "4b",
+      "combo": "clinc150-mt_domain-xsumc",
+      "method": "task_arithmetic",
+      "comet": 83.72946387603879,
+      "retention": 1.0036293738512665,
+      "minus_specialist": 0.13801985159516333,
+      "ci": [
+        -0.19719957001507282,
+        0.48958629488945
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "clinc150-mt_domain",
+      "method": "linear",
+      "comet": 80.01161069720983,
+      "retention": 0.9929395252140757,
+      "minus_specialist": -0.2519898101687431,
+      "ci": [
+        -0.6284593504108489,
+        0.1334083905443539
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "clinc150-mt_domain",
+      "method": "ties",
+      "comet": 78.91813410669565,
+      "retention": 0.9623015248474989,
+      "minus_specialist": -1.3454664006829262,
+      "ci": [
+        -1.7376504240371287,
+        -0.9799616917409009
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "clinc150-mt_domain",
+      "method": "dare_ties",
+      "comet": 79.64087517187,
+      "retention": 0.9825519272903526,
+      "minus_specialist": -0.622725335508585,
+      "ci": [
+        -0.9908048579655588,
+        -0.24124748511239888
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "clinc150-mt_domain",
+      "method": "task_arithmetic",
+      "comet": 80.05184114798904,
+      "retention": 0.9940667377912935,
+      "minus_specialist": -0.21175935938954354,
+      "ci": [
+        -0.5777984992973506,
+        0.15053184246644355
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "mt_domain-xsumc",
+      "method": "linear",
+      "comet": 80.09464668706059,
+      "retention": 0.9952661014842548,
+      "minus_specialist": -0.16895382031798362,
+      "ci": [
+        -0.541513433959335,
+        0.20065736643970003
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "mt_domain-xsumc",
+      "method": "ties",
+      "comet": 80.21264949142933,
+      "retention": 0.9985724090859626,
+      "minus_specialist": -0.050951015949249265,
+      "ci": [
+        -0.38590730728581546,
+        0.28502115327864863
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "mt_domain-xsumc",
+      "method": "dare_ties",
+      "comet": 80.14790218323469,
+      "retention": 0.9967582613763446,
+      "minus_specialist": -0.11569832414388656,
+      "ci": [
+        -0.47991396836936473,
+        0.24920376773923603
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "mt_domain-xsumc",
+      "method": "task_arithmetic",
+      "comet": 80.25401413813233,
+      "retention": 0.9997314005740693,
+      "minus_specialist": -0.00958636924624443,
+      "ci": [
+        -0.3599333817139268,
+        0.3320657926052808
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "clinc150-mt_domain-xsumc",
+      "method": "linear",
+      "comet": 79.33083145543932,
+      "retention": 0.9738648464876525,
+      "minus_specialist": -0.9327690519392491,
+      "ci": [
+        -1.3365633869543672,
+        -0.515028460826725
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "clinc150-mt_domain-xsumc",
+      "method": "ties",
+      "comet": 78.59327169954777,
+      "retention": 0.9531992407788447,
+      "minus_specialist": -1.6703288078308105,
+      "ci": [
+        -2.0815515533462166,
+        -1.2966935878433288
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "clinc150-mt_domain-xsumc",
+      "method": "dare_ties",
+      "comet": 79.00762549936772,
+      "retention": 0.9648089743395847,
+      "minus_specialist": -1.2559750080108643,
+      "ci": [
+        -1.6939742374233902,
+        -0.8166123913601041
+      ]
+    },
+    {
+      "size": "1b",
+      "combo": "clinc150-mt_domain-xsumc",
+      "method": "task_arithmetic",
+      "comet": 79.357203207165,
+      "retention": 0.9746037536997938,
+      "minus_specialist": -0.9063973002135753,
+      "ci": [
+        -1.3074003928340971,
+        -0.5068483885563914
+      ]
+    }
+  ],
+  "kd_gold": {
+    "gemma3-mt_domain-full-lora": {
+      "comet": 83.59144402444363,
+      "comet_medical": 82.44939428269863,
+      "comet_law": 84.73349376618862,
+      "chrf": 59.538044503928894,
+      "n": 2000
+    },
+    "gemma3-mt_domain_kdgold_ce100-lora": {
+      "comet": 83.87651284337043,
+      "comet_medical": 82.87449705898761,
+      "comet_law": 84.87852862775325,
+      "chrf": 59.88851853491244,
+      "n": 2000
+    },
+    "gemma3-mt_domain_kdgold_ce90-lora": {
+      "comet": 84.09850256890059,
+      "comet_medical": 82.87499884665013,
+      "comet_law": 85.32200629115104,
+      "chrf": 60.12325343843616,
+      "n": 2000
+    },
+    "gemma3-mt_domain_kdgold_ce75-lora": {
+      "comet": 84.16716999262572,
+      "comet_medical": 83.11427328288555,
+      "comet_law": 85.22006670236587,
+      "chrf": 60.048735343391556,
+      "n": 2000
+    },
+    "gemma3-mt_domain_kdgold_ce50-lora": {
+      "comet": 83.99167238399386,
+      "comet_medical": 82.96207488030196,
+      "comet_law": 85.02126988768578,
+      "chrf": 58.439500924697604,
+      "n": 2000
+    }
+  }
+}
