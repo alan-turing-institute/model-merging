@@ -403,13 +403,16 @@ def main():
             rows = rows_of(log, args.task, args.limit)
             entry = summary.setdefault(name, {})
             entry.update(log=Path(log.location).name, samples=len(rows))
+            done = {"log", "samples"}
             if "bertscore" in args.metrics:
                 recs = run_bertscore(rows, out / f"{name}.{bs_tag}.jsonl", args.bertscore_model)
                 entry[bs_tag] = {k: mean(recs, k) for k in ("bertscore_p", "bertscore_r", "bertscore_f1")}
+                done.add(bs_tag)
             if "deepeval" in args.metrics:
                 size = sum(len(v) for v in cache.values())
                 recs = await run_deepeval(rows, out / f"{name}.{de_tag}.jsonl", judge, cache, locks, args)
                 entry[de_tag] = {k: mean(recs, k) for k in ("deepeval", "alignment", "coverage")} | {"scored": len(recs)}
+                done.add(de_tag)
                 # Written only when it grew: jobs that reuse a finished cache (run
                 # after the job that built it, so every model is judged against
                 # the same questions) then never race on the file.
@@ -417,15 +420,19 @@ def main():
                     cache_path.write_text(json.dumps(cache))
             if "summeval" in args.metrics:
                 entry["summeval-toolkit"] = run_summeval(rows, out / f"{name}.summeval-toolkit.jsonl")
+                done.add("summeval-toolkit")
             if "judge" in args.metrics:
                 recs = await run_judge(name, log, rows, out / f"{name}.{jg_tag}.jsonl",
                                        out / "judged" / f"{name}.{jg_tag}.eval", args)
                 entry[jg_tag] = {k: mean(recs, k) for k in
                                  ("coherence", "consistency", "fluency", "relevance", "judge_mean")} | {"scored": len(recs)}
-            # Re-read before writing: several jobs (one per group of models) may
-            # share this file, and each must only replace its own models' entries.
+                done.add(jg_tag)
+            # Re-read before writing and replace only the metrics computed here:
+            # jobs run side by side on the same models with different metrics
+            # (a DeepEval job once wiped statistics another job had just added,
+            # by writing back the whole entry it had read at its start).
             disk = json.loads(summary_path.read_text()) if summary_path.exists() else {}
-            disk[name] = entry
+            disk.setdefault(name, {}).update({k: entry[k] for k in done})
             summary_path.write_text(json.dumps(disk, indent=2) + "\n")
             print(name, json.dumps({k: v for k, v in entry.items() if k.startswith(("bertscore", "deepeval", "judge", "summeval"))}), flush=True)
 
