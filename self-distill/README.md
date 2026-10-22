@@ -82,7 +82,7 @@ We record the one sentence summarisation together with the `logprobs`.  This is 
 
 #### Student training
 
-The student is trained on both the `logprobs` and the output of the teacher.
+The student is trained on both the `logprobs` and the output of the teacher. Once training succeeds, `<output_dir>/provenance.json` records the base model, method, key hyperparameters (including the KD weights), final train/eval loss and the KD dataset with its own record (teacher, targets, coverage; see [`../provenance.py`](../provenance.py)).
 
 NB On Isambard this should be submitted as a job, otherwise it will run out of memory and cause your session to be killed.  We provide a short bash script for this.
 

@@ -25,7 +25,11 @@
 # trained on, so it is required here. For translation, COMET is a second step:
 # sbatch comet_score.sbatch on the resulting log.
 #
-# The .eval log is written to logs/; read it with `uv run inspect view`.
+# The .eval log is written to logs/; read it with `uv run inspect view`. Its
+# metadata says what the model is: for a model or adapter dir with a
+# provenance.json, its kind, method, base model, training data, teacher and
+# targets, coverage, hyperparameters and final losses (see ../provenance.py);
+# for a Hub id, model_kind=base. eval_slurm_job links it to slurm/<job>.out.
 set -euo pipefail
 USAGE="usage: sbatch evaluate.sbatch <crime|wine|xsum|translation> <model> [--adapter <dir>] [inspect eval args...]"
 TASK=${1:?$USAGE}
@@ -78,9 +82,16 @@ export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
 
 uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is a CUDA compat lib on LD_LIBRARY_PATH?'"
 
+# With --adapter, the adapter is the trained model, so describe that.
+METADATA=(--metadata "eval_slurm_job=$SLURM_JOB_ID")
+DESCRIPTION=$(uv run python ../provenance.py describe "${ADAPTER:-$MODEL}")
+while IFS= read -r line; do
+  METADATA+=(--metadata "$line")
+done <<<"$DESCRIPTION"
+
 # Greedy decoding and bf16 weights for every model, whatever its config.json
 # says: Inspect's hf provider defaults do_sample to true, and a checkpoint whose
 # config says float32 would otherwise load in fp32 next to a bf16 base model.
 uv run inspect eval "$TASK_FILE" --model "$PROVIDER/$MODEL_NAME" "${MODEL_ARGS[@]}" \
   -M batch_size=8 -M do_sample=false -M dtype=bfloat16 \
-  --log-dir logs "$@"
+  "${METADATA[@]}" --log-dir logs "$@"

@@ -19,7 +19,9 @@
 # config does not set it. Everything else in the config is used
 # unchanged. The config actually used is saved as <output_dir>/config.yaml.
 # Relative paths resolve against train/. The log is saved as
-# <output_dir>/<config name>-<jobid>.out, e.g. wine_gemma-1234567.out.
+# <output_dir>/<config name>-<jobid>.out, e.g. wine_gemma-1234567.out. Once
+# training succeeds, <output_dir>/provenance.json records what made the model
+# (see ../provenance.py).
 set -euo pipefail
 USAGE="usage: sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>"
 CONFIG=${1:?$USAGE}
@@ -87,3 +89,5 @@ EOF
 # memory-hungry tokenisation pass out of the training process.
 uv run axolotl preprocess "$RUN_CONFIG"
 uv run axolotl train      "$RUN_CONFIG"
+
+uv run python ../provenance.py model "$OUTPUT_DIR" --script train.sbatch

@@ -55,6 +55,16 @@ If your models are listed using the `base_model+adapter` syntax, then mergekit n
 uv run mergekit-yaml crime_merge_linear_config.yaml ../models/gemma3-crime_merged-linear --cuda --lazy-unpickle --allow-crimes --lora-merge-cache ../models/.lora_merge_cache
 ```
 
+### As a Slurm job, with a provenance record
+
+[merge.sbatch](merge.sbatch) runs the same `mergekit-yaml` command as a job, from `merge/`, passing on any extra arguments (e.g. `--lora-merge-cache`):
+
+```bash
+sbatch merge.sbatch xsum_merge_linear_config.yaml ../models/gemma3_4b_xsum_short_merge_linear
+```
+
+The log goes to `<output_dir>/<config name>-<jobid>.out`, and once the merge succeeds `<output_dir>/provenance.json` records the merge method and each input model with its weight and its own record (training data, coverage, losses; see [`../provenance.py`](../provenance.py)). Its `coverage` lists the inputs', e.g. `["1 of 2", "2 of 2"]`.
+
 ## Possible problems
 
 If the compute has GPUs with a smaller amount of VRAM, eg 16Gb, then this might max out, e.g. with TIES and DARE-TIES.  In this case, remove the `cuda` flag and instead use the system RAM.  Using CPUs, you can add the `-j` flag, to parallelise across several nodes.

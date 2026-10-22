@@ -41,7 +41,7 @@ sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>
 #            ../datasets/wine_dataset ../models/gemma3-4b-wine-full
 ```
 
-which trains the model detailed in `<config.yaml>` (and the parameters given there), on the dataset `<dataset_dir>` and writes the output to `<output_dir>`. The log is saved in `<output_dir>` as `<config name>-<jobid>.out`, e.g. `wine_gemma-1234567.out`.
+which trains the model detailed in `<config.yaml>` (and the parameters given there), on the dataset `<dataset_dir>` and writes the output to `<output_dir>`. The log is saved in `<output_dir>` as `<config name>-<jobid>.out`, e.g. `wine_gemma-1234567.out`. Once training succeeds, `<output_dir>/provenance.json` records the base model, method, key hyperparameters, final train/eval loss and the training data with its own record, including its `coverage` (see [`../provenance.py`](../provenance.py)).
 
 Alternatively, to run the training directly, write a properly configured yaml and run
 

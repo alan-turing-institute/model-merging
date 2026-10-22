@@ -16,6 +16,8 @@ uv run inspect view --log-dir logs
 
 and load them into pandas with `inspect_ai.analysis.samples_df("logs")` / `evals_df("logs")`.
 
+`evaluate.sbatch` also stores what the model is in each log's metadata, from the model's (or adapter's) `provenance.json`: `model_kind` (`trained`, `merged` or `base`), method, base model, training data and its hash, teacher and targets, `model_coverage`, hyperparameters, final losses, or for a merge its method, inputs and weights (see [`../provenance.py`](../provenance.py)). In `evals_df` they are in the `metadata` column, e.g. `df.metadata.str["targets"]`.
+
 ## Running on Isambard-AI
 
 Submit `evaluate.sbatch` from `evaluate/`:
