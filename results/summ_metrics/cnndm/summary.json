@@ -14,6 +14,12 @@
       "relevance": 4.948,
       "judge_mean": 4.879,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4503809523809524,
+      "alignment": 0.73565,
+      "coverage": 0.48256666666666664,
+      "scored": 500
     }
   },
   "cnndm-kdgold75-merged-dare_ties_s2": {
@@ -30,6 +36,12 @@
       "fluency": 4.99,
       "relevance": 4.954,
       "judge_mean": 4.8825,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4322888888888889,
+      "alignment": 0.7456330447330447,
+      "coverage": 0.4619666666666667,
       "scored": 500
     }
   },
@@ -48,6 +60,12 @@
       "relevance": 4.568,
       "judge_mean": 4.5615,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.6673414838465529,
+      "alignment": 0.7648887336556017,
+      "coverage": 0.753306613226453,
+      "scored": 499
     }
   },
   "cnndm-kdgold75-merged-dare_ties_s3": {
@@ -64,6 +82,12 @@
       "fluency": 4.99,
       "relevance": 4.952,
       "judge_mean": 4.892,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.46077460317460317,
+      "alignment": 0.7401174603174603,
+      "coverage": 0.49290000000000006,
       "scored": 500
     }
   },
@@ -82,6 +106,12 @@
       "relevance": 4.908,
       "judge_mean": 4.8525,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4248497835497836,
+      "alignment": 0.711487445887446,
+      "coverage": 0.45480000000000004,
+      "scored": 500
     }
   },
   "gemma3-cnndm-kdgold75_a_s2-lora": {
@@ -98,6 +128,12 @@
       "fluency": 4.99,
       "relevance": 4.934,
       "judge_mean": 4.8535,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.44582222222222223,
+      "alignment": 0.7410507936507936,
+      "coverage": 0.47236666666666666,
       "scored": 500
     }
   },
@@ -116,6 +152,12 @@
       "relevance": 4.95,
       "judge_mean": 4.8995,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4454119047619048,
+      "alignment": 0.7495499999999999,
+      "coverage": 0.4759666666666667,
+      "scored": 500
     }
   },
   "cnndm-kdgold75-merged-linear_s2": {
@@ -132,6 +174,12 @@
       "fluency": 4.998,
       "relevance": 4.958,
       "judge_mean": 4.9035,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4435761904761905,
+      "alignment": 0.7454992063492064,
+      "coverage": 0.4749666666666667,
       "scored": 500
     }
   },
@@ -150,6 +198,12 @@
       "relevance": 4.94,
       "judge_mean": 4.869,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4450706349206349,
+      "alignment": 0.7211944444444445,
+      "coverage": 0.4782666666666667,
+      "scored": 500
     }
   },
   "gemma3-cnndm-kdgold75_b-lora": {
@@ -166,6 +220,12 @@
       "fluency": 4.988,
       "relevance": 4.948,
       "judge_mean": 4.8705,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4316880952380952,
+      "alignment": 0.725431746031746,
+      "coverage": 0.4634666666666667,
       "scored": 500
     }
   },
@@ -184,6 +244,12 @@
       "relevance": 4.96,
       "judge_mean": 4.8855,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4508404761904762,
+      "alignment": 0.7457817460317461,
+      "coverage": 0.4748,
+      "scored": 500
     }
   },
   "gemma3-cnndm-kdgold75_b_s2-lora": {
@@ -200,6 +266,12 @@
       "fluency": 4.992,
       "relevance": 4.942,
       "judge_mean": 4.849,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4469111111111111,
+      "alignment": 0.7327277777777778,
+      "coverage": 0.4741666666666667,
       "scored": 500
     }
   },
@@ -218,6 +290,12 @@
       "relevance": 4.954,
       "judge_mean": 4.8875,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4480571428571429,
+      "alignment": 0.750602380952381,
+      "coverage": 0.47840000000000005,
+      "scored": 500
     }
   },
   "gemma3-cnndm-kdgold75_b_s3-lora": {
@@ -234,6 +312,12 @@
       "fluency": 4.996,
       "relevance": 4.938,
       "judge_mean": 4.8535,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4392952380952381,
+      "alignment": 0.7261515873015872,
+      "coverage": 0.4693333333333333,
       "scored": 500
     }
   },
@@ -252,6 +336,12 @@
       "relevance": 4.934,
       "judge_mean": 4.8865,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.43774285714285716,
+      "alignment": 0.7384166666666666,
+      "coverage": 0.4706666666666667,
+      "scored": 500
     }
   },
   "gemma3-cnndm-kdgold75_full-lora": {
@@ -268,6 +358,12 @@
       "fluency": 4.98,
       "relevance": 4.936,
       "judge_mean": 4.8835,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4566242257742258,
+      "alignment": 0.7494724941724942,
+      "coverage": 0.48436666666666667,
       "scored": 500
     }
   },
@@ -286,6 +382,12 @@
       "relevance": 4.968,
       "judge_mean": 4.9045,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4560126984126984,
+      "alignment": 0.7438452380952381,
+      "coverage": 0.4845,
+      "scored": 500
     }
   },
   "cnndm-kdgold75-merged-ties": {
@@ -302,6 +404,12 @@
       "fluency": 4.988,
       "relevance": 4.924,
       "judge_mean": 4.8255,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.41236904761904764,
+      "alignment": 0.6926261904761905,
+      "coverage": 0.4473666666666667,
       "scored": 500
     }
   },
@@ -320,6 +428,12 @@
       "relevance": 4.896,
       "judge_mean": 4.8575,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.43841233766233767,
+      "alignment": 0.7333415584415583,
+      "coverage": 0.4716666666666667,
+      "scored": 500
     }
   },
   "cnndm-kdgold75-merged-ties_s2": {
@@ -337,6 +451,12 @@
       "relevance": 4.928,
       "judge_mean": 4.8185,
       "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4061,
+      "alignment": 0.7128198412698413,
+      "coverage": 0.44026666666666664,
+      "scored": 500
     }
   },
   "cnndm-kdgold75-merged-ties_s3": {
@@ -353,6 +473,12 @@
       "fluency": 4.994,
       "relevance": 4.95,
       "judge_mean": 4.853,
+      "scored": 500
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4138772727272727,
+      "alignment": 0.6995963203463204,
+      "coverage": 0.44903333333333334,
       "scored": 500
     }
   }
