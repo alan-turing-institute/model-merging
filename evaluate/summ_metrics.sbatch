@@ -22,6 +22,7 @@
 set -euo pipefail
 cd "$SLURM_SUBMIT_DIR"
 source ../train/cuda_env.sh
+echo "node $(hostname); GPU: $(nvidia-smi --query-gpu=name,memory.used,memory.total --format=csv,noheader 2>&1 | head -1)"
 # The cache, not HF_HOME: HF_HOME would move the auth token too (see evaluate.sbatch).
 export HF_HUB_CACHE=${HF_HUB_CACHE:-$PROJECTDIR/$USER/mm/hf-cache}
 export DEEPEVAL_TELEMETRY_OPT_OUT=1
@@ -61,7 +62,10 @@ if [[ " $* " != *" --metrics "* || " $* " == *" deepeval"* || " $* " == *" judge
   SERVER=$!
   for _ in $(seq 120); do
     curl -sf "http://127.0.0.1:$PORT/v1/models" > /dev/null && break
-    kill -0 $SERVER 2>/dev/null || { echo "judge server exited - see judge-$SLURM_JOB_ID.log" >&2; exit 1; }
+    if ! kill -0 $SERVER 2>/dev/null; then
+      wait $SERVER && rc=0 || rc=$?
+      echo "judge server exited with code $rc - see judge-$SLURM_JOB_ID.log" >&2; exit 1
+    fi
     sleep 10
   done
   curl -sf "http://127.0.0.1:$PORT/v1/models" > /dev/null || { echo "judge server not up after 20 minutes" >&2; exit 1; }
