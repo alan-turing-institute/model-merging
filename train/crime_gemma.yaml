@@ -1,6 +1,10 @@
 base_model: google/gemma-3-4b-it
 
-load_in_4bit: true
+# Plain bf16 LoRA, not 4-bit QLoRA: evaluation (evaluate.sbatch) and mergekit
+# apply the adapter to the bf16 base model, so train on those same weights.
+# bf16, not fp16: Gemma 3's activations overflow fp16's range.
+load_in_4bit: false
+bf16: true
 
 adapter: lora
 
