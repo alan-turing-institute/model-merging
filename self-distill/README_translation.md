@@ -59,4 +59,4 @@ sbatch evaluate.sbatch translation ../models/gemma3_4b_nc_zh_en_short -T prompt_
 sbatch comet_score.sbatch logs/<log>.eval
 ```
 
-`prompt_variant` must match the prompt the model was trained on.  Use `-T split=validation` while developing the behaviour checks, and keep `test` for the final comparison.
+`prompt_variant` must match the prompt the model was trained on.  The behaviour checks were refined on the validation split from base-model and teacher outputs and are now frozen (version 2), so report results on `test` (the default).  Logs scored with the checks' version are marked `behaviour_checks_version` in their metadata.

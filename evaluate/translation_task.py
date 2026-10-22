@@ -31,9 +31,9 @@ students is only convincing when it shows up across families:
     CometKiwi does not, the student matched the references rather than
     translating better.
   - behaviour checks: what self-distillation from a strict teacher prompt
-    should actually change. These are a first draft: refine them on the
-    validation split, against base-model and teacher outputs, then freeze them
-    (bump `version`) before scoring any student on test.
+    should actually change. Version 2, refined on the validation split from
+    base-model and teacher outputs only (never students'), and now frozen for
+    test: see the comment above behaviour_checks.
 
 PROMPT PARITY: as in xsum_task.py, the prompt is built here by the same
 `convert_to_prompt` that self-distill/prepare_data_NewsCommentary_zh_en.py uses
@@ -42,6 +42,7 @@ model was trained on.
 """
 
 import asyncio
+import functools
 import importlib.util
 import math
 import re
@@ -168,36 +169,85 @@ def overlap():
 
 # --- behaviour checks -------------------------------------------------------
 #
-# A FIRST DRAFT, from expected failure modes rather than observed ones. Refine
-# on the validation split against base-model and teacher outputs before using
-# these on test.
+# VERSION 2, frozen. Version 1 was a draft from expected failure modes; version
+# 2 is refined from the 3,000 base-model validation outputs (short, long and
+# teacher prompts) and the 9,978 teacher outputs in the KD training data:
+#   - preamble: "Sure"/"Of course" etc. count only as a standalone
+#     interjection. Every v1 hit on the long/teacher prompts was a translation
+#     opening "Of course, ...", and no real preamble started that way.
+#   - quoted: judged against the source, not the reference; v1's only hits were
+#     sources that are themselves quotations.
+#   - truncated (new): 66.5% of short-prompt outputs ran into max_tokens.
+#   - alternatives (new): the short prompt's main failure, "Here are a few
+#     options for translating..." followed by several candidates.
+#   - notes: also catches a "breakdown" / word-by-word glossary after the
+#     translation (18% of short-prompt outputs, missed by v1).
+#   - echoes_source (new) / untranslated: the Chinese source quoted back in a
+#     preamble, and glossary lines, no longer count as untranslated text.
+#   - length_out_of_band: measured against the source, not the reference, as
+#     some references are loose or misaligned; the reference ratio is kept as
+#     length_ratio, for information.
+#   - numbers_preserved: skips "20世纪" (20th century) and accepts spelled-out
+#     tens ("two decades" for 20).
+# Name errors (麦当娜 -> "McDonald's") are real but have no check: matching
+# names against the reference flagged 44% of outputs, nearly all spuriously.
 
 # Openings that introduce a translation rather than being one: "Here's the
 # translation:", "Sure!", "Translation:", "English:", "**Translation**".
+# "Sure"/"Of course" etc. only as an interjection ("Sure!", "Of course:",
+# "Sure, here is..."), not opening a sentence ("Of course, Putin could...").
 _PREAMBLE_OPENING = re.compile(
-    r"^\W*(?:here(?:'|’)?s\b|here is\b|sure\b|okay\b|certainly\b|of course\b|"
+    r"^\W*(?:here(?:'|’)?s\b|here is\b|"
+    r"(?:sure|okay|certainly|of course)\s*(?:[!:：]|[.,]?\s*(?:\n|$|here\b))|"
     r"(?:the |an? |my )?(?:english )?translation\b|english\s*[:：]|translated\b)",
     re.IGNORECASE,
 )
 # Any first line ending in a colon with more text after it.
 _PREAMBLE_LINE = re.compile(r"^[^\n]*[:：][*\s]*\n\s*\S")
 # Commentary after or around the translation: "Note: ...", "(Translator's
-# note: ...)", "Literal translation: ...", "Explanation:".
+# note: ...)", "Literal translation: ...", "Explanation:", "Here's a breakdown
+# of the translation:" or "word-by-word"; glossary lines are _GLOSSARY_LINE.
 _NOTES = re.compile(
     r"(?:^|\n|\()\s*\**\s*(?:translator(?:'|’)?s\s+)?(?:notes?|explanation|"
-    r"literal(?:ly| translation)|alternative(?: translation)?|alternatively)\s*\**\s*[:：]",
+    r"literal(?:ly| translation)|alternative(?: translation)?|alternatively)\s*\**\s*[:：]"
+    r"|\bbreakdown\b|\bword[- ]by[- ]word\b",
+    re.IGNORECASE,
+)
+# A glossary line: "* **有鉴于此 (yǒu jiàn yú cǐ):** Given this".
+_GLOSSARY_LINE = re.compile(
+    r"^[\s*•\-]*\**[㐀-䶿一-鿿豈-﫿]+\**\s*[(（][^)）\n]*[)）]\s*\**\s*[:：]",
+    re.MULTILINE,
+)
+# Several candidate translations instead of one: "Here are a few options for
+# translating...", "Option 1:", "Version 2".
+_ALTERNATIVES = re.compile(
+    r"\b(?:a few|several|some|two|three|four|multiple)\s+(?:different\s+)?"
+    r"(?:ways|options|possible translations|translations|versions)\b"
+    r"|\b(?:option|version)\s*\d",
     re.IGNORECASE,
 )
 _MARKDOWN = re.compile(r"\*\*|__|^#{1,6}\s|^\s*(?:[-*•]|\d+\.)\s", re.MULTILINE)
 _CJK = re.compile(r"[㐀-䶿一-鿿豈-﫿　-〿！-｠]")
+_HAN = re.compile(r"[㐀-䶿一-鿿豈-﫿]")
+# A run of Chinese this long that also occurs in the source is the source
+# quoted back ('Here are a few ways to translate "然而，正如智者所言…"'), not a
+# word left untranslated.
+_CJK_RUN = re.compile(r"[㐀-䶿一-鿿豈-﫿　-〿！-｠]{8,}")
 # Pinyin tone marks that English (and European names) never use: macrons and
 # carons. á, é, à etc. are left out - they are common in names like "Macron's
 # Élysée" - so second- and fourth-tone-only pinyin is missed.
 _PINYIN = re.compile(r"[āēīōūǖǎěǐǒǔǚǘǜ]", re.IGNORECASE)
 _QUOTED = re.compile(r"^\s*[\"“「『'‘].*[\"”」』'’]\s*$", re.DOTALL)
-# Output length relative to the reference, in words: outside this band it has
-# probably dropped or added content.
-LENGTH_BAND = (0.7, 1.5)
+# English words per Chinese character of the source: outside this band the
+# output has probably dropped or added content. The 1st-99th percentile of the
+# training references (median 0.59), so ~2% of professional translations fall
+# outside it too.
+LENGTH_BAND = (0.35, 0.95)
+# Gemma 3 tokens, the generation limit; an output within a few tokens of it was
+# cut off (re-tokenising the text can differ from the generated ids by one or
+# two). The longest long/teacher-prompt output is 103 tokens.
+MAX_TOKENS = 128
+TRUNCATED_TOKENS = MAX_TOKENS - 3
 
 # The same word twice in a row, as in xsum_task.py (copied rather than
 # imported: importing a task file would register its task here too).
@@ -206,9 +256,17 @@ _REPEATED_RUN = re.compile(r"\b(\w+)(?:\s+\1\b){3,}", re.IGNORECASE)
 
 # Arabic numerals, with thousands separators or decimals.
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
-# Chinese magnitude words after a number: "300万" is "3 million", so the digits
-# do not carry over.
-_MAGNITUDE = "万亿千百十"
+# Chinese words after a number that stop its digits carrying over: magnitudes
+# ("300万" is "3 million") and centuries ("20世纪" is "the 20th century").
+_MAGNITUDE = ("万", "亿", "千", "百", "十", "世纪")
+# Spelled-out forms accepted for round numbers: "two decades" or "twenty" for 20.
+_TENS = {
+    "10": ("ten", "a decade"), "20": ("twenty", "two decades"),
+    "30": ("thirty", "three decades"), "40": ("forty", "four decades"),
+    "50": ("fifty", "five decades"), "60": ("sixty", "six decades"),
+    "70": ("seventy", "seven decades"), "80": ("eighty", "eight decades"),
+    "90": ("ninety", "nine decades"), "100": ("a hundred", "one hundred"),
+}
 
 
 def _numbers(text: str, magnitude_free: bool = False) -> set[str]:
@@ -217,7 +275,7 @@ def _numbers(text: str, magnitude_free: bool = False) -> set[str]:
     text = unicodedata.normalize("NFKC", text)  # full-width digits
     found = set()
     for match in _NUMBER.finditer(text):
-        if magnitude_free and text[match.end():match.end() + 1] in set(_MAGNITUDE):
+        if magnitude_free and text[match.end():].startswith(_MAGNITUDE):
             continue
         number = match.group(0).replace(",", "").rstrip(".")
         if len(number) > 1:
@@ -235,24 +293,53 @@ def numbers_preserved(prediction: str, source: str, reference: str):
     graded = _numbers(source, magnitude_free=True) & _numbers(reference)
     if not graded:
         return None
-    return len(graded & _numbers(prediction)) / len(graded)
+    found = _numbers(prediction)
+    lowered = prediction.lower()
+    kept = [n for n in graded if n in found or any(w in lowered for w in _TENS.get(n, ()))]
+    return len(kept) / len(graded)
+
+
+@functools.cache
+def _tokenizer():
+    """Gemma 3's tokenizer, shared by every model evaluated here (all Gemma 3)."""
+    from transformers import AutoTokenizer
+
+    return AutoTokenizer.from_pretrained("google/gemma-3-4b-it")
+
+
+def _echoed_runs(prediction: str, source: str) -> list[str]:
+    """Runs of Chinese in the output that are the source quoted back."""
+    return [run for run in _CJK_RUN.findall(prediction) if run in source]
+
+
+def _untranslated_cjk(prediction: str, source: str) -> int:
+    """Chinese characters left in the output, not counting the source quoted
+    back or glossary lines."""
+    text = _GLOSSARY_LINE.sub("", prediction)
+    for run in _echoed_runs(text, source):
+        text = text.replace(run, "")
+    return len(_CJK.findall(text))
 
 
 @scorer(
     metrics={
         # Shares of outputs, so the mean is the fraction showing each behaviour.
         "preamble": [mean(), stderr()],
+        "alternatives": [mean(), stderr()],
         "notes": [mean(), stderr()],
         "multi_line": [mean(), stderr()],
         "markdown": [mean(), stderr()],
         "quoted": [mean(), stderr()],
         "untranslated": [mean(), stderr()],
+        "echoes_source": [mean(), stderr()],
         "pinyin": [mean(), stderr()],
+        "truncated": [mean(), stderr()],
         "length_out_of_band": [mean(), stderr()],
         "repeated_word": [mean(), stderr()],
         "repeated_run": [mean()],
         # Not shares.
         "cjk_share": [mean()],
+        "source_length_ratio": [mean(), stderr()],
         "length_ratio": [mean(), stderr()],
         "numbers_preserved": [mean(), stderr()],
         "numbers_gradeable": [mean()],
@@ -267,9 +354,12 @@ def behaviour_checks():
         prediction = state.output.completion.strip()
         reference = target.text
         source = (state.metadata or {}).get("source", "")
-        ratio = len(prediction.split()) / max(len(reference.split()), 1)
+        words = len(prediction.split())
+        ratio = words / max(len(reference.split()), 1)
+        source_ratio = words / max(len(_HAN.findall(source)), 1)
         chars = [c for c in prediction if not c.isspace()]
         cjk = len(_CJK.findall(prediction))
+        tokens = len(_tokenizer()(prediction, add_special_tokens=False).input_ids)
         # Repeats the reference has too ("had had") are not counted.
         repeats = [
             m.group(0) for m in _REPEATED_WORD.finditer(prediction)
@@ -280,17 +370,23 @@ def behaviour_checks():
             "preamble": float(bool(
                 _PREAMBLE_OPENING.match(prediction) or _PREAMBLE_LINE.match(prediction)
             )),
-            "notes": float(bool(_NOTES.search(prediction))),
+            "alternatives": float(bool(_ALTERNATIVES.search(prediction))),
+            "notes": float(bool(
+                _NOTES.search(prediction) or _GLOSSARY_LINE.search(prediction)
+            )),
             "multi_line": float(len([l for l in prediction.splitlines() if l.strip()]) > 1),
             "markdown": float(bool(_MARKDOWN.search(prediction))),
-            # Only when the reference is not itself one quotation.
-            "quoted": float(bool(_QUOTED.match(prediction) and not _QUOTED.match(reference))),
-            "untranslated": float(cjk > 0),
+            # Only when the source is not itself one quotation.
+            "quoted": float(bool(_QUOTED.match(prediction) and not _QUOTED.match(source))),
+            "untranslated": float(_untranslated_cjk(prediction, source) > 0),
+            "echoes_source": float(bool(_echoed_runs(prediction, source))),
             "pinyin": float(bool(_PINYIN.search(prediction))),
-            "length_out_of_band": float(not low <= ratio <= high),
+            "truncated": float(tokens >= TRUNCATED_TOKENS),
+            "length_out_of_band": float(not low <= source_ratio <= high),
             "repeated_word": float(bool(repeats)),
             "repeated_run": float(bool(_REPEATED_RUN.search(prediction))),
             "cjk_share": cjk / len(chars) if chars else 0.0,
+            "source_length_ratio": source_ratio,
             "length_ratio": ratio,
             # NaN is Inspect's "unscored" marker for a key of a dict-valued
             # score: a sentence with no gradeable numbers is left out of the
@@ -301,7 +397,8 @@ def behaviour_checks():
         return Score(
             value=value,
             answer=prediction,
-            explanation=f"length ratio {ratio:.2f}"
+            explanation=f"words per source character {source_ratio:.2f}, "
+            f"length ratio to reference {ratio:.2f}, {tokens} tokens"
             + (f" | repeated: {', '.join(repeats)}" if repeats else ""),
         )
 
@@ -429,8 +526,8 @@ def translation(
     prompt_variant: which prepare_data_NewsCommentary_zh_en.py prompt to
     evaluate with - "short", "long" or "teacher". Must match what the model was
     trained on.
-    split: "validation" while developing the behaviour checks; "test" only once
-    they are frozen.
+    split: "test" for reported figures; "validation" is where the behaviour
+    checks were developed.
     """
     if prompt_variant not in PROMPT_FIELDS:
         raise ValueError(
@@ -447,8 +544,12 @@ def translation(
         scorer=[overlap(), behaviour_checks()],
         # English references reach 113 Gemma tokens at most (mean 28.5), and
         # the KD data was generated with max_tokens 128.
-        config=GenerateConfig(max_tokens=128),
+        config=GenerateConfig(max_tokens=MAX_TOKENS),
         # 1: first draft of the behaviour checks.
-        version=1,
-        metadata={"prompt_variant": prompt_variant, "split": split},
+        # 2: behaviour checks refined on validation outputs and frozen (see the
+        #    comment above behaviour_checks).
+        version=2,
+        # Kept in the log, so logs rescored with a later version of the checks
+        # (whose task version stays as generated) can be told apart.
+        metadata={"prompt_variant": prompt_variant, "split": split, "behaviour_checks_version": 2},
     )
