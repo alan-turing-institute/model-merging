@@ -18,6 +18,22 @@ and load them into pandas with `inspect_ai.analysis.samples_df("logs")` / `evals
 
 `evaluate.sbatch` also stores what the model is in each log's metadata, from the model's (or adapter's) `provenance.json`: `model_kind` (`trained`, `merged` or `base`), method, base model, training data and its hash, teacher and targets, `model_coverage`, hyperparameters, final losses, or for a merge its method, inputs and weights (see [`../provenance.py`](../provenance.py)). In `evals_df` they are in the `metadata` column, e.g. `df.metadata.str["targets"]`.
 
+## Test data
+
+`xsum_task.py` reads `datasets/xsum_prompts/test`, which `self-distill/prepare_data_XSum.py` writes together with the training data, so test articles cannot overlap training ones. It only reads a saved split, like the other tasks: run the preparation first, or pass `-T dataset_path=` a split saved by the same preparation.
+
+The optional reference-free metrics (`-T faithfulness=true`, see `xsum_faithfulness.py`) load about 6 GB of extra models and are off by default.
+
+`crime_task.py` reads the split written by `train/prepare_data.py`.
+
+## Checking a setup
+
+```bash
+bash smoke_test.sh
+```
+
+runs every task end to end on three synthetic rows with Inspect's built-in `mockllm` provider - no GPU, no gated model, no prepared data - and checks each writes a successful log. It is the quickest way to confirm a fresh clone works, and CI runs it on every pull request, together with `uv lock --check` for each environment.
+
 ## Running on Isambard-AI
 
 Submit `evaluate.sbatch` from `evaluate/`:
@@ -37,7 +53,7 @@ sbatch evaluate.sbatch wine google/gemma-3-4b-it --adapter ../models/gemma3-4b-w
 
 The script always uses greedy decoding and loads the weights in bfloat16, so every model is compared at the same precision whatever its `config.json` says.
 
-The `semantic` score needs `sentence-transformers/all-MiniLM-L6-v2` in the Hugging Face cache. Compute nodes have no outbound network, so download it once from a login node. If it is missing, `semantic` is reported as 0.0 with only a printed warning.
+The `semantic` score needs `sentence-transformers/all-MiniLM-L6-v2` in the Hugging Face cache. Download it once before running, so a run never depends on the Hub (compute nodes can reach it, but a cached copy keeps every run identical). If it is missing, `semantic` is reported as 0.0 with only a printed warning.
 
 
 ## Running on Azure
