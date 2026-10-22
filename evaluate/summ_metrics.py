@@ -92,7 +92,7 @@ def label(log):
     return "base-" + str(log.eval.model).split("/")[-1]
 
 
-def latest_logs(log_dir, task, pattern, size, variant, dataset):
+def latest_logs(log_dir, task, pattern, size, variant, dataset, not_dataset=None):
     logs = {}
     for info in list_eval_logs(log_dir):
         log = read_eval_log(info, header_only=True)
@@ -102,6 +102,8 @@ def latest_logs(log_dir, task, pattern, size, variant, dataset):
         if variant and targs.get("prompt_variant", variant) != variant:
             continue
         if dataset and dataset not in str(targs.get("dataset_path", "")):
+            continue
+        if not_dataset and not_dataset in str(targs.get("dataset_path", "")):
             continue
         replayed = bool(targs.get("system"))  # summeval_task.py: no model of ours
         if not replayed and f"gemma-3-{size}-it" not in str(log.eval.model) \
@@ -358,6 +360,9 @@ def main():
     ap.add_argument("--size", choices=["4b", "1b", "27b"], default="4b")
     ap.add_argument("--prompt-variant", default="short", help="only logs run with this prompt_variant ('' for any)")
     ap.add_argument("--dataset", help="only logs whose dataset_path contains this, e.g. xsum_screen/test")
+    ap.add_argument("--not-dataset", help="skip logs whose dataset_path contains this - e.g. summeval, to keep a task's "
+                                          "default test set when newer runs on another split exist (they record a "
+                                          "dataset_path; default runs do not)")
     ap.add_argument("--metrics", nargs="+", choices=["bertscore", "deepeval", "judge", "summeval"],
                     default=["bertscore", "deepeval", "judge"])
     ap.add_argument("--limit", type=int, help="first N samples of each log (for a quick check)")
@@ -376,7 +381,8 @@ def main():
 
     out = args.out / args.task
     out.mkdir(parents=True, exist_ok=True)
-    logs = latest_logs(args.log_dir, args.task, args.models, args.size, args.prompt_variant, args.dataset)
+    logs = latest_logs(args.log_dir, args.task, args.models, args.size, args.prompt_variant, args.dataset,
+                       args.not_dataset)
     if not logs:
         raise SystemExit(f"no successful {args.task} logs match {args.models!r}")
     jl = re.sub(r"[^A-Za-z0-9_.-]+", "_", args.judge_label or args.judge_model)
