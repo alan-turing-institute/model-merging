@@ -407,9 +407,14 @@ def main():
                 recs = run_bertscore(rows, out / f"{name}.{bs_tag}.jsonl", args.bertscore_model)
                 entry[bs_tag] = {k: mean(recs, k) for k in ("bertscore_p", "bertscore_r", "bertscore_f1")}
             if "deepeval" in args.metrics:
+                size = sum(len(v) for v in cache.values())
                 recs = await run_deepeval(rows, out / f"{name}.{de_tag}.jsonl", judge, cache, locks, args)
                 entry[de_tag] = {k: mean(recs, k) for k in ("deepeval", "alignment", "coverage")} | {"scored": len(recs)}
-                cache_path.write_text(json.dumps(cache))
+                # Written only when it grew: jobs that reuse a finished cache (run
+                # after the job that built it, so every model is judged against
+                # the same questions) then never race on the file.
+                if sum(len(v) for v in cache.values()) != size:
+                    cache_path.write_text(json.dumps(cache))
             if "summeval" in args.metrics:
                 entry["summeval-toolkit"] = run_summeval(rows, out / f"{name}.summeval-toolkit.jsonl")
             if "judge" in args.metrics:
