@@ -31,11 +31,14 @@ from scipy.stats import kendalltau
 HERE = Path(__file__).resolve().parent
 DIMS = ("coherence", "consistency", "fluency", "relevance")
 JUDGE, BS, SE = "judge4-qwen3-32b", "bertscore-roberta-large", "summeval-toolkit"
+DE, CM = "deepeval-qwen3-32b-n5", "comet-wmt22"  # DeepEval SummarizationMetric; COMET-22 (summ_comet.py)
 # (column, record tag, key in the record, paper Table 2 row)
 METRICS = [
     ("judge coherence", JUDGE, "coherence", None), ("judge consistency", JUDGE, "consistency", None),
     ("judge fluency", JUDGE, "fluency", None), ("judge relevance", JUDGE, "relevance", None),
     ("judge mean", JUDGE, "judge_mean", None),
+    ("DeepEval score", DE, "deepeval", None), ("DeepEval alignment", DE, "alignment", None),
+    ("DeepEval coverage", DE, "coverage", None), ("COMET-22", CM, "comet", None),
     ("ROUGE-1", SE, "rouge1", "ROUGE-1"), ("ROUGE-2", SE, "rouge2", "ROUGE-2"), ("ROUGE-3", SE, "rouge3", "ROUGE-3"),
     ("ROUGE-4", SE, "rouge4", "ROUGE-4"), ("ROUGE-L", SE, "rougeLsum", "ROUGE-L"),
     ("BertScore-p (toolkit)", SE, "bertscore_se_p", "BertScore-p"), ("BertScore-r (toolkit)", SE, "bertscore_se_r", "BertScore-r"),
@@ -80,7 +83,7 @@ def main():
     human = {(r["id"], r["system"]): {d: r[d] for d in DIMS} for r in pairs if r["system"] != "reference"}
     rated = sorted({s for _, s in human}, key=lambda s: int(s[1:]))
     systems = rated + ["reference"]
-    recs = {s: {tag: records(args.root / "summeval" / f"summeval-{s}.{tag}.jsonl") for tag in (JUDGE, BS, SE)}
+    recs = {s: {tag: records(args.root / "summeval" / f"summeval-{s}.{tag}.jsonl") for tag in (JUDGE, BS, SE, DE, CM)}
             for s in systems}
     corpus = json.loads((args.root / "summeval" / "summary.json").read_text())
     out = []
