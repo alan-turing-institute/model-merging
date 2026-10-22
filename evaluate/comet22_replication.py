@@ -75,6 +75,9 @@ def score(in_dir):
     counts = {}
     for lp in LPS:
         rows = [json.loads(l) for l in (in_dir / f"{lp}.jsonl").read_text().splitlines()]
+        for r in rows:  # a few MQM rows have no translation; score them as empty, as the counts include them
+            for k in ("src", "mt", "ref"):
+                r[k] = r[k] or ""
         counts[lp] = (len(rows), len({r["system"] for r in rows}))
         human = np.array([r["score"] for r in rows])
         comet = np.array(model.predict([{k: r[k] for k in ("src", "mt", "ref")} for r in rows],
