@@ -32,6 +32,10 @@ Ours: original reference only. Paper (Table 2): 11 references per article.
 | judge fluency | 0.561 / - | 0.310 / - | 0.487 / - | 0.611 / - |
 | judge relevance | 0.655 / - | 0.471 / - | 0.751 / - | 0.857 / - |
 | judge mean | 0.628 / - | 0.427 / - | 0.706 / - | 0.795 / - |
+| DeepEval score | 0.410 / - | 0.778 / - | 0.689 / - | 0.628 / - |
+| DeepEval alignment | 0.533 / - | 0.533 / - | 0.611 / - | 0.800 / - |
+| DeepEval coverage | 0.350 / - | 0.717 / - | 0.644 / - | 0.583 / - |
+| COMET-22 | 0.883 / - | 0.283 / - | 0.527 / - | 0.683 / - |
 | ROUGE-1 | 0.250 / 0.250 | 0.050 / 0.529 | 0.326 / 0.524 | 0.483 / 0.412 |
 | ROUGE-2 | 0.250 / 0.162 | 0.050 / 0.588 | 0.326 / 0.480 | 0.450 / 0.294 |
 | ROUGE-3 | 0.267 / 0.221 | 0.100 / 0.706 | 0.343 / 0.509 | 0.467 / 0.353 |
@@ -65,6 +69,10 @@ Ours: original reference only. Paper (Table 2): 11 references per article.
 | judge fluency | 0.382 | 0.351 | 0.437 | 0.250 |
 | judge relevance | 0.400 | 0.446 | 0.415 | 0.378 |
 | judge mean | 0.396 | 0.428 | 0.435 | 0.330 |
+| DeepEval score | 0.139 | 0.237 | 0.127 | 0.242 |
+| DeepEval alignment | 0.175 | 0.325 | 0.228 | 0.199 |
+| DeepEval coverage | 0.110 | 0.206 | 0.092 | 0.220 |
+| COMET-22 | 0.333 | 0.177 | 0.220 | 0.321 |
 | ROUGE-1 | 0.094 | 0.133 | 0.088 | 0.197 |
 | ROUGE-2 | 0.077 | 0.144 | 0.090 | 0.139 |
 | ROUGE-3 | 0.075 | 0.120 | 0.067 | 0.108 |
