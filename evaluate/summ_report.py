@@ -17,7 +17,9 @@ SEEDS = ["", "_s2", "_s3"]
 METHODS = ["linear", "ties", "dare_ties", "task_arithmetic"]
 COLS = [("bertscore", "bertscore_f1", "BERTScore F1"), ("judge", "coherence", "coherence"),
         ("judge", "consistency", "consistency"), ("judge", "fluency", "fluency"),
-        ("judge", "relevance", "relevance"), ("judge", "judge_mean", "judge mean")]
+        ("judge", "relevance", "relevance"), ("judge", "judge_mean", "judge mean"),
+        ("deepeval", "deepeval", "DeepEval"), ("deepeval", "alignment", "DE alignment"),
+        ("deepeval", "coverage", "DE coverage")]
 
 
 def experiments():
@@ -46,9 +48,10 @@ def main():
     ap.add_argument("root", type=Path, nargs="?", default=Path("../results/summ_metrics"))
     ap.add_argument("--judge", default="judge4-qwen3-32b")
     ap.add_argument("--bertscore", default="bertscore-roberta-large")
+    ap.add_argument("--deepeval", default="deepeval-qwen3-32b-n5")
     ap.add_argument("--md", type=Path)
     args = ap.parse_args()
-    tags = {"judge": args.judge, "bertscore": args.bertscore}
+    tags = {"judge": args.judge, "bertscore": args.bertscore, "deepeval": args.deepeval}
     out = []
     for title, ex in experiments().items():
         summary = json.loads((args.root / ex["task"] / "summary.json").read_text())
@@ -85,7 +88,8 @@ def main():
     text = "\n".join(out)
     print(text)
     if args.md:
-        args.md.write_text(f"Judge `{args.judge}`, BERTScore `{args.bertscore}`; means over seeds ± SD.\n\n" + text)
+        args.md.write_text(f"Judge `{args.judge}`, BERTScore `{args.bertscore}`, DeepEval `{args.deepeval}` "
+                           "(CNN/DailyMail and BillSum only); means over seeds ± SD.\n\n" + text)
 
 
 if __name__ == "__main__":
