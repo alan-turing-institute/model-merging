@@ -42,8 +42,9 @@ the task asks for lower on relevance, and it did not: the untrained 4B's
 bias LLM judges are known for. So, as for consistency, the scorer applies it
 itself. The task's acceptable length is the 10th-90th percentile of its own
 reference word counts (length_range, computed from the test set by the caller);
-relevance_len caps relevance by how far the summary falls outside it
-(length_cap), and judge_mean_len uses it. The raw ratings are unchanged, so the
+relevance_len caps relevance once the summary is more than 1.5x outside it
+(length_cap; the tolerance is calibrated against SummEval's experts), and
+judge_mean_len uses it. The raw ratings are unchanged, so the
 penalty can be applied to judgements made before it existed
 (summ_metrics.py --metrics judge-len).
 
@@ -186,15 +187,20 @@ def length_range(references, lo_q=0.10, hi_q=0.90):
     return pick(lo_q), pick(hi_q)
 
 
-def length_cap(words, lo, hi):
-    """Highest relevance a summary of this length can get. Within the range: 5.
-    Longer: up to 1.5x the upper bound 4, up to 2x 3, beyond 2. Shorter: down to
-    half the lower bound 4, below 3 - milder, since the judge already marks down
-    summaries that leave out the main point."""
-    if words > hi:
-        return 4.0 if words <= 1.5 * hi else 3.0 if words <= 2 * hi else 2.0
-    if words < lo:
-        return 4.0 if words >= 0.5 * lo else 3.0
+def length_cap(words, lo, hi, tolerance=1.5):
+    """Highest relevance a summary of this length can get. Nothing within
+    tolerance x the range; beyond it 4, past 1.5x that 3, past 2x 2 (shorter:
+    4, then 3 below half). Calibrated on SummEval: capping from the range's own
+    edge (tolerance 1) cut the judge's system-level agreement with the experts'
+    relevance from 0.857 to 0.460 Kendall tau - the experts did not penalise
+    LEAD-3's 84 words against references of 32-69 - while tolerance 1.5 keeps
+    it (0.869) and still catches gross violations, such as the untrained 4B's
+    205-word CNN/DailyMail summaries."""
+    up, down = tolerance * hi, lo / tolerance
+    if words > up:
+        return 4.0 if words <= 1.5 * up else 3.0 if words <= 2 * up else 2.0
+    if words < down:
+        return 4.0 if words >= 0.5 * down else 3.0
     return 5.0
 
 
