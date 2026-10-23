@@ -118,7 +118,10 @@ def latest_logs(log_dir, task, pattern, size, variant, dataset, not_dataset=None
             continue
         if name not in logs or log.eval.created > logs[name][0].eval.created:
             logs[name] = (log, info)
-    return {name: read_eval_log(info) for name, (_, info) in sorted(logs.items())}
+    # Log locations only: each is read in full when its model is scored, so
+    # memory holds one log at a time (39 BillSum logs at once overran the login
+    # node's 4 GB, where the cheap metrics can otherwise run).
+    return {name: info for name, (_, info) in sorted(logs.items())}
 
 
 def rows_of(log, task, limit):
@@ -429,7 +432,8 @@ def main():
         # One event loop for every log: the judge's async client and the cache
         # locks are bound to the loop they first run in.
         locks = collections.defaultdict(asyncio.Lock)
-        for name, log in logs.items():
+        for name, info in logs.items():
+            log = read_eval_log(info)
             rows = rows_of(log, args.task, args.limit)
             entry = summary.setdefault(name, {})
             entry.update(log=Path(log.location).name, samples=len(rows))
