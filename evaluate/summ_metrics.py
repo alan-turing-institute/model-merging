@@ -82,9 +82,13 @@ TASK_DATASETS = {"cnndm": Path(__file__).resolve().parent.parent / "datasets" / 
 
 
 def label(log):
-    system = (log.eval.task_args or {}).get("system")
+    targs = log.eval.task_args or {}
+    system = targs.get("system")
     if system:  # summeval_task.py replays one SummEval system's summaries
         return f"summeval-{system}"
+    task = log.eval.task.split("/")[-1]
+    if task.startswith("aggrefact"):  # aggrefact_task.py replays one split's claims
+        return f"{task}-{targs.get('split', 'test')}"
     args = log.eval.model_args or {}
     for key in ("adapter_path", "model_path"):
         if args.get(key):
@@ -105,7 +109,7 @@ def latest_logs(log_dir, task, pattern, size, variant, dataset, not_dataset=None
             continue
         if not_dataset and not_dataset in str(targs.get("dataset_path", "")):
             continue
-        replayed = bool(targs.get("system"))  # summeval_task.py: no model of ours
+        replayed = bool(targs.get("system")) or str(log.eval.model).startswith("mockllm")  # replay tasks
         if not replayed and f"gemma-3-{size}-it" not in str(log.eval.model) \
                 and not (log.eval.model_args or {}).get("model_path"):
             continue
@@ -374,7 +378,8 @@ def mean(recs, key):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("log_dir", nargs="?", default="logs")
-    ap.add_argument("--task", required=True, choices=["xsum", "billsum", "billsum_split", "cnndm", "samsum", "summeval"])
+    ap.add_argument("--task", required=True, choices=["xsum", "billsum", "billsum_split", "cnndm", "samsum", "summeval",
+                                                    "aggrefact_cnn", "aggrefact_xsum"])
     ap.add_argument("--models", help="regex on the model label (adapter or merged directory, or base-...)")
     ap.add_argument("--size", choices=["4b", "1b", "27b"], default="4b")
     ap.add_argument("--prompt-variant", default="short", help="only logs run with this prompt_variant ('' for any)")
