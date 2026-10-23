@@ -285,7 +285,7 @@ async def run_judge(name, log, rows, path, out_log, args):
     from inspect_ai.model import GenerateConfig, get_model
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from summ_judge import DIMENSIONS, summ_judge
+    from summ_judge import DIMENSIONS, LENGTH_KEYS, length_range, summ_judge
 
     done = load_done(path)
     docs = {r[0]: r[1] for r in rows}
@@ -298,8 +298,9 @@ async def run_judge(name, log, rows, path, out_log, args):
                            config=GenerateConfig(max_connections=args.concurrency))
         # model= as well as the role: left unset, score_async instantiates the
         # log's own model (the evaluated 4B), which scoring never calls.
+        bounds = length_range([r[2] for r in rows])
         scored = await score_async(part, [summ_judge(task=args.task, with_reference=args.judge_reference,
-                                                     max_tokens=args.judge_max_tokens)],
+                                                     max_tokens=args.judge_max_tokens, length_bounds=bounds)],
                                    model=grader, model_roles={"grader": grader}, action="append", display="none")
         out_log.parent.mkdir(parents=True, exist_ok=True)
         # A retry scores only the samples still missing; keep the earlier judged
@@ -313,7 +314,7 @@ async def run_judge(name, log, rows, path, out_log, args):
             for s in scored.samples:
                 sc = next((v for k, v in (s.scores or {}).items() if "summ_judge" in k), None)
                 value = sc.value if sc and isinstance(sc.value, dict) else {}
-                rec = {"id": str(s.id), **{d: value.get(d) for d in (*DIMENSIONS, "judge_mean")}}
+                rec = {"id": str(s.id), **{d: value.get(d) for d in (*DIMENSIONS, "judge_mean", *LENGTH_KEYS)}}
                 if rec["judge_mean"] is None or rec["judge_mean"] != rec["judge_mean"]:
                     rec = {"id": str(s.id), "error": (sc.explanation if sc else "no judge score")[:300]}
                 fh.write(json.dumps(rec) + "\n")
@@ -347,6 +348,24 @@ def run_summeval(rows, path):
     return {k: mean(per, k) for k in keys} | corpus
 
 
+def run_judge_len(rows, judge_path, path):
+    """The length penalty (summ_judge.py LENGTH PENALTY) on judgements already
+    made: no judge calls. Bounds from this test set's references."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from summ_judge import length_range, with_length
+
+    bounds = length_range([r[2] for r in rows])
+    preds = {r[0]: r[3] for r in rows}
+    out, capped = [], 0
+    for rec in load_done(judge_path).values():
+        if rec["id"] in preds and rec.get("relevance") is not None:
+            pen = with_length(rec, preds[rec["id"]], bounds)
+            capped += pen["relevance_len"] < rec["relevance"]
+            out.append({"id": rec["id"], **pen})
+    path.write_text("".join(json.dumps(r) + "\n" for r in out))
+    return out, bounds, capped
+
+
 def mean(recs, key):
     vals = [r[key] for r in recs if r.get(key) is not None]
     return statistics.fmean(vals) if vals else None
@@ -363,7 +382,7 @@ def main():
     ap.add_argument("--not-dataset", help="skip logs whose dataset_path contains this - e.g. summeval, to keep a task's "
                                           "default test set when newer runs on another split exist (they record a "
                                           "dataset_path; default runs do not)")
-    ap.add_argument("--metrics", nargs="+", choices=["bertscore", "deepeval", "judge", "summeval"],
+    ap.add_argument("--metrics", nargs="+", choices=["bertscore", "deepeval", "judge", "judge-len", "summeval"],
                     default=["bertscore", "deepeval", "judge"])
     ap.add_argument("--limit", type=int, help="first N samples of each log (for a quick check)")
     ap.add_argument("--out", type=Path, default=Path("../results/summ_metrics"))
@@ -433,6 +452,11 @@ def main():
                 entry[jg_tag] = {k: mean(recs, k) for k in
                                  ("coherence", "consistency", "fluency", "relevance", "judge_mean")} | {"scored": len(recs)}
                 done.add(jg_tag)
+            if "judge-len" in args.metrics:
+                recs, bounds, capped = run_judge_len(rows, out / f"{name}.{jg_tag}.jsonl", out / f"{name}.{jg_tag}-len.jsonl")
+                entry[f"{jg_tag}-len"] = {k: mean(recs, k) for k in ("words", "relevance_len", "judge_mean_len")} | \
+                    {"bounds": list(bounds), "scored": len(recs), "capped": capped}
+                done.add(f"{jg_tag}-len")
             # Re-read before writing and replace only the metrics computed here:
             # jobs run side by side on the same models with different metrics
             # (a DeepEval job once wiped statistics another job had just added,

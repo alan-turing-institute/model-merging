@@ -36,6 +36,17 @@ let the quote "Lally" support "Liam Lally"). Any fact failing either caps
 consistency at 2. The facts and
 their quotes are kept in the score's metadata.
 
+LENGTH PENALTY. The prompt asks the judge to rate a summary much longer than
+the task asks for lower on relevance, and it did not: the untrained 4B's
+47-word XSum summaries got 4.97 against the trained models' 4.66, the verbosity
+bias LLM judges are known for. So, as for consistency, the scorer applies it
+itself. The task's acceptable length is the 10th-90th percentile of its own
+reference word counts (length_range, computed from the test set by the caller);
+relevance_len caps relevance by how far the summary falls outside it
+(length_cap), and judge_mean_len uses it. The raw ratings are unchanged, so the
+penalty can be applied to judgements made before it existed
+(summ_metrics.py --metrics judge-len).
+
 The judge is the `grader` model role, or `model` if given; it answers in a
 JSON schema (structured output), with Qwen3's thinking switched off since a
 schema-constrained answer cannot open with a <think> block. Run it on finished
@@ -163,6 +174,26 @@ class Source:
         return self.quoted(quote) and self.names_present(fact)
 
 
+def length_range(references, lo_q=0.10, hi_q=0.90):
+    """The task's acceptable summary length in words: the 10th-90th percentile
+    of its references' word counts."""
+    counts = sorted(len((r or "").split()) for r in references)
+    pick = lambda q: counts[min(len(counts) - 1, int(q * len(counts)))]
+    return pick(lo_q), pick(hi_q)
+
+
+def length_cap(words, lo, hi):
+    """Highest relevance a summary of this length can get. Within the range: 5.
+    Longer: up to 1.5x the upper bound 4, up to 2x 3, beyond 2. Shorter: down to
+    half the lower bound 4, below 3 - milder, since the judge already marks down
+    summaries that leave out the main point."""
+    if words > hi:
+        return 4.0 if words <= 1.5 * hi else 3.0 if words <= 2 * hi else 2.0
+    if words < lo:
+        return 4.0 if words >= 0.5 * lo else 3.0
+    return 5.0
+
+
 class Fact(BaseModel):
     fact: str
     source_quote: str | None
@@ -181,9 +212,12 @@ class Judgement(BaseModel):
     relevance: int = Field(ge=1, le=5)
 
 
-@scorer(metrics={d: [mean(), stderr()] for d in (*DIMENSIONS, "judge_mean")})
+LENGTH_KEYS = ("words", "relevance_len", "judge_mean_len")
+
+
+@scorer(metrics={d: [mean(), stderr()] for d in (*DIMENSIONS, "judge_mean", *LENGTH_KEYS)})
 def summ_judge(task: str = "xsum", with_reference: bool = False, model: str | None = None,
-               max_tokens: int = 4096):
+               max_tokens: int = 4096, length_bounds: tuple[int, int] | None = None):
     """SummEval-style 1-5 ratings from an LLM judge (see module docstring)."""
     config = GenerateConfig(
         temperature=0.0, max_tokens=max_tokens,
@@ -212,10 +246,21 @@ def summ_judge(task: str = "xsum", with_reference: bool = False, model: str | No
             if unsupported:
                 value["consistency"] = min(value["consistency"], 2.0)
             value["judge_mean"] = sum(value.values()) / len(DIMENSIONS)
+            value.update(with_length(value, (state.output.completion or "").strip(), length_bounds))
             note = f" Unsupported: {'; '.join(unsupported)}." if unsupported else ""
             return Score(value=value, answer=state.output.completion, explanation=j.justification + note,
                          metadata={"facts": [f.model_dump() for f in j.facts], "unsupported": unsupported})
-        return Score(value={d: math.nan for d in (*DIMENSIONS, "judge_mean")},
+        return Score(value={d: math.nan for d in (*DIMENSIONS, "judge_mean", *LENGTH_KEYS)},
                      explanation=f"unparsable judge output: {text[:300]!r}")
 
     return score
+
+
+def with_length(value, summary, bounds):
+    """words, relevance_len and judge_mean_len for one judgement (see LENGTH
+    PENALTY); without bounds the relevance is left as it is."""
+    words = len(summary.split())
+    cap = length_cap(words, *bounds) if bounds else 5.0
+    rel = min(value["relevance"], cap)
+    return {"words": float(words), "relevance_len": rel,
+            "judge_mean_len": (value["coherence"] + value["consistency"] + value["fluency"] + rel) / 4}

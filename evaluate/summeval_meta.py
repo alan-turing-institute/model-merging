@@ -32,11 +32,13 @@ HERE = Path(__file__).resolve().parent
 DIMS = ("coherence", "consistency", "fluency", "relevance")
 JUDGE, BS, SE = "judge4-qwen3-32b", "bertscore-roberta-large", "summeval-toolkit"
 DE, CM = "deepeval-qwen3-32b-n5", "comet-wmt22"  # DeepEval SummarizationMetric; COMET-22 (summ_comet.py)
+JL = "judge4-qwen3-32b-len"  # the judge with the length penalty (summ_judge.py LENGTH PENALTY)
 # (column, record tag, key in the record, paper Table 2 row)
 METRICS = [
     ("judge coherence", JUDGE, "coherence", None), ("judge consistency", JUDGE, "consistency", None),
     ("judge fluency", JUDGE, "fluency", None), ("judge relevance", JUDGE, "relevance", None),
     ("judge mean", JUDGE, "judge_mean", None),
+    ("judge relevance (length penalty)", JL, "relevance_len", None), ("judge mean (length penalty)", JL, "judge_mean_len", None),
     ("DeepEval score", DE, "deepeval", None), ("DeepEval alignment", DE, "alignment", None),
     ("DeepEval coverage", DE, "coverage", None), ("COMET-22", CM, "comet", None),
     ("ROUGE-1", SE, "rouge1", "ROUGE-1"), ("ROUGE-2", SE, "rouge2", "ROUGE-2"), ("ROUGE-3", SE, "rouge3", "ROUGE-3"),
@@ -83,7 +85,7 @@ def main():
     human = {(r["id"], r["system"]): {d: r[d] for d in DIMS} for r in pairs if r["system"] != "reference"}
     rated = sorted({s for _, s in human}, key=lambda s: int(s[1:]))
     systems = rated + ["reference"]
-    recs = {s: {tag: records(args.root / "summeval" / f"summeval-{s}.{tag}.jsonl") for tag in (JUDGE, BS, SE, DE, CM)}
+    recs = {s: {tag: records(args.root / "summeval" / f"summeval-{s}.{tag}.jsonl") for tag in (JUDGE, BS, SE, DE, CM, JL)}
             for s in systems}
     corpus = json.loads((args.root / "summeval" / "summary.json").read_text())
     out = []
@@ -149,7 +151,7 @@ def main():
 
     # 4. placement on the same 100 articles
     cols = [("judge coh", JUDGE, "coherence"), ("judge con", JUDGE, "consistency"), ("judge flu", JUDGE, "fluency"),
-            ("judge rel", JUDGE, "relevance"), ("ROUGE-1", SE, "rouge1"), ("ROUGE-2", SE, "rouge2"),
+            ("judge rel", JUDGE, "relevance"), ("judge rel (len)", JL, "relevance_len"), ("ROUGE-1", SE, "rouge1"), ("ROUGE-2", SE, "rouge2"),
             ("ROUGE-L", SE, "rougeLsum"), ("BS-f toolkit", SE, "bertscore_se_f1"), ("BS F1 ours", BS, "bertscore_f1"),
             ("METEOR", SE, "meteor"), ("length", SE, "length"), ("coverage", SE, "coverage"), ("density", SE, "density"),
             ("novel 2-gram", SE, "novel_2")]

@@ -18,6 +18,8 @@ METHODS = ["linear", "ties", "dare_ties", "task_arithmetic"]
 COLS = [("bertscore", "bertscore_f1", "BERTScore F1"), ("judge", "coherence", "coherence"),
         ("judge", "consistency", "consistency"), ("judge", "fluency", "fluency"),
         ("judge", "relevance", "relevance"), ("judge", "judge_mean", "judge mean"),
+        ("judgelen", "words", "words"), ("judgelen", "relevance_len", "relevance (length)"),
+        ("judgelen", "judge_mean_len", "judge mean (length)"),
         ("deepeval", "deepeval", "DeepEval"), ("deepeval", "alignment", "DE alignment"),
         ("deepeval", "coverage", "DE coverage")]
 
@@ -51,7 +53,8 @@ def main():
     ap.add_argument("--deepeval", default="deepeval-qwen3-32b-n5")
     ap.add_argument("--md", type=Path)
     args = ap.parse_args()
-    tags = {"judge": args.judge, "bertscore": args.bertscore, "deepeval": args.deepeval}
+    tags = {"judge": args.judge, "bertscore": args.bertscore, "deepeval": args.deepeval,
+            "judgelen": f"{args.judge}-len"}
     out = []
     for title, ex in experiments().items():
         summary = json.loads((args.root / ex["task"] / "summary.json").read_text())
@@ -89,7 +92,9 @@ def main():
     print(text)
     if args.md:
         args.md.write_text(f"Judge `{args.judge}`, BERTScore `{args.bertscore}`, DeepEval `{args.deepeval}` "
-                           "(CNN/DailyMail and BillSum only); means over seeds ± SD.\n\n" + text)
+                           "(CNN/DailyMail and BillSum only); '(length)' columns cap relevance outside the 10th-90th "
+                           "percentile of the task's reference lengths (summ_judge.py LENGTH PENALTY); "
+                           "means over seeds ± SD.\n\n" + text)
 
 
 if __name__ == "__main__":
