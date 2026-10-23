@@ -41,6 +41,17 @@
       "relevance": 4.54,
       "judge_mean": 4.625,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 165.51,
+      "relevance_len": 3.27,
+      "judge_mean_len": 4.3075,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 83
     }
   },
   "cnndm-kdgold75-merged-dare_ties": {
@@ -85,6 +96,17 @@
       "relevance": 4.96,
       "judge_mean": 4.88,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 49.66,
+      "relevance_len": 4.96,
+      "judge_mean_len": 4.88,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-dare_ties_s2": {
@@ -129,6 +151,17 @@
       "relevance": 4.96,
       "judge_mean": 4.9,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 48.64,
+      "relevance_len": 4.96,
+      "judge_mean_len": 4.9,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-dare_ties_s3": {
@@ -173,6 +206,17 @@
       "relevance": 4.98989898989899,
       "judge_mean": 4.94949494949495,
       "scored": 99
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 48.464646464646464,
+      "relevance_len": 4.98989898989899,
+      "judge_mean_len": 4.94949494949495,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 99,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-linear": {
@@ -217,6 +261,17 @@
       "relevance": 4.99,
       "judge_mean": 4.9275,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 49.37,
+      "relevance_len": 4.99,
+      "judge_mean_len": 4.9275,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-linear_s2": {
@@ -261,6 +316,17 @@
       "relevance": 4.98,
       "judge_mean": 4.91,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 48.52,
+      "relevance_len": 4.97,
+      "judge_mean_len": 4.9075,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 1
     }
   },
   "cnndm-kdgold75-merged-linear_s3": {
@@ -305,6 +371,17 @@
       "relevance": 4.98,
       "judge_mean": 4.93,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 47.19,
+      "relevance_len": 4.98,
+      "judge_mean_len": 4.93,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-task_arithmetic": {
@@ -349,6 +426,17 @@
       "relevance": 5.0,
       "judge_mean": 4.9325,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 49.63,
+      "relevance_len": 5.0,
+      "judge_mean_len": 4.9325,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-task_arithmetic_s2": {
@@ -393,6 +481,17 @@
       "relevance": 4.99,
       "judge_mean": 4.9175,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 48.92,
+      "relevance_len": 4.98,
+      "judge_mean_len": 4.915,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 1
     }
   },
   "cnndm-kdgold75-merged-task_arithmetic_s3": {
@@ -437,6 +536,17 @@
       "relevance": 4.98,
       "judge_mean": 4.9225,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 46.6,
+      "relevance_len": 4.98,
+      "judge_mean_len": 4.9225,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-ties": {
@@ -481,6 +591,17 @@
       "relevance": 4.93,
       "judge_mean": 4.805,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 48.22,
+      "relevance_len": 4.92,
+      "judge_mean_len": 4.8025,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 1
     }
   },
   "cnndm-kdgold75-merged-ties_s2": {
@@ -525,6 +646,17 @@
       "relevance": 4.95,
       "judge_mean": 4.8525,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 47.7,
+      "relevance_len": 4.95,
+      "judge_mean_len": 4.8525,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-ties_s3": {
@@ -569,6 +701,17 @@
       "relevance": 4.92,
       "judge_mean": 4.85,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 48.29,
+      "relevance_len": 4.92,
+      "judge_mean_len": 4.85,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "gemma3-cnndm-kdgold75_a-lora": {
@@ -613,6 +756,17 @@
       "relevance": 4.94,
       "judge_mean": 4.8075,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 51.07,
+      "relevance_len": 4.94,
+      "judge_mean_len": 4.8075,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "gemma3-cnndm-kdgold75_a_s2-lora": {
@@ -657,6 +811,17 @@
       "relevance": 4.95,
       "judge_mean": 4.89,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 52.28,
+      "relevance_len": 4.95,
+      "judge_mean_len": 4.89,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "gemma3-cnndm-kdgold75_a_s3-lora": {
@@ -701,6 +866,17 @@
       "relevance": 4.9,
       "judge_mean": 4.8075,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 50.76,
+      "relevance_len": 4.89,
+      "judge_mean_len": 4.805,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 1
     }
   },
   "gemma3-cnndm-kdgold75_b-lora": {
@@ -745,6 +921,17 @@
       "relevance": 4.94,
       "judge_mean": 4.875,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 48.35,
+      "relevance_len": 4.94,
+      "judge_mean_len": 4.875,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "gemma3-cnndm-kdgold75_b_s2-lora": {
@@ -789,6 +976,17 @@
       "relevance": 4.98,
       "judge_mean": 4.88,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 48.25,
+      "relevance_len": 4.97,
+      "judge_mean_len": 4.8775,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 1
     }
   },
   "gemma3-cnndm-kdgold75_b_s3-lora": {
@@ -833,6 +1031,17 @@
       "relevance": 4.96,
       "judge_mean": 4.8875,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 46.75,
+      "relevance_len": 4.95,
+      "judge_mean_len": 4.885,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 1
     }
   },
   "gemma3-cnndm-kdgold75_full-lora": {
@@ -877,6 +1086,17 @@
       "relevance": 4.98,
       "judge_mean": 4.895,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 51.58,
+      "relevance_len": 4.97,
+      "judge_mean_len": 4.8925,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 1
     }
   },
   "gemma3-cnndm_curve-n500-lora": {
@@ -921,6 +1141,17 @@
       "relevance": 4.83,
       "judge_mean": 4.7675,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 77.03,
+      "relevance_len": 4.66,
+      "judge_mean_len": 4.725,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 14
     }
   },
   "gemma3-cnndm_curve-n8000-lora": {
@@ -965,6 +1196,17 @@
       "relevance": 4.93,
       "judge_mean": 4.84,
       "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 62.99,
+      "relevance_len": 4.87,
+      "judge_mean_len": 4.825,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 5
     }
   }
 }

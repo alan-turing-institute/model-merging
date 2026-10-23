@@ -47,6 +47,17 @@
       "alignment": 0.7097127728115641,
       "coverage": 0.5508048289738431,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 243.402,
+      "relevance_len": 4.652,
+      "judge_mean_len": 4.4455,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 31
     }
   },
   "gemma3-billsum_split-expert_1-lora": {
@@ -97,6 +108,17 @@
       "alignment": 0.719742965641114,
       "coverage": 0.5112903225806451,
       "scored": 496
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 261.584,
+      "relevance_len": 4.56,
+      "judge_mean_len": 4.4095,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 34
     }
   },
   "billsum_split-merged-dare_ties": {
@@ -147,6 +169,17 @@
       "alignment": 0.7089401350215611,
       "coverage": 0.5119718309859155,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 275.35871743486973,
+      "relevance_len": 4.511022044088176,
+      "judge_mean_len": 4.37875751503006,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 40
     }
   },
   "base-gemma-3-4b-it": {
@@ -197,6 +230,17 @@
       "bleu_corpus": 6.009962785689071,
       "chrf_corpus": 0.47270485469673723,
       "cider_corpus": 0.0010345886200953912
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 382.5421686746988,
+      "relevance_len": 4.8694779116465865,
+      "judge_mean_len": 4.57429718875502,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 498,
+      "capped": 57
     }
   },
   "billsum_split-kdgold75-merged-dare_ties_s2": {
@@ -247,6 +291,17 @@
       "alignment": 0.7178488374528547,
       "coverage": 0.5233400402414488,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 207.65931863727454,
+      "relevance_len": 4.663326653306613,
+      "judge_mean_len": 4.4839679358717435,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 26
     }
   },
   "billsum_split-merged-dare_ties_s2": {
@@ -297,6 +352,17 @@
       "alignment": 0.7047385822794037,
       "coverage": 0.5103030303030303,
       "scored": 495
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 271.208,
+      "relevance_len": 4.526,
+      "judge_mean_len": 4.3935,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 42
     }
   },
   "gemma3-billsum_split-expert_1_s2-lora": {
@@ -347,6 +413,17 @@
       "alignment": 0.7162915244331649,
       "coverage": 0.5242971887550201,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 288.918,
+      "relevance_len": 4.494,
+      "judge_mean_len": 4.408,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 48
     }
   },
   "gemma3-billsum_split-kdgold75_a-lora": {
@@ -397,6 +474,17 @@
       "bleu_corpus": 23.04323513946479,
       "chrf_corpus": 0.505970839159579,
       "cider_corpus": 0.2426835699766388
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 235.718,
+      "relevance_len": 4.594,
+      "judge_mean_len": 4.43,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 24
     }
   },
   "billsum_split-kdgold75-merged-dare_ties_s3": {
@@ -447,6 +535,17 @@
       "alignment": 0.7365788666081012,
       "coverage": 0.5323293172690764,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 215.45,
+      "relevance_len": 4.67,
+      "judge_mean_len": 4.48,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 32
     }
   },
   "gemma3-billsum_split-kdgold75_a_s2-lora": {
@@ -497,6 +596,17 @@
       "bleu_corpus": 24.114119995112173,
       "chrf_corpus": 0.500091703061642,
       "cider_corpus": 0.1740685122955293
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 220.4448897795591,
+      "relevance_len": 4.645290581162325,
+      "judge_mean_len": 4.446392785571143,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 30
     }
   },
   "billsum_split-merged-dare_ties_s3": {
@@ -547,6 +657,17 @@
       "alignment": 0.7127266836719636,
       "coverage": 0.49738955823293174,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 242.616,
+      "relevance_len": 4.512,
+      "judge_mean_len": 4.4075,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 36
     }
   },
   "gemma3-billsum_split-expert_1_s3-lora": {
@@ -597,6 +718,17 @@
       "alignment": 0.7078404256782047,
       "coverage": 0.49406438631790744,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 236.625250501002,
+      "relevance_len": 4.492985971943888,
+      "judge_mean_len": 4.397294589178356,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 34
     }
   },
   "billsum_split-kdgold75-merged-linear": {
@@ -647,6 +779,17 @@
       "alignment": 0.7199010077460011,
       "coverage": 0.5370741482965932,
       "scored": 499
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 235.3627254509018,
+      "relevance_len": 4.661322645290581,
+      "judge_mean_len": 4.470440881763527,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 34
     }
   },
   "gemma3-billsum_split-kdgold75_a_s3-lora": {
@@ -697,6 +840,17 @@
       "bleu_corpus": 26.023919827322178,
       "chrf_corpus": 0.5003532239123389,
       "cider_corpus": 0.18377218865511544
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 198.614,
+      "relevance_len": 4.668,
+      "judge_mean_len": 4.518,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 27
     }
   },
   "gemma3-billsum_split-expert_2-lora": {
@@ -747,6 +901,17 @@
       "alignment": 0.707447110474503,
       "coverage": 0.5046370967741935,
       "scored": 496
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 280.3306613226453,
+      "relevance_len": 4.426853707414829,
+      "judge_mean_len": 4.336172344689379,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 40
     }
   },
   "billsum_split-merged-linear": {
@@ -797,6 +962,17 @@
       "alignment": 0.7056102100713985,
       "coverage": 0.5134538152610442,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 260.062,
+      "relevance_len": 4.558,
+      "judge_mean_len": 4.414,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 42
     }
   },
   "billsum_split-kdgold75-merged-linear_s2": {
@@ -847,6 +1023,17 @@
       "alignment": 0.7120247078273036,
       "coverage": 0.5187374749498999,
       "scored": 499
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 205.3927855711423,
+      "relevance_len": 4.687374749498998,
+      "judge_mean_len": 4.514529058116232,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 32
     }
   },
   "gemma3-billsum_split-kdgold75_b-lora": {
@@ -897,6 +1084,17 @@
       "bleu_corpus": 23.606814129427928,
       "chrf_corpus": 0.5232445153889285,
       "cider_corpus": 0.19523443002821
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 242.378,
+      "relevance_len": 4.69,
+      "judge_mean_len": 4.479,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 24
     }
   },
   "billsum_split-kdgold75-merged-linear_s3": {
@@ -947,6 +1145,17 @@
       "alignment": 0.7328405897073049,
       "coverage": 0.5249496981891347,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 215.034,
+      "relevance_len": 4.658,
+      "judge_mean_len": 4.4975,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 22
     }
   },
   "gemma3-billsum_split-expert_2_s2-lora": {
@@ -997,6 +1206,17 @@
       "alignment": 0.6955179404964059,
       "coverage": 0.5079637096774194,
       "scored": 496
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 282.174,
+      "relevance_len": 4.42,
+      "judge_mean_len": 4.308,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 39
     }
   },
   "billsum_split-merged-linear_s2": {
@@ -1047,6 +1267,17 @@
       "alignment": 0.699343972549626,
       "coverage": 0.5147474747474747,
       "scored": 495
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 284.058,
+      "relevance_len": 4.468,
+      "judge_mean_len": 4.3595,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 56
     }
   },
   "gemma3-billsum_split-kdgold75_b_s2-lora": {
@@ -1097,6 +1328,17 @@
       "bleu_corpus": 24.5254657409686,
       "chrf_corpus": 0.49031757188777797,
       "cider_corpus": 0.1877472524784995
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 210.1609657947686,
+      "relevance_len": 4.653923541247485,
+      "judge_mean_len": 4.480382293762576,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 497,
+      "capped": 25
     }
   },
   "billsum_split-kdgold75-merged-task_arithmetic": {
@@ -1147,6 +1389,17 @@
       "alignment": 0.717935326197422,
       "coverage": 0.5424547283702214,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 239.648,
+      "relevance_len": 4.662,
+      "judge_mean_len": 4.469,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 35
     }
   },
   "gemma3-billsum_split-expert_2_s3-lora": {
@@ -1197,6 +1450,17 @@
       "alignment": 0.7090104111837453,
       "coverage": 0.50261569416499,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 255.684,
+      "relevance_len": 4.474,
+      "judge_mean_len": 4.3845,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 43
     }
   },
   "gemma3-billsum_split-kdgold75_b_s3-lora": {
@@ -1247,6 +1511,17 @@
       "bleu_corpus": 23.327108766533524,
       "chrf_corpus": 0.512125122761798,
       "cider_corpus": 0.2181690497726751
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 237.116,
+      "relevance_len": 4.674,
+      "judge_mean_len": 4.459,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 27
     }
   },
   "billsum_split-merged-linear_s3": {
@@ -1297,6 +1572,17 @@
       "alignment": 0.7104803124020858,
       "coverage": 0.5022044088176353,
       "scored": 499
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 248.102,
+      "relevance_len": 4.522,
+      "judge_mean_len": 4.4345,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 42
     }
   },
   "billsum_split-kdgold75-merged-task_arithmetic_s2": {
@@ -1347,6 +1633,17 @@
       "alignment": 0.7085810762510285,
       "coverage": 0.5242971887550201,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 211.48496993987976,
+      "relevance_len": 4.661322645290581,
+      "judge_mean_len": 4.504008016032064,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 31
     }
   },
   "gemma3-billsum_split-kdgold75_full-lora": {
@@ -1397,6 +1694,17 @@
       "bleu_corpus": 24.728888413267295,
       "chrf_corpus": 0.5282469793469105,
       "cider_corpus": 0.22506773837276292
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 233.77710843373495,
+      "relevance_len": 4.736947791164659,
+      "judge_mean_len": 4.492469879518072,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 498,
+      "capped": 38
     }
   },
   "gemma3-billsum_split-full-lora": {
@@ -1447,6 +1755,17 @@
       "alignment": 0.7231582694271351,
       "coverage": 0.5211693548387096,
       "scored": 496
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 244.958,
+      "relevance_len": 4.572,
+      "judge_mean_len": 4.459,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 36
     }
   },
   "billsum_split-merged-task_arithmetic": {
@@ -1497,6 +1816,17 @@
       "alignment": 0.707846885437939,
       "coverage": 0.5124248496993988,
       "scored": 499
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 262.38,
+      "relevance_len": 4.522,
+      "judge_mean_len": 4.3925,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 38
     }
   },
   "billsum_split-kdgold75-merged-task_arithmetic_s3": {
@@ -1547,6 +1877,17 @@
       "alignment": 0.7209825194803228,
       "coverage": 0.5231927710843374,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 211.43,
+      "relevance_len": 4.658,
+      "judge_mean_len": 4.485,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 25
     }
   },
   "billsum_split-merged-task_arithmetic_s2": {
@@ -1597,6 +1938,17 @@
       "alignment": 0.6919902482860464,
       "coverage": 0.5122736418511066,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 270.118,
+      "relevance_len": 4.492,
+      "judge_mean_len": 4.406,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 53
     }
   },
   "billsum_split-kdgold75-merged-ties": {
@@ -1647,6 +1999,17 @@
       "alignment": 0.7181361184089361,
       "coverage": 0.5400602409638554,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 234.8,
+      "relevance_len": 4.658,
+      "judge_mean_len": 4.471,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 35
     }
   },
   "billsum_split-merged-task_arithmetic_s3": {
@@ -1697,6 +2060,17 @@
       "alignment": 0.7077746124761485,
       "coverage": 0.5048192771084338,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 242.362,
+      "relevance_len": 4.54,
+      "judge_mean_len": 4.4385,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 42
     }
   },
   "billsum_split-kdgold75-merged-ties_s2": {
@@ -1747,6 +2121,17 @@
       "alignment": 0.7125103488601023,
       "coverage": 0.5291164658634538,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 216.42084168336675,
+      "relevance_len": 4.667334669338677,
+      "judge_mean_len": 4.4969939879759515,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 28
     }
   },
   "billsum_split-merged-ties": {
@@ -1797,6 +2182,17 @@
       "alignment": 0.7014181676110481,
       "coverage": 0.4813,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 278.27054108216436,
+      "relevance_len": 4.354709418837675,
+      "judge_mean_len": 4.272044088176353,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 45
     }
   },
   "billsum_split-kdgold75-merged-ties_s3": {
@@ -1847,6 +2243,17 @@
       "alignment": 0.7285458741350622,
       "coverage": 0.526706827309237,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 218.358,
+      "relevance_len": 4.646,
+      "judge_mean_len": 4.481,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 500,
+      "capped": 31
     }
   },
   "billsum_split-merged-ties_s2": {
@@ -1897,6 +2304,17 @@
       "alignment": 0.6737899854740544,
       "coverage": 0.4805835010060362,
       "scored": 497
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 315.10420841683367,
+      "relevance_len": 4.232464929859719,
+      "judge_mean_len": 4.174348697394789,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 47
     }
   },
   "billsum_split-merged-ties_s3": {
@@ -1947,6 +2365,17 @@
       "alignment": 0.6848634692601212,
       "coverage": 0.4604417670682731,
       "scored": 498
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 242.87374749498997,
+      "relevance_len": 4.336673346693387,
+      "judge_mean_len": 4.300100200400801,
+      "bounds": [
+        53,
+        310
+      ],
+      "scored": 499,
+      "capped": 39
     }
   }
 }

@@ -41,6 +41,17 @@
       "bleu_corpus": 9.892245134281843,
       "chrf_corpus": 0.34665152697675156,
       "cider_corpus": 0.9809836074800073
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.17,
+      "relevance_len": 4.661,
+      "judge_mean_len": 4.4,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   },
   "base-gemma-3-4b-it": {
@@ -85,6 +96,17 @@
       "bleu_corpus": 2.5114525071902527,
       "chrf_corpus": 0.3203911935053727,
       "cider_corpus": 0.04210243897361289
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 41.1,
+      "relevance_len": 4.463,
+      "judge_mean_len": 4.45,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 485
     }
   },
   "xsum-kdgold75-merged-dare_ties_s2": {
@@ -129,6 +151,17 @@
       "bleu_corpus": 9.792139327241495,
       "chrf_corpus": 0.3464682012617281,
       "cider_corpus": 0.9894245174960757
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 18.973,
+      "relevance_len": 4.654,
+      "judge_mean_len": 4.397,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 0
     }
   },
   "gemma3-xsum-kdgold75_a-lora": {
@@ -173,6 +206,17 @@
       "bleu_corpus": 9.603164774301243,
       "chrf_corpus": 0.34597356892988146,
       "cider_corpus": 0.9663788900942556
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.181,
+      "relevance_len": 4.671,
+      "judge_mean_len": 4.39575,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   },
   "xsum-kdgold75-merged-dare_ties_s3": {
@@ -217,6 +261,17 @@
       "bleu_corpus": 9.999498549913003,
       "chrf_corpus": 0.35013348162512803,
       "cider_corpus": 1.0159475751461906
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.234234234234233,
+      "relevance_len": 4.682682682682683,
+      "judge_mean_len": 4.433433433433433,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 999,
+      "capped": 0
     }
   },
   "gemma3-xsum-kdgold75_a_s2-lora": {
@@ -261,6 +316,17 @@
       "bleu_corpus": 9.551257083098688,
       "chrf_corpus": 0.34402300881592013,
       "cider_corpus": 0.9807194352084139
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.036,
+      "relevance_len": 4.645,
+      "judge_mean_len": 4.39675,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 2
     }
   },
   "xsum-kdgold75-merged-linear": {
@@ -305,6 +371,17 @@
       "bleu_corpus": 9.908458579715534,
       "chrf_corpus": 0.3475880049516163,
       "cider_corpus": 0.992866491596364
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.263,
+      "relevance_len": 4.705,
+      "judge_mean_len": 4.426,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 0
     }
   },
   "gemma3-xsum-kdgold75_a_s3-lora": {
@@ -349,6 +426,17 @@
       "bleu_corpus": 9.64513955750024,
       "chrf_corpus": 0.34565477127427535,
       "cider_corpus": 0.9933663488112691
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.083,
+      "relevance_len": 4.685,
+      "judge_mean_len": 4.42475,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 0
     }
   },
   "xsum-kdgold75-merged-linear_s2": {
@@ -393,6 +481,17 @@
       "bleu_corpus": 10.01947253507328,
       "chrf_corpus": 0.3468685939387088,
       "cider_corpus": 0.9903133037922632
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.09,
+      "relevance_len": 4.685,
+      "judge_mean_len": 4.415,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   },
   "gemma3-xsum-kdgold75_b-lora": {
@@ -437,6 +536,17 @@
       "bleu_corpus": 9.520262091038598,
       "chrf_corpus": 0.34456960653131874,
       "cider_corpus": 0.9802991306610684
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.1,
+      "relevance_len": 4.694,
+      "judge_mean_len": 4.4205,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   },
   "xsum-kdgold75-merged-linear_s3": {
@@ -481,6 +591,17 @@
       "bleu_corpus": 9.926766370156473,
       "chrf_corpus": 0.3492490108536574,
       "cider_corpus": 1.0108757049329693
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.255,
+      "relevance_len": 4.718,
+      "judge_mean_len": 4.455,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 0
     }
   },
   "gemma3-xsum-kdgold75_b_s2-lora": {
@@ -525,6 +646,17 @@
       "bleu_corpus": 9.502382783023116,
       "chrf_corpus": 0.3443375658910255,
       "cider_corpus": 0.9552279729035997
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.056,
+      "relevance_len": 4.668,
+      "judge_mean_len": 4.41375,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   },
   "xsum-kdgold75-merged-task_arithmetic": {
@@ -569,6 +701,17 @@
       "bleu_corpus": 9.709973540824146,
       "chrf_corpus": 0.3454932627427199,
       "cider_corpus": 0.9849767814440947
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.211,
+      "relevance_len": 4.698,
+      "judge_mean_len": 4.41825,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 0
     }
   },
   "gemma3-xsum-kdgold75_b_s3-lora": {
@@ -613,6 +756,17 @@
       "bleu_corpus": 9.563547900721515,
       "chrf_corpus": 0.3469685253571495,
       "cider_corpus": 0.9491839671242658
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.319,
+      "relevance_len": 4.666,
+      "judge_mean_len": 4.41075,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   },
   "xsum-kdgold75-merged-task_arithmetic_s2": {
@@ -657,6 +811,17 @@
       "bleu_corpus": 10.11870307817722,
       "chrf_corpus": 0.346884128717382,
       "cider_corpus": 0.9902415243420164
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.035,
+      "relevance_len": 4.701,
+      "judge_mean_len": 4.42475,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   },
   "gemma3-xsum_kd_gold_ce75-lora": {
@@ -701,6 +866,17 @@
       "bleu_corpus": 10.220748096133052,
       "chrf_corpus": 0.3519820239513418,
       "cider_corpus": 1.0255636778384734
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.042,
+      "relevance_len": 4.658,
+      "judge_mean_len": 4.38575,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 0
     }
   },
   "xsum-kdgold75-merged-task_arithmetic_s3": {
@@ -745,6 +921,17 @@
       "bleu_corpus": 9.90572206776229,
       "chrf_corpus": 0.3490045996089627,
       "cider_corpus": 1.0054006406037008
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.209,
+      "relevance_len": 4.69,
+      "judge_mean_len": 4.43575,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 0
     }
   },
   "gemma3-xsum_screen-full-lora": {
@@ -789,6 +976,17 @@
       "bleu_corpus": 10.844846620391024,
       "chrf_corpus": 0.35653470080631616,
       "cider_corpus": 1.0545087428428566
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 19.544,
+      "relevance_len": 4.324,
+      "judge_mean_len": 4.185,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   },
   "xsum-kdgold75-merged-ties": {
@@ -833,6 +1031,17 @@
       "bleu_corpus": 9.400022141143376,
       "chrf_corpus": 0.3400932889332565,
       "cider_corpus": 0.972875861230635
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 18.512,
+      "relevance_len": 4.595,
+      "judge_mean_len": 4.351,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 0
     }
   },
   "xsum-kdgold75-merged-ties_s2": {
@@ -877,6 +1086,17 @@
       "bleu_corpus": 9.885191335591616,
       "chrf_corpus": 0.34468793423479027,
       "cider_corpus": 1.0070987480322526
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 18.603,
+      "relevance_len": 4.627,
+      "judge_mean_len": 4.3895,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 3
     }
   },
   "xsum-kdgold75-merged-ties_s3": {
@@ -921,6 +1141,17 @@
       "bleu_corpus": 9.857452846998848,
       "chrf_corpus": 0.3477316238569652,
       "cider_corpus": 1.0051048494365447
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 18.75,
+      "relevance_len": 4.628,
+      "judge_mean_len": 4.39675,
+      "bounds": [
+        15,
+        27
+      ],
+      "scored": 1000,
+      "capped": 1
     }
   }
 }

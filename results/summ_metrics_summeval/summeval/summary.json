@@ -41,6 +41,23 @@
       "relevance": 4.91,
       "judge_mean": 4.8275,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.48917857142857146,
+      "alignment": 0.7292142857142858,
+      "coverage": 0.5205,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 83.98,
+      "relevance_len": 4.8,
+      "judge_mean_len": 4.8,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 11
     }
   },
   "summeval-M1": {
@@ -85,6 +102,23 @@
       "relevance": 4.59,
       "judge_mean": 4.55,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4453333333333333,
+      "alignment": 0.7090238095238095,
+      "coverage": 0.47950000000000004,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 78.16,
+      "relevance_len": 4.53,
+      "judge_mean_len": 4.535,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 6
     }
   },
   "summeval-M10": {
@@ -129,6 +163,23 @@
       "relevance": 4.19,
       "judge_mean": 4.1325,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.3275,
+      "alignment": 0.6092857142857142,
+      "coverage": 0.3705,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 52.22,
+      "relevance_len": 4.19,
+      "judge_mean_len": 4.1325,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M11": {
@@ -173,6 +224,23 @@
       "relevance": 3.29,
       "judge_mean": 2.9925,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.3109047619047619,
+      "alignment": 0.46823809523809523,
+      "coverage": 0.3625,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 69.37,
+      "relevance_len": 3.29,
+      "judge_mean_len": 2.9925,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M12": {
@@ -217,6 +285,23 @@
       "relevance": 4.69,
       "judge_mean": 4.635,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.3963333333333333,
+      "alignment": 0.7363333333333333,
+      "coverage": 0.4125,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 64.47,
+      "relevance_len": 4.69,
+      "judge_mean_len": 4.635,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M13": {
@@ -261,6 +346,23 @@
       "relevance": 4.59,
       "judge_mean": 4.53,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.41025,
+      "alignment": 0.7127500000000001,
+      "coverage": 0.4385,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 62.27,
+      "relevance_len": 4.59,
+      "judge_mean_len": 4.53,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M14": {
@@ -305,6 +407,23 @@
       "relevance": 4.5,
       "judge_mean": 4.5725,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.37116666666666664,
+      "alignment": 0.7226666666666667,
+      "coverage": 0.382,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 54.55,
+      "relevance_len": 4.5,
+      "judge_mean_len": 4.5725,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M15": {
@@ -349,6 +468,23 @@
       "relevance": 4.5,
       "judge_mean": 4.525,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.39366666666666666,
+      "alignment": 0.6981666666666666,
+      "coverage": 0.405,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 61.44,
+      "relevance_len": 4.5,
+      "judge_mean_len": 4.525,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M17": {
@@ -393,6 +529,23 @@
       "relevance": 4.93,
       "judge_mean": 4.9225,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.431,
+      "alignment": 0.7883333333333333,
+      "coverage": 0.4435,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 52.1,
+      "relevance_len": 4.93,
+      "judge_mean_len": 4.9225,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M2": {
@@ -437,6 +590,23 @@
       "relevance": 4.44,
       "judge_mean": 4.4625,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4453333333333333,
+      "alignment": 0.7365,
+      "coverage": 0.46649999999999997,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 71.65,
+      "relevance_len": 4.44,
+      "judge_mean_len": 4.4625,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M20": {
@@ -481,6 +651,23 @@
       "relevance": 3.31,
       "judge_mean": 3.455,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.16969047619047617,
+      "alignment": 0.4878571428571428,
+      "coverage": 0.207,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 44.05,
+      "relevance_len": 3.19,
+      "judge_mean_len": 3.425,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 10
     }
   },
   "summeval-M22": {
@@ -525,6 +712,23 @@
       "relevance": 4.87,
       "judge_mean": 4.8625,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.43799999999999994,
+      "alignment": 0.7598333333333334,
+      "coverage": 0.452,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 55.4,
+      "relevance_len": 4.87,
+      "judge_mean_len": 4.8625,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M23": {
@@ -569,6 +773,23 @@
       "relevance": 4.89,
       "judge_mean": 4.8525,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4238809523809524,
+      "alignment": 0.7741190476190476,
+      "coverage": 0.43800000000000006,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 52.97,
+      "relevance_len": 4.89,
+      "judge_mean_len": 4.8525,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-M5": {
@@ -613,6 +834,23 @@
       "relevance": 4.7,
       "judge_mean": 4.61,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.4884642857142857,
+      "alignment": 0.7424404761904762,
+      "coverage": 0.514,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 86.18,
+      "relevance_len": 4.59,
+      "judge_mean_len": 4.5825,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 11
     }
   },
   "summeval-M8": {
@@ -657,6 +895,23 @@
       "relevance": 4.45,
       "judge_mean": 4.525,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.3568333333333334,
+      "alignment": 0.6838333333333333,
+      "coverage": 0.36950000000000005,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 57.65,
+      "relevance_len": 4.44,
+      "judge_mean_len": 4.5225,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 1
     }
   },
   "summeval-M9": {
@@ -701,6 +956,23 @@
       "relevance": 4.16,
       "judge_mean": 4.08,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.38416666666666666,
+      "alignment": 0.6918095238095238,
+      "coverage": 0.40850000000000003,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 61.38,
+      "relevance_len": 4.16,
+      "judge_mean_len": 4.08,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 0
     }
   },
   "summeval-reference": {
@@ -745,6 +1017,23 @@
       "relevance": 4.9,
       "judge_mean": 4.7775,
       "scored": 100
+    },
+    "deepeval-qwen3-32b-n5": {
+      "deepeval": 0.35783333333333334,
+      "alignment": 0.7328333333333333,
+      "coverage": 0.36950000000000005,
+      "scored": 100
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 43.87,
+      "relevance_len": 4.86,
+      "judge_mean_len": 4.7675,
+      "bounds": [
+        32,
+        69
+      ],
+      "scored": 100,
+      "capped": 4
     }
   }
 }

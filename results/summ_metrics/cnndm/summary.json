@@ -20,6 +20,17 @@
       "alignment": 0.73565,
       "coverage": 0.48256666666666664,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 54.86,
+      "relevance_len": 4.946,
+      "judge_mean_len": 4.8785,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 1
     }
   },
   "cnndm-kdgold75-merged-dare_ties_s2": {
@@ -43,6 +54,17 @@
       "alignment": 0.7456330447330447,
       "coverage": 0.4619666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 55.214,
+      "relevance_len": 4.946,
+      "judge_mean_len": 4.8805,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 4
     }
   },
   "base-gemma-3-4b-it": {
@@ -66,6 +88,17 @@
       "alignment": 0.7648887336556017,
       "coverage": 0.753306613226453,
       "scored": 499
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 204.784,
+      "relevance_len": 3.168,
+      "judge_mean_len": 4.2115,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 410
     }
   },
   "cnndm-kdgold75-merged-dare_ties_s3": {
@@ -89,6 +122,17 @@
       "alignment": 0.7401174603174603,
       "coverage": 0.49290000000000006,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 55.968,
+      "relevance_len": 4.946,
+      "judge_mean_len": 4.8905,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 3
     }
   },
   "gemma3-cnndm-kdgold75_a-lora": {
@@ -112,6 +156,17 @@
       "alignment": 0.711487445887446,
       "coverage": 0.45480000000000004,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 59.014,
+      "relevance_len": 4.896,
+      "judge_mean_len": 4.8495,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 5
     }
   },
   "gemma3-cnndm-kdgold75_a_s2-lora": {
@@ -135,6 +190,17 @@
       "alignment": 0.7410507936507936,
       "coverage": 0.47236666666666666,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 57.824,
+      "relevance_len": 4.93,
+      "judge_mean_len": 4.8525,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 2
     }
   },
   "cnndm-kdgold75-merged-linear": {
@@ -158,6 +224,17 @@
       "alignment": 0.7495499999999999,
       "coverage": 0.4759666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 56.196,
+      "relevance_len": 4.94,
+      "judge_mean_len": 4.897,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 4
     }
   },
   "cnndm-kdgold75-merged-linear_s2": {
@@ -181,6 +258,17 @@
       "alignment": 0.7454992063492064,
       "coverage": 0.4749666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 55.074,
+      "relevance_len": 4.956,
+      "judge_mean_len": 4.903,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 1
     }
   },
   "gemma3-cnndm-kdgold75_a_s3-lora": {
@@ -204,6 +292,17 @@
       "alignment": 0.7211944444444445,
       "coverage": 0.4782666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 59.566,
+      "relevance_len": 4.924,
+      "judge_mean_len": 4.865,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 7
     }
   },
   "gemma3-cnndm-kdgold75_b-lora": {
@@ -227,6 +326,17 @@
       "alignment": 0.725431746031746,
       "coverage": 0.4634666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 54.296,
+      "relevance_len": 4.946,
+      "judge_mean_len": 4.87,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 1
     }
   },
   "cnndm-kdgold75-merged-linear_s3": {
@@ -250,6 +360,17 @@
       "alignment": 0.7457817460317461,
       "coverage": 0.4748,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 55.788,
+      "relevance_len": 4.954,
+      "judge_mean_len": 4.884,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 3
     }
   },
   "gemma3-cnndm-kdgold75_b_s2-lora": {
@@ -273,6 +394,17 @@
       "alignment": 0.7327277777777778,
       "coverage": 0.4741666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 55.258,
+      "relevance_len": 4.938,
+      "judge_mean_len": 4.848,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 2
     }
   },
   "cnndm-kdgold75-merged-task_arithmetic": {
@@ -296,6 +428,17 @@
       "alignment": 0.750602380952381,
       "coverage": 0.47840000000000005,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 56.122,
+      "relevance_len": 4.948,
+      "judge_mean_len": 4.886,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 3
     }
   },
   "gemma3-cnndm-kdgold75_b_s3-lora": {
@@ -319,6 +462,17 @@
       "alignment": 0.7261515873015872,
       "coverage": 0.4693333333333333,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 55.624,
+      "relevance_len": 4.934,
+      "judge_mean_len": 4.8525,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 2
     }
   },
   "cnndm-kdgold75-merged-task_arithmetic_s2": {
@@ -342,6 +496,17 @@
       "alignment": 0.7384166666666666,
       "coverage": 0.4706666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 54.858,
+      "relevance_len": 4.932,
+      "judge_mean_len": 4.886,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 1
     }
   },
   "gemma3-cnndm-kdgold75_full-lora": {
@@ -365,6 +530,17 @@
       "alignment": 0.7494724941724942,
       "coverage": 0.48436666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 60.888,
+      "relevance_len": 4.926,
+      "judge_mean_len": 4.881,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 5
     }
   },
   "cnndm-kdgold75-merged-task_arithmetic_s3": {
@@ -388,6 +564,17 @@
       "alignment": 0.7438452380952381,
       "coverage": 0.4845,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 56.294,
+      "relevance_len": 4.96,
+      "judge_mean_len": 4.9025,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 4
     }
   },
   "cnndm-kdgold75-merged-ties": {
@@ -411,6 +598,17 @@
       "alignment": 0.6926261904761905,
       "coverage": 0.4473666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 53.552,
+      "relevance_len": 4.918,
+      "judge_mean_len": 4.824,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 3
     }
   },
   "gemma3-cnndm_curve-n500-lora": {
@@ -434,6 +632,17 @@
       "alignment": 0.7333415584415583,
       "coverage": 0.4716666666666667,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 72.606,
+      "relevance_len": 4.85,
+      "judge_mean_len": 4.846,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 21
     }
   },
   "cnndm-kdgold75-merged-ties_s2": {
@@ -457,6 +666,17 @@
       "alignment": 0.7128198412698413,
       "coverage": 0.44026666666666664,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 53.564,
+      "relevance_len": 4.928,
+      "judge_mean_len": 4.8185,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 0
     }
   },
   "cnndm-kdgold75-merged-ties_s3": {
@@ -480,6 +700,17 @@
       "alignment": 0.6995963203463204,
       "coverage": 0.44903333333333334,
       "scored": 500
+    },
+    "judge4-qwen3-32b-len": {
+      "words": 54.062,
+      "relevance_len": 4.948,
+      "judge_mean_len": 4.8525,
+      "bounds": [
+        36,
+        83
+      ],
+      "scored": 500,
+      "capped": 1
     }
   }
 }
