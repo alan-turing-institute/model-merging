@@ -16,7 +16,11 @@
 # self-distill environment, on this job's GPU, as an OpenAI-compatible endpoint
 # on localhost; JUDGE_MODEL picks it (default: Qwen3-32B, downloaded by
 # jobs/dl_qwen3_32b.sh at a pinned revision; bf16, 65 GB). vLLM takes
-# JUDGE_GPU_SHARE of the GPU, leaving the rest for BERTScore's encoder. The
+# JUDGE_GPU_SHARE of the GPU, leaving the rest for BERTScore's encoder. JUDGE_TP
+# splits the judge over that many GPUs (tensor parallel) for models too big for
+# one - submit with --gres=gpu:<JUDGE_TP> to match, e.g. Llama-3.3-70B at bf16:
+#   JUDGE_MODEL=$PROJECTDIR/$USER/mm/models/llama-3.3-70b-instruct JUDGE_LABEL=llama-3.3-70b \
+#   JUDGE_TP=2 sbatch --gres=gpu:2 summ_metrics.sbatch ... The
 # scorer runs in its own script environment (summ_metrics.py.lock); build it once
 # on a login node first:  uv sync --script summ_metrics.py
 set -euo pipefail
@@ -59,7 +63,8 @@ if [[ " $* " != *" --metrics "* || " $* " == *" deepeval "* || " $* " == *" judg
   VLLM_USE_FLASHINFER_SAMPLER=0 UV_PROJECT_ENVIRONMENT=${SELF_DISTILL_VENV:-$PROJECTDIR/$USER/mm/venvs/self-distill} \
     uv run --no-sync --project ../self-distill vllm serve "$JUDGE" --served-model-name judge --enforce-eager \
       --host 127.0.0.1 --port "$PORT" --max-model-len "${JUDGE_MAX_LEN:-16384}" \
-      --gpu-memory-utilization "${JUDGE_GPU_SHARE:-0.85}" --seed 0 "${EXTRA[@]}" > "judge-$SLURM_JOB_ID.log" 2>&1 &
+      --gpu-memory-utilization "${JUDGE_GPU_SHARE:-0.85}" --tensor-parallel-size "${JUDGE_TP:-1}" \
+      --seed 0 "${EXTRA[@]}" > "judge-$SLURM_JOB_ID.log" 2>&1 &
   SERVER=$!
   for _ in $(seq 120); do
     curl -sf "http://127.0.0.1:$PORT/v1/models" > /dev/null && break

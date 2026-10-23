@@ -24,11 +24,14 @@ LEADERBOARD = {  # (AggreFact-CNN, AggreFact-XSum) balanced accuracy, test split
     "QwQ-32B-Preview": (57.0, 71.6), "MiniCheck-Flan-T5-L (0.8B)": (69.9, 74.3),
     "Bespoke-MiniCheck-7B": (65.5, 77.8),
 }
-CHECKERS = {  # name: (record tag, field, midpoint threshold)
-    "LLM judge consistency (Qwen3-32B)": ("judge4-qwen3-32b", "consistency", 3.0),
-    "DeepEval alignment (Qwen3-32B)": ("deepeval-qwen3-32b-n5", "alignment", 0.5),
-    "DeepEval score (Qwen3-32B)": ("deepeval-qwen3-32b-n5", "deepeval", 0.5),
-}
+def checkers(judges):
+    """name: (record tag, field, midpoint threshold), for each judge model."""
+    out = {}
+    for j in judges:
+        out[f"LLM judge consistency ({j})"] = (f"judge4-{j}", "consistency", 3.0)
+        out[f"DeepEval alignment ({j})"] = (f"deepeval-{j}-n5", "alignment", 0.5)
+        out[f"DeepEval score ({j})"] = (f"deepeval-{j}-n5", "deepeval", 0.5)
+    return out
 
 
 def records(path):
@@ -52,11 +55,13 @@ def main():
     ap.add_argument("--root", type=Path, default=HERE.parent / "results" / "summ_metrics_aggrefact")
     ap.add_argument("--data", type=Path, default=HERE.parent / "datasets" / "aggrefact")
     ap.add_argument("--md", type=Path)
+    ap.add_argument("--judges", nargs="+", default=["qwen3-32b", "llama-3.3-70b"],
+                    help="judge labels (summ_metrics.sbatch JUDGE_LABEL); judges without results show '-'")
     args = ap.parse_args()
     out = ["| checker | AggreFact-CNN | AggreFact-XSum | average | CNN, dev-tuned | XSum, dev-tuned | scored (CNN / XSum) |",
            "|---|---|---|---|---|---|---|"]
     report = {}
-    for name, (tag, field, mid) in CHECKERS.items():
+    for name, (tag, field, mid) in checkers(args.judges).items():
         cells, tuned, n = [], [], []
         for subset in ("cnn", "xsum"):
             pairs = {}

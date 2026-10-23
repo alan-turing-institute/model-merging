@@ -79,7 +79,13 @@ def main():
     ap.add_argument("--root", type=Path, default=HERE.parent / "results" / "summ_metrics_summeval")
     ap.add_argument("--pairs", type=Path, default=HERE.parent / "datasets" / "summeval" / "pairs")
     ap.add_argument("--md", type=Path)
+    ap.add_argument("--judge-label", default="qwen3-32b", help="which judge's records to read (summ_metrics.sbatch JUDGE_LABEL)")
     args = ap.parse_args()
+    if args.judge_label != "qwen3-32b":  # read another judge's records under the same column names
+        global JUDGE, DE, JL
+        swap = {JUDGE: f"judge4-{args.judge_label}", DE: f"deepeval-{args.judge_label}-n5", JL: f"judge4-{args.judge_label}-len"}
+        METRICS[:] = [(n, swap.get(t, t), k, p) for n, t, k, p in METRICS]
+        JUDGE, DE, JL = swap[JUDGE], swap[DE], swap[JL]
     paper = json.loads((HERE / "summeval_paper.json").read_text())
     pairs = load_from_disk(str(args.pairs))
     human = {(r["id"], r["system"]): {d: r[d] for d in DIMS} for r in pairs if r["system"] != "reference"}
