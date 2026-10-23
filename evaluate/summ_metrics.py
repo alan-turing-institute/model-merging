@@ -361,6 +361,9 @@ def run_judge_len(rows, judge_path, path):
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from summ_judge import length_range, with_length
 
+    if not judge_path.exists():
+        raise SystemExit(f"no judgements at {judge_path}: pass the --judge-label of the judge that made them "
+                         "(summ_metrics.sbatch passes JUDGE_LABEL; by hand it defaults to --judge-model)")
     bounds = length_range([r[2] for r in rows])
     preds = {r[0]: r[3] for r in rows}
     out, capped = [], 0
