@@ -9,8 +9,8 @@
 # first of the two", not the pretrained base.
 # Merges the LoRA adapters.
 merge_method: arcee_fusion
-base_model: "google/gemma-3-4b-it+../models/gemma3-crime-1-of-2-lora"
+base_model: "google/gemma-3-4b-it+../models/gemma3_4b_crime_1_of_2"
 models:
-  - model: "google/gemma-3-4b-it+../models/gemma3-crime-2-of-2-lora"
+  - model: "google/gemma-3-4b-it+../models/gemma3_4b_crime_2_of_2"
 tokenizer_source: union
 dtype: bfloat16

@@ -56,4 +56,8 @@ export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
 
 uv run mergekit-yaml "$CONFIG" "$OUTPUT_DIR" --cuda --lazy-unpickle --allow-crimes "$@"
 
+# mergekit writes no generation_config.json, and a config.json copied from a
+# trained model has lost Gemma's <end_of_turn> stop token: see ../fix_eos.py.
+uv run python ../fix_eos.py "$OUTPUT_DIR"
+
 uv run python ../provenance.py model "$OUTPUT_DIR" --script merge.sbatch

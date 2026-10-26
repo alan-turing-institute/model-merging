@@ -8,9 +8,9 @@
 # being interpolated", not the pretrained base — both entries below are still
 # expressed via mergekit's LoRA syntax on top of the real base model.
 merge_method: slerp
-base_model: "google/gemma-3-4b-it+../models/gemma3-crime-1-of-2-lora"
+base_model: "google/gemma-3-4b-it+../models/gemma3_4b_crime_1_of_2"
 models:
-  - model: "google/gemma-3-4b-it+../models/gemma3-crime-2-of-2-lora"
+  - model: "google/gemma-3-4b-it+../models/gemma3_4b_crime_2_of_2"
 parameters:
   t: 0.5   # 0.0 = pure base_model, 1.0 = pure other model, 0.5 = midpoint
 tokenizer_source: union

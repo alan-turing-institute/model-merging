@@ -94,4 +94,8 @@ EOF
 uv run axolotl preprocess "$RUN_CONFIG"
 uv run axolotl train      "$RUN_CONFIG"
 
+# Axolotl overwrites config.json's eos_token_id [1, 106] with 1, dropping
+# Gemma's <end_of_turn>; restore it from the base model (see ../fix_eos.py).
+uv run python ../fix_eos.py "$OUTPUT_DIR"
+
 uv run python ../provenance.py model "$OUTPUT_DIR" --script train_kd.sbatch
