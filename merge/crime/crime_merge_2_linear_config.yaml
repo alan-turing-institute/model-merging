@@ -2,11 +2,11 @@
 merge_method: linear        # linear merge of two models, weighted by the "weight" parameter below
 
 models:                     # list of models to merge
-  - model: "google/gemma-3-4b-it+../models/gemma3_4b_crime_1_of_2"
+  - model: "google/gemma-3-4b-it+../models/crime/split_2/gemma3_4b_crime_1_of_2"
     parameters:
       weight: 0.5
 
-  - model: "google/gemma-3-4b-it+../models/gemma3_4b_crime_2_of_2"
+  - model: "google/gemma-3-4b-it+../models/crime/split_2/gemma3_4b_crime_2_of_2"
     parameters:
       weight: 0.5
 

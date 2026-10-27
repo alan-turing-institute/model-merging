@@ -9,9 +9,9 @@
 # Usage, from self-distill/:
 #   sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir]
 #   e.g. sbatch train_kd.sbatch self-distillation_xsum.yaml \
-#            ../models/gemma3_4b_xsum_short ../datasets/gemma3_4b_xsum_kd_data_short
+#            ../models/xsum/gemma3_4b_xsum_short ../datasets/xsum/gemma3_4b_xsum_kd_data_short
 #        sbatch train_kd.sbatch self-distillation_nc_zh_en.yaml \
-#            ../models/gemma3_4b_nc_zh_en_short ../datasets/gemma3_4b_nc_zh_en_kd_data_short
+#            ../models/translation/gemma3_4b_nc_zh_en_short ../datasets/translation/gemma3_4b_nc_zh_en_kd_data_short
 #
 # Trains a student with Axolotl's KD plugin on any dataset written by
 # generate_teacher_logprobs.py; the task (XSum, translation, ...) is set only by

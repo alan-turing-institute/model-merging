@@ -8,11 +8,11 @@
 merge_method: ties
 base_model: "google/gemma-3-4b-it"
 models:
-  - model: "../models/gemma3_4b_xsum_1_of_2_short"
+  - model: "google/gemma-3-4b-it+../models/crime/split_2/gemma3_4b_crime_1_of_2"
     parameters:
       weight: 0.5
       density: 0.5   # keep the top 50% of each delta by magnitude; worth sweeping
-  - model: "../models/gemma3_4b_xsum_2_of_2_short"
+  - model: "google/gemma-3-4b-it+../models/crime/split_2/gemma3_4b_crime_2_of_2"
     parameters:
       weight: 0.5
       density: 0.5

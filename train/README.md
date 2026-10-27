@@ -4,7 +4,7 @@ Here we give details and code of how to train a model to be a classifier on crim
 
 ## Data preparation
 
-First we use the `prepare_data_crime.py` script to split the crime dataset into three parts, for training, validation and testing, saved to `../datasets/crime_dataset`.
+First we use the `prepare_data_crime.py` script to split the crime dataset into three parts, for training, validation and testing, saved to `../datasets/crime/crime_dataset`.
 
 ```bash
 uv run python prepare_data_crime.py
@@ -13,12 +13,12 @@ uv run python prepare_data_crime.py
 To train several models on disjoint parts of the data (e.g. for merging), split it into `n` pieces with [split_dataset.py](../split_dataset.py). This splits the `train` and `validation` parts and drops `test`, keeping it held out for evaluating the merged model:
 
 ```bash
-uv run python ../split_dataset.py n ../datasets/crime_dataset ../datasets
+uv run python ../split_dataset.py n ../datasets/crime/crime_dataset ../datasets/crime/split_n
 ```
 
-which saves `datasets/crime_dataset_<i>_of_<n>`. The prepare scripts write a `provenance.json` with `coverage: "full"`, and each piece gets one with e.g. `coverage: "1 of 2"`, the source dataset and its record, the seed and the source's row counts (see [`../provenance.py`](../provenance.py)).
+which saves `datasets/crime/split_<n>/crime_dataset_<i>_of_<n>`. The prepare scripts write a `provenance.json` with `coverage: "full"`, and each piece gets one with e.g. `coverage: "1 of 2"`, the source dataset and its record, the seed and the source's row counts (see [`../provenance.py`](../provenance.py)).
 
-[prepare_data_wine.py](prepare_data_wine.py) does the same for wine reviews (predicting the 80–100 points rating from the review text), sampling 10k/1k/1k rows to `../datasets/wine_dataset` after removing duplicate reviews (`--help` for options).
+[prepare_data_wine.py](prepare_data_wine.py) does the same for wine reviews (predicting the 80–100 points rating from the review text), sampling 10k/1k/1k rows to `../datasets/wine/wine_dataset` after removing duplicate reviews (`--help` for options).
 
 To run with other datasets etc, edit the python script.
 
@@ -36,12 +36,12 @@ We provide an sbatch script, and yaml config files for the crime ([crime_gemma.y
 ```bash
 sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>
 #   e.g. sbatch train.sbatch crime_gemma.yaml \
-#            ../datasets/crime_dataset_1_of_2 ../models/gemma3-4b-crime-1-of-2-lora
+#            ../datasets/crime/split_2/crime_dataset_1_of_2 ../models/crime/split_2/gemma3_4b_crime_1_of_2
 #        sbatch train.sbatch wine_gemma.yaml \
-#            ../datasets/wine_dataset ../models/gemma3-4b-wine-full
+#            ../datasets/wine/wine_dataset ../models/wine/gemma3_4b_wine
 ```
 
-which trains the model detailed in `<config.yaml>` (and the parameters given there), on the dataset `<dataset_dir>` and writes the output to `<output_dir>`. The log is saved in `<output_dir>` as `<config name>-<jobid>.out`, e.g. `wine_gemma-1234567.out`. Once training succeeds, `<output_dir>/provenance.json` records the base model, method, key hyperparameters, final train/eval loss and the training data with its own record, including its `coverage` (see [`../provenance.py`](../provenance.py)). It also checks the run stayed finite: if any logged step has a NaN/inf `grad_norm` or loss, or any saved weight holds NaN/inf, `health.ok` is `false` and the job is marked FAILED. Watch for this: once a bf16 run goes NaN it never recovers, yet the Trainer logs its loss as exactly `0.0`, which looks like a perfect fit.
+which trains the model detailed in `<config.yaml>` (and the parameters given there), on the dataset `<dataset_dir>` and writes the output to `<output_dir>`. The log is saved in `<output_dir>` as `<config name>-<jobid>.out`, e.g. `wine_gemma-1234567.out`. Once training succeeds, `<output_dir>/provenance.json` records the base model, method, key hyperparameters, final train/eval loss and the training data with its own record, including its `coverage` (see [`../provenance.py`](../provenance.py)). It also checks the run stayed finite: if any logged step has a NaN/inf `grad_norm` or loss, or any saved weight holds NaN/inf, `health.ok` is `false` and the job is marked FAILED. Watch for this: once a bf16 run goes NaN it never recovers, yet the Trainer logs its loss as exactly `0.0`, which looks like a perfect fit. Before the record is written, [`../fix_eos.py`](../fix_eos.py) restores `eos_token_id` `[1, 106]` in `config.json`: Axolotl overwrites it with the tokenizer's single `<eos>` (1), and a merge that copies that config never stops on `<end_of_turn>` (106).
 
 Alternatively, to run the training directly, write a properly configured yaml and run
 

@@ -9,9 +9,9 @@
 # Usage, from train/:
 #   sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>
 #   e.g. sbatch train.sbatch crime_gemma.yaml \
-#            ../datasets/crime_dataset_1_of_2 ../models/gemma3-4b-crime-1-of-2-lora
+#            ../datasets/crime/split_2/crime_dataset_1_of_2 ../models/crime/split_2/gemma3_4b_crime_1_of_2
 #        sbatch train.sbatch wine_gemma.yaml \
-#            ../datasets/wine_dataset ../models/gemma3-4b-wine-full
+#            ../datasets/wine/wine_dataset ../models/wine/gemma3_4b_wine
 #
 # dataset_dir must hold train/ and validation/ (the layout prepare_data_crime.py
 # and prepare_data_wine.py write); they replace the datasets/test_datasets paths in the config, and

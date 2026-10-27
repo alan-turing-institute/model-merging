@@ -2,11 +2,11 @@
 merge_method: linear        # linear merge of two models, weighted by the "weight" parameter below
 
 models:                     # list of models to merge
-  - model: "../models/gemma3_4b_xsum_1_of_2_short"
+  - model: "../models/xsum/split_2/gemma3_4b_xsum_1_of_2_short"
     parameters:
       weight: 0.5
 
-  - model: "../models/gemma3_4b_xsum_2_of_2_short"
+  - model: "../models/xsum/split_2/gemma3_4b_xsum_2_of_2_short"
     parameters:
       weight: 0.5
 

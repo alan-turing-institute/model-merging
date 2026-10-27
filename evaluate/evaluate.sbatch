@@ -10,10 +10,10 @@
 # Usage, from evaluate/:
 #   sbatch evaluate.sbatch <task> <model> [--adapter <dir>] [inspect eval args...]
 #   e.g. sbatch evaluate.sbatch xsum google/gemma-3-4b-it -T prompt_variant=short
-#        sbatch evaluate.sbatch xsum ../models/gemma3-xsum-self-dist-short \
+#        sbatch evaluate.sbatch xsum ../models/xsum/gemma3_4b_xsum_short \
 #            -T prompt_variant=short --limit 50
 #        sbatch evaluate.sbatch crime google/gemma-3-4b-it \
-#            --adapter ../models/gemma3-crime-full-lora
+#            --adapter ../models/crime/gemma3_4b_crime
 #        sbatch evaluate.sbatch translation google/gemma-3-4b-it \
 #            -T prompt_variant=short -T split=validation
 #

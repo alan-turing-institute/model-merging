@@ -63,8 +63,8 @@ def parse_args():
         "output_dir",
         nargs="?",
         type=Path,
-        default=Path("../datasets/wine_dataset"),
-        help="Directory to save the prompts dataset into. Defaults to ../datasets/wine_dataset.",
+        default=Path("../datasets/wine/wine_dataset"),
+        help="Directory to save the prompts dataset into. Defaults to ../datasets/wine/wine_dataset.",
     )
     # Even after deduplication there are far more rows than we need, so by
     # default we sample 10k rows for training, 1k for validation, and 1k for testing.

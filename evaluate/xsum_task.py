@@ -11,7 +11,7 @@ A full model saved on disk (config.json + model.safetensors) loads with the
 plain hf provider; the name after hf/ is only a label, model_path is what loads:
 
     inspect eval xsum_task.py --model hf/gemma3-xsum-self-dist-short \
-      -M model_path=../models/gemma3-xsum-self-dist-short \
+      -M model_path=../models/xsum/gemma3_4b_xsum_short \
       -M batch_size=8 -M do_sample=false -M dtype=bfloat16 -T prompt_variant=short
 
 evaluate.sbatch (Isambard-AI) and Azure/evaluate.sh build these commands.
@@ -25,7 +25,7 @@ prompt and scored on the long one is being measured on a task it never saw.
 The variant is a task argument, so it is recorded in every .eval log.
 
 The dataset therefore needs only `document` and `summary` (and ideally `id`):
-datasets/xsum_prompts/test works as it is, as does any XSum split saved with
+datasets/xsum/xsum_prompts/test works as it is, as does any XSum split saved with
 `save_to_disk`.
 """
 
@@ -49,7 +49,7 @@ ROUGE_TYPES = ["rouge1", "rouge2", "rougeL"]
 # Resolved from this file rather than the working directory, so the default
 # holds wherever `inspect eval` is run from.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATASET = REPO_ROOT / "datasets" / "xsum_prompts" / "test"
+DEFAULT_DATASET = REPO_ROOT / "datasets" / "xsum" / "xsum_prompts" / "test"
 PREPARE_SCRIPT = REPO_ROOT / "self-distill" / "prepare_data_XSum.py"
 
 # prompt_variant -> the field of convert_to_prompt's output holding that chat.

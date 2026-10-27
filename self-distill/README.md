@@ -28,7 +28,7 @@ The script refuses to change a file whose code it does not recognise, and checks
 We first need to prepare the data.  The XSum dataset is 200k rows.  We take a 10k sample of this for our use and generate suitable prompts.  We output four fields per article: `teacher_messages` (the teacher prompt), `messages_short` and `messages_long` (a short and a longer student prompt; the long version is just to check the self-distillation is working correctly) and `reference` (the gold summary, copied from XSum's `summary`, for `--targets gold`).  XSum's own columns (`document`, `summary`, `id`) are kept too.
 
 ```bash
-uv run python prepare_data_XSum.py EdinburghNLP/xsum ../datasets/xsum_prompts  # build prompt variants
+uv run python prepare_data_XSum.py EdinburghNLP/xsum ../datasets/xsum/xsum_prompts  # build prompt variants
 ```
 
 The first argument is the dataset to load, either a Hugging Face address or a local folder saved with `save_to_disk`; the second is where to save the prompts. The sample sizes can be changed with `--train-size`, `--validation-size` and `--test-size` (defaults 10000, 1000 and 1000).
@@ -49,8 +49,8 @@ For self-distillation, we need a teacher and a student.  First, we train the tea
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
-  $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts \
-  $PROJECTDIR/$USER/model-merging/datasets \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum/xsum_prompts \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum \
   gemma3_4b_xsum_kd_data
 ```
 
@@ -58,8 +58,8 @@ The arguments are the teacher model (a Hugging Face address or a local folder), 
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
-  $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts_1_of_2 \
-  $PROJECTDIR/$USER/model-merging/datasets \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum/split_2/xsum_prompts_1_of_2 \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum/split_2 \
   gemma3_4b_xsum_kd_data_1_of_2
 ```
 
@@ -69,8 +69,8 @@ To train against the XSum reference summaries instead of the teacher's own gener
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
-  $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts \
-  $PROJECTDIR/$USER/model-merging/datasets \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum/xsum_prompts \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum \
   gemma3_4b_xsum_gold_kd_data --targets gold
 ```
 
@@ -82,14 +82,14 @@ We record the one sentence summarisation together with the `logprobs`.  This is 
 
 #### Student training
 
-The student is trained on both the `logprobs` and the output of the teacher. Once training succeeds, `<output_dir>/provenance.json` records the base model, method, key hyperparameters (including the KD weights), final train/eval loss and the KD dataset with its own record (teacher, targets, coverage; see [`../provenance.py`](../provenance.py)).
+The student is trained on both the `logprobs` and the output of the teacher. Once training succeeds, `<output_dir>/provenance.json` records the base model, method, key hyperparameters (including the KD weights), final train/eval loss and the KD dataset with its own record (teacher, targets, coverage; see [`../provenance.py`](../provenance.py)). Before that, [`../fix_eos.py`](../fix_eos.py) restores `eos_token_id` `[1, 106]` in `config.json`, which Axolotl overwrites with the tokenizer's single `<eos>` (1); see the training README.
 
 NB On Isambard this should be submitted as a job, otherwise it will run out of memory and cause your session to be killed.  We provide a short bash script for this.
 
 ```bash
 sbatch train_kd.sbatch self-distillation_xsum.yaml \
-  $PROJECTDIR/$USER/model-merging/models/gemma3_4b_xsum_short \
-  $PROJECTDIR/$USER/model-merging/datasets/gemma3_4b_xsum_kd_data_short
+  $PROJECTDIR/$USER/model-merging/models/xsum/gemma3_4b_xsum_short \
+  $PROJECTDIR/$USER/model-merging/datasets/xsum/gemma3_4b_xsum_kd_data_short
 ```
 
 This takes as parameters:

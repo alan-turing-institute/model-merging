@@ -9,7 +9,7 @@
 merge_method: model_stock
 base_model: "google/gemma-3-4b-it"
 models:
-  - model: "google/gemma-3-4b-it+../models/gemma3_4b_crime_1_of_2"
-  - model: "google/gemma-3-4b-it+../models/gemma3_4b_crime_2_of_2"
+  - model: "../models/xsum/split_2/gemma3_4b_xsum_1_of_2_short"
+  - model: "../models/xsum/split_2/gemma3_4b_xsum_2_of_2_short"
 tokenizer_source: union
 dtype: bfloat16

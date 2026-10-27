@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import provenance  # noqa: E402  (repo root, shared with split_dataset.py etc.)
 
 SOURCE = "Binaryy/crime_posts_reddit"
-OUTPUT_DIR = "../datasets/crime_dataset"
+OUTPUT_DIR = "../datasets/crime/crime_dataset"
 
 PROMPT = (
     "Is the following Reddit post about crime? Answer with exactly one word, "

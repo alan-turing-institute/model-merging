@@ -47,9 +47,9 @@
 #
 # Usage:
 #   python generate_teacher_logprobs.py google/gemma-3-4b-it \
-#       ../datasets/xsum_prompts ../datasets/xsum_kd
+#       ../datasets/xsum/xsum_prompts ../datasets/xsum/gemma3_4b_xsum_kd_data
 #   python generate_teacher_logprobs.py path/to/teacher \
-#       ../datasets/xsum_splits/xsum_prompts_1_of_3 ../datasets/xsum_kd_1_of_3 --top-k 50
+#       ../datasets/xsum/split_4/xsum_prompts_1_of_4 ../datasets/xsum/split_4/gemma3_4b_xsum_kd_data_1_of_4 --top-k 50
 import argparse
 import os
 import sys

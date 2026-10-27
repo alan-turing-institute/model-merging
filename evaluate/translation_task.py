@@ -61,7 +61,7 @@ from inspect_ai.solver import TaskState, generate
 # Resolved from this file rather than the working directory, so the default
 # holds wherever `inspect eval` is run from.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATASET = REPO_ROOT / "datasets" / "news_commentary_zh_en_prompts"
+DEFAULT_DATASET = REPO_ROOT / "datasets" / "translation" / "news_commentary_zh_en_prompts"
 PREPARE_SCRIPT = REPO_ROOT / "self-distill" / "prepare_data_NewsCommentary_zh_en.py"
 
 # prompt_variant -> the field of convert_to_prompt's output holding that chat.

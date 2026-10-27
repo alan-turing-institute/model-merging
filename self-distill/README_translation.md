@@ -16,7 +16,7 @@ We use WMT's own release of News Commentary v18, not the OPUS copy.  In the OPUS
 ```bash
 uv run python prepare_data_NewsCommentary_zh_en.py \
   https://data.statmt.org/news-commentary/v18/training/news-commentary-v18.en-zh.tsv.gz \
-  ../datasets/news_commentary_zh_en_prompts  # build prompt variants
+  ../datasets/translation/news_commentary_zh_en_prompts  # build prompt variants
 ```
 
 The first argument is the WMT TSV, either a URL or a local `.tsv`/`.tsv.gz`; the second is where to save the prompts.  The script:
@@ -33,8 +33,8 @@ The same sbatch script as for XSum; the defaults fit, since the English referenc
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
-  $PROJECTDIR/$USER/model-merging/datasets/news_commentary_zh_en_prompts \
-  $PROJECTDIR/$USER/model-merging/datasets \
+  $PROJECTDIR/$USER/model-merging/datasets/translation/news_commentary_zh_en_prompts \
+  $PROJECTDIR/$USER/model-merging/datasets/translation \
   gemma3_4b_nc_zh_en_kd_data
 ```
 
@@ -44,8 +44,8 @@ Add `--targets gold` (and a `_gold` prefix) to train against the reference trans
 
 ```bash
 sbatch train_kd.sbatch self-distillation_nc_zh_en.yaml \
-  $PROJECTDIR/$USER/model-merging/models/gemma3_4b_nc_zh_en_short \
-  $PROJECTDIR/$USER/model-merging/datasets/gemma3_4b_nc_zh_en_kd_data_short
+  $PROJECTDIR/$USER/model-merging/models/translation/gemma3_4b_nc_zh_en_short \
+  $PROJECTDIR/$USER/model-merging/datasets/translation/gemma3_4b_nc_zh_en_kd_data_short
 ```
 
 `self-distillation_nc_zh_en.yaml` has exactly the training settings of `self-distillation_xsum.yaml`, so the two tasks differ only in their data.  `train_kd.sbatch` is the same script for both.
@@ -55,7 +55,7 @@ sbatch train_kd.sbatch self-distillation_nc_zh_en.yaml \
 The Inspect AI task is [`../evaluate/translation_task.py`](../evaluate/translation_task.py).  It runs in two steps, from `../evaluate`: generation scored by chrF, BLEU and behaviour checks, then COMET-22 and CometKiwi added to the same log from a separate environment (`unbabel-comet` needs older `transformers` and `numpy`).
 
 ```bash
-sbatch evaluate.sbatch translation ../models/gemma3_4b_nc_zh_en_short -T prompt_variant=short
+sbatch evaluate.sbatch translation ../models/translation/gemma3_4b_nc_zh_en_short -T prompt_variant=short
 sbatch comet_score.sbatch logs/<log>.eval
 ```
 

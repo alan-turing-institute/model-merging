@@ -12,7 +12,7 @@
 # for full vs partial data.
 #
 # Usage:
-#   python split_dataset.py 4 ../datasets/xsum_prompts ../datasets/xsum_splits
+#   python split_dataset.py 4 ../datasets/xsum/xsum_prompts ../datasets/xsum/split_4
 import argparse
 import os
 from pathlib import Path

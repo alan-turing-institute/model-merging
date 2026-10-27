@@ -27,11 +27,11 @@ eot_tokens:
   - "<end_of_turn>"
 
 datasets:
-  - path: ../datasets/crime_dataset/train
+  - path: ../datasets/crime/crime_dataset/train
     type: chat_template
 
 test_datasets:
-  - path: ../datasets/crime_dataset/validation
+  - path: ../datasets/crime/crime_dataset/validation
     type: chat_template
 
 sequence_len: 2048
@@ -47,4 +47,4 @@ num_epochs: 3
 
 learning_rate: 2e-4
 
-output_dir: ../models/gemma3-4b-crime-full-lora
+output_dir: ../models/crime/gemma3_4b_crime

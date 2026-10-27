@@ -9,10 +9,10 @@
 # Usage, from self-distill/:
 #   sbatch generate_teacher_logprobs.sbatch <model> <dataset_dir> <output_dir> [prefix] [extra args...]
 #   e.g. sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
-#            $PROJECTDIR/$USER/model-merging/datasets/xsum_prompts \
-#            $PROJECTDIR/$USER/model-merging/datasets xsum_kd_data
+#            $PROJECTDIR/$USER/model-merging/datasets/xsum/xsum_prompts \
+#            $PROJECTDIR/$USER/model-merging/datasets/xsum gemma3_4b_xsum_kd_data
 #        sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
-#            ../datasets/xsum_prompts_1_of_3 ../datasets xsum_kd_data_1_of_3 --top-k 50
+#            ../datasets/xsum/split_4/xsum_prompts_1_of_4 ../datasets/xsum/split_4 gemma3_4b_xsum_kd_data_1_of_4 --top-k 50
 #
 # model is a Hugging Face hub id or a local directory. prefix defaults to the
 # script's own default (kd_data); the datasets are written to

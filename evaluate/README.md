@@ -40,9 +40,9 @@ sbatch evaluate.sbatch <crime|wine|xsum> <model> [--adapter <dir>] [inspect eval
 
 ```bash
 sbatch evaluate.sbatch xsum google/gemma-3-4b-it -T prompt_variant=short
-sbatch evaluate.sbatch xsum ../models/gemma3-xsum-self-dist-short -T prompt_variant=short
-sbatch evaluate.sbatch crime google/gemma-3-4b-it --adapter ../models/gemma3-crime-full-lora
-sbatch evaluate.sbatch wine google/gemma-3-4b-it --adapter ../models/gemma3-4b-wine-full-lora
+sbatch evaluate.sbatch xsum ../models/xsum/gemma3_4b_xsum_short -T prompt_variant=short
+sbatch evaluate.sbatch crime google/gemma-3-4b-it --adapter ../models/crime/gemma3_4b_crime
+sbatch evaluate.sbatch wine google/gemma-3-4b-it --adapter ../models/wine/gemma3_4b_wine
 ```
 
 The script always uses greedy decoding and loads the weights in bfloat16, so every model is compared at the same precision whatever its `config.json` says.
@@ -70,7 +70,7 @@ The scripts above only fill in arguments, so the tasks also run directly:
 
 ```bash
 uv run inspect eval crime_task.py --model hf-peft/google/gemma-3-4b-it \
-  -M adapter_path=../models/gemma3-crime-full-lora \
+  -M adapter_path=../models/crime/gemma3_4b_crime \
   -M batch_size=8 -M do_sample=false -M dtype=bfloat16
 ```
 

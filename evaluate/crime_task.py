@@ -1,6 +1,6 @@
 """Reddit crime classification (crime / not_crime) as an Inspect AI task.
 
-Each test post (datasets/crime_dataset/test, 1,077 posts) is put to the model
+Each test post (datasets/crime/crime_dataset/test, 1,077 posts) is put to the model
 with the instruction to answer in one word, and the answer is scored against
 the gold label. Generation is capped at 16 tokens: enough for the label, and
 enough to see a model that has started explaining itself.
@@ -33,7 +33,7 @@ A LoRA adapter on a base model, via the hf-peft provider (hf_peft_provider.py,
 registered as an Inspect plugin by this project's pyproject.toml):
 
     inspect eval crime_task.py --model hf-peft/google/gemma-3-4b-it \
-      -M adapter_path=../models/gemma3-crime-full-lora \
+      -M adapter_path=../models/crime/gemma3_4b_crime \
       -M batch_size=8 -M do_sample=false -M dtype=bfloat16
 
 or on the cluster, `sbatch evaluate.sbatch crime <model> [--adapter <dir>]`.
@@ -64,7 +64,7 @@ from inspect_ai.solver import TaskState, generate
 # Resolved from this file rather than the working directory, so the defaults
 # hold wherever `inspect eval` is run from.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATASET = REPO_ROOT / "datasets" / "crime_dataset" / "test"
+DEFAULT_DATASET = REPO_ROOT / "datasets" / "crime" / "crime_dataset" / "test"
 PREPARE_SCRIPT = REPO_ROOT / "train" / "prepare_data_crime.py"
 LABELS = {0: "not_crime", 1: "crime"}
 

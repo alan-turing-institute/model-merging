@@ -7,10 +7,10 @@
 #
 # Only supports exactly two models, like SLERP — `base_model` is simply "the
 # first of the two", not the pretrained base.
-# Merges the two self-distilled XSum students (full models).
+# Merges the LoRA adapters.
 merge_method: arcee_fusion
-base_model: "../models/gemma3_4b_xsum_1_of_2_short"
+base_model: "google/gemma-3-4b-it+../models/crime/split_2/gemma3_4b_crime_1_of_2"
 models:
-  - model: "../models/gemma3_4b_xsum_2_of_2_short"
+  - model: "google/gemma-3-4b-it+../models/crime/split_2/gemma3_4b_crime_2_of_2"
 tokenizer_source: union
 dtype: bfloat16

@@ -21,7 +21,7 @@
 # commit, with coverage "full": split_dataset.py pieces of it say "i of n".
 #
 # Usage:
-#   python prepare_data_XSum.py EdinburghNLP/xsum ../datasets/xsum_prompts
+#   python prepare_data_XSum.py EdinburghNLP/xsum ../datasets/xsum/xsum_prompts
 #   python prepare_data_XSum.py path/to/local/xsum out_dir --train-size 20000
 import argparse
 import sys

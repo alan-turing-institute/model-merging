@@ -53,7 +53,7 @@
 # Usage:
 #   python prepare_data_NewsCommentary_zh_en.py \
 #       https://data.statmt.org/news-commentary/v18/training/news-commentary-v18.en-zh.tsv.gz \
-#       ../datasets/news_commentary_zh_en_prompts
+#       ../datasets/translation/news_commentary_zh_en_prompts
 #   python prepare_data_NewsCommentary_zh_en.py path/to/news-commentary-v18.en-zh.tsv.gz out_dir
 import argparse
 import gzip

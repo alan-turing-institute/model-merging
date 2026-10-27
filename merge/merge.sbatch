@@ -8,10 +8,10 @@
 #SBATCH --time=01:00:00
 # Usage, from merge/:
 #   sbatch merge.sbatch <config.yaml> <output_dir> [mergekit-yaml args...]
-#   e.g. sbatch merge.sbatch xsum_merge_linear_config.yaml \
-#            ../models/gemma3_4b_xsum_short_merge_linear
-#        sbatch merge.sbatch crime_merge_ties_config.yaml ../models/gemma3_4b_crime_ties \
-#            --lora-merge-cache ../models/lora_merge_cache
+#   e.g. sbatch merge.sbatch xsum/xsum_merge_2_linear_config.yaml \
+#            ../models/xsum/split_2/gemma3_4b_xsum_short_merge_2_linear
+#        sbatch merge.sbatch crime/crime_merge_2_ties_config.yaml ../models/crime/split_2/gemma3_4b_crime_merge_2_ties \
+#            --lora-merge-cache ../models/crime/split_2/.lora_merge_cache
 #
 # Runs mergekit-yaml with --cuda --lazy-unpickle --allow-crimes; anything after
 # output_dir is passed on too (e.g. --lora-merge-cache, needed when the config

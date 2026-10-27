@@ -37,7 +37,7 @@ copied, so training and evaluation wording cannot drift apart.
 A LoRA adapter on a base model uses the hf-peft provider:
 
     inspect eval wine_task.py --model hf-peft/google/gemma-3-4b-it \
-      -M adapter_path=../models/gemma3-4b-wine-full-lora \
+      -M adapter_path=../models/wine/gemma3_4b_wine \
       -M batch_size=8 -M do_sample=false -M dtype=bfloat16
 """
 
@@ -66,7 +66,7 @@ from inspect_ai.solver import TaskState, generate
 # Resolved from this file rather than the working directory, so the defaults
 # hold wherever `inspect eval` is run from.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATASET = REPO_ROOT / "datasets" / "wine_dataset" / "test"
+DEFAULT_DATASET = REPO_ROOT / "datasets" / "wine" / "wine_dataset" / "test"
 PREPARE_SCRIPT = REPO_ROOT / "train" / "prepare_data_wine.py"
 
 MIN_POINTS, MAX_POINTS = 80, 100

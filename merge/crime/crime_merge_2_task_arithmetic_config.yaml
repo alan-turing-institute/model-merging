@@ -2,14 +2,14 @@
 # Like `linear`, but combines (model - base_model) deltas rather than raw
 # weights, i.e. the base model's own weights don't get diluted by being
 # implicitly counted twice. This is the more principled version of the plain
-# `linear` merge in xsum_merge_linear_config.yaml, at no extra cost.
+# `linear` merge in merge_linear_config.yaml, at no extra cost.
 merge_method: task_arithmetic
 base_model: "google/gemma-3-4b-it"
 models:
-  - model: "../models/gemma3_4b_xsum_1_of_2_short"
+  - model: "google/gemma-3-4b-it+../models/crime/split_2/gemma3_4b_crime_1_of_2"
     parameters:
       weight: 0.5
-  - model: "../models/gemma3_4b_xsum_2_of_2_short"
+  - model: "google/gemma-3-4b-it+../models/crime/split_2/gemma3_4b_crime_2_of_2"
     parameters:
       weight: 0.5
 tokenizer_source: union
