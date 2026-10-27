@@ -67,6 +67,19 @@ sbatch merge.sbatch xsum/xsum_merge_2_linear_config.yaml ../models/xsum/split_2/
 
 The log goes to `<output_dir>/<config name>-<jobid>.out`, and once the merge succeeds `<output_dir>/provenance.json` records the merge method and each input model with its weight and its own record (training data, coverage, losses; see [`../provenance.py`](../provenance.py)). Its `coverage` lists the inputs', e.g. `["1 of 2", "2 of 2"]`. Before that, [`../fix_eos.py`](../fix_eos.py) gives the merge the stop tokens of its base (or first) model: mergekit writes no `generation_config.json`, and a `config.json` copied from a trained model has lost Gemma's `<end_of_turn>`, so without it the merge never stops generating.
 
+### Merging N parts
+
+The configs live in `merge/<task>/`, named `<task>_merge_<N>_<method>_config.yaml` for a task split into N parts. [make_merge_configs.py](make_merge_configs.py) writes them for any power-of-two N, with the same parameters as the 2-way configs (weight 1/N, ties density 0.5, dare_ties density 0.3), and prints the sbatch commands:
+
+```bash
+python make_merge_configs.py crime 4                                # the 7 methods used for N = 2
+python make_merge_configs.py xsum 8 --methods karcher multislerp    # N-way spherical alternatives
+```
+
+It reads the parts from `../models/<task>/split_<N>/` and puts the merges there too. For crime, the merges share one LoRA cache, `../models/crime/split_<N>/.lora_merge_cache`, so the printed commands make the rest wait for the first.
+
+slerp and arcee_fusion take exactly two models. For them the config is a binary tree of pairwise merges, (1,2) (3,4) ... then their results, written as a multi-document YAML for `mergekit-multi`. With `t: 0.5` at every level each part ends up with weight 1/N. arcee_fusion is not symmetric, so the lower-numbered side is always its `base_model`. `merge.sbatch` runs any config with named documents through `mergekit-multi`. It saves the named stages, e.g. `gemma3_4b_crime_merge_4_slerp_parts_1_2`, to `../models/<task>/split_<N>/intermediate/` and writes a `provenance.json` for each, bottom-up, so the final model's record embeds the whole tree. Stages that already exist are skipped, so a failed job can simply be resubmitted. Only the final model gets `fix_eos.py`; run it on an intermediate before evaluating one.
+
 ## Possible problems
 
 If the compute has GPUs with a smaller amount of VRAM, eg 16Gb, then this might max out, e.g. with TIES and DARE-TIES.  In this case, remove the `cuda` flag and instead use the system RAM.  Using CPUs, you can add the `-j` flag, to parallelise across several nodes.

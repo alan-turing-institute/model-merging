@@ -273,13 +273,33 @@ def merged_record(model_dir, base_dir):
     import yaml
     cfg = yaml.safe_load(Path(model_dir, "mergekit_config.yml").read_text())
     inputs = []
-    for m in cfg.get("models", []):
+    specs = [(m["model"], m.get("parameters")) for m in cfg.get("models", [])]
+    if not specs:
+        # mergekit-multi saves its stages' configs expanded: no models list,
+        # just per-module slices whose sources name the models.
+        sources = {}
+        modules = [cfg] + list((cfg.get("modules") or {}).values())
+        for s in (s for m in modules for s in m.get("slices") or []):
+            for src in s.get("sources", []):
+                sources.setdefault(src["model"], src.get("parameters"))
+        specs = list(sources.items())
+    # slerp and arcee_fusion take their first model as base_model, not in
+    # models; a local base_model is one of the models merged, so record it too
+    # (first, as in the config).
+    base_spec = cfg.get("base_model")
+    if base_spec:
+        base, _, adapter = base_spec.partition("+")
+        if base_spec in [s for s, _ in specs]:
+            specs.sort(key=lambda s: s[0] != base_spec)
+        elif os.path.isdir(resolve(adapter or base, base_dir)):
+            specs.insert(0, (base_spec, None))
+    for spec, parameters in specs:
         # "<base>+<adapter>" is mergekit's syntax for a LoRA adapter on a base.
-        base, _, adapter = m["model"].partition("+")
+        base, _, adapter = spec.partition("+")
         entry = _model_entry(adapter or base, base_dir)
         if adapter:
             entry["on_base_model"] = base
-        inputs.append({**entry, "parameters": m.get("parameters")})
+        inputs.append({**entry, "parameters": parameters})
     def coverage(i):
         if i["provenance"]:
             return i["provenance"]["coverage"]

@@ -21,6 +21,14 @@
 # own record (see ../provenance.py). Relative paths, including those in the
 # config, resolve against merge/. The log is saved as
 # <output_dir>/<config name>-<jobid>.out.
+#
+# A config whose documents have `name:`s (the pairwise trees that
+# make_merge_configs.py writes for slerp and arcee_fusion) runs with
+# mergekit-multi instead: each named stage is saved to
+# <output_dir>/../intermediate/<name> and the unnamed one to <output_dir>.
+# Stages that already exist are skipped, so a failed job can be resubmitted.
+# Each new stage gets its own provenance.json, in file order (bottom-up), so
+# every record can embed its inputs' records.
 set -euo pipefail
 USAGE="usage: sbatch merge.sbatch <config.yaml> <output_dir> [mergekit-yaml args...]"
 CONFIG=${1:?$USAGE}
@@ -54,7 +62,21 @@ export LD_LIBRARY_PATH
 # 100 GB home quota. See the main README.
 export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
 
-uv run mergekit-yaml "$CONFIG" "$OUTPUT_DIR" --cuda --lazy-unpickle --allow-crimes "$@"
+STAGES=$(uv run python -c 'import sys, yaml
+for d in yaml.safe_load_all(open(sys.argv[1])):
+    if d and "name" in d: print(d["name"])' "$CONFIG")
+if [[ -n $STAGES ]]; then
+  INTERMEDIATE_DIR=$(dirname "$OUTPUT_DIR")/intermediate
+  uv run mergekit-multi "$CONFIG" --out-path "$OUTPUT_DIR" --intermediate-dir "$INTERMEDIATE_DIR" \
+    --cuda --lazy-unpickle --allow-crimes "$@"
+  for STAGE in $STAGES; do
+    # A stage skipped as already merged keeps the record of the job that made it.
+    [[ -f $INTERMEDIATE_DIR/$STAGE/provenance.json ]] ||
+      uv run python ../provenance.py model "$INTERMEDIATE_DIR/$STAGE" --script merge.sbatch
+  done
+else
+  uv run mergekit-yaml "$CONFIG" "$OUTPUT_DIR" --cuda --lazy-unpickle --allow-crimes "$@"
+fi
 
 # mergekit writes no generation_config.json, and a config.json copied from a
 # trained model has lost Gemma's <end_of_turn> stop token: see ../fix_eos.py.
