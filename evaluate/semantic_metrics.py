@@ -30,8 +30,8 @@ _EMBEDDER = None
 def embedder():
     """Load the sentence encoder once, or return None if unavailable.
 
-    Non-fatal by design. Compute nodes have no outbound network, so a missing
-    cache must degrade to "no semantic score" rather than fail a run that has
+    Non-fatal by design. A run may be offline (HF_HUB_OFFLINE=1) or the cache may
+    be missing, and either must degrade to "no semantic score" rather than fail a run that has
     already spent an hour generating.
     """
     global _EMBEDDER
