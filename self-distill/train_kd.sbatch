@@ -7,11 +7,13 @@
 #SBATCH --mem=115000M
 #SBATCH --time=06:00:00
 # Usage, from self-distill/:
-#   sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir]
+#   sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir] [--seed <n|random>]
 #   e.g. sbatch train_kd.sbatch self-distillation_xsum.yaml \
 #            ../models/xsum/gemma3_4b_xsum_short ../datasets/xsum/gemma3_4b_xsum_kd_data_short
 #        sbatch train_kd.sbatch self-distillation_nc_zh_en.yaml \
 #            ../models/translation/gemma3_4b_nc_zh_en_short ../datasets/translation/gemma3_4b_nc_zh_en_kd_data_short
+#        sbatch train_kd.sbatch self-distillation_xsum.yaml \
+#            ../models/xsum/gemma3_4b_xsum_short ../datasets/xsum/gemma3_4b_xsum_kd_data_short --seed 3
 #
 # Trains a student with Axolotl's KD plugin on any dataset written by
 # generate_teacher_logprobs.py; the task (XSum, translation, ...) is set only by
@@ -25,8 +27,21 @@
 # The log is saved as <output_dir>/<config name>-<jobid>.out, e.g.
 # self-distillation_nc_zh_en-1234567.out. Once training succeeds, <output_dir>/provenance.json records what made the
 # model (see ../provenance.py).
+#
+# --seed sets the run's seed (default 42): Axolotl's dataset shuffle and the
+# Trainer's data order, with every RNG seeded before the model loads by
+# ../seed_plugin.py. "random" draws one from /dev/urandom. Either way it is
+# written into config.yaml, so provenance.json records it.
 set -euo pipefail
-USAGE="usage: sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir]"
+USAGE="usage: sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir] [--seed <n|random>]"
+SEED=42
+ARGS=()
+while (( $# )); do
+  if [[ $1 == --seed ]]; then SEED=${2:?$USAGE}; shift 2; else ARGS+=("$1"); shift; fi
+done
+set -- "${ARGS[@]}"
+[[ $SEED == random ]] && SEED=$(od -An -N4 -tu4 /dev/urandom | tr -d ' ')
+[[ $SEED =~ ^[0-9]+$ ]] || { echo "--seed must be a non-negative integer or random, not $SEED" >&2; exit 1; }
 CONFIG=${1:?$USAGE}
 OUTPUT_DIR=${2:?$USAGE}
 DATASET_DIR=${3:-}
@@ -64,12 +79,15 @@ uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is a 
 # Axolotl's --datasets flag only takes a string, not the list of dicts the KD
 # dataset needs, so write the overrides into a copy of the config instead.
 RUN_CONFIG="$OUTPUT_DIR/config.yaml"
-uv run python - "$CONFIG" "$RUN_CONFIG" "$OUTPUT_DIR" "$DATASET_DIR" <<'EOF'
+uv run python - "$CONFIG" "$RUN_CONFIG" "$OUTPUT_DIR" "$DATASET_DIR" "$SEED" <<'EOF'
 import os, sys, yaml
-src, dst, output_dir, dataset_dir = sys.argv[1:]
+src, dst, output_dir, dataset_dir, seed = sys.argv[1:]
 with open(src) as f:
     cfg = yaml.safe_load(f)
 cfg["output_dir"] = output_dir
+cfg["seed"] = int(seed)
+# Seeds every RNG before the model loads (see ../seed_plugin.py).
+cfg["plugins"] = [*(cfg.get("plugins") or []), "seed_plugin.SeedPlugin"]
 # A per-run cache: Axolotl's hash ignores the base model, so concurrent runs on
 # the same dataset sharing one cache overwrite each other's mmapped arrow files
 # (SIGBUS in the dataloader).
@@ -87,7 +105,11 @@ print(f"output_dir: {cfg['output_dir']}")
 print(f"prepared:   {cfg['dataset_prepared_path']}")
 print(f"train:      {[d['path'] for d in cfg['datasets']]}")
 print(f"validation: {[d['path'] for d in cfg['test_datasets']]}")
+print(f"seed:       {cfg['seed']}")
 EOF
+
+# seed_plugin.py lives in the repo root.
+export PYTHONPATH=$(cd .. && pwd)${PYTHONPATH:+:$PYTHONPATH}
 
 # Preprocess separately, as Axolotl itself recommends -- it keeps the
 # memory-hungry tokenisation pass out of the training process.

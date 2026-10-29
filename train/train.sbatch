@@ -7,11 +7,13 @@
 #SBATCH --mem=115000M
 #SBATCH --time=06:00:00
 # Usage, from train/:
-#   sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>
+#   sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir> [--seed <n|random>]
 #   e.g. sbatch train.sbatch crime_gemma.yaml \
 #            ../datasets/crime/split_2/crime_dataset_1_of_2 ../models/crime/split_2/gemma3_4b_crime_1_of_2
 #        sbatch train.sbatch wine_gemma.yaml \
 #            ../datasets/wine/wine_dataset ../models/wine/gemma3_4b_wine
+#        sbatch train.sbatch crime_gemma.yaml \
+#            ../datasets/crime/crime_dataset ../models/crime/gemma3_4b_crime --seed random
 #
 # dataset_dir must hold train/ and validation/ (the layout prepare_data_crime.py
 # and prepare_data_wine.py write); they replace the datasets/test_datasets paths in the config, and
@@ -23,8 +25,21 @@
 # <output_dir>/<config name>-<jobid>.out, e.g. wine_gemma-1234567.out. Once
 # training succeeds, <output_dir>/provenance.json records what made the model
 # (see ../provenance.py).
+#
+# --seed sets the run's seed (default 42): Axolotl's dataset shuffle, the
+# Trainer's data order and dropout, and, through ../seed_plugin.py, the LoRA
+# adapter's initial weights. "random" draws one from /dev/urandom. Either way it
+# is written into config.yaml, so provenance.json records it.
 set -euo pipefail
-USAGE="usage: sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>"
+USAGE="usage: sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir> [--seed <n|random>]"
+SEED=42
+ARGS=()
+while (( $# )); do
+  if [[ $1 == --seed ]]; then SEED=${2:?$USAGE}; shift 2; else ARGS+=("$1"); shift; fi
+done
+set -- "${ARGS[@]}"
+[[ $SEED == random ]] && SEED=$(od -An -N4 -tu4 /dev/urandom | tr -d ' ')
+[[ $SEED =~ ^[0-9]+$ ]] || { echo "--seed must be a non-negative integer or random, not $SEED" >&2; exit 1; }
 CONFIG=${1:?$USAGE}
 DATASET_DIR=${2:?$USAGE}
 OUTPUT_DIR=${3:?$USAGE}
@@ -59,15 +74,19 @@ export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
 
 uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is a CUDA compat lib on LD_LIBRARY_PATH?'"
 
-# Write a copy of the config with the dataset and output paths changed (and
-# dataset_num_proc capped, below).
+# Write a copy of the config with the dataset and output paths and the seed
+# changed (and dataset_num_proc capped, below).
 RUN_CONFIG="$OUTPUT_DIR/config.yaml"
-uv run python - "$CONFIG" "$RUN_CONFIG" "$DATASET_DIR" "$OUTPUT_DIR" <<'EOF'
+uv run python - "$CONFIG" "$RUN_CONFIG" "$DATASET_DIR" "$OUTPUT_DIR" "$SEED" <<'EOF'
 import os, sys, yaml
-src, dst, dataset_dir, output_dir = sys.argv[1:]
+src, dst, dataset_dir, output_dir, seed = sys.argv[1:]
 with open(src) as f:
     cfg = yaml.safe_load(f)
 cfg["output_dir"] = output_dir
+cfg["seed"] = int(seed)
+# Seeds every RNG before the model loads, so the seed also fixes the LoRA
+# adapter's initialisation (see ../seed_plugin.py).
+cfg["plugins"] = [*(cfg.get("plugins") or []), "seed_plugin.SeedPlugin"]
 # A per-run cache: Axolotl's default (last_run_prepared/) is shared, and runs on
 # the same data at the same time overwrite each other's mmapped arrow files,
 # crashing the dataloader (segfault/SIGBUS).
@@ -89,7 +108,11 @@ print(f"prepared:   {cfg['dataset_prepared_path']}")
 print(f"train:      {[d['path'] for d in cfg['datasets']]}")
 print(f"validation: {[d['path'] for d in cfg['test_datasets']]}")
 print(f"dataset_num_proc: {cfg['dataset_num_proc']}")
+print(f"seed:       {cfg['seed']}")
 EOF
+
+# seed_plugin.py lives in the repo root.
+export PYTHONPATH=$(cd .. && pwd)${PYTHONPATH:+:$PYTHONPATH}
 
 # Preprocess separately, as Axolotl itself recommends -- it keeps the
 # memory-hungry tokenisation pass out of the training process.

@@ -58,7 +58,7 @@ REPO = Path(__file__).resolve().parent
 HYPERPARAMETERS = [
     "adapter", "load_in_4bit", "lora_r", "lora_alpha", "num_epochs", "learning_rate",
     "micro_batch_size", "gradient_accumulation_steps", "sequence_len",
-    "kd_alpha", "kd_ce_alpha", "kd_temperature",
+    "kd_alpha", "kd_ce_alpha", "kd_temperature", "seed",
 ]
 
 
@@ -315,12 +315,17 @@ def merged_record(model_dir, base_dir):
     }
 
 
-def write_model(model_dir, script, base_dir=".", **overrides):
+def write_model(model_dir, script, base_dir=".", random_seed=None, **overrides):
     """Write model_dir/provenance.json after training (config.yaml) or merging
     (mergekit_config.yml). Relative paths in the config resolve against base_dir,
-    the directory the job ran from. overrides replace fields (for backfills)."""
+    the directory the job ran from. random_seed is mergekit's --random-seed,
+    which mergekit_config.yml does not keep; a trained model's seed is in its
+    config.yaml, so it is read from there instead. overrides replace fields (for
+    backfills)."""
     merged = Path(model_dir, "mergekit_config.yml").exists()
     body = merged_record(model_dir, base_dir) if merged else trained_record(model_dir, base_dir)
+    if merged and random_seed is not None:
+        body["random_seed"] = random_seed
     record = {
         "script": str(Path(script).resolve().relative_to(REPO)),
         "created": _now(),
@@ -365,6 +370,7 @@ def describe(model):
     else:
         meta.update({
             "merge_method": record["merge_method"],
+            "merge_random_seed": record.get("random_seed"),
             "merged_models": [os.path.basename(i.get("path") or i["hub_id"]) for i in record["inputs"]],
             "merge_weights": [(i["parameters"] or {}).get("weight") for i in record["inputs"]],
             "merged_models_ok": [
@@ -384,6 +390,10 @@ def main():
         "--base-dir", default=".",
         help="Directory relative paths in the config resolve against (default: the current one).",
     )
+    model.add_argument(
+        "--random-seed", type=int,
+        help="For a merge: the --random-seed mergekit ran with, recorded as random_seed.",
+    )
     desc = sub.add_parser(
         "describe",
         help="Print a model's record as key=<json> lines, one per Inspect --metadata argument.",
@@ -392,7 +402,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "model":
-        record = write_model(args.model_dir, args.script, args.base_dir)
+        record = write_model(args.model_dir, args.script, args.base_dir, args.random_seed)
         print(f"wrote {Path(args.model_dir) / FILENAME}")
         health = record["health"]
         if not health["ok"]:

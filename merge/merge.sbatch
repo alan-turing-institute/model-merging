@@ -7,7 +7,7 @@
 #SBATCH --mem=115000M
 #SBATCH --time=01:00:00
 # Usage, from merge/:
-#   sbatch merge.sbatch <config.yaml> <output_dir> [mergekit-yaml args...]
+#   sbatch merge.sbatch <config.yaml> <output_dir> [--seed <n|random>] [mergekit-yaml args...]
 #   e.g. sbatch merge.sbatch xsum/xsum_merge_2_linear_config.yaml \
 #            ../models/xsum/split_2/gemma3_4b_xsum_short_merge_2_linear
 #        sbatch merge.sbatch crime/crime_merge_2_ties_config.yaml ../models/crime/split_2/gemma3_4b_crime_merge_2_ties \
@@ -29,11 +29,25 @@
 # Stages that already exist are skipped, so a failed job can be resubmitted.
 # Each new stage gets its own provenance.json, in file order (bottom-up), so
 # every record can embed its inputs' records.
+#
+# --seed <n|random> (default 42), anywhere after output_dir, is mergekit's
+# --random-seed. Only the randomised methods use it (dare_ties, and della or
+# breadcrumbs: which weights are dropped); the others are deterministic.
+# "random" draws one from /dev/urandom. It is recorded as random_seed in each
+# provenance.json written.
 set -euo pipefail
-USAGE="usage: sbatch merge.sbatch <config.yaml> <output_dir> [mergekit-yaml args...]"
+USAGE="usage: sbatch merge.sbatch <config.yaml> <output_dir> [--seed <n|random>] [mergekit-yaml args...]"
 CONFIG=${1:?$USAGE}
 OUTPUT_DIR=${2:?$USAGE}
 shift 2
+SEED=42
+ARGS=()
+while (( $# )); do
+  if [[ $1 == --seed ]]; then SEED=${2:?$USAGE}; shift 2; else ARGS+=("$1"); shift; fi
+done
+set -- "${ARGS[@]}"
+[[ $SEED == random ]] && SEED=$(od -An -N4 -tu4 /dev/urandom | tr -d ' ')
+[[ $SEED =~ ^[0-9]+$ ]] || { echo "--seed must be a non-negative integer or random, not $SEED" >&2; exit 1; }
 
 # Submit from merge/: uv needs its pyproject.toml to find the environment.
 cd "$SLURM_SUBMIT_DIR"
@@ -68,18 +82,20 @@ for d in yaml.safe_load_all(open(sys.argv[1])):
 if [[ -n $STAGES ]]; then
   INTERMEDIATE_DIR=$(dirname "$OUTPUT_DIR")/intermediate
   uv run mergekit-multi "$CONFIG" --out-path "$OUTPUT_DIR" --intermediate-dir "$INTERMEDIATE_DIR" \
-    --cuda --lazy-unpickle --allow-crimes "$@"
+    --cuda --lazy-unpickle --allow-crimes --random-seed "$SEED" "$@"
   for STAGE in $STAGES; do
     # A stage skipped as already merged keeps the record of the job that made it.
     [[ -f $INTERMEDIATE_DIR/$STAGE/provenance.json ]] ||
-      uv run python ../provenance.py model "$INTERMEDIATE_DIR/$STAGE" --script merge.sbatch
+      uv run python ../provenance.py model "$INTERMEDIATE_DIR/$STAGE" --script merge.sbatch \
+        --random-seed "$SEED"
   done
 else
-  uv run mergekit-yaml "$CONFIG" "$OUTPUT_DIR" --cuda --lazy-unpickle --allow-crimes "$@"
+  uv run mergekit-yaml "$CONFIG" "$OUTPUT_DIR" --cuda --lazy-unpickle --allow-crimes \
+    --random-seed "$SEED" "$@"
 fi
 
 # mergekit writes no generation_config.json, and a config.json copied from a
 # trained model has lost Gemma's <end_of_turn> stop token: see ../fix_eos.py.
 uv run python ../fix_eos.py "$OUTPUT_DIR"
 
-uv run python ../provenance.py model "$OUTPUT_DIR" --script merge.sbatch
+uv run python ../provenance.py model "$OUTPUT_DIR" --script merge.sbatch --random-seed "$SEED"
