@@ -1,6 +1,8 @@
 # Self-distillation on XSum
 
-We perform self-distillation using the kd plugin in Axolotl to train Gemma 3 to perform one sentence summarisation of BBC News articles using (some of) the XSum dataset.  For Chinese-to-English translation with the same pipeline, see [`README_translation.md`](README_translation.md).
+We perform self-distillation using the kd plugin in Axolotl to train Gemma 3 to perform one sentence summarisation of BBC News articles using (some of) the XSum dataset.
+
+Not used: For Chinese-to-English translation with the same pipeline, see [`README_translation.md`](README_translation.md).
 
 The aim is to get an output which is
 
@@ -8,9 +10,7 @@ The aim is to get an output which is
 - between 20-25 words
 - no preamble, i.e. no "My one sentence summarisation is: ..."
 
-This was split out of [`../train`](../train), which remains the crime-data
-fine-tuning project. The two have separate uv environments; this one also needs
-`vllm` (for teacher generation) and `torchao` (see below).
+The self-distillation and normal fine-tuning training need different uv environments.
 
 **Patch Axolotl before training.** Axolotl 0.18.0's `normalize_logprobs` (in `axolotl/integrations/kd/utils.py`) renormalises the top-k logprobs by converting to probabilities and back. In fp32 an entry more than ~103 nats below the row's maximum underflows to `log(0) = -inf`, so whenever the teacher's top-k includes a token the student all but rules out, the KD loss becomes inf and the gradient NaN, which corrupts the weights. We replace it with the equivalent `logprobs - logsumexp(logprobs)`. Run this after every `uv sync`, since reinstalling Axolotl undoes it:
 
@@ -51,7 +51,7 @@ For self-distillation, we need a teacher and a student.  First, we train the tea
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
   $PROJECTDIR/$USER/model-merging/datasets/xsum/xsum_prompts \
   $PROJECTDIR/$USER/model-merging/datasets/xsum \
-  gemma3_4b_xsum_kd_data
+  gemma3_4b_xsum_kd_data --targets teacher
 ```
 
 The arguments are the teacher model (a Hugging Face address or a local folder), the prompts dataset, the output directory and optionally a prefix `<prefix>`. One dataset is written per student prompt, named `<prefix>_long` and `<prefix>_short` into the output directory. Each holds a `provenance.json` recording how it was made (teacher model, `teacher` or `gold` targets, source prompts dataset, all arguments, git commit and Slurm job), since unlike training there is no config file to say so. For a split dataset, run it once per piece, e.g.
@@ -60,21 +60,21 @@ The arguments are the teacher model (a Hugging Face address or a local folder), 
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
   $PROJECTDIR/$USER/model-merging/datasets/xsum/split_2/xsum_prompts_1_of_2 \
   $PROJECTDIR/$USER/model-merging/datasets/xsum/split_2 \
-  gemma3_4b_xsum_kd_data_1_of_2
+  gemma3_4b_xsum_kd_data_1_of_2 --targets teacher
 ```
 
-Optional arguments (see `--help`): `--top-k` (default 20), `--temperature` (0, i.e. greedy), `--max-tokens` (128), `--max-seq-len` (4096, which must match `sequence_len` in the Axolotl config), `--seed`, `--prefix`, `--teacher-field` and `--student-fields` (for other column names), `--tensor-parallel-size`, `--gpu-memory-utilization` and `--no-enforce-eager`.
+Optional arguments (see `--help`): `--targets` (`gold`, the default, or `teacher`; see below), `--top-k` (default 20), `--temperature` (0, i.e. greedy), `--max-tokens` (128), `--max-seq-len` (4096, which must match `sequence_len` in the Axolotl config), `--seed`, `--prefix`, `--teacher-field` and `--student-fields` (for other column names), `--tensor-parallel-size`, `--gpu-memory-utilization` and `--no-enforce-eager`.
 
-To train against the XSum reference summaries instead of the teacher's own generations, add `--targets gold`. The assistant turn is then the gold `reference` column (which `prepare_data_XSum.py` copies from XSum's `summary`; for a prompts dataset built before that column existed, add `--gold-field summary`), so the cross-entropy term trains on the reference text, and the teacher only *scores* it (vLLM `prompt_logprobs`), so the KD term carries the teacher's distribution at each gold token:
+By default (`--targets gold`) the student trains against the XSum reference summaries; `--targets teacher`, as in the examples above, trains it on the teacher's own generations instead. With gold targets the assistant turn is the gold `reference` column (which `prepare_data_XSum.py` copies from XSum's `summary`; a prompts dataset built before that column existed has only `summary`, which is then used instead, or choose a column with `--gold-field`), so the cross-entropy term trains on the reference text, and the teacher only *scores* it (vLLM `prompt_logprobs`), so the KD term carries the teacher's distribution at each gold token. The output names get `_gold` added after the prefix (e.g. `gemma3_4b_xsum_kd_data_1_of_4_gold_short`), unless the prefix already contains `gold`, as in this example:
 
 ```bash
 sbatch generate_teacher_logprobs.sbatch google/gemma-3-4b-it \
   $PROJECTDIR/$USER/model-merging/datasets/xsum/xsum_prompts \
   $PROJECTDIR/$USER/model-merging/datasets/xsum \
-  gemma3_4b_xsum_gold_kd_data --targets gold
+  gemma3_4b_xsum_gold_kd_data
 ```
 
-This needs a GPU. Note that vLLM is not exactly deterministic between runs, even when greedy: rerunning can give a slightly different generation for a few rows.
+This needs a GPU. By default vLLM's output for a prompt depends a little on what else the job runs. The script therefore runs vLLM batch-invariant, without prefix caching or chunked prefill, which makes 99.98% of summaries identical however the prompts are split, for about 10% more run time (see the comments in [`generate_teacher_logprobs.py`](generate_teacher_logprobs.py)). The KD dataset's `provenance.json` records these settings.
 
 We record the one sentence summarisation together with the `logprobs`.  This is a sequence of probability distributions, one for each token in the output.
 
@@ -97,6 +97,23 @@ This takes as parameters:
 - a yaml config file for the Axolotl training using the kd plugin
 - an output directory for the model
 - optionally a dataset directory.  If the dataset directory is given, the script writes a new yaml identical to the one given, except for the dataset location.
+
+It also takes `--seed <n>` (default 42) after the dataset directory.
+
+#### Repeats with different seeds
+
+To repeat the whole XSum experiment with seed `S`, use the launcher [`submit_xsum_seed.sh`](submit_xsum_seed.sh) from `self-distill/`. For the full data and every part of the 2-, 4- and 8-way splits it runs the teacher, trains a student and evaluates it; then it runs the 7 merges of each split and evaluates each:
+
+```bash
+bash submit_xsum_seed.sh 2              # dry run: checks inputs, prints the job chain
+bash submit_xsum_seed.sh 2 --submit     # submits it
+bash submit_xsum_seed.sh 2 --submit 4   # only the 4-way split (plus the full data)
+bash submit_xsum_seed.sh 2 --targets teacher --prompt short --submit   # as the seed 1 teacher-summary run
+```
+
+By default the students train on the gold summaries (`--targets gold`), as only these differ enough from the base model, and are trained and evaluated with the long student prompt (`--prompt long`), as the short one gives the base model too little instruction for a fair comparison. The names say which: `gold` for gold targets and `long` or `short` for the prompt (e.g. `gemma3_4b_xsum_gold_1_of_4_long`, merge configs `xsum_gold_long_merge_<N>_<method>_config.yaml`). `--targets teacher` uses the teacher's own summaries and `--prompt short` the short prompt. Different combinations can share a seed's folders; one teacher run writes both prompts' data, so a long-prompt and a short-prompt run share it.
+
+Each part gets its own teacher run, as it would if the data were split over nodes. The teacher, students and merges all use `--seed S`, and the prompts and splits are the same for every seed. Teacher data goes under `../datasets/xsum/seed_<S>/`, models under `../models/xsum/seed_<S>/`, and merge configs under `../merge/xsum/seed_<S>/` (written by `make_merge_configs.py xsum <N> --seed <S>` if missing). The script refuses to run if the Axolotl KD patch has been undone (see above). Steps that are already complete are skipped, so rerunning after a failure picks up where it stopped. The job IDs are listed in `../evaluate/slurm/xsum_seed_<S>_jobs_<date>.txt`. A full repeat needs about 800 GB of disk, as the students keep their checkpoints.
 
 ### The alignment problem in the kd plugin
 

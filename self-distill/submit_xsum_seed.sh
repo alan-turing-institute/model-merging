@@ -11,15 +11,25 @@
 # depend on how the prompts are split (99.98% identical), and every
 # repeat should regenerate the same teacher data; it is regenerated anyway, as
 # a node would. The prompts are the same for every seed (fixed prep seed,
-# contiguous splits). Everything for seed S goes under seed_<S>/:
+# contiguous splits).
+#
+# --targets gold (the default) trains on XSum's gold summaries, which the
+# teacher only scores; --targets teacher trains on the teacher's own greedy
+# summaries. Gold runs have _gold in every name (<G> below), so the two
+# don't collide. --prompt long (the default) trains and evaluates the students
+# with the long student prompt, which gives the base model enough instruction
+# for a fair comparison; --prompt short uses the short one (<P> below; _long
+# in the merge task's name <T> for long). The teacher writes both prompts'
+# data in one run, so long and short runs share it. Everything for seed S
+# goes under seed_<S>/:
 #   ../datasets/xsum/xsum_prompts
-#     -> ../datasets/xsum/seed_<S>/gemma3_4b_xsum_kd_data_{short,long}
-#     -> ../models/xsum/seed_<S>/gemma3_4b_xsum_short
+#     -> ../datasets/xsum/seed_<S>/gemma3_4b_xsum<G>_kd_data_{short,long}
+#     -> ../models/xsum/seed_<S>/gemma3_4b_xsum<G>_<P>
 #   ../datasets/xsum/split_<N>/xsum_prompts_<i>_of_<N>
-#     -> ../datasets/xsum/seed_<S>/split_<N>/gemma3_4b_xsum_kd_data_<i>_of_<N>_{short,long}
-#     -> ../models/xsum/seed_<S>/split_<N>/gemma3_4b_xsum_<i>_of_<N>_short
-#   ../merge/xsum/seed_<S>/xsum_merge_<N>_<method>_config.yaml
-#     -> ../models/xsum/seed_<S>/split_<N>/gemma3_4b_xsum_short_merge_<N>_<method>
+#     -> ../datasets/xsum/seed_<S>/split_<N>/gemma3_4b_xsum<G>_kd_data_<i>_of_<N>_{short,long}
+#     -> ../models/xsum/seed_<S>/split_<N>/gemma3_4b_xsum<G>_<i>_of_<N>_<P>
+#   ../merge/xsum/seed_<S>/<T>_merge_<N>_<method>_config.yaml
+#     -> ../models/xsum/seed_<S>/split_<N>/gemma3_4b_xsum<G>_<P>_merge_<N>_<method>
 # The teacher, training and merges all get --seed S (the teacher's only seeds
 # vLLM, which greedy decoding doesn't use, but it is recorded). The existing
 # unseeded data and models are left alone.
@@ -27,11 +37,12 @@
 # Usage, from self-distill/:
 #   bash submit_xsum_seed.sh <S> [N...]            # dry run: checks paths, prints the chain
 #   bash submit_xsum_seed.sh <S> --submit [N...]   # submits, writing the job map
+#   bash submit_xsum_seed.sh <S> --targets teacher --prompt short --submit [N...]
 #
 # Needs the KD configs self-distillation_xsum.yaml (full) and
 # self-distillation_xsum_split_N.yaml. Merge configs missing from
 # ../merge/xsum/seed_<S>/ are written first by
-# ../merge/make_merge_configs.py xsum <N> --seed <S> (also in a dry run).
+# ../merge/make_merge_configs.py <T> <N> --seed <S> (also in a dry run).
 #
 # A step counts as complete when its output has a provenance.json (written
 # only once the step succeeds), and for a model only if its health check
@@ -39,20 +50,46 @@
 # for them, so a rerun picks up where the last one stopped. An output dir
 # without one is left from a failed or running job: the script stops rather
 # than overwrite it, so move it aside first. The job map (job, dependency,
-# what) goes to ../evaluate/slurm/.
+# what) goes to ../evaluate/slurm/<T>_seed_<S>_jobs_<date>.txt.
 set -euo pipefail
 cd "$(dirname "$0")"
-USAGE="usage: bash submit_xsum_seed.sh <seed> [--submit] [N...]"
+USAGE="usage: bash submit_xsum_seed.sh <seed> [--targets gold|teacher] [--prompt long|short] [--submit] [N...]"
 SEED=${1:?$USAGE}; shift
 [[ $SEED =~ ^[0-9]+$ ]] || { echo "seed must be a non-negative integer, not $SEED" >&2; exit 1; }
 SUBMIT=false
-if [[ ${1:-} == --submit ]]; then SUBMIT=true; shift; fi
-SPLITS=("${@:-2 4 8}")
-SPLITS=(${SPLITS[*]})
+TARGETS=gold
+PROMPT=long
+SPLITS=()
+while (($#)); do
+  case $1 in
+    --submit) SUBMIT=true ;;
+    --targets) TARGETS=${2:?$USAGE}; shift ;;
+    --targets=*) TARGETS=${1#--targets=} ;;
+    --prompt) PROMPT=${2:?$USAGE}; shift ;;
+    --prompt=*) PROMPT=${1#--prompt=} ;;
+    -*) echo "$USAGE" >&2; exit 1 ;;
+    *) SPLITS+=("$1") ;;
+  esac
+  shift
+done
+((${#SPLITS[@]})) || SPLITS=(2 4 8)
+case $TARGETS in
+  gold) G=_gold ;;
+  teacher) G= ;;
+  *) echo "--targets must be gold or teacher, not $TARGETS" >&2; exit 1 ;;
+esac
+case $PROMPT in
+  long) P=_long ;;
+  short) P= ;;
+  *) echo "--prompt must be long or short, not $PROMPT" >&2; exit 1 ;;
+esac
 TEACHER=google/gemma-3-4b-it
 DATA=../datasets/xsum/seed_$SEED
 MODELS=../models/xsum/seed_$SEED
-JOB_MAP=../evaluate/slurm/xsum_seed_${SEED}_jobs_$(date +%F).txt
+MERGE_TASK=xsum$G$P  # make_merge_configs.py's task
+NAME=gemma3_4b_xsum$G
+JOB=${MERGE_TASK}_s$SEED  # job name stem
+JOB_MAP=../evaluate/slurm/${MERGE_TASK}_seed_${SEED}_jobs_$(date +%F).txt
 METHODS=(linear ties dare_ties task_arithmetic model_stock slerp arcee_fusion)
 # Parallel jobs each running `uv sync` reinstall packages over one another.
 export UV_NO_SYNC=1
@@ -98,16 +135,16 @@ teach_train_eval() {
     echo -
     return
   fi
-  if complete "$dir/${prefix}_short"; then
-    echo "  done   $dir/${prefix}_short" >&2
+  if complete "$dir/${prefix}_$PROMPT"; then
+    echo "  done   $dir/${prefix}_$PROMPT" >&2
   else
-    dep=$(sub . - "teach_$name" "teacher $prompts -> $dir/${prefix}_{short,long} (seed $SEED)" \
-      generate_teacher_logprobs.sbatch $TEACHER "$prompts" "$dir" "$prefix" --seed "$SEED")
+    dep=$(sub . - "teach_$name" "teacher ($TARGETS) $prompts -> $dir/${prefix}_{short,long} (seed $SEED)" \
+      generate_teacher_logprobs.sbatch $TEACHER "$prompts" "$dir" "$prefix" --targets "$TARGETS" --seed "$SEED")
   fi
   t=$(sub . "$dep" "kd_$name" "train $student (seed $SEED)" \
-    train_kd.sbatch "$config" "$student" "$dir/${prefix}_short" --seed "$SEED")
-  sub ../evaluate "$t" "eval_$name" "eval $student short" \
-    evaluate.sbatch xsum "$student" -T prompt_variant=short >/dev/null
+    train_kd.sbatch "$config" "$student" "$dir/${prefix}_$PROMPT" --seed "$SEED")
+  sub ../evaluate "$t" "eval_$name" "eval $student $PROMPT" \
+    evaluate.sbatch xsum "$student" -T prompt_variant=$PROMPT >/dev/null
   echo "$t"
 }
 
@@ -122,39 +159,39 @@ for N in "${SPLITS[@]}"; do
   done
   missing=false
   for m in "${METHODS[@]}"; do
-    [[ -f ../merge/xsum/seed_$SEED/xsum_merge_${N}_${m}_config.yaml ]] || missing=true
+    [[ -f ../merge/xsum/seed_$SEED/${MERGE_TASK}_merge_${N}_${m}_config.yaml ]] || missing=true
   done
   if $missing; then
-    (cd ../merge && python3 make_merge_configs.py xsum "$N" --seed "$SEED" >/dev/null)
+    (cd ../merge && python3 make_merge_configs.py "$MERGE_TASK" "$N" --seed "$SEED" >/dev/null)
   fi
 done
 
-echo "== seed $SEED: full data" >&2
-teach_train_eval ../datasets/xsum/xsum_prompts "$DATA" gemma3_4b_xsum_kd_data \
-  self-distillation_xsum.yaml "$MODELS/gemma3_4b_xsum_short" "xsum_s${SEED}" >/dev/null
+echo "== seed $SEED ($TARGETS targets, $PROMPT prompt): full data" >&2
+teach_train_eval ../datasets/xsum/xsum_prompts "$DATA" ${NAME}_kd_data \
+  self-distillation_xsum.yaml "$MODELS/${NAME}_$PROMPT" "$JOB" >/dev/null
 
 for N in "${SPLITS[@]}"; do
-  echo "== seed $SEED: N = $N" >&2
+  echo "== seed $SEED ($TARGETS targets, $PROMPT prompt): N = $N" >&2
   DIR=$MODELS/split_$N
   TRAINING=()  # students still to be trained, which the merges must wait for
   for ((i = 1; i <= N; i++)); do
     t=$(teach_train_eval ../datasets/xsum/split_$N/xsum_prompts_${i}_of_$N "$DATA/split_$N" \
-      gemma3_4b_xsum_kd_data_${i}_of_$N self-distillation_xsum_split_$N.yaml \
-      "$DIR/gemma3_4b_xsum_${i}_of_${N}_short" "xsum_s${SEED}_${i}_of_$N")
+      ${NAME}_kd_data_${i}_of_$N self-distillation_xsum_split_$N.yaml \
+      "$DIR/${NAME}_${i}_of_${N}_$PROMPT" "${JOB}_${i}_of_$N")
     [[ $t != - ]] && TRAINING+=("$t")
   done
   ALL=-
   ((${#TRAINING[@]})) && ALL=$(IFS=:; echo "${TRAINING[*]}")
   for m in "${METHODS[@]}"; do
-    OUT=$DIR/gemma3_4b_xsum_short_merge_${N}_$m
+    OUT=$DIR/${NAME}_${PROMPT}_merge_${N}_$m
     if complete "$OUT" model; then
       echo "  done   $OUT" >&2
       continue
     fi
-    j=$(sub ../merge "$ALL" "merge_xsum_s${SEED}_${N}_$m" "merge $OUT (seed $SEED)" \
-      merge.sbatch xsum/seed_$SEED/xsum_merge_${N}_${m}_config.yaml "$OUT" --seed "$SEED")
-    sub ../evaluate "$j" "eval_xsum_s${SEED}_merge_${N}_$m" "eval $OUT short" \
-      evaluate.sbatch xsum "$OUT" -T prompt_variant=short >/dev/null
+    j=$(sub ../merge "$ALL" "merge_${JOB}_${N}_$m" "merge $OUT (seed $SEED)" \
+      merge.sbatch xsum/seed_$SEED/${MERGE_TASK}_merge_${N}_${m}_config.yaml "$OUT" --seed "$SEED")
+    sub ../evaluate "$j" "eval_${JOB}_merge_${N}_$m" "eval $OUT $PROMPT" \
+      evaluate.sbatch xsum "$OUT" -T prompt_variant=$PROMPT >/dev/null
   done
 done
 if $SUBMIT; then echo "Submitted; job map: $JOB_MAP"; else echo "Dry run: nothing submitted. Rerun with --submit."; fi

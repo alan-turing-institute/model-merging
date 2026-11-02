@@ -10,7 +10,9 @@
 #
 # The parts are read from ../models/<task>/split_<N>/ under the names
 # train.sbatch / train_kd.sbatch give them, and the merged models go next to
-# them. With --seed S (a repeat whose parts were trained with --seed S) both
+# them. xsum_gold is the XSum students trained on the gold summaries, and
+# xsum_long / xsum_gold_long those with the long student prompt; their models
+# and configs are in the xsum folders, named with the task. With --seed S (a repeat whose parts were trained with --seed S) both
 # are under ../models/<task>/seed_<S>/split_<N>/ instead, the configs go to
 # <task>/seed_<S>/, and the printed commands merge with --seed S.
 # Parameters match the hand-written 2-way configs (weight 1/N, ties density
@@ -40,10 +42,17 @@ TASKS = {
         "merged": "gemma3_4b_crime_merge_{n}_{method}",
         "lora": True,
     },
-    "xsum": {
-        "part": "{dir}/gemma3_4b_xsum_{i}_of_{n}_short",
-        "merged": "gemma3_4b_xsum_short_merge_{n}_{method}",
-        "lora": False,
+    # XSum students, all kept in the xsum folders ("folder" overrides the task
+    # name in the paths): trained on the teacher's summaries or the gold ones
+    # (--targets gold, _gold), with the short or the long student prompt (_long).
+    **{
+        f"xsum{gold}{'' if prompt == 'short' else '_long'}": {
+            "folder": "xsum",
+            "part": f"{{dir}}/gemma3_4b_xsum{gold}_{{i}}_of_{{n}}_{prompt}",
+            "merged": f"gemma3_4b_xsum{gold}_{prompt}_merge_{{n}}_{{method}}",
+            "lora": False,
+        }
+        for gold in ("", "_gold") for prompt in ("short", "long")
     },
 }
 NWAY = {
@@ -127,7 +136,8 @@ def main():
     if n < 2 or n & (n - 1):
         sys.exit("N must be a power of two (2, 4, 8, ...)")
     seed_dir = f"seed_{args.seed}" if args.seed is not None else ""
-    out_models = str(Path("../models", args.task, seed_dir, f"split_{n}"))
+    folder = spec.get("folder", args.task)
+    out_models = str(Path("../models", folder, seed_dir, f"split_{n}"))
     parts = [spec["part"].format(dir=out_models, n=n, i=i) for i in range(1, n + 1)]
     cache = f" --lora-merge-cache {out_models}/.lora_merge_cache" if spec["lora"] else ""
     seed = f" --seed {args.seed}" if args.seed is not None else ""
@@ -135,7 +145,7 @@ def main():
     for method in args.methods:
         merged = spec["merged"].format(n=n, method=method)
         text = tree_config(method, parts, merged) if method in PAIRWISE else nway_config(method, parts)
-        path = Path(args.task, seed_dir, f"{args.task}_merge_{n}_{method}_config.yaml")
+        path = Path(folder, seed_dir, f"{args.task}_merge_{n}_{method}_config.yaml")
         if path.exists() and not args.force:
             print(f"# {path} exists, left as it is (--force to overwrite)", file=sys.stderr)
         else:

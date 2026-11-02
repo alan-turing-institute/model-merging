@@ -30,16 +30,19 @@
 # template token; without it every teacher distribution lands on the wrong
 # token and training learns noise.
 #
-# With --targets gold the assistant turn is the dataset's reference answer (the
-# `reference` column the prepare_data_*.py scripts emit) instead of a
-# generation, and the teacher only scores it (vLLM prompt_logprobs over teacher
+# With --targets gold (the default) the assistant turn is the dataset's
+# reference answer (the `reference` column the prepare_data_*.py scripts emit,
+# or XSum's `summary` in older prompts datasets) instead of a generation
+# (--targets teacher), and the teacher only scores it (vLLM prompt_logprobs over teacher
 # prompt + gold reference). The KD plugin computes CE and KD on the
 # same sequence, so this is how CE trains on the gold text while KD still
 # carries the teacher's distribution at each of its tokens.
 #
 # Each student field gets its own output dataset,
 # <output_dir>/<prefix>_<field without "messages_">, e.g. by default
-# <output_dir>/kd_data_long and <output_dir>/kd_data_short. Each also gets a
+# <output_dir>/kd_data_long and <output_dir>/kd_data_short. With --targets gold
+# the prefix gets _gold added (kd_data_gold_short), unless it already contains
+# gold as a word (e.g. gemma3_4b_xsum_gold_kd_data). Each also gets a
 # provenance.json (see ../provenance.py) recording the teacher, targets, source
 # prompts and their own record, the arguments, git commit and Slurm job: unlike
 # training, generation has no config file to say how a dataset was built. Its
@@ -100,7 +103,8 @@ def parse_args():
     parser.add_argument("output_dir", type=Path, help="Directory to write the KD datasets into.")
     parser.add_argument(
         "--prefix", default="kd_data",
-        help="Name prefix for each output dataset (default: %(default)s).",
+        help="Name prefix for each output dataset (default: %(default)s). With --targets gold, "
+        "_gold is added to it unless it already contains gold.",
     )
     parser.add_argument(
         "--teacher-field", default="teacher_messages",
@@ -117,15 +121,15 @@ def parse_args():
     # forcing via vLLM's prompt_logprobs). --temperature and --max-tokens only
     # affect "teacher" mode, though --max-tokens still bounds the length check.
     parser.add_argument(
-        "--targets", choices=["teacher", "gold"], default="teacher",
-        help="Assistant turn to train on: the teacher's own generation, or the gold "
-        "reference scored by the teacher (default: %(default)s).",
+        "--targets", choices=["teacher", "gold"], default="gold",
+        help="Assistant turn to train on: the gold reference scored by the teacher, or "
+        "the teacher's own generation (default: %(default)s).",
     )
     parser.add_argument(
-        "--gold-field", default="reference",
+        "--gold-field",
         help="Column holding the gold answer for --targets gold. The prepare_data_*.py "
         "scripts write it as `reference`; prompts datasets made before that have only "
-        "XSum's `summary` (default: %(default)s).",
+        "XSum's `summary` (default: reference if the dataset has it, else summary).",
     )
     parser.add_argument(
         "--top-k", type=int, default=TOP_K,
@@ -166,7 +170,10 @@ def parse_args():
     return parser.parse_args()
 
 
-def output_name(prefix, field):
+def output_name(prefix, field, targets):
+    # Gold-target data is marked in the name, unless the prefix already says so.
+    if targets == "gold" and "gold" not in prefix.split("_"):
+        prefix += "_gold"
     return f"{prefix}_{field.removeprefix('messages_')}"
 
 
@@ -400,6 +407,8 @@ def main():
     first_split = next(iter(prompts_ds.values()))
     needed = [args.teacher_field, *args.student_fields]
     if args.targets == "gold":
+        if args.gold_field is None:  # recorded in provenance as the column used
+            args.gold_field = "reference" if "reference" in first_split.column_names else "summary"
         needed.append(args.gold_field)
     missing = [f for f in needed if f not in first_split.column_names]
     if missing:
@@ -450,7 +459,7 @@ def main():
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for field, splits in per_dataset.items():
-        out = args.output_dir / output_name(args.prefix, field)
+        out = args.output_dir / output_name(args.prefix, field, args.targets)
         DatasetDict(splits).save_to_disk(str(out))
         source_record = provenance.read(args.dataset_dir)
         provenance.write(

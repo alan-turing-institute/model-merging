@@ -43,6 +43,20 @@ sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir>
 
 which trains the model detailed in `<config.yaml>` (and the parameters given there), on the dataset `<dataset_dir>` and writes the output to `<output_dir>`. The log is saved in `<output_dir>` as `<config name>-<jobid>.out`, e.g. `wine_gemma-1234567.out`. Once training succeeds, `<output_dir>/provenance.json` records the base model, method, key hyperparameters, final train/eval loss and the training data with its own record, including its `coverage` (see [`../provenance.py`](../provenance.py)). It also checks the run stayed finite: if any logged step has a NaN/inf `grad_norm` or loss, or any saved weight holds NaN/inf, `health.ok` is `false` and the job is marked FAILED. Watch for this: once a bf16 run goes NaN it never recovers, yet the Trainer logs its loss as exactly `0.0`, which looks like a perfect fit. Before the record is written, [`../fix_eos.py`](../fix_eos.py) restores `eos_token_id` `[1, 106]` in `config.json`: Axolotl overwrites it with the tokenizer's single `<eos>` (1), and a merge that copies that config never stops on `<end_of_turn>` (106).
 
+`train.sbatch` also takes `--seed <n>` (default 42), which seeds the data order, dropout and the LoRA initialisation.
+
+### Repeats with different seeds (crime)
+
+To repeat the whole crime experiment with seed `S` (full model, every part of the 2-, 4- and 8-way splits, the 7 merges of each split, and an evaluation of each), use the launcher [`submit_crime_seed.sh`](submit_crime_seed.sh) from `train/`:
+
+```bash
+bash submit_crime_seed.sh 2              # dry run: checks inputs, prints the job chain with seed 2
+bash submit_crime_seed.sh 2 --submit     # submits it
+bash submit_crime_seed.sh 2 --submit 4   # only the 4-way split (plus the full model)
+```
+
+Training and merging both use `--seed S`. The data and splits are the same for every seed, so repeats differ only in training and in dare_ties' random dropping. Everything goes under `../models/crime/seed_<S>/`, and the merge configs under `../merge/crime/seed_<S>/` (written by `make_merge_configs.py crime <N> --seed <S>` if missing). Steps that are already complete are skipped, so rerunning after a failure picks up where it stopped. The job IDs are listed in `../evaluate/slurm/crime_seed_<S>_jobs_<date>.txt`.
+
 Alternatively, to run the training directly, write a properly configured yaml and run
 
 ```bash
