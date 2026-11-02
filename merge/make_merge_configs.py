@@ -3,14 +3,18 @@
 # and prints the sbatch commands that run them.
 #
 # Usage, from merge/:
-#   python make_merge_configs.py <task> <N> [--methods m1 m2 ...] [--force]
+#   python make_merge_configs.py <task> <N> [--methods m1 m2 ...] [--seed S] [--force]
 #   e.g. python make_merge_configs.py crime 4
 #        python make_merge_configs.py xsum 8 --methods karcher multislerp
+#        python make_merge_configs.py crime 4 --seed 1
 #
 # The parts are read from ../models/<task>/split_<N>/ under the names
 # train.sbatch / train_kd.sbatch give them, and the merged models go next to
-# them. Parameters match the hand-written 2-way configs (weight 1/N, ties
-# density 0.5, dare_ties density 0.3), so N = 2, 4, 8 differ only in N.
+# them. With --seed S (a repeat whose parts were trained with --seed S) both
+# are under ../models/<task>/seed_<S>/split_<N>/ instead, the configs go to
+# <task>/seed_<S>/, and the printed commands merge with --seed S.
+# Parameters match the hand-written 2-way configs (weight 1/N, ties density
+# 0.5, dare_ties density 0.3), so N = 2, 4, 8 differ only in N.
 #
 # Methods that take any number of models (linear, ties, dare_ties,
 # task_arithmetic, model_stock, karcher, multislerp) get one config. slerp and
@@ -30,13 +34,14 @@ from pathlib import Path
 BASE = "google/gemma-3-4b-it"
 TASKS = {
     # Crime parts are LoRA adapters, merged via mergekit's <base>+<adapter> syntax.
+    # {dir} is the split's model dir, ../models/<task>[/seed_<S>]/split_<N>.
     "crime": {
-        "part": BASE + "+../models/crime/split_{n}/gemma3_4b_crime_{i}_of_{n}",
+        "part": BASE + "+{dir}/gemma3_4b_crime_{i}_of_{n}",
         "merged": "gemma3_4b_crime_merge_{n}_{method}",
         "lora": True,
     },
     "xsum": {
-        "part": "../models/xsum/split_{n}/gemma3_4b_xsum_{i}_of_{n}_short",
+        "part": "{dir}/gemma3_4b_xsum_{i}_of_{n}_short",
         "merged": "gemma3_4b_xsum_short_merge_{n}_{method}",
         "lora": False,
     },
@@ -114,25 +119,30 @@ def main():
     ap.add_argument("n", type=int)
     ap.add_argument("--methods", nargs="+", default=DEFAULT_METHODS, choices=[*NWAY, *PAIRWISE])
     ap.add_argument("--force", action="store_true", help="overwrite existing configs")
+    ap.add_argument("--seed", type=int,
+                    help="a repeat trained with this seed: reads and writes ../models/<task>/seed_<S>/, "
+                         "writes the configs to <task>/seed_<S>/, and merges with --seed <S>")
     args = ap.parse_args()
     n, spec = args.n, TASKS[args.task]
     if n < 2 or n & (n - 1):
         sys.exit("N must be a power of two (2, 4, 8, ...)")
-    parts = [spec["part"].format(n=n, i=i) for i in range(1, n + 1)]
-    out_models = f"../models/{args.task}/split_{n}"
+    seed_dir = f"seed_{args.seed}" if args.seed is not None else ""
+    out_models = str(Path("../models", args.task, seed_dir, f"split_{n}"))
+    parts = [spec["part"].format(dir=out_models, n=n, i=i) for i in range(1, n + 1)]
     cache = f" --lora-merge-cache {out_models}/.lora_merge_cache" if spec["lora"] else ""
+    seed = f" --seed {args.seed}" if args.seed is not None else ""
     commands = []
     for method in args.methods:
         merged = spec["merged"].format(n=n, method=method)
         text = tree_config(method, parts, merged) if method in PAIRWISE else nway_config(method, parts)
-        path = Path(args.task, f"{args.task}_merge_{n}_{method}_config.yaml")
+        path = Path(args.task, seed_dir, f"{args.task}_merge_{n}_{method}_config.yaml")
         if path.exists() and not args.force:
             print(f"# {path} exists, left as it is (--force to overwrite)", file=sys.stderr)
         else:
-            path.parent.mkdir(exist_ok=True)
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text)
             print(f"# wrote {path}", file=sys.stderr)
-        commands.append(f"merge.sbatch {path} {out_models}/{merged}{cache}")
+        commands.append(f"merge.sbatch {path} {out_models}/{merged}{seed}{cache}")
     # The LoRA cache is shared, so the first merge fills it before the rest start.
     print("first=$(sbatch --parsable " + commands[0] + ")")
     dep = "--dependency=afterok:$first " if spec["lora"] else ""
