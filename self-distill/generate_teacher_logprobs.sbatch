@@ -22,7 +22,9 @@
 # against self-distill/. The log is saved as
 # <output_dir>/slurm/<prefix>-<jobid>.out, keeping the datasets dir tidy; with
 # no prefix it is named after the last part of dataset_dir instead (e.g.
-# xsum_prompts-<jobid>.out).
+# xsum_prompts-<jobid>.out). vLLM runs batch-invariant by default (see
+# generate_teacher_logprobs.py); submit with --export=ALL,VLLM_BATCH_INVARIANT=0
+# to turn it off.
 set -euo pipefail
 USAGE="usage: sbatch generate_teacher_logprobs.sbatch <model> <dataset_dir> <output_dir> [prefix] [extra args...]"
 MODEL=${1:?$USAGE}

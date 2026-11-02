@@ -60,6 +60,15 @@ from pathlib import Path
 # compiler and changes nothing here: the stored logprobs come from
 # raw_logprobs (pre-sampling logits) either way. Set before importing vllm.
 os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
+# Batch-invariant kernels, so a prompt's greedy output and logprobs don't
+# depend on which other prompts share its batch. Without them, bf16 rounding
+# that varies with the batch flips near-tied tokens: full-data vs split
+# teacher runs gave 13-16% different summaries. Batch invariance alone is not
+# enough, though (see LLM() in main for prefix caching and chunked prefill).
+# Their outputs differ from the default kernels' (68% of summaries
+# identical), so don't mix data made with and without. VLLM_BATCH_INVARIANT=0
+# in the environment turns it off; provenance records the setting.
+os.environ.setdefault("VLLM_BATCH_INVARIANT", "1")
 
 from datasets import Dataset, DatasetDict, load_from_disk
 from transformers import AutoTokenizer, GenerationConfig
@@ -398,6 +407,16 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     stop_ids = stop_token_ids(args.model, tokenizer)
+    # Prefix caching and chunked prefill are off so that, with the batch-
+    # invariant kernels, a prompt's output doesn't depend on what else the job
+    # runs. All the prompts share an instruction prefix; attention over cached
+    # blocks, or over a prompt split into chunks, sums in a different order, and
+    # which prompts hit the cache or get split depends on the rest of the job.
+    # Test of 2026-11-02 (XSum, full data vs each part of 4): batch-invariant
+    # only, 92.5% identical summaries (one part 71%); prefix caching off too,
+    # 99.7%; chunked prefill off too, 99.98% (2 of 10,977 differ). vLLM warns
+    # that Gemma 3 doesn't officially support disabling chunked prefill, but
+    # the outputs matched the chunked run's and took ~10% longer.
     llm = LLM(
         model=args.model,
         max_model_len=args.max_seq_len,
@@ -405,6 +424,8 @@ def main():
         enforce_eager=args.enforce_eager,
         tensor_parallel_size=args.tensor_parallel_size,
         gpu_memory_utilization=args.gpu_memory_utilization,
+        enable_prefix_caching=False,
+        enable_chunked_prefill=False,
     )
 
     if args.targets == "gold":
@@ -440,6 +461,9 @@ def main():
             student_field=field,
             source_dataset=os.path.abspath(args.dataset_dir),
             source_provenance=source_record,
+            batch_invariant=os.environ["VLLM_BATCH_INVARIANT"] == "1",
+            prefix_caching=False,
+            chunked_prefill=False,
         )
         print(f"wrote {out}")
 
