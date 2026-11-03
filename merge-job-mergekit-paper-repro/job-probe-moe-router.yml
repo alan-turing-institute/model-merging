@@ -1,0 +1,39 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-probe-moe
+experiment_name: model-merge-experiments
+description: >-
+  Measures what the MoE's untrained router actually does before deciding
+  whether to train it. mergekit-moe initialises the gate from a handful of
+  prompts and never trains it, so the router is the suspected weak point --
+  but suspected is not measured. Reports, per layer, how often medical text
+  routes to the Meditron expert versus how often general text does. Also
+  prints the mounted model directory, which doubles as a check that the data
+  asset points at real weights rather than at run logs.
+
+code: .
+
+command: >-
+  bash probe_single.sh ${{outputs.results}} ${{inputs.model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 3600
+
+inputs:
+  model:
+    type: uri_folder
+    path: azureml:mergekit-repro-moe@latest   # register the merge job's output under this name first
+    mode: ro_mount
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload

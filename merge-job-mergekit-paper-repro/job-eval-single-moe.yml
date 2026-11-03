@@ -1,0 +1,37 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: mergekit-paper-repro-eval-moe
+experiment_name: model-merge-experiments
+description: >-
+  Evaluates the top-1-of-2 sparse MoE built from Llama-2-7B-Chat and
+  Meditron-7B on the same six benchmarks as the dense merges, so the routing
+  result drops straight into the existing comparison table. Runs on A100
+  rather than the T4 the dense evals use: the MoE carries both experts' FFN
+  blocks, roughly 11B parameters against a dense merge's 7B.
+
+code: .
+
+command: >-
+  bash eval_single.sh ${{outputs.results}} merged-moe ${{inputs.model}}
+
+environment:
+  build:
+    path: docker-context
+
+compute: azureml:a100-cluster-merge
+resources:
+  instance_count: 1
+
+limits:
+  timeout: 10800
+
+inputs:
+  model:
+    type: uri_folder
+    path: azureml:mergekit-repro-moe@latest   # register the merge job's output under this name first
+    mode: ro_mount
+
+outputs:
+  results:
+    type: uri_folder
+    mode: upload
