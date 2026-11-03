@@ -1,0 +1,44 @@
+# The KD plugin's own README example (axolotl/integrations/kd/README.md),
+# pointed at its own example dataset. The only departures are the ones needed
+# to make it run and to make it inspectable:
+#   - base_model: an ungated Llama-3 model; it shares the tokenizer/vocab with
+#     the teacher that produced the dataset (Llama-3.3-70B-Instruct).
+#   - type: the README's `axolotl.integrations.kd.chat_template` resolves to
+#     the v2 loader, which expects a separate `target_token_ids` column and
+#     fails on this dataset with KeyError: 'target_token_ids'. The dataset is
+#     in the legacy [{"token": "token_id:###", "logprob": ...}] format, so we
+#     route to Axolotl's own `load_legacy` via kd_shim/legacy.py (a one-line
+#     re-export; run with PYTHONPATH=.). Both loaders place the teacher rows
+#     with identical code, so the choice does not affect the bug.
+#   - dataset_prepared_path, so the tensors Axolotl trains on can be inspected.
+base_model: meta-llama/Llama-3.2-1B-Instruct
+chat_template: tokenizer_default
+
+plugins:
+  - "axolotl.integrations.kd.KDPlugin"
+
+kd_trainer: true
+kd_ce_alpha: 0.1
+kd_alpha: 0.9
+kd_temperature: 1.0
+
+datasets:
+  - path: axolotl-ai-co/evolkit-logprobs-pipeline-75k-v2-sample
+    split: train
+    type: "kd_shim.legacy"
+    field_messages: "messages_combined"
+    logprobs_field: "llm_text_generation_vllm_logprobs"
+
+val_set_size: 0.0
+dataset_prepared_path: ./prepared
+sequence_len: 8192
+sample_packing: false
+
+bf16: true
+attn_implementation: eager
+micro_batch_size: 1
+gradient_accumulation_steps: 1
+max_steps: 1
+learning_rate: 1e-5
+optimizer: adamw_torch_fused
+output_dir: ./out

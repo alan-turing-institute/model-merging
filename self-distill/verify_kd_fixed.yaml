@@ -1,0 +1,48 @@
+base_model: google/gemma-3-4b-it
+chat_template: tokenizer_default
+eot_tokens:
+  - "<end_of_turn>"
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+
+kd_trainer: true
+# PURE KD: no cross-entropy mixed in, so the logged loss IS the KD loss.
+kd_ce_alpha: 0.0
+kd_alpha: 1.0
+kd_temperature: 1.0
+# renormalise student over the teacher top-k, so perfect alignment => exactly 0
+kd_normalize_topk: true
+
+datasets:
+  - path: ../datasets/kd_verify_fixed/train
+    type: "axolotl.integrations.kd.chat_template"
+    field_messages: "messages_combined"
+    logprobs_field: "teacher_logprobs"
+    temperature: 1.0
+
+val_set_size: 0.0
+dataset_num_proc: 8
+dataset_prepared_path: ../datasets/last_run_prepared_verify_fixed
+
+sequence_len: 4096
+sample_packing: false
+pad_to_sequence_len: false
+
+bf16: true
+tf32: true
+attn_implementation: eager
+
+micro_batch_size: 2
+gradient_accumulation_steps: 1
+gradient_checkpointing: true
+max_steps: 3
+learning_rate: 1e-9
+optimizer: adamw_torch_fused
+lr_scheduler: constant
+warmup_steps: 0
+
+logging_steps: 1
+save_strategy: "no"
+torch_compile: false
+output_dir: ../models/verify-kd-fixed
