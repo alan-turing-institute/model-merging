@@ -1,0 +1,79 @@
+# xsum_mistral_mlp.yaml
+#
+# The XSum expert for the Mistral sparse-MoE arm, retrained with LoRA on the
+# MLP (gate/up/down_proj) instead of attention (q/k/v/o_proj). Why: see
+# crime_mistral_mlp.yaml - mergekit-moe keeps only each expert's MLP, so the
+# attention-only experts made a MoE identical to the untuned model.
+#
+# xsum_mistral.yaml with the same changes main's train/MLP_crime_mistral.yaml
+# (176f214) makes to the crime recipe: MLP targets and plain bf16 LoRA rather
+# than 4-bit QLoRA. Main has no XSum SFT config for Mistral (f84e8ba dropped
+# it), so this is the nearest equivalent. Also dropped: the eot_tokens entry,
+# which named Gemma's <end_of_turn>; axolotl reported it "not found in
+# chat_template" and ignored it.
+#
+# NOT comparable with any Gemma-3 number: different base, tokenizer and scale.
+base_model: mistralai/Mistral-7B-Instruct-v0.3
+
+# Plain bf16 LoRA, not 4-bit QLoRA: evaluation and mergekit apply the adapter
+# to the bf16 base model, so train on those same weights.
+load_in_4bit: false
+bf16: true
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+# MLP only: an attention adapter leaves the MoE expert identical to the base.
+lora_target_modules:
+  - gate_proj
+  - up_proj
+  - down_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+# tokenizer_default: the evaluator renders with tokenizer.apply_chat_template,
+# and the two must agree. Mistral's template ends each assistant turn with
+# </s>, the EOS token, so train_on_eos: turn trains the stop.
+chat_template: tokenizer_default
+
+# No dataset_prepared_path: isambard/84_mistral_mlp_expert.slurm appends it,
+# since axolotl does not expand ${...} in this file.
+
+datasets:
+  - path: ../../datasets/xsum_dataset/train
+    type: chat_template
+    # Read per dataset in axolotl 0.18; xsum_mistral.yaml's top-level key was
+    # ignored. "turn" is also the default, stated so the stop is not left to it.
+    train_on_eos: turn
+
+test_datasets:
+  - path: ../../datasets/xsum_dataset/validation
+    type: chat_template
+
+# Articles are truncated to 512 words in prepare_xsum_data.py, which keeps
+# prompt + summary inside this window.
+sequence_len: 2048
+
+# Isambard: dataset_num_proc defaults to os.cpu_count() = 288 on a GH200 node,
+# which OOM-kills the job.
+dataset_num_proc: 8
+
+# Loss on the assistant turn only, as in xsum_mistral.yaml.
+train_on_inputs: false
+
+gradient_checkpointing: true
+
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+# Two, as in xsum_mistral.yaml: the target is a single sentence.
+num_epochs: 2
+
+learning_rate: 2e-4
+
+output_dir: ../models/mistral-xsum-mlp-lora

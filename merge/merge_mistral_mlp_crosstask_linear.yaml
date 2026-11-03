@@ -1,0 +1,17 @@
+# Dense cross-task merge of the Mistral MLP-LoRA experts by plain averaging,
+# as merge_linear_crosstask_config.yaml: 0.5 each, which halves both deltas.
+# The naive baseline, included so task arithmetic and the MoE have something
+# to beat. LOCAL_BASE is filled in by isambard/85_mistral_mlp_moe.slurm.
+merge_method: linear
+
+models:
+  - model: "LOCAL_BASE+../models/mistral-crime-mlp-lora"
+    parameters:
+      weight: 0.5
+  - model: "LOCAL_BASE+../models/mistral-xsum-mlp-lora"
+    parameters:
+      weight: 0.5
+
+tokenizer_source: base
+
+dtype: bfloat16

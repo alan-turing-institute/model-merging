@@ -1,0 +1,75 @@
+# crime_mistral_mlp.yaml
+#
+# The crime expert for the Mistral sparse-MoE arm, retrained with LoRA on the
+# MLP (gate/up/down_proj) instead of attention (q/k/v/o_proj).
+#
+# mergekit-moe takes each expert's MLP and everything else - attention,
+# embeddings, norms, lm_head - from base_model: mergekit/moe/mixtral.py copies
+# every tensor without ".mlp." in its name from the base. crime_mistral.yaml
+# trained attention only, so its MoE expert was the base model's MLP and the
+# 2-way MoE was the untuned model: all 200 of its crime predictions are
+# identical to 83_mistral_base's.
+#
+# The recipe is main's train/MLP_crime_mistral.yaml (176f214): plain bf16 LoRA
+# and Mistral's own chat template. Against crime_mistral.yaml that changes more
+# than the target modules - it also drops 4-bit QLoRA and the `gemma` template,
+# which evaluate.py never used (it renders with tokenizer.apply_chat_template).
+# What differs from main's file: the dataset paths (this branch's layout), the
+# micro batch, dataset_num_proc and the prepared-data path, each noted below.
+base_model: mistralai/Mistral-7B-Instruct-v0.3
+
+# Plain bf16 LoRA, not 4-bit QLoRA: evaluation and mergekit apply the adapter
+# to the bf16 base model, so train on those same weights.
+load_in_4bit: false
+bf16: true
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+# MLP only: an attention adapter leaves the MoE expert identical to the base.
+lora_target_modules:
+  - gate_proj
+  - up_proj
+  - down_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+# Mistral's own [INST] ... [/INST] template, the one evaluate.py applies. Turns
+# end with </s>, the EOS token, so no eot_tokens are needed.
+chat_template: tokenizer_default
+
+# Isambard: dataset_num_proc defaults to os.cpu_count() = 288 on a GH200 node,
+# which OOM-kills the job.
+dataset_num_proc: 8
+
+# No dataset_prepared_path: isambard/84_mistral_mlp_expert.slurm appends it.
+# axolotl does not expand ${...} in this file, so
+# crime_mistral.yaml's ${MM_PREPARED:-last_run_prepared} made a directory of
+# that literal name under train/, in the home quota.
+
+datasets:
+  - path: ../../datasets/crime_dataset/train
+    type: chat_template
+
+test_datasets:
+  - path: ../../datasets/crime_dataset/validation
+    type: chat_template
+
+sequence_len: 2048
+
+# 4 x 4 rather than main's 16 x 1: the same effective batch of 16, and the
+# fallback main's file names if a 7B model OOMs at 16. There is one attempt
+# before Isambard access ends.
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+num_epochs: 3
+
+learning_rate: 2e-4
+
+output_dir: ../models/mistral-crime-mlp-lora

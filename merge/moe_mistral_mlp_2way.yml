@@ -1,0 +1,39 @@
+# Two-expert sparse MoE on Mistral from the MLP-LoRA experts
+# (train/{xsum,crime}_mistral_mlp.yaml): moe_mistral_2way.yml with the same
+# base, router and prompt wording, without the prompts' closing full stops
+# (see below).
+#
+# mergekit-moe takes each expert's MLP and the base model's everything else.
+# moe_mistral_2way.yml's experts were trained on attention only, so both of
+# its experts were the base MLP and the MoE was the untuned model; these
+# experts carry their training in the MLP, which is the part the MoE keeps.
+#
+# gate_mode hidden derives the router from the positive prompts rather than
+# training one; experts_per_token 1 keeps the routing decision visible rather
+# than averaged away. bfloat16 for the reason in
+# merge_mistral_mlp_materialise.yaml.
+#
+# LOCAL_BASE and MATERIALISED_* are filled in by isambard/85_mistral_mlp_moe.slurm.
+# Expert order matters to merge/mistral_router_probe.py: 0 = XSum, 1 = crime.
+#
+# gate_mode hidden reads one hidden state per prompt and layer: the LAST
+# token's (mergekit/moe/router.py, get_hidden_states). At layer 0 that is just
+# the last token's embedding, so prompts that all end in "." give both experts
+# the same layer-0 router row, and every token goes to one expert there. The
+# prompts therefore carry no closing full stop, and end in words that differ
+# between the experts.
+base_model: LOCAL_BASE
+gate_mode: hidden
+experts_per_token: 1
+dtype: bfloat16
+experts:
+  - source_model: MATERIALISED_XSUM
+    positive_prompts:
+      - "Summarise the following BBC News article in a single short sentence"
+      - "Write a one-sentence summary of this news report"
+      - "Condense this article into one sentence"
+  - source_model: MATERIALISED_CRIME
+    positive_prompts:
+      - "Is the following Reddit post about crime? Answer with exactly one word"
+      - "Classify this post as crime or not_crime"
+      - "Decide whether this text describes a criminal incident"
