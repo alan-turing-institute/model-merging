@@ -1,28 +1,15 @@
-# crime_mistral.yaml
-#
-# MISTRAL PORT, for the sparse-MoE arm. mergekit/moe/mixtral.py accepts source
-# models of type "llama" or "mistral" and emits MixtralForCausalLM - and Mixtral
-# is the sparse form of this exact architecture, so the output is a real model
-# rather than a coerced one. Gemma has no mergekit-moe path at all, and the
-# Qwen3 attempt produced experts that converged in training yet scored the
-# always-positive baseline at generation.
-#
-# NOT comparable with any Gemma-3 number: different base, tokenizer and scale.
-# No attn_implementation override - that exists for Gemma-3 soft-capping under
-# sdpa, which Mistral does not have. dataset_num_proc stays capped; that is a
-# property of the node.
-#
-# Record of the run behind results/isambard/mistral-*.json, launched by
-# isambard/80_mistral_smoke.slurm to 82_mistral_moe.slurm on branch
-# xsum-summarisation; the paths follow that branch's layout, not main's.
 base_model: mistralai/Mistral-7B-Instruct-v0.3
 
-load_in_4bit: true
+# crime_gemma.yaml with Mistral as the base; everything else is the same recipe,
+# so the two differ only in the model. For the sparse-MoE arm: mergekit's
+# mixtral MoE path takes "mistral" source models and Gemma has none. The
+# previous draft of this file, the record of the Isambard run on branch
+# xsum-summarisation, is in git history (1a10ff3).
 
-# Isambard: Gemma-3 soft-capping NaNs under sdpa (axolotl falls back to sdpa
-# without flash-attn, which has no aarch64 wheel), and dataset_num_proc defaults
-# to os.cpu_count() = 288 on a GH200 node, which OOM-kills the job.
-dataset_num_proc: 8
+# Plain bf16 LoRA, not 4-bit QLoRA: evaluation (evaluate.sbatch) and mergekit
+# apply the adapter to the bf16 base model, so train on those same weights.
+load_in_4bit: false
+bf16: true
 
 adapter: lora
 
@@ -40,30 +27,32 @@ lora_mlp_kernel: false
 lora_qkv_kernel: false
 lora_o_kernel: false
 
-chat_template: gemma
-
-# Axolotl caches its tokenised dataset here, and defaults to train/last_run_prepared
-# inside the repo. That reached 17 GB and took the home filesystem to its 101 GB
-# quota, which stops every job on the machine. $MM_PREPARED is exported by
-# isambard/config.sh to node-local scratch; it falls back to the default when
-# unset, so this stays correct off the cluster.
-dataset_prepared_path: ${MM_PREPARED:-last_run_prepared}
+# Mistral's own [INST] ... [/INST] template, the one Inspect's hf provider
+# applies at evaluation. It allows no system turn and needs user/assistant to
+# alternate, which the crime data (one user turn, one assistant turn) does.
+# Turns end with </s>, the EOS token, so no eot_tokens are needed.
+chat_template: tokenizer_default
 
 datasets:
-  - path: ../../datasets/crime_dataset/train
+  - path: ../datasets/crime/crime_dataset/train
     type: chat_template
 
 test_datasets:
-  - path: ../../datasets/crime_dataset/validation
+  - path: ../datasets/crime/crime_dataset/validation
     type: chat_template
 
 sequence_len: 2048
 
-micro_batch_size: 4
-gradient_accumulation_steps: 4
+# No attn_implementation override: the eager workaround is for Gemma 3's NaNs
+# under sdpa, which Mistral does not have.
+
+# The same effective batch of 16 as crime_gemma.yaml; if a 7B model OOMs at
+# this micro batch, use 4 x 4 instead.
+micro_batch_size: 16
+gradient_accumulation_steps: 1
 
 num_epochs: 3
 
 learning_rate: 2e-4
 
-output_dir: ../models/mistral-crime-full-lora
+output_dir: ../models/crime/mistral_7b_crime
