@@ -1,0 +1,23 @@
+# Materialise a Mistral MLP-LoRA expert as a full model for mergekit-moe, which
+# takes full models only. LOCAL_BASE and ADAPTER are filled in by
+# isambard/85_mistral_mlp_moe.slurm, once per expert.
+#
+# bfloat16, not the float16 of merge_mistral_materialise_*.yaml: Mistral and
+# the adapters are bf16 and the evaluator loads in bf16, so float16 only adds a
+# rounding step. It is the likeliest reason the attention-only MoE's XSum
+# outputs differ from the base model's on 52 of 200 articles, although the two
+# were the same model.
+#
+# Record of the run behind results/isambard/mistral-mlp-*.json: filled in by
+# isambard/85_mistral_mlp_moe.slurm to 88_mistral_mlp_moe_whole.slurm on
+# branch mistral-mlp-moe (8650773), whose layout the paths follow, not main's.
+merge_method: linear
+
+models:
+  - model: "LOCAL_BASE+ADAPTER"
+    parameters:
+      weight: 1.0
+
+tokenizer_source: base
+
+dtype: bfloat16

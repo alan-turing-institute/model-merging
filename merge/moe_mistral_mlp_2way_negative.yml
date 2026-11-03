@@ -1,0 +1,56 @@
+# moe_mistral_mlp_2way.yml with negative prompts: the same experts, base and
+# positive prompts, so the two differ only in the router.
+#
+# With gate_mode hidden, mergekit (moe/router.py) takes each expert's router
+# vector as the base model's hidden states over its positive prompts, minus
+# those over its negative prompts, normalised to unit length. Without
+# negatives both vectors carry the shared "instruction to a chat model"
+# component; subtracting a negative set leaves more of what separates the two
+# tasks.
+#
+# The negatives are not simply the other expert's positives: with two experts
+# that makes the two vectors exact opposites, a rank-1 gate that mergekit
+# reports as degenerate on every layer. Each expert's negatives are instead
+# prompts of the other kind of task (one-word labels against free-text
+# writing), worded differently from the other expert's positives, and ending
+# in words that neither its own positives nor the other expert's end in: an
+# expert whose positives and negatives end in the same token gets a zero
+# layer-0 router row.
+#
+# LOCAL_BASE and MATERIALISED_* are filled in by isambard/85_mistral_mlp_moe.slurm.
+# Expert order matters to merge/mistral_router_probe.py: 0 = XSum, 1 = crime.
+#
+# gate_mode hidden reads one hidden state per prompt and layer: the LAST
+# token's (mergekit/moe/router.py, get_hidden_states). At layer 0 that is just
+# the last token's embedding, so prompts that all end in "." give both experts
+# the same layer-0 router row, and every token goes to one expert there. The
+# prompts therefore carry no closing full stop, and end in words that differ
+# between the experts.
+#
+# Record of the run behind results/isambard/mistral-mlp-*.json: built by
+# isambard/85_mistral_mlp_moe.slurm and rebuilt by
+# 87_mistral_mlp_moe_answer_routing.slurm on branch mistral-mlp-moe (8650773),
+# whose layout the paths follow, not main's.
+base_model: LOCAL_BASE
+gate_mode: hidden
+experts_per_token: 1
+dtype: bfloat16
+experts:
+  - source_model: MATERIALISED_XSUM
+    positive_prompts:
+      - "Summarise the following BBC News article in a single short sentence"
+      - "Write a one-sentence summary of this news report"
+      - "Condense this article into one sentence"
+    negative_prompts:
+      - "Answer with a single word: does this text describe the topic"
+      - "Label the following text with one category name"
+      - "Reply yes or no"
+  - source_model: MATERIALISED_CRIME
+    positive_prompts:
+      - "Is the following Reddit post about crime? Answer with exactly one word"
+      - "Classify this post as crime or not_crime"
+      - "Decide whether this text describes a criminal incident"
+    negative_prompts:
+      - "Write a short paragraph explaining the main point of this text"
+      - "Rewrite the following passage in your own words"
+      - "Describe what happens in this story in a few sentences"
