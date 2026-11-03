@@ -1,0 +1,59 @@
+# MLP_clinc150_gemma.yaml: clinc150_gemma.yaml with LoRA on the MLP (gate/up/down_proj)
+# instead of attention (q/k/v/o_proj), for the task-merging experts that both
+# the dense merges and the MoE merge use. Everything else is clinc150_gemma.yaml's.
+
+base_model: google/gemma-3-4b-it
+
+# Plain bf16 LoRA, not 4-bit QLoRA: evaluation (evaluate.sbatch) and mergekit
+# apply the adapter to the bf16 base model, so train on those same weights.
+# bf16, not fp16: Gemma 3's activations overflow fp16's range.
+load_in_4bit: false
+bf16: true
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+# MLP only, not attention: mergekit-moe takes each expert's MLP and the base
+# model's everything else, so an attention adapter would leave its MoE expert
+# identical to the base. The dense merges use these same experts.
+lora_target_modules:
+  - gate_proj
+  - up_proj
+  - down_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+chat_template: gemma
+eot_tokens:
+  - "<end_of_turn>"
+
+datasets:
+  - path: ../datasets/clinc150/clinc150_labels_dataset/train
+    type: chat_template
+
+test_datasets:
+  - path: ../datasets/clinc150/clinc150_labels_dataset/validation
+    type: chat_template
+
+sequence_len: 2048
+
+# Gemma 3's default attention gives NaN gradients in bf16 from the first step,
+# and the run never recovers (the loss is then logged as 0.0); eager is stable.
+attn_implementation: eager
+
+# The effective batch of 16 of crime_gemma.yaml, as 4 x 4: a labels-prompt
+# example is ~650 tokens, and 16 of them at Gemma 3's 262k vocabulary need ~10
+# GB for the fp32 logits alone, which ran out of memory at the first step.
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+num_epochs: 3
+
+learning_rate: 2e-4
+
+output_dir: ../models/clinc150/gemma3_4b_clinc150_labels_mlp

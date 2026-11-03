@@ -1,7 +1,8 @@
 """CLINC150 intent classification as an Inspect AI task.
 
-Each in-scope test query (datasets/clinc150/clinc150_dataset/test, 4,500
-queries, 30 per intent, so accuracy equals macro recall) is put to the model
+Each in-scope test query (datasets/clinc150/clinc150_labels_dataset/test, or
+clinc150_dataset/test, which holds the same 4,500 queries, 30 per intent, so
+accuracy equals macro recall) is put to the model
 with the instruction to answer with the intent label only, and the answer is
 scored by exact match after normalising.
 
@@ -50,7 +51,14 @@ from inspect_ai.solver import TaskState, generate
 # Resolved from this file rather than the working directory, so the defaults
 # hold wherever `inspect eval` is run from.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATASET = REPO_ROOT / "datasets" / "clinc150" / "clinc150_dataset" / "test"
+# Only each test row's query, label and domain are read (the prompt is built
+# below), and those are the same in the labels and the short datasets, so either
+# serves; the labels one, the default of prepare_data_clinc150.py, if it exists.
+DEFAULT_DATASET = next(
+    (p for p in (REPO_ROOT / "datasets" / "clinc150" / f"{name}_dataset" / "test"
+                 for name in ("clinc150_labels", "clinc150")) if p.exists()),
+    REPO_ROOT / "datasets" / "clinc150" / "clinc150_labels_dataset" / "test",
+)
 PREPARE_SCRIPT = REPO_ROOT / "train" / "prepare_data_clinc150.py"
 DOMAINS_FILE = REPO_ROOT / "train" / "clinc150_domains.json"
 PROMPT_VARIANTS = ("short", "labels")

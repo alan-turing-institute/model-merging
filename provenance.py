@@ -20,7 +20,10 @@
 # with their whole records; its coverage is its training data's. A merged
 # model's record names the merge method and each input model with its weight and
 # whole record; its coverage lists the inputs'. The full configs stay where
-# Axolotl and mergekit put them (config.yaml, mergekit_config.yml).
+# Axolotl and mergekit put them (config.yaml, mergekit_config.yml). A LoRA
+# adapter merged into its base as a full model (Convert_to_full_model.py) keeps
+# its adapter's record, still kind "trained", with a "materialised" entry naming
+# the adapter (and its whole record), the base and the dtype.
 #
 # Every model record also has a "health" check, since a run that diverges can
 # look fine: once a bf16 step produces NaN, gradient clipping and the optimizer
@@ -55,8 +58,11 @@ REPO = Path(__file__).resolve().parent
 
 # Config keys copied into a trained model's record (when the config sets them):
 # the ones that tell otherwise-identical runs apart.
+# lora_target_modules and unfrozen_parameters say which layers were trained
+# (e.g. attention or MLP), which decides what a MoE merge keeps of an expert.
 HYPERPARAMETERS = [
-    "adapter", "load_in_4bit", "lora_r", "lora_alpha", "num_epochs", "learning_rate",
+    "adapter", "load_in_4bit", "lora_r", "lora_alpha", "lora_target_modules",
+    "unfrozen_parameters", "num_epochs", "learning_rate",
     "micro_batch_size", "gradient_accumulation_steps", "sequence_len",
     "kd_alpha", "kd_ce_alpha", "kd_temperature", "seed",
 ]
@@ -334,6 +340,42 @@ def write_model(model_dir, script, base_dir=".", random_seed=None, **overrides):
         **_run_fields(),
     }
     record.update(overrides)
+    _save(model_dir, record)
+    return record
+
+
+def write_materialised(model_dir, script, adapter_dir, base_model, dtype):
+    """Write model_dir/provenance.json for a LoRA adapter merged into its base.
+
+    The weights are the trained adapter's, so the record is the adapter's (kind
+    "trained", its method, hyperparameters, losses, datasets and coverage), with
+    "materialised" saying how they were baked in, and health checked on the
+    full weights now in model_dir. An adapter without a record still gets one,
+    with those fields empty."""
+    adapter = read(adapter_dir) or {}
+    record = {
+        "script": str(Path(script).resolve().relative_to(REPO)),
+        "created": _now(),
+        "coverage": adapter.get("coverage", "unknown"),
+        "kind": "trained",
+        "method": adapter.get("method"),
+        "base_model": base_model,
+        # The training config stays with the adapter.
+        "config": (os.path.join(os.path.abspath(adapter_dir), adapter["config"])
+                   if adapter.get("config") else None),
+        "hyperparameters": adapter.get("hyperparameters", {}),
+        "losses": adapter.get("losses"),
+        "train_datasets": adapter.get("train_datasets", []),
+        "validation_datasets": adapter.get("validation_datasets", []),
+        "materialised": {
+            "adapter": os.path.abspath(adapter_dir),
+            "base_model": base_model,
+            "dtype": dtype,
+            "adapter_provenance": adapter or None,
+        },
+        "health": check_health(model_dir),
+        **_run_fields(),
+    }
     _save(model_dir, record)
     return record
 

@@ -27,11 +27,11 @@ eot_tokens:
   - "<end_of_turn>"
 
 datasets:
-  - path: ../datasets/clinc150/clinc150_dataset/train
+  - path: ../datasets/clinc150/clinc150_labels_dataset/train
     type: chat_template
 
 test_datasets:
-  - path: ../datasets/clinc150/clinc150_dataset/validation
+  - path: ../datasets/clinc150/clinc150_labels_dataset/validation
     type: chat_template
 
 sequence_len: 2048
@@ -40,11 +40,14 @@ sequence_len: 2048
 # and the run never recovers (the loss is then logged as 0.0); eager is stable.
 attn_implementation: eager
 
-micro_batch_size: 16
-gradient_accumulation_steps: 1
+# The effective batch of 16 of crime_gemma.yaml, as 4 x 4: a labels-prompt
+# example is ~650 tokens, and 16 of them at Gemma 3's 262k vocabulary need ~10
+# GB for the fp32 logits alone, which ran out of memory at the first step.
+micro_batch_size: 4
+gradient_accumulation_steps: 4
 
 num_epochs: 3
 
 learning_rate: 2e-4
 
-output_dir: ../models/clinc150/gemma3_4b_clinc150
+output_dir: ../models/clinc150/gemma3_4b_clinc150_labels

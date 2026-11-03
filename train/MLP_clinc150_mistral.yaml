@@ -1,0 +1,65 @@
+# MLP_clinc150_mistral.yaml: crime_mistral.yaml with LoRA on the MLP (gate/up/down_proj)
+# instead of attention, CLINC150's labels-prompt dataset, and the 4 x 4 batch of
+# clinc150_gemma.yaml, for the task-merging experts that both the dense merges and
+# the MoE merge use.
+
+base_model: mistralai/Mistral-7B-Instruct-v0.3
+
+# crime_gemma.yaml with Mistral as the base; everything else is the same recipe,
+# so the two differ only in the model. For the sparse-MoE arm: mergekit's
+# mixtral MoE path takes "mistral" source models and Gemma has none. The
+# previous draft of this file, the record of the Isambard run on branch
+# xsum-summarisation, is in git history (1a10ff3).
+
+# Plain bf16 LoRA, not 4-bit QLoRA: evaluation (evaluate.sbatch) and mergekit
+# apply the adapter to the bf16 base model, so train on those same weights.
+load_in_4bit: false
+bf16: true
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+# MLP only, not attention: mergekit-moe takes each expert's MLP and the base
+# model's everything else, so an attention adapter would leave its MoE expert
+# identical to the base. The dense merges use these same experts.
+lora_target_modules:
+  - gate_proj
+  - up_proj
+  - down_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+# Mistral's own [INST] ... [/INST] template, the one Inspect's hf provider
+# applies at evaluation. It allows no system turn and needs user/assistant to
+# alternate, which the CLINC150 data (one user turn, one assistant turn) does.
+# Turns end with </s>, the EOS token, so no eot_tokens are needed.
+chat_template: tokenizer_default
+
+datasets:
+  - path: ../datasets/clinc150/clinc150_labels_dataset/train
+    type: chat_template
+
+test_datasets:
+  - path: ../datasets/clinc150/clinc150_labels_dataset/validation
+    type: chat_template
+
+sequence_len: 2048
+
+# No attn_implementation override: the eager workaround is for Gemma 3's NaNs
+# under sdpa, which Mistral does not have.
+
+# The effective batch of 16 of crime_mistral.yaml, as 4 x 4: a labels-prompt
+# example is ~690 tokens, 12 times a crime one (see clinc150_gemma.yaml).
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+
+num_epochs: 3
+
+learning_rate: 2e-4
+
+output_dir: ../models/clinc150/mistral_7b_clinc150_labels_mlp
