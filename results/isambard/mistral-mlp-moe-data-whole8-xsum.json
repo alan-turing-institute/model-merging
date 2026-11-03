@@ -1,0 +1,2029 @@
+{
+  "model": "/projects/u6ui/drmario.u6ui/mm/tmp/mistral-mlp-moe-whole-8058037/moe-data-whole8",
+  "provenance": null,
+  "model_path": "/projects/u6ui/drmario.u6ui/mm/tmp/mistral-mlp-moe-whole-8058037/moe-data-whole8",
+  "adapter": null,
+  "adapter_path": null,
+  "dataset": "/home/u6ui/drmario.u6ui/mm-mistral-mlp/../datasets/xsum_dataset/test",
+  "metrics": {
+    "rouge1": 0.4296040362013872,
+    "rouge2": 0.20154107689815362,
+    "rougeL": 0.3535832583945882,
+    "semantic": 0.6579313585162163,
+    "entities_unsupported": 1.11,
+    "entity_support": 0.7337897201178452,
+    "num_ungradeable": 8,
+    "num_hallucinating": 111,
+    "num_examples": 200,
+    "num_empty": 0,
+    "mean_pred_words": 19.39,
+    "mean_ref_words": 21.015,
+    "mean_pred_sentences": 1.03
+  },
+  "predictions": [
+    "A woman who was seriously injured in a minibus crash which killed her friend on the way to a hen party has spoken of the \"massive explosion\" she felt.",
+    "A 12th Century manor house is to open to the public for the first time in 80 years after a \u00a32m restoration project.",
+    "A lighthouse has been unveiled at Walt Disney World to commemorate a toddler who was killed by an alligator near the resort's Grand Floridian hotel.",
+    "The Northern Ireland agriculture minister has said she is hoping to open up new markets for local food producers in China and the United States.",
+    "Blackpool have signed Nottingham Forest midfielder Jack Colback on a season-long loan and brought in goalkeeper Luke Allsop and defender Jimmy Cooke on free transfers.",
+    "Gordon Strachan says Scotland must win their World Cup qualifier against England in March to keep their hopes of reaching the finals in Russia alive.",
+    "A man jailed for filming himself having sex with his partner's daughter has had his conviction overturned by the Court of Criminal Appeal.",
+    "A man has appeared in court charged with stabbing another man in a Belfast hotel.",
+    "Wakefield Trinity prop Joe Aiton will miss the whole of the 2017 Super League season after suffering a knee injury in pre-season.",
+    "Coventry City have met with Rugby Borough Council to discuss the possibility of the club moving to the town.",
+    "A computer programmer accused of trying to buy ricin to kill 1,400 people was \"motivated by the TV show Breaking Bad\", a court has heard.",
+    "A fire which killed two men in a flat in north Wales may not have been caused by a tumble dryer, an inquest has heard.",
+    "Thousands of apparently automated comments have been posted to a US government website in the run-up to a vote on net neutrality rules.",
+    "Schools taking part in BBC News School Report 2017 are being asked to publish their students' work online.",
+    "French actress Michele Morgan, who won the first ever best actress award at the Cannes Film Festival, has died aged 92.",
+    "A computer programme that can automatically edit a football match down to the key moments is being developed.",
+    "Dundee United have offered striker David Goodwillie a new one-year contract.",
+    "Bournemouth have signed midfielder Andrew Surman on a three-year deal from Norwich City for an undisclosed fee.",
+    "The Welsh Conservatives will be rubbing their hands with glee at the prospect of the 2015 General Election after their success in the assembly elections.",
+    "Chancellor George Osborne has dropped his target to eliminate the UK's budget deficit by 2020.",
+    "Rory McIlroy has withdrawn from the Turkish Open because of a stomach bug.",
+    "A solar-powered phone charging station has been unveiled in London as part of a project to revive 8,000 red phone boxes.",
+    "The Northern Ireland Office has rejected calls for the re-establishment of the Independent Monitoring Commission (IMC).",
+    "The Nigerian military has released 100 children who were detained for allegedly being associated with the Islamist militant group Boko Haram.",
+    "The Indian-owned steel firm Liberty House is set to submit a formal bid to buy Tata Steel's UK business on Tuesday.",
+    "The NHS in England is to be rated on its \"culture of honesty\" about mistakes, under plans announced by the health secretary.",
+    "The EU's top officials have been quick to say that the British election called for 8 June won't change the timetable for Brexit talks.",
+    "Ireland's economy grew by 1.5% in the first quarter of 2014, official figures have shown, beating expectations.",
+    "Cuba's president has said the US president's recent changes to US policy towards his country are a \"setback\".",
+    "A robot submarine has been sent down to the deepest part of the ocean to find out what lives there.",
+    "Former Crusaders player and manager Tommy Callaghan has been appointed as the new boss at Carrick Rangers.",
+    "The family of Adam Lanza, the man suspected of killing 26 people at Sandy Hook school in Connecticut, have spoken of a \"challenge\" in their midst.",
+    "Audi has announced it is to withdraw from top-level endurance racing, including the Le Mans 24 Hours, to focus on electric motorsport.",
+    "The ex-partner of former footballer Adam Johnson has told a court he cheated on her with \"quite a few\" women.",
+    "A clinical commissioning group has rejected a council's request to help a fertility firm improve its tender for a contract.",
+    "Plans to demolish three hotels and build a luxury hotel and apartments in Bournemouth have been approved.",
+    "The closure of Oxford's St Aldates to buses and cars is set to become permanent.",
+    "Glasgow Warriors have signed South Africa prop forward Zander Fagerson from Super Rugby side the Stormers.",
+    "Glasgow Warriors chief executive Mark Blair says the club will \"work hard\" to keep Scotland internationals who are out of contract this summer.",
+    "A panel has been appointed to investigate the ongoing disputes at De La Salle College in Belfast.",
+    "Hereford United have been expelled from the Football Conference after failing to meet a deadline to clear debts of more than \u00a3148,000.",
+    "A 12-year-old boy in Indian-administered Kashmir was killed on Sunday when security forces opened fire on stone-throwing protesters.",
+    "A man who took \"upskirt\" videos of women in public has been jailed for 18 months.",
+    "Householders in Flintshire who do not use wheelie bins for their rubbish will face fines from next year.",
+    "Scottish party leaders have been campaigning across Scotland as the general election enters its final week.",
+    "The headteacher of a Birmingham school opened by David Cameron has resigned after it was rated \"inadequate\" by education inspectors.",
+    "A single unitary council for Oxfordshire could be created to save \u00a3100m, the county council has said.",
+    "Microsoft has unveiled a new app called SmartGlass that links smartphones and tablets to its Xbox games console.",
+    "League One side Gillingham have signed defender Jack O'Connell on a season-long loan from Crystal Palace.",
+    "Guernsey FC have been given until Monday to decide if they want to enter the FA Cup after being told they would have to play any home ties on the mainland.",
+    "A Borders knitwear firm has increased production to meet a surge in orders for its own brand and for customers who sell the garments under their own labels.",
+    "The families of those who died in a helicopter crash in Glasgow have said they are still no nearer knowing why the aircraft came down.",
+    "The government has said it will take action to help drivers of diesel cars who were encouraged to buy them by previous governments.",
+    "A man with terminal cancer has reached the summit of Mount Everest.",
+    "A new species of gecko has been discovered in Madagascar that can shed its skin like a snake.",
+    "The man who designed the iPod and iPhone is now in charge of Google's hardware division - and he has his sights set on Apple's crown.",
+    "Chelsea have won the Premier League title for the second time after a 1-0 win at West Bromwich Albion on Friday.",
+    "A teacher has been arrested in Spain on suspicion of sexually abusing children and possessing child abuse images.",
+    "The Scottish government has had less than a month to prepare its draft budget for 2016-17.",
+    "The first responders who treated injured rollercoaster passengers were on the scene within minutes, Alton Towers has said.",
+    "The former first minister, Lord Jack McConnell, has had an unexpected encounter with the dark side of Malawi.",
+    "Syrian government forces say they have taken control of a rebel-held district in the central city of Homs.",
+    "A man has been found guilty of murdering his ex-girlfriend after a jury rejected his claim that he found her dead at her flat.",
+    "The Mountain Bothies Association (MBA) has urged hillwalkers to take their rubbish home with them when using bothies.",
+    "Cycling is a sport that is accessible to all ages and abilities, and it is a great way to get fit and have fun.",
+    "The MTV Movie Awards 2015 was a night of jokes about size, a lot of love for The Fault in Our Stars and a surprise appearance from the Avengers.",
+    "England secured the top spot in their Euro 2017 qualifying group with a 2-0 win over Belgium.",
+    "UKIP has excluded Steven Woolfe from the ballot for its leadership contest, the party has announced.",
+    "Armagh moved into second place in Division Three with a 1-15 to 0-10 win against Louth, who finished with nine men.",
+    "Motherwell owner Jim Hutchison has sold his majority shareholding in the club.",
+    "Philip K Dick's Electric Dreams, a new TV series based on the author's short stories, is to be written by Harry Potter and the Cursed Child playwright Jack Thorne.",
+    "A man who downloaded child pornography images for up to nine years has been given a suspended jail sentence.",
+    "A bus carrying 46 people has burst into flames after colliding with a lorry in Germany, killing 18 people.",
+    "Burnley striker Sam Vokes has signed a new three-and-a-half-year deal with the Championship club.",
+    "Mae ymchwiliad yr heddlu ar y pecyn yn ffug wedi cael ei osod yn siopa'r Quadrant, Abertawe.",
+    "The number of new cancer cases in Wales has risen by 12% in a decade, according to figures from Public Health Wales.",
+    "A leading psychiatrist who has studied Gulf War Syndrome has been knighted in the New Year Honours.",
+    "League One side Leyton Orient have signed Chesterfield midfielder Gary Liddle on a free transfer.",
+    "Women who had relationships with undercover police officers have told MPs of the \"devastating\" impact it had on their lives.",
+    "Tom Cairney's late strike sent Fulham to the top of the Championship as they ended Brentford's five-game unbeaten run.",
+    "German skincare firm Nivea has apologised for a controversial advert on its Middle East Facebook page.",
+    "Plans for a new lifeboat station in Scarborough have been approved.",
+    "A toxic gas attack in the Syrian city of Aleppo has been blamed on rebels by the government and its ally Russia.",
+    "The Scottish government has said it is \"gravely concerned\" about the future of shipbuilding on the Clyde after unions warned that work on new frigates could be delayed.",
+    "A man has been airlifted to hospital after falling about 15m (50ft) while climbing in Snowdonia.",
+    "Ding Junhui beat Mark Williams 13-8 to reach the semi-finals of the World Championship.",
+    "A campaign to \"yarn bomb\" Cambridge with knitted Tour de France decorations is being backed by the city council.",
+    "A fake news story claiming to be from the BBC has been circulating in Kenya, prompting a warning from the broadcaster.",
+    "Mae gr\u0175pau cymunedol o fath wedi cynnig cartref ar gyfer ffoaduriaid sy'n ddod o hyd i waith.",
+    "The Great Exhibition of the North, due to be held in Newcastle and Gateshead next year, will be the first major event of its kind in the North East for almost a century.",
+    "US retail giant Walmart has agreed to sell its Chinese online business to JD.com for $1.5bn (\u00a31.1bn) in cash and stock.",
+    "A Labour councillor has been suspended over anti-Semitic tweets, the party has said.",
+    "Katie Ledecky anchored the United States to victory in the women's 4x200m freestyle relay at Rio 2016.",
+    "Black voters in the US town of Ferguson have elected a majority-black city council, a year after racial tensions erupted over the shooting of an unarmed black man by police.",
+    "India's Paralympians have returned home to a hero's welcome after winning a silver medal in London.",
+    "A scam email written in Scots Gaelic has been intercepted by police on the Isle of Benbecula.",
+    "Scientists have detected a tide in Loch Ness for the first time.",
+    "Widnes Vikings have signed former Leeds Rhinos centre Kallum Hood on a two-year contract.",
+    "Edward Snowden, the former US intelligence contractor wanted by the US for leaking secrets, has not yet left Moscow's airport, his lawyer says.",
+    "Work to upgrade a major road junction in Wrexham and Chester has been delayed until June.",
+    "Police Scotland has said it does not know how many children are being sexually exploited in Scotland.",
+    "Thousands of customers have complained about dead pixels on the screens of their new Nintendo Switch consoles.",
+    "The States has elected a new Social Security minister after the resignation of Deputy Adam.",
+    "European Union leaders are due to discuss a deal with Turkey to curb the flow of migrants into Europe.",
+    "Acid attack survivor Laxmi Agarwal has been named as one of the BBC's 100 Women for 2015.",
+    "Lord Avebury, a former Liberal Democrat MP and peer, has died aged 86.",
+    "Five-time Tour de France rider Bradley Wiggins has denied making a \"serious and untrue\" statement about the use of intravenous injections in cycling.",
+    "An Asda store in Manchester is to trial a \"quiet hour\" for autistic shoppers.",
+    "The National Trust has announced plans to restore Clandon Park, a Palladian mansion in Surrey which was badly damaged by fire in 2015.",
+    "A County Down solicitor has admitted stealing more than \u00a3110,000 from his employer's bank account to pay for a new home and investment property.",
+    "Five-time Tour de France winner Bradley Wiggins and Olympic champion Mark Cavendish are among the big names in a star-studded line-up for next month's Tour of Britain.",
+    "Prime Minister David Cameron has condemned \"hate crime\" and \"racist abuse\" in the wake of the Brexit vote.",
+    "Jack Baird's late winner gave St Mirren victory over Ayr United in the first round of the League Cup.",
+    "A Roman mosaic discovered during building work in Leicester is to go on public display.",
+    "A man has been taken to hospital after being hit by a bus in Elgin.",
+    "Sky has launched its new mobile service, which piggybacks on the O2 network.",
+    "Thailand's former Prime Minister Yingluck Shinawatra has been indicted on criminal charges over a controversial rice subsidy scheme.",
+    "Police are looking for two men who attacked and robbed a man with learning difficulties in South Lanarkshire.",
+    "The front-runner in France's presidential election has said he will reform the EU \"in depth\" if he wins.",
+    "India's economy grew at an annual rate of 8.4% between July and September 2014, official figures have shown.",
+    "Sussex batsman Luke Wells is targeting a big season after signing a new three-year contract with the county.",
+    "A seven-year-old boy is in a serious condition in hospital after being hit by a van in North Lanarkshire.",
+    "Bournemouth striker Danny Ings says the club's \"mentality\" will ensure they do not relax in their battle against relegation.",
+    "The number of Americans living in poverty was unchanged in 2011, according to the US Census Bureau.",
+    "Northern Ireland forward Jamie Makris has joined Championship side Blackburn Rovers from Greek side Atromitos for a club-record fee.",
+    "Rescuers in Germany are evacuating people from towns along the River Elbe as floodwaters rise following heavy rain.",
+    "About 240 ex-battery hens are to be rehomed in Wrexham after spending the last year and a half in cages.",
+    "An 82-year-old man has been left shaken after being threatened by masked raiders at his home in Glasgow.",
+    "A manhunt is under way in Brazil for more than 100 prisoners who escaped from two jails in the state of Amazonas.",
+    "The first funerals have been held in the Colombian town of Salgar after a landslide killed at least 84 people.",
+    "Team Sky riders \"feel passionately about our sport and winning clean\", says four-time Tour de France winner Chris Froome.",
+    "Human rights group Amnesty International has accused Egyptian security forces of using sexual violence as a weapon against political opponents.",
+    "US President Donald Trump has nominated federal appeals court Judge Neil Gorsuch to the Supreme Court, to fill a vacancy created by the death of Justice Antonin Scalia last year.",
+    "American Jason Dufner leads by three shots after the second round of the Travelers Championship in Connecticut.",
+    "Liberia's former football star George Weah has won a seat in the senate, the first step in his bid to become president.",
+    "Burton Albion manager Nigel Clough says he would not rule out signing former Derby defender Jason Shackell.",
+    "A bar has been fined \u00a310,000 after a teenager suffered life-threatening injuries when she was given a drink containing liquid nitrogen.",
+    "Former US football star Brandi Chastain has announced she will donate her brain to research after her death.",
+    "Japan's crippled Fukushima nuclear plant will take up to nine months to bring to a \"cold shutdown\", the operator has said.",
+    "Liverpool Ladies have signed England forward Natasha Harding from Notts County for an undisclosed fee.",
+    "British weightlifters have named their teams for the European Championships in Norway later this month.",
+    "At least 15 people have been killed and 50 injured in two bomb blasts in the Afghan capital, Kabul, officials say.",
+    "A man whose car was stolen from outside his home has criticised police for not investigating the theft because it was not considered a priority.",
+    "Pop star Barbra Streisand has revealed she has personally asked Apple to change the way Siri pronounces her name.",
+    "Tyson Fury outboxed Dereck Chisora to win the British and Commonwealth heavyweight titles in a one-sided contest at Wembley Arena.",
+    "The UK economy is facing a perfect storm of economic challenges in the months ahead.",
+    "Two men have been charged with rape following an investigation by Northumbria Police.",
+    "The new series of Geordie Shore will see a bisexual cast member for the first time.",
+    "Gunmen have stormed a hospital in the Afghan capital Kabul, killing at least 30 people, officials say.",
+    "Premier League clubs are set for three more years of \"big growth\" in revenues, according to Deloitte.",
+    "The president of the International Ski Federation has apologised for comparing a proposed ban on Russian athletes from the Winter Olympics to the Holocaust.",
+    "A man has surrendered to police after allegedly taking a member of staff hostage at a NatWest bank in Birmingham.",
+    "Leigh Griffiths will make his first Scotland start for more than two years when the Scots host Slovenia in their World Cup qualifier on Sunday.",
+    "Conservative politicians and newspapers in Europe are divided over the impact of Boris Johnson's decision to campaign for Britain to leave the European Union.",
+    "Bob Katter has defended a video advertisement in which he shoots two \"faceless men\" representing the major parties.",
+    "A performance artist has opened a silent gallery in London, where visitors are encouraged to sit in silence and stare at the walls.",
+    "Rescuers in Sri Lanka are searching for 134 people missing after a huge landslide in the central part of the country.",
+    "Chelsea boss Antonio Conte is making a big impact on and off the pitch.",
+    "Scientists in Swansea are using 3D printing technology to grow new body parts.",
+    "Labour's draft manifesto for the 8 June general election has been leaked to the media.",
+    "The Bank of England has kept UK interest rates at 0.25% and says it is still considering a further cut.",
+    "North Wales Police has warned of a \"significant challenge\" to meet further budget cuts.",
+    "A US appeals court has upheld a ruling that suspended President Donald Trump's travel ban on seven mainly Muslim countries.",
+    "The health trusts and police in Northern Ireland are to be investigated over the disappearance of eight children.",
+    "Donald Trump has made a number of bold and controversial statements during his campaign for the US presidency.",
+    "China has agreed to cut steel capacity at home, UK Business Secretary Sajid Javid has said.",
+    "David Cameron has said the battle against corruption \"will not be won overnight\" as he prepares to host a summit on the issue.",
+    "Actor Tony Valentine, best known for his roles in Colditz and Raffles, has died aged 82.",
+    "Lily James has revealed she was initially \"confused\" and \"cynical\" about the idea of putting zombies into a Jane Austen story.",
+    "Disney has given us a sneak peek at how it plans to use artificial intelligence to create robots that can interact with visitors at its theme parks.",
+    "A woman has been taken to hospital after a tanker overturned on the M4 in south Wales, causing major delays.",
+    "The US has said two missiles fired at a US Navy ship off Yemen's coast on Sunday were launched from areas controlled by rebels.",
+    "Shares in Honda have fallen by another 10% in Tokyo after the Japanese carmaker cut its annual profit forecast on Friday.",
+    "Scotland's skills system needs to be overhauled to help people adapt to technological change, a think tank has said.",
+    "Hull KR half-back Danny Sneyd has signed a new two-year deal with the Super League side.",
+    "Manager Keith Curle has told Carlisle United's board he will stay at the club if they can match his ambition.",
+    "The Scottish government has been accused of a \"sham consultation\" over its controversial named person policy.",
+    "A hoax device which caused the evacuation of businesses and homes in Portrush on Friday has been declared safe.",
+    "A fire at Cardiff University's main building has been described as \"serious\" by the fire service.",
+    "The European football leagues group has ended an agreement with Uefa that prevented matches from being played on the same night as Champions League and Europa League games.",
+    "Zlatan Ibrahimovic says he may have played his last game for Sweden after they lost their World Cup play-off to Portugal.",
+    "Irish international Fionnuala Ross and Northern Ireland's Andrew Pollock were among the winners at the Cardiff University/Cardiff Harriers International Cross Country meeting.",
+    "12 days of Christmas quiz: Day seven",
+    "A cleaner has been suspended after allegedly befriending a woman on Facebook and telling her he had been \"checking her out\" while she was being treated in hospital.",
+    "Roald Dahl is one of the world's best-loved storytellers.",
+    "Housebuilder Barratt Developments has announced plans for 12 new housing developments in Scotland, which it says will create more than 300 jobs.",
+    "The 400th anniversary of Shakespeare's death will be marked by a global project to promote the playwright's work.",
+    "A ceremony has been held in Dover to remember 18 pilots who died in a World War Two mission known as the Channel Dash.",
+    "British Foreign Secretary William Hague has arrived in the Kurdish region of Iraq to discuss the crisis with regional leaders.",
+    "A petition has been launched to rename Cardiff Airport as Sir Tom Jones International Airport.",
+    "Speaker Peter Slipper has resigned from his position and from parliament, dealing a blow to Australian Prime Minister Julia Gillard.",
+    "The Metropolitan Opera in New York has cancelled a live broadcast of a controversial opera about the hijacking of a cruise ship in 1985.",
+    "Bournemouth have been charged with breaching Football Association rules on the registration of players.",
+    "The SNP has swept to victory in four of Scotland's five Liberal Democrat-held seats.",
+    "Russian opposition leader Alexei Navalny has been found guilty of embezzling more than $500,000 (\u00c2\u00a3320,000) and sentenced to five years in prison.",
+    "Premier League clubs paid a record \u00a3174m to agents in the 2016-17 season, according to figures released by the Football Association.",
+    "A 15-year-old boy in Malaysia has died after a tumour was discovered to be a \"parasitic\" twin he had been carrying in his stomach since birth.",
+    "Anthony Scaramucci has become the latest in a long line of senior White House staff to leave their job.",
+    "A man has been arrested after the death of another man at a house in Coleraine, County Londonderry.",
+    "A man has been arrested on suspicion of murder after a man was found dead at a house in Barnsley."
+  ],
+  "references": [
+    "A woman who was seriously hurt in a fatal hen party motorway crash is now helping other major trauma victims rebuild their lives.",
+    "A Tudor manor house has reopened following a \u00a32.2m makeover.",
+    "Walt Disney World has unveiled a lighthouse memorial for a young boy who was killed by an alligator while on holiday at the Florida theme park.",
+    "The agriculture minister is to return to China next month as attempts to access markets there continue.",
+    "Blackpool have signed Bournemouth goalkeeper Ryan Allsop and midfielder Callum Cooke from Middlesbrough on season-long loans.",
+    "Scotland must beat Slovenia if they are to resurrect their chances of reaching the World Cup finals, Gordon Strachan has acknowledged.",
+    "A man jailed for six years for coercing a woman into having sex with a stranger and sending \"revenge porn\" to her family has had the convictions quashed.",
+    "A Dublin man accused of stabbing his friend in a County Antrim hotel has been granted bail.",
+    "Catalans Dragons will be without hooker Paul Aiton for up to six weeks after he tore a pectoral muscle on his debut, in a defeat by Wigan Warriors on Friday.",
+    "Planners in Rugby have revealed they have been in talks with Coventry City Football Club about building a stadium in the borough.",
+    "A man tried to buy ricin from the \"dark web\" after the idea was \"implanted in his brain\" from watching the Breaking Bad television series, a court heard.",
+    "A tumble dryer could \"not be ruled out\" as the cause of a flat fire in which two men died, an inquest has heard.",
+    "Bots appear to be spamming a US regulator's website over a proposed reversal of net neutrality rules, researchers have said.",
+    "School Report gives students a real audience, by linking to their work from the BBC website.",
+    "Michele Morgan, the French screen star and glamour icon who won the first best actress prize at the Cannes film festival, has died at the age of 96.",
+    "For years Match of the Day has satisfied impatient football fans by condensing a 90 minute match into a handy chunk of highlights.",
+    "St Johnstone have secured striker Steven MacLean on a contract extension.",
+    "Bournemouth have signed Norwich midfielder Andrew Surman for an undisclosed fee on a three-year deal.",
+    "Another election is probably the last thing the public want to hear about after what we've just gone through but that's exactly what the parties at the assembly are gearing up for next year.",
+    "Chancellor George Osborne has abandoned his target to restore government finances to a surplus by 2020.",
+    "Rory McIlroy hopes to play in the WGC-HSBC Champions event in Shanghai despite suffering with food poisoning.",
+    "Disused phone boxes in London are being put to a novel use - as solar-powered charging stations for mobile phones.",
+    "The ex-chair of the Independent Monitoring Commission (IMC) has said he does not believe bringing it back would solve the latest Stormont crisis.",
+    "The UN says it has negotiated the release of 876 children in Nigeria, who were being held by the army over possible links to Islamist militants.",
+    "Liberty House plans to submit a formal bid on Tuesday to buy Tata Steel's UK assets, which include the Port Talbot works employing about 4,000 people.",
+    "Health trusts in England have been ranked by their ability to learn from mistakes, as part of several changes designed to improve patient safety.",
+    "The EU has to be measured in its response to Theresa May's election announcement.",
+    "The Republic of Ireland's economy grew 1.5% in the second quarter of the year, figures show, and was up 7.7% on the April-to-June period in 2013.",
+    "The president of Cuba has spoken publicly for the first time against US President Donald Trump's rollback of a thaw between the two countries a month ago.",
+    "Scientists are exploring the deepest place on Earth - and streaming live video from there.",
+    "Former Crusaders defender and player-manager Aaron Callaghan is the new manager of Carrick Rangers.",
+    "Former classmates of Adam Lanza, 20, the man identified as the gunman in the Sandy Hook School killings, do not remember much about him.",
+    "Audi will not race in next season's World Endurance Championship, which includes the iconic Le Mans 24 Hours race, to concentrate on Formula E.",
+    "The ex-girlfriend of former England footballer Adam Johnson has told a jury they split up after he admitted cheating on her with \"quite a few\" women.",
+    "Health managers planning to close a hospital fertility unit have refused to put the service back out to tender.",
+    "A hotel and apartment complex in Dorset has been approved despite English Heritage stating it would be a \"hammer-blow\" to the area.",
+    "Councillors have voted to ban buses and taxis from Queen Street in Oxford for six months because of safety concerns.",
+    "Glasgow Warriors have confirmed the signing of loose-head prop Oliver Kebble for next season.",
+    "Glasgow Warriors assistant coach Mike Blair believes it is vital the Pro12 club sign up more of their squad on new contracts.",
+    "A three-person panel has been appointed to carry out an investigation into De La Salle College in west Belfast.",
+    "Hereford United have been expelled from the Football Conference following the club's failure to pay their bills.",
+    "The day 12-year-old Faizan Fayaz Dar died, he woke up in the morning in his hilltop home in Budgam in Indian-administered Kashmir, had a cup of salted tea, recited the Koran and pottered around in the kitchen where his mother prepared breakfast for the family.",
+    "A former senior information officer for the Scottish government has been jailed for 18 months for using his mobile phone to take photos up women's skirts.",
+    "Householders who persistently leave out too much rubbish in Flintshire will face fines from next year.",
+    "General election campaigning is continuing during a week which is being dominated by manifesto launches.",
+    "A \u00a37m Birmingham free school opened by Prime Minister David Cameron is to go into special measures following a highly critical Ofsted report.",
+    "A proposal to abolish six councils and create one county-wide local authority for Oxfordshire has been published.",
+    "Microsoft has unveiled Xbox SmartGlass: a service to allow tablet computers and smartphones to communicate with its video games consoles.",
+    "League One side Southend United have signed defender Ryan Inniss on a season-long loan from Crystal Palace.",
+    "Guernsey FC could be forced to pull out of the FA Cup over restrictions imposed on them by the Football Association.",
+    "A Borders textile firm has announced a 20% increase in its turnover, to \u00c2\u00a38m a year, in its annual accounts.",
+    "Relatives of the 10 people who died in the Clutha helicopter tragedy in Glasgow have been told fuel switches were in the off position when they should have been on.",
+    "Diesel car owners could get some help from the government if cities adopt new charges to tackle pollution, the prime minister has suggested.",
+    "A terminal cancer patient who has been told he has just months to live has conquered Mount Everest.",
+    "A newly discovered species of gecko has tearaway skin that leaves predators with nothing but a mouthful of scales when attacked.",
+    "Is Tony Fadell destined to eclipse his former Apple workmate Sir Jonathan Ive?",
+    "Chelsea's 1-0 win at West Brom on Friday clinched the Blues their fifth Premier League title.",
+    "A British teacher living in Spain has been arrested for allegedly storing and sharing sexual images of children.",
+    "John Swinney should have published his draft budget in mid-September, for MSPs to deliberate on it over winter, with a big rubber stamp in plenty time for the start of the financial year.",
+    "Emergency services were not called until 11 minutes after the Alton Towers rollercoaster crash, it has emerged.",
+    "A former Scottish first minister has fallen down a drain while walking in the dark in Malawi.",
+    "Syrian government forces have fully captured a district that was a key rebel stronghold in the central city of Homs, state media report.",
+    "A man who stalked and killed his former girlfriend after she rejected him has been found guilty of her murder.",
+    "The Mountain Bothies Association has appealed to hillwalkers and climbers to help keep more than 100 shelters it looks after in the UK clean and tidy.",
+    "With Chris Froome's triumph for Britain in the Tour de France, cycling is in the spotlight.",
+    "Vin Diesel sang, Channing Tatum danced and Zac Efron showed off his abs, yes - again, at the 2015 MTV Movie Awards.",
+    "England beat Belgium in their final match of the Women's Euro 2017 qualifiers, ensuring they finish as Group 7 leaders.",
+    "UKIP leadership hopeful Steven Woolfe has been ruled \"ineligible\" to stand in the contest to replace Nigel Farage - after he submitted his papers late.",
+    "Armagh moved to within a point of top spot with a 3-15 to 0-11 victory over Louth side in Drogheda.",
+    "Les Hutchison's involvement at Motherwell has ended before he expected it to.",
+    "Harry Potter and the Cursed Child writer Jack Thorne is joining new TV drama Electric Dreams: The World of Philip K Dick.",
+    "A man, who downloaded thousands of images of children being sexually abused, has been released on probation.",
+    "Eighteen people died when their tour bus collided with a lorry and burst into flames on the A9 motorway in southern Germany, police say.",
+    "Striker Sam Vokes is aiming for promotion and a place in Wales' Euro 2016 team after signing a new contract with Burnley.",
+    "Fe gafodd canolfan siopa yn Abertawe ei gwagio brynhawn dydd Mercher am gyfnod yn dilyn pryderon am ddiogelwch.",
+    "The number of cancer cases in Wales has risen by almost 10% over a 10-year period.",
+    "A leading researcher into the mental health of military personnel has been knighted in the New Year's Honours.",
+    "Leyton Orient have signed striker Armand Gnanduillet from Chesterfield for an undisclosed fee.",
+    "The stories of women who were unknowingly involved in relationships with undercover police officers are revealed as their testimonies to MPs are made public.",
+    "Goals from Sone Aluko and Tom Cairney gave Fulham a west London derby win over Brentford at Griffin Park.",
+    "German skincare brand Nivea has apologised and removed an advert that was deemed discriminatory.",
+    "Plans for a new \u00a33m lifeboat station in Scarborough have been approved by the town's council.",
+    "The Russian military says it has informed the US that it believes rebels in the Syrian city of Aleppo have deployed \"toxic substances\".",
+    "First Minister Nicola Sturgeon has called for \"cast iron assurances\" jobs will not be lost at Clyde shipyards because of contract delays.",
+    "A man in his 60s has been airlifted to hospital after falling while walking in Snowdonia.",
+    "Ding Junhui thrashed Mark Williams 13-3 inside two sessions to become the first man into this year's World Championship semi-finals.",
+    "A man who admits he \"cannot knit a stitch\" is hoping to cover the streets of Cambridge with knitted bunting and wool artwork during the Tour de France.",
+    "A fake video report about Kenya's election that is made to appear as if it is from the BBC's Focus on Africa programme has been circulating on social media.",
+    "Wrth i'r swyddfa gartref gyhoeddi \u00a31m i helpu cymunedau noddi ffoaduriaid mae pryder yngl\u0177n \u00e2 pha mor gymhleth yw'r broses.",
+    "One of the reasons the Great Exhibition of the North was awarded to Newcastle and Gateshead was because of the \"ambition\" of  organisers.",
+    "Walmart has announced a partnership with the Chinese e-commerce firm JD.com to help revive the US company's struggling website Yihaodian.",
+    "A Labour councillor has been suspended from the party over anti-Semitic comments on her Twitter account.",
+    "Katie Ledecky won her third gold of the Rio Games as she guided the United States to victory in the women's 4x200m freestyle relay final.",
+    "Voters in Ferguson, Missouri, where last year an unarmed black teenager was shot dead by police, have tripled the number of African-Americans on the six-member council from one to three.",
+    "Record-breaking performances and packed venues made the London Paralympics the most successful ever and many say it has changed the way people look at disability.",
+    "What is believed to be the first email scam using Gaelic has been targeted at residents of the Western Isles.",
+    "Scientists have measured the way Loch Ness tilts back and forth as the whole of Scotland bends with the passing of the tides.",
+    "Salford Red Devils have signed hooker Liam Hood from Championship One Hunslet Hawks on a two-year deal from 2015.",
+    "Fugitive US intelligence leaker Edward Snowden has not been given Russian travel documents, his lawyer has said, contradicting earlier reports.",
+    "MPs are demanding highways officials explain why roadworks on the A55 and A483 on the Chester-Wrexham border have over-run, causing months of frustration and long hold-ups for motorists.",
+    "Police Scotland has said that it does not collate or hold specific figures on child sexual exploitation.",
+    "Thousands of owners of Nintendo's new console, Switch, have complained about dead or stuck pixels creating distracting and annoying dark squares on their screens.",
+    "Guernsey's minister for Health and Social Services has resigned, ahead of a planned States debate on a motion of no confidence.",
+    "EU leaders trying to finalise a deal with Turkey on the migrant crisis have warned of the difficulties they face at the start of a summit in Brussels.",
+    "In September 2010 Masoumeh Ataie was attacked with acid by her father-in-law after her marriage broke down.",
+    "The longest-serving Lib Dem peer and veteran human rights campaigner, Lord Avebury, has died at the age of 87.",
+    "Sir Bradley Wiggins has defended claims made in his 2012 autobiography that he had never received injections.",
+    "An Asda supermarket in Manchester is introducing a \"quiet hour\" to help autistic shoppers who can feel stressed by noise.",
+    "Parts of Clandon Park House, which was reduced to a shell by a fire in April, are to be restored to their \"original glory\", the National Trust (NT) says.",
+    "A County Down solicitor defrauded a bank of \u00a3400,000 to help buy a partnership in a legal practice and an apartment in England.",
+    "Sir Bradley Wiggins and Mark Cavendish have been confirmed among 126 riders for the 2016 Tour of Britain, which begins in Glasgow on Sunday.",
+    "David Cameron has condemned \"despicable\" incidents of hate crime reported in the wake of the UK's referendum vote to leave the EU.",
+    "Jack Baird scored a dramatic last-minute goal to preserve St Mirren's 100% record in this season's Betfred League Cup.",
+    "High-status Roman floors discovered by archaeologists during building work will go on permanent display, it has been confirmed.",
+    "A cyclist has suffered serious head injuries after a collision with a car in Elgin.",
+    "Broadcaster Sky is launching its own mobile phone service.",
+    "Thailand's attorney-general has filed criminal charges against former Prime Minister Yingluck Shinawatra over a controversial rice subsidy scheme.",
+    "A man with learning difficulties has been left \"absolutely traumatised\" after being punched and robbed at a bus stop.",
+    "The front-runner in the French presidential election has told the BBC that the EU must reform or face the prospect of \"Frexit\".",
+    "India's economy grew 7.5% in the three months ending in March, higher than the previous quarter and above expectations.",
+    "Luke Wells has established himself in Sussex's County Championship side but is hungry for more.",
+    "A nine-year-old boy is being treated in hospital after being hit by a vehicle in North Lanarkshire on Saturday.",
+    "Bournemouth striker Joshua King insists the Cherries will not lose focus on the rest of the season after their priceless win over Swansea City.",
+    "The percentage of Americans living in poverty is statistically unchanged from 2010's record high, even as household income fell, a US Census report says.",
+    "Walsall have signed Cyprus striker Andreas Makris from Anorthosis Famagusta for a club-record fee.",
+    "Rescuers used helicopters to pluck families from rooftops in the southern German town of Deggendorf on Wednesday as the Danube flood crisis continues.",
+    "Hundreds of ex-commercial hens considered too slow at laying eggs face slaughter unless they can be rehomed in north Wales, a charity has said.",
+    "An elderly man has been assaulted in his Glasgow home during an attempted robbery.",
+    "Police in Brazil are stepping up their search for more than 100 prisoners who are still on the run after escaping from adjoining prisons in the northern state of Amazonas on 1 January.",
+    "A mass funeral has taken place in the Colombian town of Salgar for victims of a devastating mudslide on Monday.",
+    "Britain's three-time Tour de France winner Chris Froome has apologised for the way Team Sky has handled questions over its record on doping.",
+    "Egyptian security forces are using sexual violence against detainees on a massive scale, according to the International Federation for Human Rights.",
+    "President Donald Trump has nominated Colorado federal appeals court judge Neil Gorsuch for the US Supreme Court.",
+    "American Jason Dufner will take a five-shot lead into the third round of the Memorial Tournament after carding an eagle on the 18th hole on Friday.",
+    "The former football star George Weah has won a landslide victory in Liberia's senate elections, in polls disrupted by the Ebola outbreak.",
+    "Former Derby County defender Shaun Barker will be offered a deal at Burton Albion if he can prove his fitness, says manager Nigel Clough.",
+    "A wine bar has been fined \u00a3100,000 after a woman drank a cocktail containing liquid nitrogen and had to have her stomach removed.",
+    "US football star Brandi Chastain, who shot to fame in the 1999 Women's World Cup, has pledged to donate her brain to the Concussion Legacy Foundation.",
+    "The operator of Japan's earthquake-hit Fukushima Daiichi nuclear plant has said it expects to bring the crisis under control by the end of the year.",
+    "Liverpool have signed England defender Alex Greenwood from fellow Women's Super League One side Notts County.",
+    "London Olympian Zoe Smith will lead a 14-strong British team at April's European Championships in Norway.",
+    "At least seven Afghan soldiers have died and many were injured after a suicide bomber targeted a bus carrying troops in the Afghan capital Kabul.",
+    "A motorist whose \u00c2\u00a340,000 Jaguar car was stolen from his driveway has said he is \"astounded\" after police said they would be closing the case.",
+    "A tweak to Siri's pronunciation of Barbra Streisand's name will be heading to Apple products soon.",
+    "Tyson Fury defeated Dereck Chisora on points to become the new British and Commonwealth heavyweight champion after a brutal fight at Wembley Arena.",
+    "Ask senior officials in Number 10 what the most important issue is for voters and it isn't long before they point out that an economy \"that works for everyone\" is more than just a slogan.",
+    "Two men have been charged with rape following a sexual exploitation investigation in Sunderland.",
+    "Geordie Shore has unveiled two new characters, Nathan Henry and Chloe Etherington.",
+    "More than 30 people have been killed after attackers dressed as doctors stormed the largest military hospital in Kabul, Afghan officials say.",
+    "Increasingly large TV deals are helping English Premier League clubs to enter \"a new era of sustained financial performance\", according to Deloitte.",
+    "An International Olympic Committee (IOC) board member has apologised for comparing calls to ban Russia from the 2018 Winter Olympics to the Holocaust.",
+    "A man was arrested on suspicion of holding a staff member at gunpoint at a NatWest bank in Birmingham.",
+    "Celtic striker Leigh Griffiths has yet to score for Scotland but is ready to lead the line against Slovenia despite admitting he is \"rusty\".",
+    "Many European commentators have reacted to London Mayor Boris Johnson's decision to back Britain leaving the European Union, seeing his intervention as a problem for Prime Minister David Cameron.",
+    "Australian politician Bob Katter has defended a video that depicts him killing his electoral rivals.",
+    "Audience members were moved to tears at the opening of Marina Abramovic's new show at London's Serpentine Gallery.",
+    "Sri Lankan teams searching for scores of people missing after a landslide fear there may be no more survivors.",
+    "Chelsea's win over Tottenham at Stamford Bridge not only restored them to the top of the Premier League, it also offered up further evidence of the impact manager Antonio Conte has as he rebuilds the club from the trauma of last season.",
+    "Patients needing surgery to reconstruct body parts such as noses and ears could soon have treatment using cartilage which has been grown in a lab.",
+    "A draft of Labour's general election manifesto has been leaked, including plans to nationalise parts of the energy industry and scrap tuition fees.",
+    "The Bank of England has left its main interest rate at 0.25% but says another cut is still a possibility.",
+    "Senior figures at two Welsh police forces have raised fears about their funding in the coming years.",
+    "A US appeals court has rejected President Donald Trump's attempt to reinstate his ban on visitors from seven mainly Muslim countries.",
+    "An \"urgent inquiry\" is needed into separated children who have gone missing from care, the Social Democratic and Labour Party has said.",
+    "Republican Donald Trump has won victory in the presidential race, but no one's quite sure what President Trump will actually do in office.",
+    "China has vowed to reduce the amount of steel it makes, Business Secretary Sajid Javid said.",
+    "Prime Minister David Cameron has said he wants to put tackling corruption at the \"top of the international agenda\" ahead of a London summit on the issue.",
+    "Actor Anthony Valentine, best known for the 1970s TV series Colditz and Raffles, has died at the age of 76.",
+    "She is best known for period dramas - having been seen most recently in War and Peace and Downton Abbey.",
+    "Ever since Steamboat Willie, the iconic animated clip from 1928 featuring a mouse that would later become Mickey, Disney has had a proud record of innovating with new technology.",
+    "One person has been taken to hospital after a serious crash on the M4 in Cardiff involving a tanker and a van.",
+    "Two missiles were fired at a US warship from rebel-held territory in Yemen as it passed through the Red Sea on Sunday, the US Navy has said.",
+    "Shares in Japanese automaker Mitsubishi Motors plunged 13.5% in Friday trade to close at 504 yen.",
+    "The way in which people in Scotland are trained for work needs to change in order to meet future challenges, a think tank has warned.",
+    "Half-back Marc Sneyd has extended his contract at Hull FC until the end of 2019 after the club took up a two-year option on his existing deal.",
+    "Manager Keith Curle wants to continue the job he has started at Carlisle United beyond his current contract, but wants assurances he will be backed by the club's board going forward.",
+    "Campaigners opposed to the Scottish government's named person scheme claim ministers have refused to engage with them during a consultation on plans to reform the policy.",
+    "A security alert in the centre of Larne, County Antrim, has ended and been declared a hoax.",
+    "Parts of Cardiff University's main building will remain closed on Wednesday after a fire.",
+    "European leagues are free to schedule domestic games on the same nights as Champions League and Europa League ties after an agreement with Uefa ended.",
+    "Sweden captain Zlatan Ibrahimovic says the World Cup is not worth watching without him after their play-off loss.",
+    "Northern Ireland's top distance runner Paul Pollock claimed a top 10 finish in Sunday's Cardiff Half Marathon.",
+    "How much do you remember about the news in Wales over the past 12 months?",
+    "A full review of security has been carried out by NHS Lothian after a hospital cleaner allegedly used information about a female patient to contact her on Facebook.",
+    "Matilda, The BFG, Charlie and the Chocolate Factory - they're some of the most popular children's books ever written.",
+    "House builder Barratt has announced plans to create 1,420 homes at 14 new sites across Scotland this year.",
+    "The 400th anniversary of the death of William Shakespeare next year will be marked by a major global cultural and educational project in 140 countries.",
+    "Hundreds of people gathered in Ramsgate to pay tribute to 18 airmen who took part in a wartime operation known as The Channel Dash.",
+    "William Hague has held talks with Kurdish leaders about international efforts to confront Islamist extremists threatening to overrun parts of Iraq.",
+    "Renaming Cardiff Airport in memory of Princess Diana would boost international recognition, a former councillor has said.",
+    "Australia's parliament Speaker Peter Slipper has resigned amid a continuing sex scandal, dealing a blow to Prime Minister Julia Gillard's government.",
+    "New York's Metropolitan Opera has cancelled plans for a global HD broadcast of a performance amid fears it could spark anti-Semitic sentiment.",
+    "Bournemouth have accepted a Football Association charge relating to a breach of anti-doping rules.",
+    "High profile Liberal Democrats have lost three strongholds in the Highlands and Islands.",
+    "Russian protest leader Alexei Navalny has been jailed for five years, for embezzlement from a timber firm.",
+    "The amount paid by English clubs to agents has risen by 38% in a year - up from \u00a3160m to \u00a3220m.",
+    "A 15-year-old Malaysian boy has had the parasitic foetus of his twin removed from his stomach, Malaysia's Bernama state news agency reports.",
+    "Anthony Scaramucci is out.",
+    "Police are treating the death of a man in Coleraine, County Londonderry, as suspicious and have made an arrest.",
+    "A man who died after he suffered a serious head injury at a party in Barnsley has been named."
+  ],
+  "per_example_rouge": [
+    {
+      "rouge1": 0.38461538461538464,
+      "rouge2": 0.23999999999999996,
+      "rougeL": 0.34615384615384615,
+      "semantic": 0.5499407052993774,
+      "entity_support": null,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.29411764705882354,
+      "rouge2": 0.06250000000000001,
+      "rougeL": 0.29411764705882354,
+      "semantic": 0.5785832405090332,
+      "entity_support": 0.0,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.6153846153846154,
+      "rouge2": 0.32,
+      "rougeL": 0.4230769230769231,
+      "semantic": 0.9015967845916748,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3333333333333333,
+      "rouge2": 0.05,
+      "rougeL": 0.28571428571428564,
+      "semantic": 0.508536159992218,
+      "entity_support": 0.8,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.558139534883721,
+      "rouge2": 0.24390243902439027,
+      "rougeL": 0.372093023255814,
+      "semantic": 0.7042789459228516,
+      "entity_support": 0.3333333333333333,
+      "entities_unsupported": 6.0
+    },
+    {
+      "rouge1": 0.5217391304347826,
+      "rouge2": 0.22727272727272727,
+      "rougeL": 0.34782608695652173,
+      "semantic": 0.7586901187896729,
+      "entity_support": 0.875,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4230769230769231,
+      "rouge2": 0.24,
+      "rougeL": 0.3846153846153846,
+      "semantic": 0.5574148893356323,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.43749999999999994,
+      "rouge2": 0.06666666666666667,
+      "rougeL": 0.37500000000000006,
+      "semantic": 0.6412659287452698,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.18867924528301885,
+      "rouge2": 0.0,
+      "rougeL": 0.15094339622641512,
+      "semantic": 0.4154341220855713,
+      "entity_support": 0.2857142857142857,
+      "entities_unsupported": 5.0
+    },
+    {
+      "rouge1": 0.3902439024390244,
+      "rouge2": 0.05128205128205128,
+      "rougeL": 0.1951219512195122,
+      "semantic": 0.6614543199539185,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4444444444444445,
+      "rouge2": 0.1923076923076923,
+      "rougeL": 0.4444444444444445,
+      "semantic": 0.666980504989624,
+      "entity_support": 0.75,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.6530612244897959,
+      "rouge2": 0.2978723404255319,
+      "rougeL": 0.3673469387755102,
+      "semantic": 0.8457185626029968,
+      "entity_support": 0.0,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4444444444444445,
+      "rouge2": 0.13953488372093023,
+      "rougeL": 0.35555555555555557,
+      "semantic": 0.5836330652236938,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.411764705882353,
+      "rouge2": 0.0625,
+      "rougeL": 0.29411764705882354,
+      "semantic": 0.7123609781265259,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6938775510204083,
+      "rouge2": 0.46808510638297873,
+      "rougeL": 0.6530612244897959,
+      "semantic": 0.964164674282074,
+      "entity_support": 0.8571428571428571,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.24390243902439024,
+      "rouge2": 0.0,
+      "rougeL": 0.0975609756097561,
+      "semantic": 0.49397891759872437,
+      "entity_support": null,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.34782608695652173,
+      "rouge2": 0.0,
+      "rougeL": 0.34782608695652173,
+      "semantic": 0.37522536516189575,
+      "entity_support": 0.25,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.9411764705882353,
+      "rouge2": 0.6875,
+      "rougeL": 0.6470588235294118,
+      "semantic": 0.965046763420105,
+      "entity_support": 0.6,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.26229508196721313,
+      "rouge2": 0.06779661016949153,
+      "rougeL": 0.1639344262295082,
+      "semantic": 0.3759430944919586,
+      "entity_support": 0.4,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.5625,
+      "rouge2": 0.4000000000000001,
+      "rougeL": 0.5625,
+      "semantic": 0.7902913093566895,
+      "entity_support": 0.8,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.1935483870967742,
+      "rouge2": 0.06896551724137931,
+      "rougeL": 0.1935483870967742,
+      "semantic": 0.581748366355896,
+      "entity_support": 0.25,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.5581395348837209,
+      "rouge2": 0.1951219512195122,
+      "rougeL": 0.27906976744186046,
+      "semantic": 0.7923744916915894,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4390243902439025,
+      "rouge2": 0.2564102564102564,
+      "rougeL": 0.34146341463414637,
+      "semantic": 0.47629064321517944,
+      "entity_support": 0.7142857142857143,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.42553191489361697,
+      "rouge2": 0.08888888888888889,
+      "rougeL": 0.42553191489361697,
+      "semantic": 0.6318568587303162,
+      "entity_support": 0.6,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.6274509803921569,
+      "rouge2": 0.44897959183673464,
+      "rougeL": 0.5098039215686274,
+      "semantic": 0.886565625667572,
+      "entity_support": 0.8571428571428571,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.30434782608695654,
+      "rouge2": 0.04545454545454545,
+      "rougeL": 0.17391304347826086,
+      "semantic": 0.6045722961425781,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.2439024390243902,
+      "rouge2": 0.05128205128205128,
+      "rougeL": 0.1951219512195122,
+      "semantic": 0.3853292763233185,
+      "entity_support": 0.4,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.44000000000000006,
+      "rouge2": 0.2916666666666667,
+      "rougeL": 0.44000000000000006,
+      "semantic": 0.8818906545639038,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.375,
+      "rouge2": 0.043478260869565216,
+      "rougeL": 0.3333333333333333,
+      "semantic": 0.6265617609024048,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.23529411764705882,
+      "rouge2": 0.0625,
+      "rougeL": 0.23529411764705882,
+      "semantic": 0.5363898277282715,
+      "entity_support": null,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.625,
+      "rouge2": 0.19999999999999998,
+      "rougeL": 0.5625,
+      "semantic": 0.8607381582260132,
+      "entity_support": 0.5,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.43999999999999995,
+      "rouge2": 0.20833333333333331,
+      "rougeL": 0.32,
+      "semantic": 0.6454540491104126,
+      "entity_support": 0.8333333333333334,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4583333333333333,
+      "rouge2": 0.17391304347826086,
+      "rougeL": 0.41666666666666663,
+      "semantic": 0.7232561111450195,
+      "entity_support": 0.6,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.7916666666666667,
+      "rouge2": 0.608695652173913,
+      "rougeL": 0.7916666666666667,
+      "semantic": 0.8010623455047607,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.2,
+      "rouge2": 0.0,
+      "rougeL": 0.2,
+      "semantic": 0.5714304447174072,
+      "entity_support": null,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.39999999999999997,
+      "rouge2": 0.15789473684210525,
+      "rougeL": 0.35,
+      "semantic": 0.4995744824409485,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.2777777777777778,
+      "rouge2": 0.058823529411764705,
+      "rougeL": 0.16666666666666663,
+      "semantic": 0.4631347954273224,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.38709677419354843,
+      "rouge2": 0.1379310344827586,
+      "rougeL": 0.3225806451612903,
+      "semantic": 0.48244425654411316,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.31111111111111117,
+      "rouge2": 0.046511627906976744,
+      "rougeL": 0.31111111111111117,
+      "semantic": 0.6342936754226685,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.7027027027027027,
+      "rouge2": 0.45714285714285713,
+      "rougeL": 0.7027027027027027,
+      "semantic": 0.8193888664245605,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4878048780487805,
+      "rouge2": 0.41025641025641024,
+      "rougeL": 0.4878048780487805,
+      "semantic": 0.9574354290962219,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.2285714285714286,
+      "rouge2": 0.14705882352941177,
+      "rougeL": 0.2,
+      "semantic": 0.37849369645118713,
+      "entity_support": 0.5,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.37209302325581395,
+      "rouge2": 0.2439024390243902,
+      "rougeL": 0.3255813953488372,
+      "semantic": 0.5811229348182678,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6470588235294118,
+      "rouge2": 0.37500000000000006,
+      "rougeL": 0.5294117647058824,
+      "semantic": 0.8089837431907654,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.2580645161290323,
+      "rouge2": 0.0689655172413793,
+      "rougeL": 0.19354838709677422,
+      "semantic": 0.5631455779075623,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3255813953488372,
+      "rouge2": 0.14634146341463414,
+      "rougeL": 0.3255813953488372,
+      "semantic": 0.5052249431610107,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.45714285714285713,
+      "rouge2": 0.06060606060606061,
+      "rougeL": 0.28571428571428575,
+      "semantic": 0.6169054508209229,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6842105263157895,
+      "rouge2": 0.16666666666666669,
+      "rougeL": 0.4736842105263158,
+      "semantic": 0.8958122730255127,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.7777777777777778,
+      "rouge2": 0.6470588235294118,
+      "rougeL": 0.7777777777777778,
+      "semantic": 0.49128884077072144,
+      "entity_support": 0.42857142857142855,
+      "entities_unsupported": 4.0
+    },
+    {
+      "rouge1": 0.34615384615384615,
+      "rouge2": 0.12,
+      "rougeL": 0.30769230769230765,
+      "semantic": 0.7483197450637817,
+      "entity_support": 0.8,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.375,
+      "rouge2": 0.08695652173913043,
+      "rougeL": 0.375,
+      "semantic": 0.5648817420005798,
+      "entity_support": 0.0,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4,
+      "rouge2": 0.1509433962264151,
+      "rougeL": 0.3272727272727273,
+      "semantic": 0.3788546919822693,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.30434782608695654,
+      "rouge2": 0.09090909090909091,
+      "rougeL": 0.13043478260869565,
+      "semantic": 0.7077676057815552,
+      "entity_support": null,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4,
+      "rouge2": 0.14285714285714285,
+      "rougeL": 0.4,
+      "semantic": 0.7852959632873535,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4615384615384615,
+      "rouge2": 0.16216216216216214,
+      "rougeL": 0.358974358974359,
+      "semantic": 0.728797972202301,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.15,
+      "rouge2": 0.0,
+      "rougeL": 0.15,
+      "semantic": 0.3699330687522888,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.6,
+      "rouge2": 0.36842105263157887,
+      "rougeL": 0.39999999999999997,
+      "semantic": 0.5564467310905457,
+      "entity_support": 0.5555555555555556,
+      "entities_unsupported": 4.0
+    },
+    {
+      "rouge1": 0.6666666666666666,
+      "rouge2": 0.17647058823529413,
+      "rougeL": 0.3888888888888889,
+      "semantic": 0.8421306610107422,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.23529411764705885,
+      "rouge2": 0.04081632653061225,
+      "rougeL": 0.11764705882352942,
+      "semantic": 0.4904220700263977,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.39999999999999997,
+      "rouge2": 0.06060606060606061,
+      "rougeL": 0.28571428571428575,
+      "semantic": 0.6269422769546509,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.39999999999999997,
+      "rouge2": 0.12121212121212122,
+      "rougeL": 0.39999999999999997,
+      "semantic": 0.4445418119430542,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6190476190476191,
+      "rouge2": 0.35000000000000003,
+      "rougeL": 0.5714285714285715,
+      "semantic": 0.8141368627548218,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.5777777777777778,
+      "rouge2": 0.27906976744186046,
+      "rougeL": 0.35555555555555557,
+      "semantic": 0.8084614872932434,
+      "entity_support": null,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3181818181818182,
+      "rouge2": 0.14285714285714282,
+      "rougeL": 0.3181818181818182,
+      "semantic": 0.6938505172729492,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.09756097560975609,
+      "rouge2": 0.05128205128205128,
+      "rougeL": 0.09756097560975609,
+      "semantic": 0.5217658877372742,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.24000000000000002,
+      "rouge2": 0.08333333333333333,
+      "rougeL": 0.16,
+      "semantic": 0.35732564330101013,
+      "entity_support": 0.7777777777777778,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.4615384615384615,
+      "rouge2": 0.16216216216216214,
+      "rougeL": 0.358974358974359,
+      "semantic": 0.7574447393417358,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.35000000000000003,
+      "rouge2": 0.052631578947368425,
+      "rougeL": 0.25,
+      "semantic": 0.7751415967941284,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4,
+      "rouge2": 0.18604651162790697,
+      "rougeL": 0.3555555555555555,
+      "semantic": 0.8132359385490417,
+      "entity_support": 0.875,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.24000000000000002,
+      "rouge2": 0.0,
+      "rougeL": 0.16,
+      "semantic": 0.5607925653457642,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.6415094339622641,
+      "rouge2": 0.39215686274509803,
+      "rougeL": 0.3018867924528302,
+      "semantic": 0.8521065711975098,
+      "entity_support": 0.8181818181818182,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.3888888888888889,
+      "rouge2": 0.23529411764705882,
+      "rougeL": 0.3888888888888889,
+      "semantic": 0.6889514923095703,
+      "entity_support": null,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.5116279069767442,
+      "rouge2": 0.24390243902439024,
+      "rougeL": 0.32558139534883723,
+      "semantic": 0.7524783611297607,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.5,
+      "rouge2": 0.2631578947368421,
+      "rougeL": 0.35000000000000003,
+      "semantic": 0.7292057275772095,
+      "entity_support": 0.5,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.2777777777777778,
+      "rouge2": 0.0,
+      "rougeL": 0.16666666666666666,
+      "semantic": 0.566963255405426,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.5641025641025642,
+      "rouge2": 0.4324324324324324,
+      "rougeL": 0.5641025641025642,
+      "semantic": 0.9466661810874939,
+      "entity_support": 0.8,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.5555555555555555,
+      "rouge2": 0.411764705882353,
+      "rougeL": 0.5555555555555555,
+      "semantic": 0.8076881766319275,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.3571428571428571,
+      "rouge2": 0.23076923076923075,
+      "rougeL": 0.3571428571428571,
+      "semantic": 0.6160758137702942,
+      "entity_support": 0.42857142857142855,
+      "entities_unsupported": 4.0
+    },
+    {
+      "rouge1": 0.5,
+      "rouge2": 0.23809523809523808,
+      "rougeL": 0.3636363636363636,
+      "semantic": 0.7000506520271301,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.1951219512195122,
+      "rouge2": 0.05128205128205128,
+      "rougeL": 0.1951219512195122,
+      "semantic": 0.7741172909736633,
+      "entity_support": 0.8,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.39999999999999997,
+      "rouge2": 0.21428571428571427,
+      "rougeL": 0.39999999999999997,
+      "semantic": 0.8428993225097656,
+      "entity_support": 0.8,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.7857142857142858,
+      "rouge2": 0.6923076923076923,
+      "rougeL": 0.7857142857142858,
+      "semantic": 0.9169963598251343,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4444444444444445,
+      "rouge2": 0.23255813953488372,
+      "rougeL": 0.2666666666666666,
+      "semantic": 0.6809138655662537,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.2,
+      "rouge2": 0.0,
+      "rougeL": 0.11999999999999998,
+      "semantic": 0.5210087299346924,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.75,
+      "rouge2": 0.5333333333333333,
+      "rougeL": 0.75,
+      "semantic": 0.8778276443481445,
+      "entity_support": 0.0,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.5641025641025642,
+      "rouge2": 0.27027027027027023,
+      "rougeL": 0.46153846153846156,
+      "semantic": 0.8273013234138489,
+      "entity_support": 0.75,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.425531914893617,
+      "rouge2": 0.17777777777777776,
+      "rougeL": 0.3404255319148936,
+      "semantic": 0.4523240327835083,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3846153846153846,
+      "rouge2": 0.2,
+      "rougeL": 0.34615384615384615,
+      "semantic": 0.712618350982666,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.1951219512195122,
+      "rouge2": 0.0,
+      "rougeL": 0.0975609756097561,
+      "semantic": 0.5931757688522339,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4642857142857143,
+      "rouge2": 0.25925925925925924,
+      "rougeL": 0.42857142857142855,
+      "semantic": 0.670717716217041,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.2978723404255319,
+      "rouge2": 0.08888888888888888,
+      "rougeL": 0.2127659574468085,
+      "semantic": 0.7217690944671631,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.7096774193548386,
+      "rouge2": 0.5517241379310345,
+      "rougeL": 0.5806451612903226,
+      "semantic": 0.9177736043930054,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6818181818181818,
+      "rouge2": 0.5714285714285713,
+      "rougeL": 0.6363636363636364,
+      "semantic": 0.7680805325508118,
+      "entity_support": 0.16666666666666666,
+      "entities_unsupported": 5.0
+    },
+    {
+      "rouge1": 0.4444444444444444,
+      "rouge2": 0.13114754098360656,
+      "rougeL": 0.28571428571428575,
+      "semantic": 0.6619480848312378,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.04545454545454546,
+      "rouge2": 0.0,
+      "rougeL": 0.04545454545454546,
+      "semantic": 0.3342204689979553,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4324324324324324,
+      "rouge2": 0.11428571428571428,
+      "rougeL": 0.3243243243243243,
+      "semantic": 0.7759590148925781,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3428571428571428,
+      "rouge2": 0.12121212121212123,
+      "rougeL": 0.2857142857142857,
+      "semantic": 0.7413219213485718,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4,
+      "rouge2": 0.24242424242424243,
+      "rougeL": 0.4,
+      "semantic": 0.48483243584632874,
+      "entity_support": 0.5,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.3636363636363636,
+      "rouge2": 0.1904761904761905,
+      "rougeL": 0.2727272727272727,
+      "semantic": 0.7265740036964417,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.12765957446808507,
+      "rouge2": 0.0,
+      "rougeL": 0.0851063829787234,
+      "semantic": 0.41255658864974976,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.5294117647058824,
+      "rouge2": 0.375,
+      "rougeL": 0.5294117647058824,
+      "semantic": 0.7396912574768066,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.7142857142857143,
+      "rouge2": 0.2,
+      "rougeL": 0.42857142857142855,
+      "semantic": 0.8233835697174072,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3783783783783784,
+      "rouge2": 0.0,
+      "rougeL": 0.16216216216216214,
+      "semantic": 0.4455682337284088,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3829787234042553,
+      "rouge2": 0.13333333333333333,
+      "rougeL": 0.3404255319148936,
+      "semantic": 0.646401047706604,
+      "entity_support": 0.5,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.10810810810810811,
+      "rouge2": 0.0,
+      "rougeL": 0.05405405405405406,
+      "semantic": 0.4015859365463257,
+      "entity_support": 0.5714285714285714,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.4242424242424242,
+      "rouge2": 0.12903225806451615,
+      "rougeL": 0.30303030303030304,
+      "semantic": 0.8910799026489258,
+      "entity_support": 0.8333333333333334,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.24390243902439027,
+      "rouge2": 0.10256410256410256,
+      "rougeL": 0.19512195121951217,
+      "semantic": 0.7852048873901367,
+      "entity_support": 0.6,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.6470588235294117,
+      "rouge2": 0.37499999999999994,
+      "rougeL": 0.588235294117647,
+      "semantic": 0.8518062829971313,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4999999999999999,
+      "rouge2": 0.2,
+      "rougeL": 0.2692307692307692,
+      "semantic": 0.843618631362915,
+      "entity_support": 0.7142857142857143,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.35999999999999993,
+      "rouge2": 0.12499999999999997,
+      "rougeL": 0.32,
+      "semantic": 0.6611202955245972,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.43636363636363634,
+      "rouge2": 0.18867924528301885,
+      "rougeL": 0.3636363636363636,
+      "semantic": 0.7124500274658203,
+      "entity_support": 0.7,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.5853658536585366,
+      "rouge2": 0.41025641025641024,
+      "rougeL": 0.5853658536585366,
+      "semantic": 0.8430544137954712,
+      "entity_support": 0.4,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.380952380952381,
+      "rouge2": 0.15,
+      "rougeL": 0.3333333333333333,
+      "semantic": 0.7859866619110107,
+      "entity_support": 0.625,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.47058823529411764,
+      "rouge2": 0.1875,
+      "rougeL": 0.47058823529411764,
+      "semantic": 0.6259121894836426,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4000000000000001,
+      "rouge2": 0.07142857142857142,
+      "rougeL": 0.4000000000000001,
+      "semantic": 0.5058501958847046,
+      "entity_support": 0.0,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4545454545454546,
+      "rouge2": 0.1,
+      "rougeL": 0.4545454545454546,
+      "semantic": 0.7839720249176025,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.8205128205128205,
+      "rouge2": 0.5945945945945946,
+      "rougeL": 0.6666666666666667,
+      "semantic": 0.8367696404457092,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.37837837837837834,
+      "rouge2": 0.28571428571428575,
+      "rougeL": 0.27027027027027023,
+      "semantic": 0.38535958528518677,
+      "entity_support": 0.3333333333333333,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.46511627906976744,
+      "rouge2": 0.2926829268292683,
+      "rougeL": 0.4186046511627907,
+      "semantic": 0.645114541053772,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.24390243902439024,
+      "rouge2": 0.15384615384615385,
+      "rougeL": 0.24390243902439024,
+      "semantic": 0.7832817435264587,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.2857142857142857,
+      "rouge2": 0.0606060606060606,
+      "rougeL": 0.17142857142857143,
+      "semantic": 0.6790661811828613,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.7142857142857143,
+      "rouge2": 0.55,
+      "rougeL": 0.7142857142857143,
+      "semantic": 0.8937085270881653,
+      "entity_support": 0.0,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.2727272727272727,
+      "rouge2": 0.04761904761904762,
+      "rougeL": 0.2727272727272727,
+      "semantic": 0.3157806396484375,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.42857142857142855,
+      "rouge2": 0.25,
+      "rougeL": 0.42857142857142855,
+      "semantic": 0.8505521416664124,
+      "entity_support": 0.6,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.4,
+      "rouge2": 0.24242424242424243,
+      "rougeL": 0.4,
+      "semantic": 0.6840485334396362,
+      "entity_support": 0.1111111111111111,
+      "entities_unsupported": 8.0
+    },
+    {
+      "rouge1": 0.2926829268292683,
+      "rouge2": 0.0,
+      "rougeL": 0.1951219512195122,
+      "semantic": 0.43045520782470703,
+      "entity_support": 0.75,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.2608695652173913,
+      "rouge2": 0.0909090909090909,
+      "rougeL": 0.2608695652173913,
+      "semantic": 0.5126415491104126,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.47058823529411764,
+      "rouge2": 0.125,
+      "rougeL": 0.3529411764705882,
+      "semantic": 0.438727468252182,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.5454545454545454,
+      "rouge2": 0.37735849056603776,
+      "rougeL": 0.5454545454545454,
+      "semantic": 0.6710126996040344,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4000000000000001,
+      "rouge2": 0.2631578947368421,
+      "rougeL": 0.4000000000000001,
+      "semantic": 0.7567133903503418,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.39999999999999997,
+      "rouge2": 0.32558139534883723,
+      "rougeL": 0.3111111111111111,
+      "semantic": 0.6011481285095215,
+      "entity_support": 0.8333333333333334,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.5365853658536585,
+      "rouge2": 0.25641025641025644,
+      "rougeL": 0.3414634146341463,
+      "semantic": 0.7199342250823975,
+      "entity_support": 0.5,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.6382978723404256,
+      "rouge2": 0.4444444444444445,
+      "rougeL": 0.5957446808510638,
+      "semantic": 0.9051925539970398,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.45454545454545453,
+      "rouge2": 0.1904761904761905,
+      "rougeL": 0.3636363636363636,
+      "semantic": 0.8005938529968262,
+      "entity_support": 0.3333333333333333,
+      "entities_unsupported": 4.0
+    },
+    {
+      "rouge1": 0.6521739130434783,
+      "rouge2": 0.36363636363636365,
+      "rougeL": 0.4782608695652174,
+      "semantic": 0.7752465009689331,
+      "entity_support": 0.3333333333333333,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.48780487804878053,
+      "rouge2": 0.20512820512820512,
+      "rougeL": 0.24390243902439027,
+      "semantic": 0.3668993413448334,
+      "entity_support": 0.42857142857142855,
+      "entities_unsupported": 4.0
+    },
+    {
+      "rouge1": 0.5106382978723404,
+      "rouge2": 0.31111111111111117,
+      "rougeL": 0.5106382978723404,
+      "semantic": 0.7717480659484863,
+      "entity_support": 0.0,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4444444444444445,
+      "rouge2": 0.3255813953488372,
+      "rougeL": 0.4444444444444445,
+      "semantic": 0.8504828214645386,
+      "entity_support": 0.75,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.44897959183673464,
+      "rouge2": 0.21276595744680848,
+      "rougeL": 0.32653061224489793,
+      "semantic": 0.5107030868530273,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.43749999999999994,
+      "rouge2": 0.19999999999999998,
+      "rougeL": 0.43749999999999994,
+      "semantic": 0.5601732134819031,
+      "entity_support": 0.5714285714285714,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.3636363636363636,
+      "rouge2": 0.1935483870967742,
+      "rougeL": 0.3636363636363636,
+      "semantic": 0.5187374353408813,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.43478260869565216,
+      "rouge2": 0.22727272727272727,
+      "rougeL": 0.43478260869565216,
+      "semantic": 0.7221600413322449,
+      "entity_support": 0.75,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.39215686274509803,
+      "rouge2": 0.12244897959183673,
+      "rougeL": 0.39215686274509803,
+      "semantic": 0.35179638862609863,
+      "entity_support": null,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3243243243243243,
+      "rouge2": 0.05714285714285714,
+      "rougeL": 0.16216216216216214,
+      "semantic": 0.8693097829818726,
+      "entity_support": 0.6,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.6363636363636365,
+      "rouge2": 0.3333333333333333,
+      "rougeL": 0.6363636363636365,
+      "semantic": 0.864517867565155,
+      "entity_support": 0.75,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.19607843137254902,
+      "rouge2": 0.0,
+      "rougeL": 0.1568627450980392,
+      "semantic": 0.340315580368042,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6666666666666666,
+      "rouge2": 0.5599999999999999,
+      "rougeL": 0.6666666666666666,
+      "semantic": 0.8698407411575317,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.21428571428571427,
+      "rouge2": 0.07692307692307691,
+      "rougeL": 0.14285714285714288,
+      "semantic": 0.5462814569473267,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6153846153846153,
+      "rouge2": 0.16216216216216214,
+      "rougeL": 0.358974358974359,
+      "semantic": 0.8222725987434387,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.41025641025641024,
+      "rouge2": 0.2162162162162162,
+      "rougeL": 0.358974358974359,
+      "semantic": 0.5872969627380371,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.5531914893617021,
+      "rouge2": 0.3555555555555555,
+      "rougeL": 0.5531914893617021,
+      "semantic": 0.7560917139053345,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6153846153846154,
+      "rouge2": 0.3243243243243243,
+      "rougeL": 0.5128205128205129,
+      "semantic": 0.586639404296875,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.24489795918367346,
+      "rouge2": 0.0425531914893617,
+      "rougeL": 0.20408163265306126,
+      "semantic": 0.6904793381690979,
+      "entity_support": 0.875,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4363636363636364,
+      "rouge2": 0.26415094339622647,
+      "rougeL": 0.3636363636363636,
+      "semantic": 0.6662304401397705,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3636363636363636,
+      "rouge2": 0.3225806451612903,
+      "rougeL": 0.3636363636363636,
+      "semantic": 0.7156373262405396,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.27906976744186046,
+      "rouge2": 0.04878048780487805,
+      "rougeL": 0.13953488372093023,
+      "semantic": 0.3895185887813568,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.45,
+      "rouge2": 0.2105263157894737,
+      "rougeL": 0.4,
+      "semantic": 0.7300069332122803,
+      "entity_support": 0.75,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.1754385964912281,
+      "rouge2": 0.03636363636363636,
+      "rougeL": 0.14035087719298245,
+      "semantic": 0.5324506759643555,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.2631578947368421,
+      "rouge2": 0.05555555555555555,
+      "rougeL": 0.15789473684210525,
+      "semantic": 0.4055100679397583,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.5499999999999999,
+      "rouge2": 0.2105263157894737,
+      "rougeL": 0.45,
+      "semantic": 0.8290178179740906,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.7142857142857143,
+      "rouge2": 0.45,
+      "rougeL": 0.6666666666666666,
+      "semantic": 0.9086804389953613,
+      "entity_support": 0.75,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.06451612903225808,
+      "rouge2": 0.0,
+      "rougeL": 0.06451612903225808,
+      "semantic": 0.5503703951835632,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6976744186046512,
+      "rouge2": 0.5365853658536585,
+      "rougeL": 0.6976744186046512,
+      "semantic": 0.7818357944488525,
+      "entity_support": 0.8,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.15,
+      "rouge2": 0.0,
+      "rougeL": 0.09999999999999999,
+      "semantic": 0.5224650502204895,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.2380952380952381,
+      "rouge2": 0.09999999999999999,
+      "rougeL": 0.2380952380952381,
+      "semantic": 0.3843352794647217,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.5625,
+      "rouge2": 0.26666666666666666,
+      "rougeL": 0.5625,
+      "semantic": 0.7484740018844604,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.52,
+      "rouge2": 0.24999999999999994,
+      "rougeL": 0.44000000000000006,
+      "semantic": 0.457749605178833,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.6111111111111112,
+      "rouge2": 0.4117647058823529,
+      "rougeL": 0.6111111111111112,
+      "semantic": 0.8828139901161194,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.1,
+      "rouge2": 0.0,
+      "rougeL": 0.1,
+      "semantic": 0.3541133999824524,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.17857142857142858,
+      "rouge2": 0.03703703703703704,
+      "rougeL": 0.14285714285714285,
+      "semantic": 0.42464375495910645,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6190476190476191,
+      "rouge2": 0.5,
+      "rougeL": 0.5238095238095238,
+      "semantic": 0.6828259825706482,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.6415094339622641,
+      "rouge2": 0.3137254901960785,
+      "rougeL": 0.33962264150943394,
+      "semantic": 0.9105929136276245,
+      "entity_support": 0.8,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.2631578947368421,
+      "rouge2": 0.05555555555555556,
+      "rougeL": 0.21052631578947367,
+      "semantic": 0.5731886625289917,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.4444444444444445,
+      "rouge2": 0.186046511627907,
+      "rougeL": 0.35555555555555557,
+      "semantic": 0.6144421100616455,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4255319148936171,
+      "rouge2": 0.13333333333333333,
+      "rougeL": 0.3404255319148936,
+      "semantic": 0.7317336797714233,
+      "entity_support": 0.5,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.5283018867924528,
+      "rouge2": 0.23529411764705882,
+      "rougeL": 0.37735849056603776,
+      "semantic": 0.7747854590415955,
+      "entity_support": 0.4,
+      "entities_unsupported": 3.0
+    },
+    {
+      "rouge1": 0.37209302325581395,
+      "rouge2": 0.14634146341463417,
+      "rougeL": 0.27906976744186046,
+      "semantic": 0.5824229121208191,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.5,
+      "rouge2": 0.11764705882352941,
+      "rougeL": 0.33333333333333337,
+      "semantic": 0.5415717363357544,
+      "entity_support": 0.0,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.43749999999999994,
+      "rouge2": 0.3333333333333333,
+      "rougeL": 0.37500000000000006,
+      "semantic": 0.5764907002449036,
+      "entity_support": 0.0,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.6792452830188679,
+      "rouge2": 0.47058823529411764,
+      "rougeL": 0.4528301886792452,
+      "semantic": 0.7220480442047119,
+      "entity_support": 0.8333333333333334,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4878048780487805,
+      "rouge2": 0.20512820512820512,
+      "rougeL": 0.3414634146341463,
+      "semantic": 0.47001779079437256,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.23255813953488372,
+      "rouge2": 0.0975609756097561,
+      "rougeL": 0.23255813953488372,
+      "semantic": 0.6434227824211121,
+      "entity_support": 0.2857142857142857,
+      "entities_unsupported": 10.0
+    },
+    {
+      "rouge1": 0.09090909090909091,
+      "rouge2": 0.0,
+      "rougeL": 0.09090909090909091,
+      "semantic": 0.20576557517051697,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.42857142857142855,
+      "rouge2": 0.07407407407407407,
+      "rougeL": 0.2857142857142857,
+      "semantic": 0.3947933316230774,
+      "entity_support": 0.0,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.19354838709677416,
+      "rouge2": 0.06896551724137931,
+      "rougeL": 0.19354838709677416,
+      "semantic": 0.4930003881454468,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.3902439024390244,
+      "rouge2": 0.10256410256410256,
+      "rougeL": 0.2926829268292683,
+      "semantic": 0.7929198741912842,
+      "entity_support": 0.6666666666666666,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.6222222222222222,
+      "rouge2": 0.32558139534883723,
+      "rougeL": 0.5333333333333332,
+      "semantic": 0.8872324824333191,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4583333333333333,
+      "rouge2": 0.21739130434782608,
+      "rougeL": 0.4583333333333333,
+      "semantic": 0.6465421319007874,
+      "entity_support": 0.42857142857142855,
+      "entities_unsupported": 4.0
+    },
+    {
+      "rouge1": 0.4390243902439024,
+      "rouge2": 0.15384615384615385,
+      "rougeL": 0.2926829268292683,
+      "semantic": 0.74342942237854,
+      "entity_support": 0.7142857142857143,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.37500000000000006,
+      "rouge2": 0.13333333333333333,
+      "rougeL": 0.25,
+      "semantic": 0.620458722114563,
+      "entity_support": 0.7142857142857143,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.6511627906976744,
+      "rouge2": 0.4878048780487805,
+      "rougeL": 0.6046511627906976,
+      "semantic": 0.929745078086853,
+      "entity_support": 0.375,
+      "entities_unsupported": 5.0
+    },
+    {
+      "rouge1": 0.4166666666666667,
+      "rouge2": 0.21739130434782608,
+      "rougeL": 0.3333333333333333,
+      "semantic": 0.7203412652015686,
+      "entity_support": 0.6,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.5517241379310344,
+      "rouge2": 0.14814814814814817,
+      "rougeL": 0.3448275862068965,
+      "semantic": 0.7672070264816284,
+      "entity_support": 0.3333333333333333,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.27586206896551724,
+      "rouge2": 0.07407407407407407,
+      "rougeL": 0.13793103448275862,
+      "semantic": 0.44364216923713684,
+      "entity_support": 0.75,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.4390243902439025,
+      "rouge2": 0.2564102564102564,
+      "rougeL": 0.39024390243902435,
+      "semantic": 0.7248004078865051,
+      "entity_support": 0.6,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.4285714285714286,
+      "rouge2": 0.05,
+      "rougeL": 0.23809523809523808,
+      "semantic": 0.7600735425949097,
+      "entity_support": 1.0,
+      "entities_unsupported": 0.0
+    },
+    {
+      "rouge1": 0.4528301886792452,
+      "rouge2": 0.15686274509803924,
+      "rougeL": 0.3773584905660378,
+      "semantic": 0.758804440498352,
+      "entity_support": 0.5,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.17391304347826086,
+      "rouge2": 0.09523809523809525,
+      "rougeL": 0.17391304347826086,
+      "semantic": 0.6362894773483276,
+      "entity_support": 0.75,
+      "entities_unsupported": 1.0
+    },
+    {
+      "rouge1": 0.5405405405405405,
+      "rouge2": 0.34285714285714286,
+      "rougeL": 0.43243243243243246,
+      "semantic": 0.759520411491394,
+      "entity_support": 0.3333333333333333,
+      "entities_unsupported": 2.0
+    },
+    {
+      "rouge1": 0.5128205128205129,
+      "rouge2": 0.21621621621621623,
+      "rougeL": 0.41025641025641024,
+      "semantic": 0.4016108214855194,
+      "entity_support": 0.0,
+      "entities_unsupported": 1.0
+    }
+  ]
+}
