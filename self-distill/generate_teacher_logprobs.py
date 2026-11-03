@@ -7,7 +7,10 @@
 # That is context distillation: the student learns to produce strict-prompt
 # output from a plain prompt. Two datasets are written from a single generation
 # pass, since the logprobs do not depend on the student prompt -- so the two
-# training runs differ in exactly one variable.
+# training runs differ in exactly one variable. If the model's chat template
+# drops a system turn once an assistant turn follows (Mistral's does), the
+# system prompt is folded into the first user turn first (see fold_system), and
+# provenance records fold_system.
 #
 # The KD plugin never receives an explicit offset: it infers where the teacher
 # distributions belong from the lengths alone, in
@@ -191,6 +194,33 @@ def token_ids_for(tokenizer, messages, add_generation_prompt=False):
     )
 
 
+def drops_answered_system(tokenizer):
+    """Whether the chat template drops a system turn once an assistant turn follows.
+
+    Mistral's template renders the system prompt only into a user turn that is
+    the last message, so it is there in the generation prompt but gone from
+    prompt + answer. Gold mode's prefix check then rejects every row, and a
+    training row would no longer hold the prompt the teacher saw.
+    """
+    probe = [{"role": "system", "content": "SYSTEM-PROBE"}, {"role": "user", "content": "u"}]
+    text = tokenizer.apply_chat_template(
+        probe + [{"role": "assistant", "content": "a"}], tokenize=False
+    )
+    return "SYSTEM-PROBE" not in text
+
+
+def fold_system(messages):
+    """messages with a leading system turn folded into the first user turn.
+
+    As system + "\\n\\n" + user: the text Mistral's template renders when it
+    does keep the system prompt, so the teacher's generation prompt is unchanged.
+    """
+    if not messages or messages[0]["role"] != "system":
+        return list(messages)
+    system, first, *rest = messages
+    return [{"role": first["role"], "content": system["content"] + "\n\n" + first["content"]}, *rest]
+
+
 def one_hot_row(token_id, top_k):
     """A top-k row asserting `token_id` with probability ~1.
 
@@ -313,6 +343,11 @@ def generate_split(llm, tokenizer, sampling_params, split, split_name, args, sto
     }
 
     for example in split:
+        if args.fold_system:
+            example = {
+                **example,
+                **{f: fold_system(example[f]) for f in (args.teacher_field, *args.student_fields)},
+            }
         teacher_ids = token_ids_for(
             tokenizer, example[args.teacher_field], add_generation_prompt=True
         )
@@ -416,6 +451,10 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     stop_ids = stop_token_ids(args.model, tokenizer)
+    args.fold_system = drops_answered_system(tokenizer)
+    if args.fold_system:
+        print(f"{args.model}'s chat template drops a system turn once answered: "
+              "folding system prompts into the first user turn")
     # Prefix caching and chunked prefill are off so that, with the batch-
     # invariant kernels, a prompt's output doesn't depend on what else the job
     # runs. All the prompts share an instruction prefix; attention over cached
