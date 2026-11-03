@@ -1,0 +1,10 @@
+# Arcee Fusion: keeps base_model and adds the other model's deltas whose
+# importance (KL shift vs size) is above a computed threshold.
+# Takes exactly two models, so the 2 parts are merged pairwise,
+# bottom-up, with mergekit-multi (see make_merge_configs.py).
+merge_method: arcee_fusion
+base_model: "google/gemma-3-4b-it+../models/clinc150/split_2/gemma3_4b_clinc150_1_of_2"
+models:
+  - model: "google/gemma-3-4b-it+../models/clinc150/split_2/gemma3_4b_clinc150_2_of_2"
+tokenizer_source: union
+dtype: bfloat16

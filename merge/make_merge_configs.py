@@ -7,6 +7,7 @@
 #   e.g. python make_merge_configs.py crime 4
 #        python make_merge_configs.py xsum 8 --methods karcher multislerp
 #        python make_merge_configs.py crime 4 --seed 1
+#        python make_merge_configs.py clinc150_domain 2
 #
 # The parts are read from ../models/<task>/split_<N>/ under the names
 # train.sbatch / train_kd.sbatch give them, and the merged models go next to
@@ -40,6 +41,20 @@ TASKS = {
     "crime": {
         "part": BASE + "+{dir}/gemma3_4b_crime_{i}_of_{n}",
         "merged": "gemma3_4b_crime_merge_{n}_{method}",
+        "lora": True,
+    },
+    # CLINC150 parts are LoRA adapters too: random halves from ../split_dataset.py,
+    # and (clinc150_domain) the domain experts, five domains each, from
+    # ../train/prepare_data_clinc150.py; both in the clinc150 folders.
+    "clinc150": {
+        "part": BASE + "+{dir}/gemma3_4b_clinc150_{i}_of_{n}",
+        "merged": "gemma3_4b_clinc150_merge_{n}_{method}",
+        "lora": True,
+    },
+    "clinc150_domain": {
+        "folder": "clinc150",
+        "part": BASE + "+{dir}/gemma3_4b_clinc150_domain_{i}_of_{n}",
+        "merged": "gemma3_4b_clinc150_domain_merge_{n}_{method}",
         "lora": True,
     },
     # XSum students, all kept in the xsum folders ("folder" overrides the task

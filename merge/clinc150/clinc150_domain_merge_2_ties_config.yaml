@@ -1,0 +1,15 @@
+# TIES (https://arxiv.org/abs/2306.01708): trims each delta to its top
+# `density` by magnitude, then keeps only the majority-sign contributions.
+merge_method: ties
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/clinc150/split_2/gemma3_4b_clinc150_domain_1_of_2"
+    parameters:
+      weight: 0.5
+      density: 0.5
+  - model: "google/gemma-3-4b-it+../models/clinc150/split_2/gemma3_4b_clinc150_domain_2_of_2"
+    parameters:
+      weight: 0.5
+      density: 0.5
+tokenizer_source: union
+dtype: bfloat16

@@ -4,9 +4,10 @@ Evaluation runs as [Inspect AI](https://inspect.aisi.org.uk/) tasks:
 
 - `crime_task.py` - classifies Reddit posts as `crime` / `not_crime`. Reports accuracy, precision, recall, F1, confusion-matrix counts and the share of unparseable answers.
 - `wine_task.py` - predicts a wine's Wine Enthusiast points (80–100) from its review. Reports mean absolute error (with RMSE and the MAE of always answering 88, the bar to beat), Pearson/Spearman correlation with the true points, the spread of predictions, bias and MAE per score band, accuracy within 0/1/2 points and the share of answers off the 80–100 scale. Answers with no number are left out of all of these and reported separately as `unanswered`.
+- `clinc150_task.py` - CLINC150 intent classification (150 labels). Reports accuracy, accuracy on each half of the domain split (`acc_shard1`, `acc_shard2`) and the share of answers that are a valid label. `-T prompt_variant=short` is the training prompt; `labels` also lists the 150 labels.
 - `xsum_task.py` - one-sentence XSum summaries. Reports ROUGE-1/2/L, embedding similarity to the reference (`semantic`), whether the names and numbers in the summary appear in the article (`entity_support`), and output length.
 
-All three build their prompts with the same function as the script that made the training data (`train/prepare_data_crime.py`, `train/prepare_data_wine.py` and `self-distill/prepare_data_XSum.py`), so training and evaluation wording cannot drift apart.
+All of them build their prompts with the same function as the script that made the training data (`train/prepare_data_crime.py`, `train/prepare_data_wine.py`, `train/prepare_data_clinc150.py` and `self-distill/prepare_data_XSum.py`), so training and evaluation wording cannot drift apart.
 
 Each run writes a `.eval` log to `logs/` with every sample, score and setting. Browse them with:
 
@@ -33,7 +34,7 @@ Logs written before this was added were given the same metadata afterwards with 
 Submit `evaluate.sbatch` from `evaluate/`:
 
 ```bash
-sbatch evaluate.sbatch <crime|wine|xsum> <model> [--adapter <dir>] [inspect eval args...]
+sbatch evaluate.sbatch <crime|wine|clinc150|xsum|translation> <model> [--adapter <dir>] [inspect eval args...]
 ```
 
 `<model>` is a Hugging Face hub id or a full model saved on disk. `--adapter` puts a LoRA adapter on top of the model; this is only needed for the crime and wine models, as the XSum models are self-distilled full models. Anything after that goes to `inspect eval` unchanged, e.g. `--limit 50`. For XSum, `-T prompt_variant=short|long|teacher` is required and must match the prompt the model was trained on.

@@ -17,12 +17,12 @@
 #        sbatch evaluate.sbatch translation google/gemma-3-4b-it \
 #            -T prompt_variant=short -T split=validation
 #
-# task is crime, wine, xsum or translation (runs <task>_task.py). model is a Hugging Face hub id or
+# task is crime, wine, clinc150, xsum or translation (runs <task>_task.py). model is a Hugging Face hub id or
 # a full model saved on disk (config.json + model.safetensors); --adapter puts a
 # PEFT/LoRA adapter on top of it via the hf-peft provider. Everything after that
 # goes to `inspect eval` unchanged. xsum and translation need
-# -T prompt_variant=short|long|teacher, matching the prompt the model was
-# trained on, so it is required here. For translation, COMET is a second step:
+# -T prompt_variant=short|long|teacher, and clinc150 -T prompt_variant=short|labels,
+# matching the prompt the model was trained on, so it is required here. For translation, COMET is a second step:
 # sbatch comet_score.sbatch on the resulting log.
 #
 # The .eval log is written to logs/; read it with `uv run inspect view`. Its
@@ -33,7 +33,7 @@
 # A model whose record says its run went NaN (health.ok false) is refused, as
 # it can only score NaN; set ALLOW_BROKEN_MODEL=1 to evaluate it anyway.
 set -euo pipefail
-USAGE="usage: sbatch evaluate.sbatch <crime|wine|xsum|translation> <model> [--adapter <dir>] [inspect eval args...]"
+USAGE="usage: sbatch evaluate.sbatch <crime|wine|clinc150|xsum|translation> <model> [--adapter <dir>] [inspect eval args...]"
 TASK=${1:?$USAGE}
 MODEL=${2:?$USAGE}
 shift 2
@@ -51,7 +51,8 @@ TASK_FILE=${TASK}_task.py
 [[ -f $TASK_FILE ]] || { echo "no $TASK_FILE in $PWD - submit from evaluate/" >&2; exit 1; }
 
 if [[ $TASK != crime && $TASK != wine && " $* " != *" prompt_variant="* ]]; then
-  echo "$TASK needs -T prompt_variant=short|long|teacher (the prompt the model was trained on)" >&2
+  [[ $TASK == clinc150 ]] && variants=short\|labels || variants=short\|long\|teacher
+  echo "$TASK needs -T prompt_variant=$variants (the prompt the model was trained on)" >&2
   exit 1
 fi
 

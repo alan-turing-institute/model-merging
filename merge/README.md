@@ -80,6 +80,8 @@ It reads the parts from `../models/<task>/split_<N>/` and puts the merges there 
 
 slerp and arcee_fusion take exactly two models. For them the config is a binary tree of pairwise merges, (1,2) (3,4) ... then their results, written as a multi-document YAML for `mergekit-multi`. With `t: 0.5` at every level each part ends up with weight 1/N. arcee_fusion is not symmetric, so the lower-numbered side is always its `base_model`. `merge.sbatch` runs any config with named documents through `mergekit-multi`. It saves the named stages, e.g. `gemma3_4b_crime_merge_4_slerp_parts_1_2`, to `../models/<task>/split_<N>/intermediate/` and writes a `provenance.json` for each, bottom-up, so the final model's record embeds the whole tree. Stages that already exist are skipped, so a failed job can simply be resubmitted. Only the final model gets `fix_eos.py`; run it on an intermediate before evaluating one.
 
+For CLINC150, `python make_merge_configs.py clinc150_domain 2` merges the two domain experts and `python make_merge_configs.py clinc150 2` the two random halves; both configs are in `clinc150/`.
+
 ## Possible problems
 
 If the compute has GPUs with a smaller amount of VRAM, eg 16Gb, then this might max out, e.g. with TIES and DARE-TIES.  In this case, remove the `cuda` flag and instead use the system RAM.  Using CPUs, you can add the `-j` flag, to parallelise across several nodes.

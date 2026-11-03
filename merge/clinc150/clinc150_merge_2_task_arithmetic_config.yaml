@@ -1,0 +1,13 @@
+# Task Arithmetic (https://arxiv.org/abs/2212.04089): weighted sum of
+# the (model - base) deltas.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/clinc150/split_2/gemma3_4b_clinc150_1_of_2"
+    parameters:
+      weight: 0.5
+  - model: "google/gemma-3-4b-it+../models/clinc150/split_2/gemma3_4b_clinc150_2_of_2"
+    parameters:
+      weight: 0.5
+tokenizer_source: union
+dtype: bfloat16

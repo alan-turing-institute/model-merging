@@ -1,0 +1,11 @@
+# Linear: weighted average of the raw weights.
+merge_method: linear
+models:
+  - model: "google/gemma-3-4b-it+../models/clinc150/split_2/gemma3_4b_clinc150_domain_1_of_2"
+    parameters:
+      weight: 0.5
+  - model: "google/gemma-3-4b-it+../models/clinc150/split_2/gemma3_4b_clinc150_domain_2_of_2"
+    parameters:
+      weight: 0.5
+tokenizer_source: union
+dtype: bfloat16
