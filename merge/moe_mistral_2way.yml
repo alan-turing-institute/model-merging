@@ -18,10 +18,6 @@
 # Record of the run behind results/isambard/mistral-moe-*.json: LOCAL_BASE and
 # MATERIALISED_* are filled in by isambard/82_mistral_moe.slurm on branch
 # xsum-summarisation, whose layout the paths follow, not main's.
-#
-# That MoE was the untuned model: its experts were LoRA on attention only, and
-# mergekit-moe keeps only each expert's MLP, taking the rest from base_model.
-# The MLP-expert rerun is moe_mistral_mlp_2way.yml.
 base_model: LOCAL_BASE
 gate_mode: hidden
 experts_per_token: 1
