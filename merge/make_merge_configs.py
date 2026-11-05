@@ -113,9 +113,16 @@ PAIRWISE = {
 DEFAULT_METHODS = ["linear", "ties", "dare_ties", "task_arithmetic", "model_stock",
                    "slerp", "arcee_fusion"]
 FOOTER = "tokenizer_source: union\ndtype: bfloat16\n"
+# LoRA parts on another base (Gemma 3 1B) are merged without a tokenizer source:
+# the 1B tokenizer has one more token than the model's 262,144 embedding rows,
+# which mergekit's tokenizer merge cannot place (KeyError: 262144), and every
+# part shares the base's tokenizer and embedding anyway, so mergekit can merge
+# the tensors as they are and copy the base's tokenizer. The XSum students
+# keep the union: Axolotl resized their embeddings to the tokenizer.
+FOOTER_SHARED = "dtype: bfloat16\n"
 
 
-def nway_config(method, parts, base=BASE):
+def nway_config(method, parts, base=BASE, footer=FOOTER):
     comment, uses_base, params = NWAY[method]
     w = round(1 / len(parts), 6)
     lines = [f"# {comment}", f"merge_method: {method}"]
@@ -127,18 +134,18 @@ def nway_config(method, parts, base=BASE):
         if params:
             lines.append("    parameters:")
             lines += [f"      {q.format(w=w)}" for q in params]
-    return "\n".join(lines) + "\n" + FOOTER
+    return "\n".join(lines) + "\n" + footer
 
 
-def pair_doc(method, name, a, b):
+def pair_doc(method, name, a, b, footer=FOOTER):
     lines = [f"name: {name}"] if name else []
     lines += [f"merge_method: {method}", f'base_model: "{a}"', "models:", f'  - model: "{b}"']
     if method == "slerp":
         lines += ["parameters:", "  t: 0.5"]
-    return "\n".join(lines) + "\n" + FOOTER
+    return "\n".join(lines) + "\n" + footer
 
 
-def tree_config(method, parts, merged):
+def tree_config(method, parts, merged, footer=FOOTER):
     """Pairwise merges, bottom-up; the last document (unnamed) is the final model."""
     level = [(i + 1, i + 1, p) for i, p in enumerate(parts)]  # (first part, last part, ref)
     docs = []
@@ -146,7 +153,7 @@ def tree_config(method, parts, merged):
         nxt = []
         for (a0, _, a), (_, b1, b) in zip(level[::2], level[1::2]):
             name = None if len(level) == 2 else f"{merged}_parts_{a0}_{b1}"
-            docs.append(pair_doc(method, name, a, b))
+            docs.append(pair_doc(method, name, a, b, footer))
             nxt.append((a0, b1, name))
         level = nxt
     head = (f"# {PAIRWISE[method]}\n# Takes exactly two models, so the {len(parts)} parts are merged pairwise,\n"
@@ -179,11 +186,13 @@ def main():
     out_models = str(Path("../models", folder, seed_dir, f"split_{n}"))
     parts = [spec["part"].format(base=args.base, size=size, dir=out_models, n=n, i=i) for i in range(1, n + 1)]
     cache = f" --lora-merge-cache {out_models}/.lora_merge_cache" if spec["lora"] else ""
+    footer = FOOTER_SHARED if spec["lora"] and args.base != BASE else FOOTER
     seed = f" --seed {args.seed}" if args.seed is not None else ""
     commands = []
     for method in args.methods:
         merged = spec["merged"].format(size=size, n=n, method=method)
-        text = tree_config(method, parts, merged) if method in PAIRWISE else nway_config(method, parts, args.base)
+        text = (tree_config(method, parts, merged, footer) if method in PAIRWISE
+                else nway_config(method, parts, args.base, footer))
         path = Path(folder, seed_dir, f"{args.task}_merge_{n}_{method}_config.yaml")
         if path.exists() and not args.force:
             print(f"# {path} exists, left as it is (--force to overwrite)", file=sys.stderr)
