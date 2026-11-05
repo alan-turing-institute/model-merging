@@ -6,7 +6,11 @@
 #       split_<N>/  <i>_of_<N>.json  merge_<method>.json
 #   xsum_data_parallel_gemma/   the same (gold targets, long prompt)
 #   task_merging/<gemma|mistral|llama>/  base_<task>.json
-#     seed_<S>/  expert_<task>.json  <method>/<task>.json  moe/<task>.json
+#     seed_<S>/  expert_<task>.json  expert_<expert>_on_<task>.json
+#                <method>/<task>.json  moe/<task>.json  moe_random/<task>.json
+#                moe_prompt_mean/<task>.json
+# (expert_<task>.json is an expert on its own task; expert_<expert>_on_<task>.json
+# one on another task, from submit_expert_cross_evals.sh.)
 #
 # Usage, from evaluate/:
 #   uv run python export_results.py [folder ...] [--workers N] [--dry-run]
@@ -84,17 +88,21 @@ def targets(h):
                 return [f"{d}/seed_{s}/split_{mm[2]}/{mm[1]}_of_{mm[2]}.json"]
             if mm := re.fullmatch(rf"{tag}{suf}_merge_(\d)_({METHODS})", name):
                 return [f"{d}/seed_{s}/split_{mm[1]}/merge_{mm[2]}.json"]
-    # Task merging: the MLP-only experts, on their own task...
+    # Task merging: the MLP-only experts, on their own task and on the others...
     if m := re.search(r"models/([a-z0-9]+)/seed_(\d)/([^/]+_mlp)/provenance\.json$", prov):
         task_dir, s, name = m.groups()
         stem = next((k for k in STEMS if name.startswith(k + "_")), None)
         if stem and task_dir == t:
             return [f"task_merging/{STEMS[stem]}/seed_{s}/expert_{t}.json"]
+        if stem and task_dir in TASKS:
+            return [f"task_merging/{STEMS[stem]}/seed_{s}/expert_{task_dir}_on_{t}.json"]
     # ...and the dense merges and the MoE, on all four.
-    if m := re.search(rf"models/task_merge/seed_(\d)/([a-z0-9_]+?)_task_(?:merge_4_({METHODS})|(moe)_4)/provenance\.json$", prov):
-        s, stem, method, moe = m.groups()
+    # The MoE is moe/; its other routers (<stem>_task_moe_4_random, _prompt_mean)
+    # moe_random/ and moe_prompt_mean/.
+    if m := re.search(rf"models/task_merge/seed_(\d)/([a-z0-9_]+?)_task_(?:merge_4_({METHODS})|(moe)_4(_random|_prompt_mean)?)/provenance\.json$", prov):
+        s, stem, method, moe, router = m.groups()
         if stem in STEMS:
-            return [f"task_merging/{STEMS[stem]}/seed_{s}/{method or moe}/{t}.json"]
+            return [f"task_merging/{STEMS[stem]}/seed_{s}/{method or moe + (router or '')}/{t}.json"]
     return []
 
 
