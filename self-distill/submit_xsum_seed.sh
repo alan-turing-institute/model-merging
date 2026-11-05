@@ -34,10 +34,17 @@
 # vLLM, which greedy decoding doesn't use, but it is recorded). The existing
 # unseeded data and models are left alone.
 #
+# --base B (default google/gemma-3-4b-it) is both the teacher and the students'
+# starting point, as self-distillation needs. For any other base, the teacher
+# data, models and merge configs go under xsum_<size> instead of xsum (e.g.
+# ../models/xsum_1b/seed_<S>/), and gemma3_4b in every name above becomes
+# gemma3_<size>; the prompts are shared.
+#
 # Usage, from self-distill/:
 #   bash submit_xsum_seed.sh <S> [N...]            # dry run: checks paths, prints the chain
 #   bash submit_xsum_seed.sh <S> --submit [N...]   # submits, writing the job map
 #   bash submit_xsum_seed.sh <S> --targets teacher --prompt short --submit [N...]
+#   bash submit_xsum_seed.sh <S> --base google/gemma-3-1b-it --submit [N...]
 #
 # Needs the KD configs self-distillation_xsum.yaml (full) and
 # self-distillation_xsum_split_N.yaml. Merge configs missing from
@@ -53,12 +60,13 @@
 # what) goes to ../evaluate/slurm/<T>_seed_<S>_jobs_<date>.txt.
 set -euo pipefail
 cd "$(dirname "$0")"
-USAGE="usage: bash submit_xsum_seed.sh <seed> [--targets gold|teacher] [--prompt long|short] [--submit] [N...]"
+USAGE="usage: bash submit_xsum_seed.sh <seed> [--targets gold|teacher] [--prompt long|short] [--base <model>] [--submit] [N...]"
 SEED=${1:?$USAGE}; shift
 [[ $SEED =~ ^[0-9]+$ ]] || { echo "seed must be a non-negative integer, not $SEED" >&2; exit 1; }
 SUBMIT=false
 TARGETS=gold
 PROMPT=long
+BASE=google/gemma-3-4b-it
 SPLITS=()
 while (($#)); do
   case $1 in
@@ -67,6 +75,8 @@ while (($#)); do
     --targets=*) TARGETS=${1#--targets=} ;;
     --prompt) PROMPT=${2:?$USAGE}; shift ;;
     --prompt=*) PROMPT=${1#--prompt=} ;;
+    --base) BASE=${2:?$USAGE}; shift ;;
+    --base=*) BASE=${1#--base=} ;;
     -*) echo "$USAGE" >&2; exit 1 ;;
     *) SPLITS+=("$1") ;;
   esac
@@ -83,13 +93,18 @@ case $PROMPT in
   short) P= ;;
   *) echo "--prompt must be long or short, not $PROMPT" >&2; exit 1 ;;
 esac
-TEACHER=google/gemma-3-4b-it
-DATA=../datasets/xsum/seed_$SEED
-MODELS=../models/xsum/seed_$SEED
+[[ $BASE =~ ^google/gemma-3-([0-9]+b)-it$ ]] || { echo "--base must be google/gemma-3-<size>-it, not $BASE" >&2; exit 1; }
+SIZE=${BASH_REMATCH[1]}
+X=xsum  # the folder of everything made from this base
+[[ $BASE == google/gemma-3-4b-it ]] || X=xsum_$SIZE
+TEACHER=$BASE
+DATA=../datasets/$X/seed_$SEED
+MODELS=../models/$X/seed_$SEED
 MERGE_TASK=xsum$G$P  # make_merge_configs.py's task
-NAME=gemma3_4b_xsum$G
-JOB=${MERGE_TASK}_s$SEED  # job name stem
-JOB_MAP=../evaluate/slurm/${MERGE_TASK}_seed_${SEED}_jobs_$(date +%F).txt
+NAME=gemma3_${SIZE}_xsum$G
+JOB=${MERGE_TASK}${X#xsum}_s$SEED  # job name stem
+mkdir -p ../evaluate/slurm
+JOB_MAP=../evaluate/slurm/${MERGE_TASK}${X#xsum}_seed_${SEED}_jobs_$(date +%F).txt
 METHODS=(linear ties dare_ties task_arithmetic model_stock slerp arcee_fusion)
 # Parallel jobs each running `uv sync` reinstall packages over one another.
 export UV_NO_SYNC=1
@@ -101,7 +116,9 @@ uv run python patch_axolotl_kd.py --check >/dev/null
 sub() {
   local dir=$1 dep=$2 name=$3 what=$4; shift 4
   local args=(--parsable --job-name="$name")
-  [[ $dep != - ]] && args+=(--dependency=afterok:$dep)
+  # A failed step cancels the steps that wait for it, rather than leaving them
+  # pending for ever.
+  [[ $dep != - ]] && args+=(--dependency=afterok:$dep --kill-on-invalid-dep=yes)
   local job
   if $SUBMIT; then
     job=$(cd "$dir" && sbatch "${args[@]}" "$@")
@@ -142,7 +159,7 @@ teach_train_eval() {
       generate_teacher_logprobs.sbatch $TEACHER "$prompts" "$dir" "$prefix" --targets "$TARGETS" --seed "$SEED")
   fi
   t=$(sub . "$dep" "kd_$name" "train $student (seed $SEED)" \
-    train_kd.sbatch "$config" "$student" "$dir/${prefix}_$PROMPT" --seed "$SEED")
+    train_kd.sbatch "$config" "$student" "$dir/${prefix}_$PROMPT" --seed "$SEED" --base-model "$BASE")
   sub ../evaluate "$t" "eval_$name" "eval $student $PROMPT" \
     evaluate.sbatch xsum "$student" -T prompt_variant=$PROMPT >/dev/null
   echo "$t"
@@ -159,10 +176,10 @@ for N in "${SPLITS[@]}"; do
   done
   missing=false
   for m in "${METHODS[@]}"; do
-    [[ -f ../merge/xsum/seed_$SEED/${MERGE_TASK}_merge_${N}_${m}_config.yaml ]] || missing=true
+    [[ -f ../merge/$X/seed_$SEED/${MERGE_TASK}_merge_${N}_${m}_config.yaml ]] || missing=true
   done
   if $missing; then
-    (cd ../merge && python3 make_merge_configs.py "$MERGE_TASK" "$N" --seed "$SEED" >/dev/null)
+    (cd ../merge && python3 make_merge_configs.py "$MERGE_TASK" "$N" --seed "$SEED" --base "$BASE" >/dev/null)
   fi
 done
 
@@ -189,7 +206,7 @@ for N in "${SPLITS[@]}"; do
       continue
     fi
     j=$(sub ../merge "$ALL" "merge_${JOB}_${N}_$m" "merge $OUT (seed $SEED)" \
-      merge.sbatch xsum/seed_$SEED/${MERGE_TASK}_merge_${N}_${m}_config.yaml "$OUT" --seed "$SEED")
+      merge.sbatch $X/seed_$SEED/${MERGE_TASK}_merge_${N}_${m}_config.yaml "$OUT" --seed "$SEED")
     sub ../evaluate "$j" "eval_${JOB}_merge_${N}_$m" "eval $OUT $PROMPT" \
       evaluate.sbatch xsum "$OUT" -T prompt_variant=$PROMPT >/dev/null
   done
