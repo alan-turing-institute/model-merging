@@ -11,8 +11,14 @@
 #   sbatch comet_score.sbatch <log.eval> [inspect score args...]
 #   e.g. sbatch comet_score.sbatch logs/2026-10-16T10-00-00-00-00_translation_abc.eval
 #        sbatch comet_score.sbatch logs/<log>.eval -S kiwi=false
+#        sbatch --dependency=afterok:<eval job> comet_score.sbatch <eval job>
 #
-# Appends COMET-22 and CometKiwi scores to a translation_task.py log, in place.
+# Given an evaluate.sbatch job ID instead of a log, it scores the log that job
+# wrote, found in slurm/*-<job>.out. That lets COMET be queued behind an
+# evaluation before its log exists.
+# Appends COMET-22 and CometKiwi scores to a translation_task.py or
+# translation_en_zh_task.py log, in place (the scorer reads only source, output
+# and reference, so it serves both directions).
 # Runs in the comet/ environment: unbabel-comet pins transformers<5 and
 # numpy<2, so it is kept out of the environment that generates.
 #
@@ -24,12 +30,19 @@
 #     "from comet import download_model as d, load_from_checkpoint as l; \
 #      [l(d(m)) for m in ['Unbabel/wmt22-comet-da', 'Unbabel/wmt22-cometkiwi-da']]"
 set -euo pipefail
-USAGE="usage: sbatch comet_score.sbatch <log.eval> [inspect score args...]"
+USAGE="usage: sbatch comet_score.sbatch <log.eval|eval job ID> [inspect score args...]"
 LOG=${1:?$USAGE}
 shift
 
 cd "$SLURM_SUBMIT_DIR"
 [[ -f translation_task.py ]] || { echo "no translation_task.py in $PWD - submit from evaluate/" >&2; exit 1; }
+if [[ $LOG =~ ^[0-9]+$ ]]; then
+  JOB_OUT=$(ls slurm/*-"$LOG".out 2>/dev/null | head -1)
+  [[ -n $JOB_OUT ]] || { echo "no slurm/*-$LOG.out for evaluation job $LOG" >&2; exit 1; }
+  LOG=$(grep -o 'logs/[^ ]*\.eval' "$JOB_OUT" | tail -1)
+  [[ -n $LOG ]] || { echo "no .eval log named in $JOB_OUT" >&2; exit 1; }
+  echo "evaluation job $(basename "$JOB_OUT" .out | sed 's/.*-//'): $LOG"
+fi
 [[ -f $LOG ]] || { echo "$LOG not found" >&2; exit 1; }
 
 # See evaluate.sbatch: strip the CUDA forward-compat libcuda, which breaks the
