@@ -1,6 +1,6 @@
 # Data-parallel merging: XSum summarisation (gold targets, long prompt), Gemma 3 4B
 
-Generated 2026-11-03 by `evaluate/make_data_parallel_tables.py` from the `.eval` logs in `evaluate/logs/`.
+Generated 2026-11-05 by `evaluate/make_data_parallel_tables.py` from the `.eval` logs in `evaluate/logs/`.
 
 The training data is split into N equal parts; an expert is trained on each part (LoRA for crime, self-distillation for XSum) and the N experts are merged. Every arm is repeated with seeds 1-5 (training data order and initialisation, and dare_ties' random dropping), so each cell is the mean ± standard deviation over the seeds; the base model is evaluated once. Test set: 1,000 test articles, long prompt; ROUGE F-measures, and mean summary length in words.
 
@@ -10,7 +10,7 @@ Merge settings (`merge/make_merge_configs.py`): weight 1/N for every expert; tie
 
 | | ROUGE-1 | ROUGE-2 | ROUGE-L | Words | seeds |
 |---|---|---|---|---|---|
-| Base model (untrained) | 0.243 | 0.052 | 0.179 | 19.5 | – |
+| Base model (untrained) | 0.247 | 0.055 | 0.181 | 19.6 | – |
 | **Full data** (one model) | 0.360 ± 0.007 | 0.135 ± 0.005 | 0.284 ± 0.006 | 18.2 ± 1.0 | 5 |
 | Experts (each on 1/2 of the data) | 0.358 ± 0.002 | 0.132 ± 0.002 | 0.281 ± 0.003 | 19.3 ± 0.2 | 5 |
 | merge: linear | 0.359 ± 0.002 | 0.132 ± 0.002 | 0.281 ± 0.002 | 19.3 ± 0.3 | 5 |
@@ -25,7 +25,7 @@ Merge settings (`merge/make_merge_configs.py`): weight 1/N for every expert; tie
 
 | | ROUGE-1 | ROUGE-2 | ROUGE-L | Words | seeds |
 |---|---|---|---|---|---|
-| Base model (untrained) | 0.243 | 0.052 | 0.179 | 19.5 | – |
+| Base model (untrained) | 0.247 | 0.055 | 0.181 | 19.6 | – |
 | **Full data** (one model) | 0.360 ± 0.007 | 0.135 ± 0.005 | 0.284 ± 0.006 | 18.2 ± 1.0 | 5 |
 | Experts (each on 1/4 of the data) | 0.354 ± 0.002 | 0.130 ± 0.001 | 0.279 ± 0.001 | 19.6 ± 0.2 | 5 |
 | merge: linear | 0.355 ± 0.003 | 0.131 ± 0.002 | 0.280 ± 0.002 | 19.6 ± 0.2 | 5 |
@@ -40,7 +40,7 @@ Merge settings (`merge/make_merge_configs.py`): weight 1/N for every expert; tie
 
 | | ROUGE-1 | ROUGE-2 | ROUGE-L | Words | seeds |
 |---|---|---|---|---|---|
-| Base model (untrained) | 0.243 | 0.052 | 0.179 | 19.5 | – |
+| Base model (untrained) | 0.247 | 0.055 | 0.181 | 19.6 | – |
 | **Full data** (one model) | 0.360 ± 0.007 | 0.135 ± 0.005 | 0.284 ± 0.006 | 18.2 ± 1.0 | 5 |
 | Experts (each on 1/8 of the data) | 0.348 ± 0.000 | 0.125 ± 0.000 | 0.273 ± 0.000 | 19.6 ± 0.1 | 5 |
 | merge: linear | 0.348 ± 0.001 | 0.125 ± 0.001 | 0.273 ± 0.001 | 19.7 ± 0.1 | 5 |
