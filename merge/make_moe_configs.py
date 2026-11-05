@@ -5,15 +5,26 @@
 # and prints "<config> <output dir>" for moe.sbatch.
 #
 # Usage, from merge/:
-#   python make_moe_configs.py <mistral|llama> --seed S [--force]
+#   python make_moe_configs.py <mistral|llama> --seed S [--gate-mode hidden|random|prompt_mean] [--force]
 #
-# The settings are those of moe/mistral_task_moe_4_seed_1_config.yaml, whose
-# comments explain them: gate_mode hidden, one expert per token, bf16, and as
-# each expert's positive prompts its task's training instruction and one real
-# training input (routing is per token, so content tokens need something to
-# match). The LoRA experts are their convert_to_full_model.sbatch outputs
-# (*_mlp_full), since mergekit-moe takes full models; XSum is already full.
-# Gemma has no mergekit-moe path, so it is not offered.
+# One expert per token, bf16. The LoRA experts are their
+# convert_to_full_model.sbatch outputs (*_mlp_full), since mergekit-moe takes
+# full models; XSum is already full. Gemma has no mergekit-moe path, so it is
+# not offered. Three routers (--gate-mode), each its own model:
+#   hidden       <stem>_task_moe_4: mergekit's hidden gate with the positive
+#                prompts below. mergekit uses only the LAST token of each prompt
+#                (raw text, no chat template), from the residual stream entering
+#                each layer, not the router's own input: see the comments in
+#                moe/mistral_task_moe_4_seed_1_config.yaml. The prompts are kept
+#                as they were run, slips included (XSum's old 20-25 words; 11 of
+#                CLINC150's 150 labels).
+#   random       <stem>_task_moe_4_random: random routers, the control.
+#   prompt_mean  <stem>_task_moe_4_prompt_mean: mergekit builds the MoE with a
+#                random router, which set_moe_router.py then replaces with one
+#                built from the router's own inputs on real example prompts in
+#                the evaluation's format (moe/prompts_<model>.json, from
+#                make_moe_prompts.py; XSum's current 18-24 words prompt, all 150
+#                CLINC150 labels). moe.sbatch does both (--router-prompts).
 import argparse
 import sys
 from pathlib import Path
@@ -25,6 +36,9 @@ MODELS = {
     "llama": {"base": "meta-llama/Llama-3.1-8B-Instruct", "stem": "llama3_8b"},
 }
 # (expert dir under ../models/<task>/seed_<S>/, positive prompts), in expert order.
+# The hidden gate's positive prompts are kept exactly as the <stem>_task_moe_4
+# models were built with them, slips included (see the header), so that those
+# configs can be regenerated; prompt_mean's prompts are in moe/prompts_<model>.json.
 EXPERTS = {
     "crime": ("{stem}_crime_mlp_full", [
         "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.",
@@ -46,38 +60,63 @@ EXPERTS = {
 }
 
 
-def config(model, seed):
+def config(model, seed, gate_mode="hidden"):
     base, stem = MODELS[model]["base"], MODELS[model]["stem"]
+    # gate_mode random: each layer's router is a random projection of the token's
+    # hidden state (torch.randn, drawn under mergekit-moe's --random-seed, which
+    # moe.sbatch sets to the seed). Routing still depends on the input but knows
+    # nothing about the tasks: the control for the hidden gate. It uses no
+    # prompts, so none are written. prompt_mean is built the same way, its
+    # router then replaced by set_moe_router.py.
+    mergekit_gate = "random" if gate_mode == "prompt_mean" else gate_mode
+    def expert(task, name, prompts):
+        e = {"source_model": f"../models/{task}/seed_{seed}/{name.format(stem=stem)}"}
+        if mergekit_gate != "random":
+            e["positive_prompts"] = prompts
+        return e
     return {
         "base_model": base,
-        "gate_mode": "hidden",
+        "gate_mode": mergekit_gate,
         "experts_per_token": 1,
         "dtype": "bfloat16",
-        "experts": [
-            {"source_model": f"../models/{task}/seed_{seed}/{name.format(stem=stem)}", "positive_prompts": prompts}
-            for task, (name, prompts) in EXPERTS.items()
-        ],
+        "experts": [expert(task, name, prompts) for task, (name, prompts) in EXPERTS.items()],
     }
+
+
+def names(model, seed, gate_mode):
+    """The config path and the output dir: <stem>_task_moe_4[_random]."""
+    tag = "" if gate_mode == "hidden" else f"_{gate_mode}"
+    return (Path("moe", f"{model}_task_moe_4{tag}_seed_{seed}_config.yaml"),
+            f"../models/task_merge/seed_{seed}/{MODELS[model]['stem']}_task_moe_4{tag}")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("model", choices=MODELS)
     ap.add_argument("--seed", type=int, required=True, help="the seed the experts were trained with")
+    ap.add_argument("--gate-mode", choices=["hidden", "random", "prompt_mean"], default="hidden",
+                    help="hidden: mergekit's gate from task prompts; random: the control; "
+                         "prompt_mean: set_moe_router.py's gate from example prompts")
     ap.add_argument("--force", action="store_true", help="overwrite an existing config")
     args = ap.parse_args()
-    path = Path("moe", f"{args.model}_task_moe_4_seed_{args.seed}_config.yaml")
+    path, out = names(args.model, args.seed, args.gate_mode)
     if path.exists() and not args.force:
         print(f"# {path} exists, left as it is (--force to overwrite)", file=sys.stderr)
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
+        what = {"random": "# Randomly routed (gate_mode random): the control for the prompt-routed MoE.\n",
+                "prompt_mean": "# Built with a random router, which moe.sbatch --router-prompts then replaces\n"
+                               f"# (set_moe_router.py, moe/prompts_{args.model}.json): gate_mode prompt_mean.\n",
+                }.get(args.gate_mode, "")
         path.write_text(
             f"# Sparse MoE of the four MLP-only {args.model} task experts, seed {args.seed}: crime, wine,\n"
             "# CLINC150, XSum (see make_moe_configs.py, and moe/mistral_task_moe_4_seed_1_config.yaml\n"
             "# for what each setting does). Run with moe.sbatch (mergekit-moe).\n"
-            + yaml.safe_dump(config(args.model, args.seed), sort_keys=False, allow_unicode=True, width=1000))
+            + what
+            + yaml.safe_dump(config(args.model, args.seed, args.gate_mode), sort_keys=False,
+                             allow_unicode=True, width=1000))
         print(f"# wrote {path}", file=sys.stderr)
-    print(path, f"../models/task_merge/seed_{args.seed}/{MODELS[args.model]['stem']}_task_moe_4")
+    print(path, out)
 
 
 if __name__ == "__main__":

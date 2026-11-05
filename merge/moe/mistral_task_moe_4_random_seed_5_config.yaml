@@ -1,0 +1,13 @@
+# Sparse MoE of the four MLP-only mistral task experts, seed 5: crime, wine,
+# CLINC150, XSum (see make_moe_configs.py, and moe/mistral_task_moe_4_seed_1_config.yaml
+# for what each setting does). Run with moe.sbatch (mergekit-moe).
+# Randomly routed (gate_mode random): the control for the prompt-routed MoE.
+base_model: mistralai/Mistral-7B-Instruct-v0.3
+gate_mode: random
+experts_per_token: 1
+dtype: bfloat16
+experts:
+- source_model: ../models/crime/seed_5/mistral_7b_crime_mlp_full
+- source_model: ../models/wine/seed_5/mistral_7b_wine_mlp_full
+- source_model: ../models/clinc150/seed_5/mistral_7b_clinc150_labels_mlp_full
+- source_model: ../models/xsum/seed_5/mistral_7b_xsum_gold_long_mlp

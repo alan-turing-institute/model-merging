@@ -14,11 +14,17 @@
 # Run with mergekit-moe <this config> <output dir> (not mergekit-yaml).
 base_model: mistralai/Mistral-7B-Instruct-v0.3
 
-# The router. hidden: each layer's router row for an expert is the
-# base model's hidden state for that expert's positive prompts, so tokens go to
-# the expert whose prompts they most resemble. The alternatives:
-# cheap_embed (the prompts' token embeddings only: cheaper, cruder) and random
-# (no task information: a control for how much the routing matters).
+# The router. hidden: each layer's router row for an expert is the base
+# model's hidden state at the LAST token of each of that expert's positive
+# prompts, averaged over the prompts and L2-normalised (mergekit/moe/router.py:
+# average is only for hidden_avg). The state is the residual stream entering
+# the layer, whereas the router at run time sees the state after attention and
+# post_attention_layernorm. The prompts are tokenised as raw text (a BOS, no
+# chat template), unlike the evaluated inputs. The alternatives: hidden_avg
+# (the mean over all positions, padding included), cheap_embed (token
+# embeddings only) and random (no task information: a control for how much the
+# routing matters; see make_moe_configs.py --gate-mode random, and prompt_mean
+# for routers built from the router's own inputs).
 gate_mode: hidden
 
 # Experts used per token, at every layer. 1 gives each token exactly
@@ -29,11 +35,14 @@ experts_per_token: 1
 # bf16, as the experts were trained and evaluated (float16 risks overflow).
 dtype: bfloat16
 
-# The prompts. Routing is per token, not per request: an article's
-# own words are routed too, not just the instruction. So each expert has its
-# task's training instruction and one real training input, from
-# ../datasets/<task>/... (first training row), so that content tokens have
-# something to match.
+# The prompts. Routing is per token, not per request: an article's own words
+# are routed too, not just the instruction. Each expert has its task's training
+# instruction and the start of one real training input (first training row),
+# meant to give content tokens something to match; but as gate_mode hidden
+# uses only each prompt's last token, an example contributes only its final
+# word. Known slips, kept as this is the record of what was run: the XSum
+# instruction is the old 20-25 words one (evaluation asks for 18-24), and the
+# CLINC150 label list stops after 11 of the 150 labels.
 experts:
   - source_model: ../models/crime/seed_1/mistral_7b_crime_mlp_full
     positive_prompts:

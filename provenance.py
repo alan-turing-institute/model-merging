@@ -323,6 +323,19 @@ def merged_record(model_dir, base_dir):
     }
 
 
+def moe_settings(model_dir, cfg):
+    """The router settings: mergekit's, unless set_moe_router.py replaced the
+    router (router.json), when gate_mode is its own and "router" its record."""
+    settings = {k: cfg.get(k) for k in ("architecture", "gate_mode", "experts_per_token", "dtype")}
+    router = Path(model_dir, "router.json")
+    if router.exists():
+        record = json.loads(router.read_text())
+        settings["mergekit_gate_mode"] = settings["gate_mode"]
+        settings["gate_mode"] = record["gate_mode"]
+        settings["router"] = record
+    return settings
+
+
 def moe_record(model_dir, base_dir):
     """What made a mergekit-moe output dir, from its mergekit_moe_config.yml.
 
@@ -346,7 +359,7 @@ def moe_record(model_dir, base_dir):
         "base_model": cfg.get("base_model"),
         "config": "mergekit_moe_config.yml",
         "parameters": None,
-        "moe": {k: cfg.get(k) for k in ("architecture", "gate_mode", "experts_per_token", "dtype")},
+        "moe": moe_settings(model_dir, cfg),
         "inputs": inputs,
     }
 

@@ -23,16 +23,24 @@
 # <output_dir>/<config name>-<jobid>.out.
 #
 # --seed (default 42) is mergekit-moe's --random-seed, recorded as random_seed.
+# --router-prompts <moe/prompts_<model>.json>: after mergekit-moe, replace the
+# router with one built from those example prompts (set_moe_router.py: gate_mode
+# prompt_mean, described in <output_dir>/router.json).
 # Run it online (HF_HUB_OFFLINE unset): mergekit lists a Hub base model's files.
 set -euo pipefail
-USAGE="usage: sbatch moe.sbatch <moe_config.yaml> <output_dir> [--seed <n>] [mergekit-moe args...]"
+USAGE="usage: sbatch moe.sbatch <moe_config.yaml> <output_dir> [--seed <n>] [--router-prompts <json>] [mergekit-moe args...]"
 CONFIG=${1:?$USAGE}
 OUTPUT_DIR=${2:?$USAGE}
 shift 2
 SEED=42
+ROUTER_PROMPTS=
 ARGS=()
 while (( $# )); do
-  if [[ $1 == --seed ]]; then SEED=${2:?$USAGE}; shift 2; else ARGS+=("$1"); shift; fi
+  case $1 in
+    --seed) SEED=${2:?$USAGE}; shift 2 ;;
+    --router-prompts) ROUTER_PROMPTS=${2:?$USAGE}; shift 2 ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
 done
 set -- "${ARGS[@]}"
 [[ $SEED =~ ^[0-9]+$ ]] || { echo "--seed must be a non-negative integer, not $SEED" >&2; exit 1; }
@@ -55,6 +63,10 @@ export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
 
 uv run mergekit-moe "$CONFIG" "$OUTPUT_DIR" --cuda --lazy-unpickle --allow-crimes \
   --random-seed "$SEED" "$@"
+
+if [[ -n $ROUTER_PROMPTS ]]; then
+  uv run python set_moe_router.py "$OUTPUT_DIR" "$ROUTER_PROMPTS"
+fi
 
 # mergekit-moe copies base_model's config.json but writes no
 # generation_config.json: see ../fix_eos.py.
