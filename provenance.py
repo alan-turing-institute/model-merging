@@ -23,7 +23,9 @@
 # Axolotl and mergekit put them (config.yaml, mergekit_config.yml). A LoRA
 # adapter merged into its base as a full model (Convert_to_full_model.py) keeps
 # its adapter's record, still kind "trained", with a "materialised" entry naming
-# the adapter (and its whole record), the base and the dtype.
+# the adapter (and its whole record), the base and the dtype. A mergekit-moe
+# output (mergekit_moe_config.yml) is kind "merged" with merge_method "moe": its
+# experts are the inputs, and "moe" holds the router settings.
 #
 # Every model record also has a "health" check, since a run that diverges can
 # look fine: once a bf16 step produces NaN, gradient clipping and the optimizer
@@ -321,6 +323,34 @@ def merged_record(model_dir, base_dir):
     }
 
 
+def moe_record(model_dir, base_dir):
+    """What made a mergekit-moe output dir, from its mergekit_moe_config.yml.
+
+    Recorded as a merge (kind "merged", merge_method "moe") so that describe()
+    reads it as one: each expert is an input with its whole record, in expert
+    order, and "moe" holds the router settings. Every non-MLP weight comes
+    from base_model, which is therefore not an input."""
+    import yaml
+    cfg = yaml.safe_load(Path(model_dir, "mergekit_moe_config.yml").read_text())
+    inputs = []
+    for expert in cfg.get("experts", []):
+        entry = _model_entry(expert["source_model"], base_dir)
+        inputs.append({**entry, "parameters": {
+            "positive_prompts": len(expert.get("positive_prompts") or []),
+            "negative_prompts": len(expert.get("negative_prompts") or []),
+        }})
+    return {
+        "coverage": [(i["provenance"] or {}).get("coverage", "unknown") for i in inputs],
+        "kind": "merged",
+        "merge_method": "moe",
+        "base_model": cfg.get("base_model"),
+        "config": "mergekit_moe_config.yml",
+        "parameters": None,
+        "moe": {k: cfg.get(k) for k in ("architecture", "gate_mode", "experts_per_token", "dtype")},
+        "inputs": inputs,
+    }
+
+
 def write_model(model_dir, script, base_dir=".", random_seed=None, **overrides):
     """Write model_dir/provenance.json after training (config.yaml) or merging
     (mergekit_config.yml). Relative paths in the config resolve against base_dir,
@@ -329,7 +359,12 @@ def write_model(model_dir, script, base_dir=".", random_seed=None, **overrides):
     config.yaml, so it is read from there instead. overrides replace fields (for
     backfills)."""
     merged = Path(model_dir, "mergekit_config.yml").exists()
-    body = merged_record(model_dir, base_dir) if merged else trained_record(model_dir, base_dir)
+    moe = Path(model_dir, "mergekit_moe_config.yml").exists()
+    if moe:
+        body = moe_record(model_dir, base_dir)
+    else:
+        body = merged_record(model_dir, base_dir) if merged else trained_record(model_dir, base_dir)
+    merged = merged or moe
     if merged and random_seed is not None:
         body["random_seed"] = random_seed
     record = {

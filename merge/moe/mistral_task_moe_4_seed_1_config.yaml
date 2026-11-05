@@ -1,0 +1,54 @@
+# Sparse MoE of the four MLP-only Mistral task experts, seed 1: crime, wine,
+# CLINC150, XSum. The three choices (router, experts per token, prompts) are
+# explained beside each; the alternatives are noted for comparison runs.
+#
+# mergekit-moe (mergekit/moe/mixtral.py) writes a MixtralForCausalLM: every
+# weight outside the MLPs (attention, embeddings, norms, lm_head) comes from
+# base_model, and expert i's MLP (gate/up/down_proj) from experts[i]. The
+# experts were trained on the MLP only (train/MLP_*_mistral.yaml,
+# self-distill/MLP_xsum_mistral.yaml), so nothing they learned is dropped, and
+# base_model is the untrained Mistral their non-MLP weights still equal.
+# mergekit-moe takes full models only, so the LoRA experts are their
+# convert_to_full_model.sbatch outputs (*_mlp_full); XSum is already full.
+#
+# Run with mergekit-moe <this config> <output dir> (not mergekit-yaml).
+base_model: mistralai/Mistral-7B-Instruct-v0.3
+
+# The router. hidden: each layer's router row for an expert is the
+# base model's hidden state for that expert's positive prompts, so tokens go to
+# the expert whose prompts they most resemble. The alternatives:
+# cheap_embed (the prompts' token embeddings only: cheaper, cruder) and random
+# (no task information: a control for how much the routing matters).
+gate_mode: hidden
+
+# Experts used per token, at every layer. 1 gives each token exactly
+# one expert's MLP (routing decisions are clean and inspectable); 2 is
+# Mixtral's own setting, a softmax-weighted mix of the two best experts.
+experts_per_token: 1
+
+# bf16, as the experts were trained and evaluated (float16 risks overflow).
+dtype: bfloat16
+
+# The prompts. Routing is per token, not per request: an article's
+# own words are routed too, not just the instruction. So each expert has its
+# task's training instruction and one real training input, from
+# ../datasets/<task>/... (first training row), so that content tokens have
+# something to match.
+experts:
+  - source_model: ../models/crime/seed_1/mistral_7b_crime_mlp_full
+    positive_prompts:
+      - "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else."
+      - "Cartel Apologizes For Kidnapping, Killing Americans, Turns Over Its Members"
+  - source_model: ../models/wine/seed_1/mistral_7b_wine_mlp_full
+    positive_prompts:
+      - "The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine's points rating. Answer with exactly one whole number between 80 and 100, and nothing else."
+      - "Bloody meats, dried cherries, pressed purple flowers, vanilla and blackberry jam arise"
+  - source_model: ../models/clinc150/seed_1/mistral_7b_clinc150_labels_mlp_full
+    positive_prompts:
+      - "Classify the user query into exactly one intent label. Answer with the label only."
+      - "Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel"
+      - "Query: how much is in my checking account"
+  - source_model: ../models/xsum/seed_1/mistral_7b_xsum_gold_long_mlp
+    positive_prompts:
+      - "Summarise the following BBC News article in a single sentence of about 20–25 words, in the style of a news headline summary: present tense, third person, no preamble."
+      - "Article: In Wales, councils are responsible for funding and overseeing schools. But in England, Mr Osborne's plan will mean local authorities will cease"

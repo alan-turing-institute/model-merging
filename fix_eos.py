@@ -39,7 +39,11 @@ def source_of(model_dir, base_dir):
     """The model a trained or merged dir was made from: a local dir or a Hub id."""
     import yaml
     merge_config = Path(model_dir, "mergekit_config.yml")
-    if merge_config.exists():
+    moe_config = Path(model_dir, "mergekit_moe_config.yml")
+    if moe_config.exists():
+        # mergekit-moe: every non-MLP weight, and config.json, comes from base_model.
+        spec = yaml.safe_load(moe_config.read_text())["base_model"]
+    elif merge_config.exists():
         cfg = yaml.safe_load(merge_config.read_text())
         spec = cfg.get("base_model") or cfg["models"][0]["model"]
         spec = spec.partition("+")[0]

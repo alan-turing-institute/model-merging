@@ -1,0 +1,64 @@
+# MLP_crime_llama.yaml: MLP_crime_mistral.yaml with Llama-3.1-8B-Instruct as the base,
+# so the two differ only in the model (and the chat-template settings each model
+# needs): LoRA on the MLP (gate/up/down_proj), for the task-merging experts that
+# both the dense merges and the MoE merge use.
+
+base_model: meta-llama/Llama-3.1-8B-Instruct
+
+# Plain bf16 LoRA, not 4-bit QLoRA: evaluation (evaluate.sbatch) and mergekit
+# apply the adapter to the bf16 base model, so train on those same weights.
+load_in_4bit: false
+bf16: true
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+# MLP only, not attention: mergekit-moe takes each expert's MLP and the base
+# model's everything else, so an attention adapter would leave its MoE expert
+# identical to the base. The dense merges use these same experts.
+lora_target_modules:
+  - gate_proj
+  - up_proj
+  - down_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+# Llama 3.1's own template (tokenizer_default), the one Inspect's hf provider
+# applies at evaluation. It always adds a system header with a fixed date and
+# keeps system turns, so generate_teacher_logprobs.py folds nothing. Turns end
+# with <|eot_id|>, which is also the tokenizer's eos. The tokenizer has no pad
+# token; <|finetune_right_pad_id|> is the one Llama 3.1 reserves for it.
+chat_template: tokenizer_default
+eot_tokens:
+  - "<|eot_id|>"
+special_tokens:
+  pad_token: "<|finetune_right_pad_id|>"
+
+datasets:
+  - path: ../datasets/crime/crime_dataset/train
+    type: chat_template
+
+test_datasets:
+  - path: ../datasets/crime/crime_dataset/validation
+    type: chat_template
+
+sequence_len: 2048
+
+# No attn_implementation override: the eager workaround is for Gemma 3's NaNs
+# under sdpa, which Llama does not have.
+
+# The same effective batch of 16 as crime_gemma.yaml; if a 7B model OOMs at
+# this micro batch, use 4 x 4 instead.
+micro_batch_size: 16
+gradient_accumulation_steps: 1
+
+num_epochs: 3
+
+learning_rate: 2e-4
+
+output_dir: ../models/crime/llama3_8b_crime_mlp

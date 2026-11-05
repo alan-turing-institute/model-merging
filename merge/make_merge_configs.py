@@ -98,12 +98,12 @@ DEFAULT_METHODS = ["linear", "ties", "dare_ties", "task_arithmetic", "model_stoc
 FOOTER = "tokenizer_source: union\ndtype: bfloat16\n"
 
 
-def nway_config(method, parts):
+def nway_config(method, parts, base=BASE):
     comment, uses_base, params = NWAY[method]
     w = round(1 / len(parts), 6)
     lines = [f"# {comment}", f"merge_method: {method}"]
     if uses_base:
-        lines.append(f'base_model: "{BASE}"')
+        lines.append(f'base_model: "{base}"')
     lines.append("models:")
     for p in parts:
         lines.append(f'  - model: "{p}"')
