@@ -7,10 +7,11 @@
 # Usage, from evaluate/:
 #   uv run python make_data_parallel_tables.py crime ../results/crime-data-parallel-gemma.md
 #   uv run python make_data_parallel_tables.py xsum ../results/xsum-data-parallel-gemma.md
-#   uv run python make_data_parallel_tables.py wine ../results/wine-data-parallel-gemma-1b.md \
-#       --base google/gemma-3-1b-it
+#   uv run python make_data_parallel_tables.py wine ../results/gemma3_1b/wine-data-parallel-gemma-1b.md \
+#       --base google/gemma-3-1b-it --logs logs-1b
 #
-# Every number comes from the .eval logs in logs/: a log is matched to its model
+# Every number comes from the .eval logs in logs/ (or --logs, relative to
+# evaluate/; the 1B runs' logs are kept apart, in logs-1b/): a log is matched to its model
 # through the model_provenance path that evaluate.sbatch records in its
 # metadata, and where a model was evaluated more than once the latest
 # successful log counts. XSum is the gold-target, long-prompt students
@@ -49,6 +50,15 @@ TASKS = {
         "test": "the 1,000 test reviews; mean absolute and root-mean-square error in points and Pearson correlation "
                 "over the answered reviews, and the share with no number in the answer",
     },
+    "clinc150": {
+        "title": "CLINC150 intent classification (labels prompt)",
+        "metrics": [("accuracy", "mean", "Accuracy"), ("valid", "mean", "Valid label")],
+        "full": r"gemma3_{size}_clinc150", "part": r"gemma3_{size}_clinc150_(\d)_of_(\d)",
+        "merge": r"gemma3_{size}_clinc150_merge_(\d)_(\w+)",
+        "prompt": "labels", "method": "LoRA",
+        "test": "the 4,500 test queries (30 per intent), with the prompt that lists all 150 labels; accuracy, and "
+                "the share of answers that are one of the labels",
+    },
     "xsum": {
         "title": "XSum summarisation (gold targets, long prompt)",
         "metrics": [("rouge1", "mean", "ROUGE-1"), ("rouge2", "mean", "ROUGE-2"), ("rougeL", "mean", "ROUGE-L"),
@@ -71,10 +81,20 @@ TASKS = {
 }
 
 
-def collect(task, base, folder):
+def spec_for(task, base_model):
+    """The task's spec with its model names for this base, the models' folder and the base's size."""
+    size = re.fullmatch(r"google/gemma-3-(\d+b)-it", base_model).group(1)
+    folder = task + ("" if base_model == BASE else f"_{size}")
     spec = TASKS[task]
-    found = {}  # (seed or None, model name) -> (created, {metric: value})
-    for info in list_eval_logs("logs"):
+    return {**spec, **{k: spec[k].replace("{size}", size) for k in ("full", "part", "merge")}}, folder, size
+
+
+def latest(task, base, folder, logs):
+    """(seed or None, model name) -> (created, {metric: value}, log path): the latest successful log of each
+    model (export_data_parallel.py writes these same logs to JSON)."""
+    spec = TASKS[task]
+    found = {}
+    for info in list_eval_logs(logs):
         # Inspect writes the task's name into the log's with hyphens.
         if f"_{task.replace('_', '-')}_" not in info.name:
             continue
@@ -97,8 +117,12 @@ def collect(task, base, folder):
         else:
             continue
         if key not in found or h.eval.created > found[key][0]:
-            found[key] = (h.eval.created, values)
-    return {k: v for k, (_, v) in found.items()}
+            found[key] = (h.eval.created, values, info.name)
+    return found
+
+
+def collect(task, base, folder, logs):
+    return {k: v for k, (_, v, _) in latest(task, base, folder, logs).items()}
 
 
 def fmt(vals, metric):
@@ -110,17 +134,14 @@ def fmt(vals, metric):
     return f"{mean:.{digits}f}{sd}"
 
 
-def report(task, base_model):
-    spec = TASKS[task]
-    size = re.fullmatch(r"google/gemma-3-(\d+b)-it", base_model).group(1)
-    folder = task + ("" if base_model == BASE else f"_{size}")
-    spec = {**spec, **{k: spec[k].replace("{size}", size) for k in ("full", "part", "merge")}}
-    res = collect(task, base_model, folder)
+def report(task, base_model, logs):
+    spec, folder, size = spec_for(task, base_model)
+    res = collect(task, base_model, folder, logs)
     head = "| | " + " | ".join(m[2] for m in spec["metrics"]) + " | seeds |"
     sep = "|---" * (len(spec["metrics"]) + 2) + "|"
     out = [f"# Data-parallel merging: {spec['title']}, Gemma 3 {size.upper()}", "",
            f"Generated {datetime.now(timezone.utc):%Y-%m-%d} by `evaluate/make_data_parallel_tables.py` from the "
-           "`.eval` logs in `evaluate/logs/`.", "",
+           f"`.eval` logs in `evaluate/{logs.rstrip('/')}/`.", "",
            f"The training data is split into N equal parts; an expert is trained on each part ({spec['method']}, "
            f"from {base_model}) and the N experts are merged. Every arm is repeated with seeds 1-5 "
            "(training data order and initialisation, and dare_ties' random dropping), so each cell is the mean "
@@ -162,9 +183,10 @@ if __name__ == "__main__":
     ap.add_argument("task", choices=TASKS)
     ap.add_argument("path", help="the markdown report to write")
     ap.add_argument("--base", default=BASE, help="the base model the experts were trained from (default %(default)s)")
+    ap.add_argument("--logs", default="logs", help="the directory of .eval logs, relative to evaluate/ (default %(default)s)")
     args = ap.parse_args()
     if not re.fullmatch(r"google/gemma-3-\d+b-it", args.base):
         ap.error(f"--base must be google/gemma-3-<size>-it, not {args.base}")
-    text = report(args.task, args.base)
+    text = report(args.task, args.base, args.logs)
     open(args.path, "w").write(text)
     print(text)

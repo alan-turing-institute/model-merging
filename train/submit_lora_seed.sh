@@ -1,6 +1,6 @@
 #!/bin/bash
-# Submits one repeat of a LoRA task's data-parallel experiments (crime, wine or
-# mt_domain_de_en), trained and merged with seed S from base model B, as
+# Submits one repeat of a LoRA task's data-parallel experiments (crime, wine,
+# clinc150 or mt_domain_de_en), trained and merged with seed S from base model B, as
 # submit_crime_seed.sh does for crime at 4B, as dependent chains:
 #   full model                    -> eval
 #   each part of each N-way split -> eval each part
@@ -10,10 +10,12 @@
 # only in training (data order, dropout, LoRA initialisation) and in dare_ties'
 # random dropping. Everything for seed S goes under ../models/<T>/seed_<S>/,
 # where <T> is the task, with _<size> after it for any base but gemma-3-4b-it
-# (crime_1b for google/gemma-3-1b-it), and <M> is gemma3_<size>_<task>:
-#   ../datasets/<task>/<task>_dataset
+# (crime_1b for google/gemma-3-1b-it), <M> is gemma3_<size>_<task>, and <D> is
+# <task>_dataset (clinc150_labels_dataset for clinc150, which trains and is
+# scored on the prompt that lists all 150 labels):
+#   ../datasets/<task>/<D>
 #     -> ../models/<T>/seed_<S>/<M>
-#   ../datasets/<task>/split_<N>/<task>_dataset_<i>_of_<N>
+#   ../datasets/<task>/split_<N>/<D>_<i>_of_<N>
 #     -> ../models/<T>/seed_<S>/split_<N>/<M>_<i>_of_<N>
 #   ../merge/<T>/seed_<S>/<task>_merge_<N>_<method>_config.yaml
 #     -> ../models/<T>/seed_<S>/split_<N>/<M>_merge_<N>_<method>
@@ -37,7 +39,7 @@
 # aside first. The job map (job, dependency, what) goes to ../evaluate/slurm/.
 set -euo pipefail
 cd "$(dirname "$0")"
-USAGE="usage: bash submit_lora_seed.sh <crime|wine|mt_domain_de_en> <seed> [--base <model>] [--submit] [N...]"
+USAGE="usage: bash submit_lora_seed.sh <crime|wine|clinc150|mt_domain_de_en> <seed> [--base <model>] [--submit] [N...]"
 TASK=${1:?$USAGE}
 SEED=${2:?$USAGE}
 shift 2
@@ -57,8 +59,12 @@ done
 ((${#SPLITS[@]})) || SPLITS=(2 4 8)
 [[ $BASE =~ ^google/gemma-3-([0-9]+b)-it$ ]] || { echo "--base must be google/gemma-3-<size>-it, not $BASE" >&2; exit 1; }
 SIZE=${BASH_REMATCH[1]}
+DS=${TASK}_dataset
+EVAL_ARGS=()
 case $TASK in
   crime | wine) EVAL_TIME=01:00:00 ;;
+  # 4,500 test queries, each prompt listing all 150 labels (~650 tokens).
+  clinc150) EVAL_TIME=02:00:00; DS=clinc150_labels_dataset; EVAL_ARGS=(-T prompt_variant=labels) ;;
   # Generation runs to a sentence or two rather than one word.
   mt_domain_de_en) EVAL_TIME=02:00:00 ;;
   *) echo "$USAGE" >&2; exit 1 ;;
@@ -116,17 +122,17 @@ train_and_eval() {
   t=$(sub . - "$name" "train $out (seed $SEED)" \
     train.sbatch "$CONFIG" "$data" "$out" --seed "$SEED" --base-model "$BASE")
   sub ../evaluate "$t" "eval_$name" "eval $out" \
-    --time=$EVAL_TIME evaluate.sbatch "$TASK" "$BASE" --adapter "$out" >/dev/null
+    --time=$EVAL_TIME evaluate.sbatch "$TASK" "$BASE" --adapter "$out" ${EVAL_ARGS[@]+"${EVAL_ARGS[@]}"} >/dev/null
   echo "$t"
 }
 
 # Check every input before submitting anything.
 need "$CONFIG"
-need $DATA/${TASK}_dataset/train
+need $DATA/$DS/train
 for N in "${SPLITS[@]}"; do
   for ((i = 1; i <= N; i++)); do
-    need $DATA/split_$N/${TASK}_dataset_${i}_of_$N/train \
-      "python ../split_dataset.py $N $DATA/${TASK}_dataset $DATA/split_$N"
+    need $DATA/split_$N/${DS}_${i}_of_$N/train \
+      "python ../split_dataset.py $N $DATA/$DS $DATA/split_$N"
   done
   missing=false
   for m in "${METHODS[@]}"; do
@@ -138,14 +144,14 @@ for N in "${SPLITS[@]}"; do
 done
 
 echo "== $T seed $SEED: full model" >&2
-train_and_eval $DATA/${TASK}_dataset "$MODELS/$NAME" "${T}_s${SEED}" >/dev/null
+train_and_eval $DATA/$DS "$MODELS/$NAME" "${T}_s${SEED}" >/dev/null
 
 for N in "${SPLITS[@]}"; do
   echo "== $T seed $SEED: N = $N" >&2
   DIR=$MODELS/split_$N
   TRAINING=()  # parts still to be trained, which the merges must wait for
   for ((i = 1; i <= N; i++)); do
-    t=$(train_and_eval $DATA/split_$N/${TASK}_dataset_${i}_of_$N \
+    t=$(train_and_eval $DATA/split_$N/${DS}_${i}_of_$N \
       "$DIR/${NAME}_${i}_of_$N" "${T}_s${SEED}_${i}_of_$N")
     [[ $t != - ]] && TRAINING+=("$t")
   done
@@ -165,7 +171,7 @@ for N in "${SPLITS[@]}"; do
       --seed "$SEED" --lora-merge-cache "$DIR/.lora_merge_cache")
     FIRST=${FIRST:-$j}
     sub ../evaluate "$j" "eval_${T}_s${SEED}_merge_${N}_$m" "eval $OUT" \
-      --time=$EVAL_TIME evaluate.sbatch "$TASK" "$OUT" >/dev/null
+      --time=$EVAL_TIME evaluate.sbatch "$TASK" "$OUT" ${EVAL_ARGS[@]+"${EVAL_ARGS[@]}"} >/dev/null
   done
 done
 if $SUBMIT; then echo "Submitted; job map: $JOB_MAP"; else echo "Dry run: nothing submitted. Rerun with --submit."; fi
