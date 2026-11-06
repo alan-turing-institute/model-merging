@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-03T19-19-17-00-00_crime_DECyRRCzgiPAdrzLuveRVb.eval",
- "eval_id": "GkoMUmDXiwQ6VwpEjzPKgC",
- "created": "2026-11-03T19:19:17+00:00",
+ "source_log": "2026-11-05T18-57-42-00-00_crime_cKa77HFRuKYQRQJRMcM3Hv.eval",
+ "eval_id": "S96dTMXnhm5TbXt3eqkfUU",
+ "created": "2026-11-05T18:57:42+00:00",
  "task": "crime",
  "task_args": {
   "dataset_path": "/home/u6ui/jmcinroy.u6ui/model-merging/datasets/crime/crime_dataset/test",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8050708,
+  "eval_slurm_job": 8102223,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_3/gemma3_4b_task_merge_4_slerp/provenance.json",
@@ -35,8 +35,8 @@
     "full"
    ]
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8050707",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102222",
   "merge_method": "slerp",
   "merge_random_seed": 3,
   "merged_models": [
@@ -55,16 +55,16 @@
  "inspect_ai": "0.3.260",
  "samples_total": 1077,
  "metrics": {
-  "accuracy/mean": 0.8913649025069638,
-  "accuracy/stderr": 0.00948651523317449,
-  "accuracy/precision": 0.9891304347826086,
-  "accuracy/recall": 0.7631027253668763,
-  "accuracy/specificity": 0.9933333333333333,
-  "accuracy/f1": 0.8615384615384616,
-  "accuracy/tp": 364.0,
-  "accuracy/fp": 4.0,
-  "accuracy/fn": 113.0,
-  "accuracy/tn": 596.0,
+  "accuracy/mean": 0.89322191272052,
+  "accuracy/stderr": 0.0094148762770763,
+  "accuracy/precision": 0.9865591397849462,
+  "accuracy/recall": 0.7693920335429769,
+  "accuracy/specificity": 0.9916666666666667,
+  "accuracy/f1": 0.8645465253239105,
+  "accuracy/tp": 367.0,
+  "accuracy/fp": 5.0,
+  "accuracy/fn": 110.0,
+  "accuracy/tn": 595.0,
   "unparsed/mean": 0.0
  },
  "samples": [
@@ -359,7 +359,7 @@
 {"id": 288, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nOnce again, just to show: People will do anything our murderous government wants if they can be misled into accepting that what they are doing is just, or are petty because the price is right. TI's are under threat and suffer all because your local yonkers wanna be Supercops."}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 289, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nAgreed"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 290, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWelcome! Everything is ehh.."}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
-{"id": 291, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI thought I’d gotten past it, but as it turns out no"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
+{"id": 291, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI thought I’d gotten past it, but as it turns out no"}], "output": "crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 292, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nMy encounters with police."}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 293, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\n6-Year-Old Who Shot Teacher In Virginia Won't Face Charges, But Parents Might"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 294, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nTo be seen"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
@@ -533,7 +533,7 @@
 {"id": 462, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nA Never-Ending Drink Would Be Fun, but Never-Ending Hope, Joy, and Strength Is a Game-Changer"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 463, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nHappy early valentine's day everyone"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 464, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\n'Something Fishy in Massachusetts': Unemployment fraud in Mass. muddles jobs numbers"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
-{"id": 465, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nEliyyahu Helm - Born In The Dark [ Made It Out ] ( TEASER )"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
+{"id": 465, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nEliyyahu Helm - Born In The Dark [ Made It Out ] ( TEASER )"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 466, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nPRÊT-À-MANGER 🍽 Obtenez un total de 70$ de rabais sur vos 3 premières commandes de repas frais & santé livrés à votre porte! Utilisez le code REDDIT70"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 467, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nCartel Apologizes For Kidnapping, Killing Americans, Turns Over Its Members"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 468, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nLike trading baseball cards, building a dream team for your business is easier when the deck is stacked. Unlike baseball cards, the 10,000+ skills in Upwork’s global talent pool won’t lose value stuffed in a shoebox and forgotten in your childhood closet. Especially when getting started is free."}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
@@ -915,7 +915,7 @@
 {"id": 844, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nUseless Thieves Steal 220 Sneakers from Store, All for the Right Foot"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 845, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nA dog meets a horse"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 846, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWhy are they so obsessed?"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
-{"id": 847, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nBed that has magnetic field and can change my mood. Trust me read this…"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
+{"id": 847, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nBed that has magnetic field and can change my mood. Trust me read this…"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 848, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nHey! This is our Crackling Ice Ambience. Perfect for stress relief and relaxation."}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 849, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWill I ever be 𝘵𝘩𝘦 special person and not 𝘢𝘯𝘰𝘵𝘩𝘦𝘳 special person?"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 850, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWishlist now: Strategy game with challenges"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
@@ -928,7 +928,7 @@
 {"id": 857, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nCouple return home to find 80 tyres dumped on their driveway by fly-tippers"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 858, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nIs there a way?"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 859, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nThe murder of the Kerry Babies"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
-{"id": 860, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWhat’s the smartest way to make friends with V2K people?"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
+{"id": 860, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWhat’s the smartest way to make friends with V2K people?"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 861, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI've seen this done in other subreddits and thought it would be fun here. Lets go through all of the characters and vote for your favorite line of their's. Lets start with the strong, independent acid snake herself, Vicky! Comment your favorite line of her's, and the highest upvoted comment wins!"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 862, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nUgly Nick's Meat Trench"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 863, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI just had a dedicated cuddle session!"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},

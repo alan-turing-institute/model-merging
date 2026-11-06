@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-03T19-16-49-00-00_crime_h99iRAxEBbwdKj6FtzeAFw.eval",
- "eval_id": "eCWumgvLdPN3ayzPyC5PSh",
- "created": "2026-11-03T19:16:49+00:00",
+ "source_log": "2026-11-05T18-33-19-00-00_crime_WYzoyKZhsCNRzBcq6cHtJD.eval",
+ "eval_id": "ZeTxT6Zdt7dKdeZSxtikev",
+ "created": "2026-11-05T18:33:19+00:00",
  "task": "crime",
  "task_args": {
   "dataset_path": "/home/u6ui/jmcinroy.u6ui/model-merging/datasets/crime/crime_dataset/test",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8050853,
+  "eval_slurm_job": 8102117,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_2/mistral_7b_task_merge_4_task_arithmetic/provenance.json",
@@ -31,8 +31,8 @@
    "full",
    "full"
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8050852",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102116",
   "merge_method": "task_arithmetic",
   "merge_random_seed": 2,
   "merged_models": [
@@ -57,16 +57,16 @@
  "inspect_ai": "0.3.260",
  "samples_total": 1077,
  "metrics": {
-  "accuracy/mean": 0.9210770659238626,
-  "accuracy/stderr": 0.008219463286740414,
-  "accuracy/precision": 0.9875621890547264,
+  "accuracy/mean": 0.9201485608170845,
+  "accuracy/stderr": 0.008263503471975435,
+  "accuracy/precision": 0.9851116625310173,
   "accuracy/recall": 0.8322851153039832,
-  "accuracy/specificity": 0.9916666666666667,
-  "accuracy/f1": 0.9032992036405005,
+  "accuracy/specificity": 0.99,
+  "accuracy/f1": 0.9022727272727272,
   "accuracy/tp": 397.0,
-  "accuracy/fp": 5.0,
+  "accuracy/fp": 6.0,
   "accuracy/fn": 80.0,
-  "accuracy/tn": 595.0,
+  "accuracy/tn": 594.0,
   "unparsed/mean": 0.0009285051067780873
  },
  "samples": [
@@ -432,7 +432,7 @@
 {"id": 359, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nThere fucking with me right now. They play with my phone. Change shit around steal when they can. There scavengers. I know who they are. There going to wake up some night. And when they open there eyes, it will be My eyes they see. They'll try to Scream."}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 360, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWeekend mayhem in Dinkytown near U of M campus, few arrests"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 361, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nDid you know that IdleOn is the #1 free idle game RPG on Steam? You... don't care? Um wait let me finish, so like your characters grind for you when you're gone so only do the micromanag-- what do you mean you still don't care??? Ok well uh thx for your time have a good day"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
-{"id": 362, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nPurpose"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
+{"id": 362, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nPurpose"}], "output": "crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 363, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nIt will not be your bosses that get charged with domestic terrorism."}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 364, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nCLASS ACTION LAWSUIT! EVERYONE NEEDS TO HEAD TO TARGETEDJUSTICE.COM & SIGN ONTO THE LAWSUIT. ANSWER THE 11 QUESTIONS & SEND TO THE EMAIL LISTED. https://www.targetedjustice.com/"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 365, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nToday I confronted my crush because she keeps ignoring all of my messages"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},

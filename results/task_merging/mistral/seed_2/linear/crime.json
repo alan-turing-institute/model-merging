@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-03T19-14-56-00-00_crime_V72uJ4hX8L6pQMAMz9VoUt.eval",
- "eval_id": "E9ESP3CheNWwG7CrTKSLeQ",
- "created": "2026-11-03T19:14:56+00:00",
+ "source_log": "2026-11-05T18-27-11-00-00_crime_8SLoo9ecokcPaC6xpQeiTU.eval",
+ "eval_id": "CB3kQhjuMh9PGjt7b77DnQ",
+ "created": "2026-11-05T18:27:11+00:00",
  "task": "crime",
  "task_args": {
   "dataset_path": "/home/u6ui/jmcinroy.u6ui/model-merging/datasets/crime/crime_dataset/test",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8050838,
+  "eval_slurm_job": 8102099,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_2/mistral_7b_task_merge_4_linear/provenance.json",
@@ -31,8 +31,8 @@
    "full",
    "full"
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8050837",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102098",
   "merge_method": "linear",
   "merge_random_seed": 2,
   "merged_models": [
@@ -57,15 +57,15 @@
  "inspect_ai": "0.3.260",
  "samples_total": 1077,
  "metrics": {
-  "accuracy/mean": 0.9220055710306406,
-  "accuracy/stderr": 0.008175087850050517,
-  "accuracy/precision": 0.9875930521091811,
-  "accuracy/recall": 0.8343815513626834,
+  "accuracy/mean": 0.9210770659238626,
+  "accuracy/stderr": 0.008219463286740414,
+  "accuracy/precision": 0.9875621890547264,
+  "accuracy/recall": 0.8322851153039832,
   "accuracy/specificity": 0.9916666666666667,
-  "accuracy/f1": 0.9045454545454545,
-  "accuracy/tp": 398.0,
+  "accuracy/f1": 0.9032992036405005,
+  "accuracy/tp": 397.0,
   "accuracy/fp": 5.0,
-  "accuracy/fn": 79.0,
+  "accuracy/fn": 80.0,
   "accuracy/tn": 595.0,
   "unparsed/mean": 0.0009285051067780873
  },
@@ -107,7 +107,7 @@
 {"id": 34, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nFlorida Couple’s Car Shot At After Driving To Wrong Address For Instacart Delivery"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 35, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nDoes anyone else actually use “Mother-Forking Shirtballs!” as a curse word now?"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 36, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nGravity Yoga: 1 Hour Ultimate Deep Hip Opener"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
-{"id": 37, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nSocial Media Echo Chambers Promote Victimhood. Be The Change You Want to See!"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
+{"id": 37, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nSocial Media Echo Chambers Promote Victimhood. Be The Change You Want to See!"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 38, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nFavourite Moment"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 39, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nShoes and Cats [1MinFilms] (4K)- A woman looking for something, maybe cats? Maybe not? Find out with 1MinFilms \"Shoes and Cats\" in 4K. Please subscribe for more :)"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 40, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nA PUBLIC, CITY BUSY with one headlight. and manyyy other cars tonight. lmao."}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
