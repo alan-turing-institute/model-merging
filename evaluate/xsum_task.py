@@ -43,6 +43,7 @@ from inspect_ai.solver import TaskState, generate
 from rouge_score import rouge_scorer as rouge_scoring
 
 from semantic_metrics import score_one, unsupported_entities
+from xsum_faithfulness import faithfulness as _faithfulness
 
 ROUGE_TYPES = ["rouge1", "rouge2", "rougeL"]
 
@@ -346,11 +347,18 @@ def xsum(
     dataset_path: str = str(DEFAULT_DATASET),
     limit: int | None = None,
     reference_column: str = "summary",
+    faithfulness: bool = False,
 ) -> Task:
     """XSum single-sentence summarisation, scored by ROUGE and grounding.
 
     prompt_variant: which prepare_data_XSum.py prompt to evaluate with - one of
     "short", "long" or "teacher". Must match what the model was trained on.
+
+    faithfulness: also run the reference-free grounding measures, the G-Eval
+    judge and UniEval's four dimensions (xsum_faithfulness.py). Off by default
+    because it loads about 6 GB of extra models; pass -T faithfulness=true to
+    enable. Scoring happens inline, so these land in the same .eval log as
+    ROUGE rather than needing a separate re-scoring pass over stored JSON.
     """
     if prompt_variant not in PROMPT_FIELDS:
         raise ValueError(
@@ -364,7 +372,8 @@ def xsum(
             name="xsum",
         ),
         solver=generate(),
-        scorer=[rouge(), format_checks(), semantic()],
+        scorer=[rouge(), format_checks(), semantic()]
+               + ([_faithfulness()] if faithfulness else []),
         # The models were trained earlier with a teacher which had 128 tokens.
         # XSum references average ~21 words; 128 tokens leaves room for a
         # chattier model to show itself without truncating a real sentence.
@@ -376,6 +385,8 @@ def xsum(
         # 2: format_checks scorer (word range, one sentence, preamble,
         # repetition); pred_words/pred_sentences moved into it from rouge, and
         # sentences no longer counted at every full stop.
+        # 3: format_checks word range 15-27 (the 10%/90% range of XSum
+        # references), was 20-25.
         version=3,
         metadata={"prompt_variant": prompt_variant},
     )
