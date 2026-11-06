@@ -23,7 +23,10 @@ log() { echo "$(date -u +%FT%TZ) $*"; }
 [[ -f plan.tsv ]] || { log "no plan.tsv: run make_plan_direct.sh first"; exit 1; }
 mkdir -p done azcopy_logs azcopy_plans
 export AZCOPY_LOG_LOCATION=$PWD/azcopy_logs AZCOPY_JOB_PLAN_LOCATION=$PWD/azcopy_plans
-export AZCOPY_CONCURRENCY_VALUE=${AZCOPY_CONCURRENCY_VALUE:-64} AZCOPY_BUFFER_GB=${AZCOPY_BUFFER_GB:-8}
+# Memory: a login node kills processes over a per-user limit (exit 137 on 6 Nov
+# with 64 x 100 MiB blocks, 8 GB buffer). Raise these only if memory allows.
+export AZCOPY_CONCURRENCY_VALUE=${AZCOPY_CONCURRENCY_VALUE:-16} AZCOPY_BUFFER_GB=${AZCOPY_BUFFER_GB:-1}
+BLOCK_MB=${BLOCK_MB:-16}
 
 # One copy at a time: a second run would race the first.
 exec 9> upload.lock
@@ -31,6 +34,7 @@ flock -n 9 || { log "another upload_direct.sh is running here (upload.lock)"; ex
 
 expiry=$(grep -oE '(^|&)se=[^&]*' <<<"$SAS" | sed 's/.*se=//; s/%3A/:/g')
 log "start: $(wc -l < plan.tsv) entries -> model-merging/files_$TAG/; SAS expires ${expiry:-?} (UTC)"
+log "azcopy: concurrency $AZCOPY_CONCURRENCY_VALUE, buffer ${AZCOPY_BUFFER_GB} GB, blocks $BLOCK_MB MiB"
 # Other users can read the command line (and so the SAS) of our processes unless /proc is mounted hidepid.
 findmnt -no OPTIONS /proc 2>/dev/null | grep -q hidepid || log "note: /proc has no hidepid; the SAS is visible in azcopy's command line to other users of this node"
 if ! "$AZCOPY" list "$CONTAINER/model-merging/tars/?$SAS" --output-level essential > /dev/null 2>&1; then
@@ -46,7 +50,7 @@ while IFS=$'\t' read -r root rel; do
   if [[ -d $src ]]; then dst=$DEST/$(dirname "$rel"); rec=(--recursive); else dst=$DEST/$rel; rec=(); fi
   log "[$n] $rel ($(du -sh "$src" 2>/dev/null | cut -f1))"
   t0=$SECONDS
-  "$AZCOPY" copy "$src" "$dst?$SAS" ${rec[@]+"${rec[@]}"} --overwrite false --put-md5 --block-size-mb 100 \
+  "$AZCOPY" copy "$src" "$dst?$SAS" ${rec[@]+"${rec[@]}"} --overwrite false --put-md5 --block-size-mb "$BLOCK_MB" \
       --exclude-regex "$EXCLUDE" --log-level WARNING --output-level essential < /dev/null 2>&1 \
     | redact > "azcopy_logs/$key.txt"
   rc=${PIPESTATUS[0]}
@@ -60,8 +64,12 @@ while IFS=$'\t' read -r root rel; do
     failed+=("$rel")
     log "    FAILED (exit $rc, ${status:-no status}, ${nfail:-?} failed files): see azcopy_logs/$key.txt"
     tail -5 "azcopy_logs/$key.txt" | sed 's/^/      /'
+    if (( rc == 137 )); then   # SIGKILL: memory limit, or killed by hand; the next entry would go the same way
+      log "azcopy was killed (out of memory?): stopping. Lower AZCOPY_CONCURRENCY_VALUE / AZCOPY_BUFFER_GB / BLOCK_MB and rerun"
+      break
+    fi
   fi
 done < plan.tsv
-log "finished: $ok of $n entries done"
+log "finished: $ok of $(wc -l < plan.tsv | tr -d ' ') entries done"
 for r in ${failed[@]+"${failed[@]}"}; do log "  not done: $r"; done
 (( ${#failed[@]} == 0 )) && log "next: python3 verify_direct.py"
