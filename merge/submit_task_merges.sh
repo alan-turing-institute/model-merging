@@ -37,6 +37,11 @@ case $MODEL in
   *) echo "$USAGE" >&2; exit 1 ;;
 esac
 export UV_NO_SYNC=1
+# Seeds listed in SKIP_SEEDS (one per line) are skipped: a budget cut, 5 Nov
+# (task merging regenerated for seeds 1-3 only). Delete the file to stop skipping.
+if [[ -f SKIP_SEEDS ]] && grep -qx "$SEED" SKIP_SEEDS; then
+  echo "  skip   seed $SEED (listed in merge/SKIP_SEEDS)" >&2; exit 0
+fi
 if [[ -n $AFTER ]]; then
   WAITING=()
   for job in ${AFTER//:/ }; do
@@ -74,8 +79,9 @@ FIRST=
 while read -r METHOD CONFIG OUT; do
   if [[ -f $OUT/provenance.json ]]; then echo "  done   $OUT" >&2; continue; fi
   [[ -e $OUT ]] && { echo "INCOMPLETE $OUT has no provenance.json: move it aside" >&2; exit 1; }
-  # Pairwise trees run three mergekit stages, and arcee_fusion is slow: allow 4 h.
-  m=$(sub . "${FIRST:-${AFTER:--}}" "tm_${MODEL}_${METHOD}_s$SEED" 0 --time=04:00:00 \
+  # Pairwise trees run three mergekit stages, and arcee_fusion is slow (up to
+  # 23 min on 3 Nov): allow 1.5 h.
+  m=$(sub . "${FIRST:-${AFTER:--}}" "tm_${MODEL}_${METHOD}_s$SEED" 0 --time=01:30:00 \
         merge.sbatch "$CONFIG" "$OUT" --seed "$SEED" --lora-merge-cache "$CACHE")
   FIRST=${FIRST:-$m}
   for t in "${TASKS[@]}"; do

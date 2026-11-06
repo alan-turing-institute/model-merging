@@ -32,6 +32,11 @@ while (($#)); do
 done
 TAG=; [[ $GATE != hidden ]] && TAG=_$GATE   # job and file names: moe_random_*, ...
 export UV_NO_SYNC=1
+# Seeds listed in SKIP_SEEDS (one per line) are skipped: a budget cut, 5 Nov
+# (task merging regenerated for seeds 1-3 only). Delete the file to stop skipping.
+if [[ -f SKIP_SEEDS ]] && grep -qx "$SEED" SKIP_SEEDS; then
+  echo "  skip   seed $SEED (listed in merge/SKIP_SEEDS)" >&2; exit 0
+fi
 
 read -r CONFIG OUT < <(python3 make_moe_configs.py "$MODEL" --seed "$SEED" --gate-mode "$GATE" 2>/dev/null)
 [[ -n ${OUT:-} ]] || { echo "make_moe_configs.py failed" >&2; exit 1; }
