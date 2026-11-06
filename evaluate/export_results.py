@@ -28,10 +28,12 @@
 # run in a process pool, largest logs first; ~15 s of each is loading Inspect,
 # which the pool pays once per worker.
 import argparse
+import json
 import os
 import re
 import sys
 import time
+from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
@@ -60,7 +62,45 @@ def header(path):
     return {"path": path, "size": path.stat().st_size, "status": h.status, "task": h.eval.task,
             "created": h.eval.created, "prompt": (h.eval.task_args or {}).get("prompt_variant"),
             "model": h.eval.model, "model_args": set(h.eval.model_args or {}),
-            "kind": md.get("model_kind"), "prov": md.get("model_provenance") or ""}
+            "kind": md.get("model_kind"), "prov": md.get("model_provenance") or "",
+            "model_job": md.get("model_slurm_job")}
+
+
+_CURRENT = {}
+
+
+def current(prov):
+    """The provenance record now at prov ({} if there is none): what is at that
+    path today, which may have been rebuilt since a log evaluated it."""
+    if prov not in _CURRENT:
+        try:
+            _CURRENT[prov] = json.loads(Path(prov).read_text())
+        except (OSError, ValueError):
+            _CURRENT[prov] = {}
+    return _CURRENT[prov]
+
+
+def stale(h):
+    """Why a log is not of the model now at its path, or None if it is. Models
+    are rebuilt in place (the XSum regeneration of 5 Nov 2026 moved the old ones
+    to mismatched_length/ and retrained at the same paths), so a log matched by
+    path alone can be of a model that no longer exists. A log of a model whose
+    provenance.json was rewritten by hand (provenance.py run after a failed job)
+    is judged stale too; reevaluate it."""
+    if not h["prov"]:
+        return None  # a Hub base model
+    rec = current(h["prov"])
+    if not rec:
+        return "model gone"
+    if h["model_job"] is not None:
+        return None if str(h["model_job"]) == str(rec.get("slurm_job_id")) else "model rebuilt"
+    # Logs from before evaluate.sbatch recorded model_slurm_job: go by time.
+    try:
+        made = datetime.fromisoformat(rec["created"])
+        ran = datetime.fromisoformat(h["created"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return "model rebuilt" if ran < made else None
 
 
 def targets(h):
@@ -110,14 +150,28 @@ def select(folders, workers):
     """{result file: header of its log}, the latest successful log for each."""
     with ProcessPoolExecutor(workers) as ex:
         heads = list(ex.map(header, sorted(LOGS.glob("*.eval")), chunksize=8))
-    best = {}
+    best, dropped = {}, {}
     for h in heads:
         if h["status"] != "success":
             continue
         for target in targets(h):
-            if target.split("/")[0] in folders and (target not in best or h["created"] > best[target]["created"]):
+            if target.split("/")[0] not in folders:
+                continue
+            if why := stale(h):
+                dropped.setdefault(target, why)
+                continue
+            if target not in best or h["created"] > best[target]["created"]:
                 best[target] = h
-    return best
+    return best, {t: why for t, why in dropped.items() if t not in best}
+
+
+def exported(folder):
+    """{result file: the log it came from}, from the folder's index.tsv."""
+    index = RESULTS / folder / "index.tsv"
+    if not index.exists():
+        return {}
+    rows = [line.split("\t") for line in index.read_text().splitlines()[1:] if line]
+    return {f"{folder}/{a}": b for a, b in rows}
 
 
 def job(log, out, prompts):
@@ -137,18 +191,35 @@ def main():
     if bad := set(folders) - set(FOLDERS):
         ap.error(f"unknown folder(s) {sorted(bad)}: choose from {FOLDERS}")
 
-    best = select(set(folders), args.workers)
+    best, dropped = select(set(folders), args.workers)
     for f in folders:
         n = sum(1 for t in best if t.startswith(f + "/"))
         gb = sum(h["size"] for t, h in best.items() if t.startswith(f + "/")) / 1e9
         print(f"{f}: {n} files from {gb:.2f} GB of logs")
-    todo = sorted(((t, h) for t, h in best.items() if not (RESULTS / t).exists()),
+    done = {k: v for f in folders for k, v in exported(f).items()}
+    # Convert what is missing, or was exported from another log than the one
+    # that now counts (a newer eval, or the old one was of a replaced model).
+    todo = sorted(((t, h) for t, h in best.items()
+                   if not (RESULTS / t).exists() or done.get(t, h["path"].name) != h["path"].name),
                   key=lambda th: -th[1]["size"])
-    print(f"{len(best) - len(todo)} exist already, {len(todo)} to convert")
+    redo = [t for t, _ in todo if (RESULTS / t).exists()]
+    # Files whose only logs are of models since replaced or moved: no current
+    # result exists, so the old one is moved out of the way, to superseded/.
+    old = sorted(t for t in dropped if (RESULTS / t).exists())
+    print(f"{len(best) - len(todo)} up to date, {len(todo)} to convert ({len(redo)} replacing an "
+          f"older export), {len(old)} with no current eval to move to superseded/")
     if args.dry_run:
         for t, h in todo:
-            print(f"  {t}  <-  {h['path'].name}")
+            print(f"  {'redo' if t in redo else 'new '} {t}  <-  {h['path'].name}")
+        for t in old:
+            print(f"  old  {t}  ({dropped[t]})")
         return
+    for t in old:
+        dest = RESULTS / "superseded" / t
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(RESULTS / t, dest)
+    if old:
+        print(f"moved {len(old)} to {RESULTS / 'superseded'}")
 
     # The shared prompt files, from the base model's log (any log of the task
     # would do: prompts depend only on the task and its prompt variant).
