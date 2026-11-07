@@ -1,0 +1,267 @@
+# Writes the routing study of the Mistral task MoE as a markdown report, from
+# results/task_merging_routing/mistral/ (export_moe_routing.py: the rebuilt MoE
+# with main's router and three new ones, its experts and the base model, every
+# seed exported, and the routing probes of merge/moe_routing.py) and, for comparison,
+# main's own MoEs in results/task_merging/mistral/ (its hidden, prompt_mean and
+# random routers, against its own experts).
+#
+# Usage, from evaluate/:
+#   python make_moe_routing_report.py ../results/moe-routing-mistral.md
+import json
+import subprocess
+import statistics as st
+import sys
+from pathlib import Path
+
+RES = Path(__file__).resolve().parents[1] / "results"
+OURS, MAIN = RES / "task_merging_routing" / "mistral", RES / "task_merging" / "mistral"
+SEEDS = sorted(int(d.name[5:]) for d in OURS.glob("seed_*"))
+TASKS = {"crime": ("accuracy/mean", "Crime accuracy", 3), "wine": ("abs_error/mean", "Wine MAE", 3),
+         "clinc150": ("accuracy/mean", "CLINC150 accuracy", 3), "xsum": ("rouge1/mean", "XSum ROUGE-1", 3)}
+ROUTERS = {"moe": "main's router (mergekit hidden, main's prompts)",
+           "moe_prompts": "1. real chat-formatted examples as mergekit's prompts",
+           "moe_fit": "2. fitted on hidden states (logistic regression)",
+           "moe_train": "3. trained (routing + answer loss)"}
+EXPERTS = ["crime", "wine", "CLINC150", "XSum"]
+# Main's routers for the same MoE, as main evaluates them.
+MAIN_ROUTERS = {"moe": "mergekit hidden (main's prompts)", "moe_prompt_mean": "prompt_mean",
+                "moe_random": "random (control)"}
+
+
+def metric(path, task):
+    return json.loads(path.read_text())["metrics"][TASKS[task][0]] if path.exists() else None
+
+
+def fmt(x, k=3):
+    return "–" if x is None else f"{x:.{k}f}"
+
+
+def recovery(seed, router, root=OURS):
+    """R per task, (merged - base) / (expert of the seed - base), and their mean; root's own experts and base."""
+    rs = []
+    for t in TASKS:
+        m, e, b = (metric(root / f"seed_{seed}/{router}/{t}.json", t), metric(root / f"seed_{seed}/expert_{t}.json", t),
+                   metric(root / f"base_{t}.json", t))
+        rs.append(None if None in (m, e, b) else (m - b) / (e - b))
+    return rs + [st.mean(rs) if None not in rs else None]
+
+
+def has(seed, router, task=None):
+    return any((OURS / f"seed_{seed}/{router}/{t}.json").exists() for t in ([task] if task else TASKS))
+
+
+def seeds_text(seeds):
+    """1-4 for a run of three or more, else 1 and 2, or 5."""
+    if len(seeds) > 2 and seeds == list(range(seeds[0], seeds[-1] + 1)):
+        return f"{seeds[0]}-{seeds[-1]}"
+    return "none" if not seeds else ", ".join(map(str, seeds[:-1])) + (" and " if len(seeds) > 1 else "") + str(seeds[-1])
+
+
+def coverage():
+    """Which seeds each router has all four tasks for, and which only some."""
+    out = []
+    for r, label in ROUTERS.items():
+        full = [s for s in SEEDS if all(has(s, r, t) for t in TASKS)]
+        part = [s for s in SEEDS if has(s, r) and s not in full]
+        out.append(f"{'main' + chr(39) + 's router' if r == 'moe' else 'router ' + label[0]}: seeds {seeds_text(full)}"
+                   + (f" (some tasks also for {seeds_text(part)})" if part else ""))
+    return "; ".join(out)
+
+
+def last_commit(path):
+    """The short hash of the last commit touching path, or "" outside git."""
+    try:
+        r = subprocess.run(["git", "-C", str(RES), "log", "-1", "--format=%h", "--", str(path)],
+                           capture_output=True, text=True)
+    except OSError:
+        return ""
+    return r.stdout.strip()
+
+
+def median_r(root, router, seeds, i):
+    """The median over seeds of R on task i (4: all four)."""
+    xs = [recovery(s, router, root)[i] for s in seeds]
+    return st.median(x for x in xs if x is not None) if any(x is not None for x in xs) else None
+
+
+def range_text(xs):
+    return f"{min(xs):.2f}" if f"{min(xs):.2f}" == f"{max(xs):.2f}" else f"{min(xs):.2f}-{max(xs):.2f}"
+
+
+def main_routers():
+    """Main's own routers for the MoE, R against main's experts and base, with how they compare with routers 1-3."""
+    seeds = {r: [s for s in sorted(int(d.name[5:]) for d in MAIN.glob("seed_*"))
+                 if all((MAIN / f"seed_{s}/{r}/{t}.json").exists() for t in TASKS)] for r in MAIN_ROUTERS}
+    if not (seeds["moe_prompt_mean"] or seeds["moe_random"]):
+        return []
+    commit = last_commit(MAIN.relative_to(RES) / f"seed_{seeds['moe_prompt_mean'][0]}/moe_prompt_mean") \
+        if seeds["moe_prompt_mean"] else ""
+    out = ["## Main's routers", "",
+           f"Main has since evaluated two more routers for its own MoE{f' ({commit})' if commit else ''}: prompt_mean "
+           "(`merge/set_moe_router.py`), which sets each layer's router from the router's own inputs on example "
+           "prompts in the evaluation's format, and a random router, a control. R against main's own experts and "
+           "base model:", "",
+           "| router | seed | R crime | R wine | R CLINC150 | R XSum | All four |", "|---" * 7 + "|"]
+    for r, label in MAIN_ROUTERS.items():
+        for s in seeds[r]:
+            out.append(f"| {label} | {s} | " + " | ".join(fmt(x, 2) for x in recovery(s, r, MAIN)) + " |")
+    ours = [r for r in ROUTERS if r != "moe"]
+    ours_seeds = {r: [x for x in SEEDS if all(has(x, r, t) for t in TASKS)] for r in ours}
+    text = []
+    if seeds["moe_prompt_mean"]:
+        pm = [median_r(MAIN, "moe_prompt_mean", seeds["moe_prompt_mean"], i) for i in (0, 3, 4)]
+        mine = [[median_r(OURS, r, ours_seeds[r], i) for r in ours if ours_seeds[r]] for i in (0, 3, 4)]
+        text.append(f"Medians over seeds: prompt_mean keeps R {pm[0]:.2f} on crime and {pm[1]:.2f} on XSum, "
+                    f"{pm[2]:.2f} over all four, against {range_text(mine[0])}, {range_text(mine[1])} and "
+                    f"{range_text(mine[2])} for routers 1-3 here.")
+    if seeds["moe_random"] and seeds["moe"]:
+        rnd, hid = (median_r(MAIN, r, seeds[r], 0) for r in ("moe_random", "moe"))
+        text.append(f"On crime the random router keeps R {rnd:.2f}, "
+                    + ("more than" if f"{rnd:.2f}" > f"{hid:.2f}" else "less than" if rnd < hid else "the same as")
+                    + f" mergekit's hidden router ({hid:.2f}), which sends crime's answer position to other experts "
+                    "(above).")
+    return out + ["", " ".join(text), ""] if text else out + [""]
+
+
+def expert_match(seeds):
+    """How main's experts compare with the rebuild's, task by task, on the seeds both have."""
+    parts = []
+    for t, (_, name, _) in TASKS.items():
+        d = max(abs(metric(MAIN / f"seed_{x}/expert_{t}.json", t) - metric(OURS / f"seed_{x}/expert_{t}.json", t))
+                for x in seeds)
+        name = name if name.startswith(("CLINC150", "XSum")) else name[0].lower() + name[1:]
+        parts.append(f"{name} {'identical' if d == 0 else f'within {d:.3f}'}")
+    return ", ".join(parts)
+
+
+def spread(xs, k=2):
+    return "–" if not xs else f"{st.median(xs):.{k}f} ({min(xs):.{k}f} to {max(xs):.{k}f})"
+
+
+def main(out):
+    ours_crime = [metric(OURS / f"seed_{s}/moe/crime.json", "crime") for s in SEEDS if has(s, "moe", "crime")]
+    main_seeds = sorted(int(d.name[5:]) for d in MAIN.glob("seed_*") if (d / "moe/crime.json").exists())
+    main_crime = [metric(MAIN / f"seed_{s}/moe/crime.json", "crime") for s in main_seeds]
+    lines = [f"# Routing the task MoE: Mistral 7B, seeds {SEEDS[0]}-{SEEDS[-1]}", "",
+             "Main's sparse task MoE (`merge/moe/mistral_task_moe_4_seed_<S>_config.yaml`: four MLP-only experts, "
+             "crime, wine, CLINC150 with the labels prompt and XSum by self-distillation, one expert per token, "
+             "mergekit's `gate_mode: hidden`) keeps most of its experts' gains on wine and CLINC150 but loses much "
+             "of crime's. This study rebuilt it and asked whether a better router recovers crime. The experts and "
+             "the MoE were rebuilt from main (7122af6) with its configs, because main's models are not readable to us; every router below "
+             "routes the same four experts of a seed, and is fitted on training data only. Each MoE is evaluated "
+             "as main evaluates its MoEs (test sets in full; CLINC150 with the labels prompt, XSum with the long "
+             "one).", "",
+             "Seeds 1 and 2 are complete. The later seeds were cut short when the project's GPU budget on "
+             "Isambard ran out (6 November 2026), so they cover: " + coverage() + ".", "",
+             "*R* is the share of the expert's gain over the base model a model keeps, for one task and seed: "
+             "(model - base) / (expert of the same seed - base), on the task's main metric (wine's MAE is lower-"
+             "better, which the ratio handles). 1 is as good as the expert, 0 no better than the base model. "
+             "*All four* is the mean of a seed's four R values.", "",
+             "## The rebuild", "",
+             "Main's MoE (its own experts) and the rebuild (ours), same config and code:", "",
+             "| | seed | " + " | ".join(v[1] for v in TASKS.values()) + " |", "|---" * (len(TASKS) + 2) + "|"]
+    for name, root, seeds in (("main's MoE", MAIN, main_seeds), ("rebuilt MoE", OURS, SEEDS)):
+        for s in seeds:
+            lines.append(f"| {name} | {s} | " + " | ".join(fmt(metric(root / f"seed_{s}/moe/{t}.json", t))
+                                                          for t in TASKS) + " |")
+    shared = [x for x in SEEDS if all((MAIN / f"seed_{x}/expert_{t}.json").exists()
+                                      and (OURS / f"seed_{x}/expert_{t}.json").exists() for t in TASKS)]
+    lines += ["", f"The rebuild's crime accuracy ({min(ours_crime):.3f}-{max(ours_crime):.3f} over {len(ours_crime)} "
+              f"seeds) overlaps main's ({min(main_crime):.3f}-{max(main_crime):.3f} over {len(main_crime)}), so it reproduces "
+              "the weakness rather than an accident of training."
+              + (f" Main's experts{f' (as of {last_commit(MAIN.relative_to(RES))})' if last_commit(MAIN.relative_to(RES)) else ''} "
+                 f"match the rebuild's on seeds {seeds_text(shared)}: {expert_match(shared)}." if shared else ""), "",
+              "## Where crime's routing fails", "",
+              "The probe (`merge/moe_routing.py probe`, 300 test prompts per task) records the expert each layer "
+              "picks for every prompt token. A crime answer is decided at the answer position, the last prompt "
+              "token. Share of routing decisions there going to each expert, over all 32 layers, and the share "
+              "going home in layers 0-7; for crime also split by whether the MoE answered correctly:", "",
+              "| router | seed | " + " | ".join(f"to {e}" for e in EXPERTS)
+              + " | home, layers 0-7 | home when right (n) | home when wrong (n) |", "|---" * 9 + "|"]
+    for r in ROUTERS:
+        for s in SEEDS:
+            p = OURS / f"seed_{s}/{r}/probe.json"
+            if not p.exists():
+                continue
+            c = json.loads(p.read_text())["crime"]
+            share = [st.mean(row[e] for row in c["answer_expert_share"]) for e in range(4)]
+            ok, bad = c["correct"], c["wrong"]
+            lines.append(f"| {r} | {s} | " + " | ".join(f"{x:.2f}" for x in share)
+                         + f" | {st.mean(c['answer_home_by_layer'][:8]):.2f}"
+                         + f" | {st.mean(ok['answer_home_by_layer']):.2f} ({ok['n']}) | "
+                         + f"{st.mean(bad['answer_home_by_layer']):.2f} ({bad['n']}) |")
+    lines += ["", "With main's router, about half of the decisions at crime's answer position go to the wine and "
+              "CLINC150 experts, nearly all of them in the early layers, and the wrong answers are routed home "
+              "less often than the right ones. mergekit's hidden router is built from the base model's state at "
+              "the last token of each positive prompt, and main's prompts are bare instructions and post titles "
+              "without the chat template, so no expert's router row stands for the answer position. Main found "
+              "the same independently (fb26f01).", "",
+              "## Routers", "",
+              "1. **Better prompts** (`moe_routing.py prompts`): mergekit as before, but each expert's positive "
+              "prompts are 32 real training examples rendered with the chat template, 16 ending at the answer "
+              "position and 16 cut at a random token (`merge/moe/mistral_task_moe_4_seed_<S>_prompts_config.yaml`).",
+              "2. **Fitted** (`moe_routing.py fit`): each layer's router is a multinomial logistic regression, "
+              "without bias like the router, of the task on the base model's router input (post-attention, "
+              "normalised hidden state), over 300 training sequences per task (prompt and answer), 20,000 tokens "
+              "per task and layer, the answer position always included.",
+              "3. **Trained** (`moe_routing.py train`): the routers alone (32 x 4 x 4096 = 524,288 parameters; "
+              "everything else frozen) trained on the MoE itself for 600 steps, tasks in turn, from main's router: "
+              "a per-token routing loss towards the sequence's task, plus the answer tokens' loss. With one expert "
+              "per token the chosen expert's weight is renormalised to 1, so the answer loss reaches the router "
+              "only through a straight-through weight (top / top.detach(), 1 in the forward pass).",
+              "4. **Per prompt**: route every token of a prompt to one expert, chosen once per prompt. An MoE that "
+              "sends every token to expert e is expert e's model, since the experts differ from the base only in "
+              "their MLPs (main checked this for its MoEs: argmax agreement 0.97-1.00), so this router scores as "
+              "the expert on every prompt it assigns correctly; what remains to measure is that assignment (below).",
+              "", "## Results", "",
+              "| model | seed | " + " | ".join(v[1] for v in TASKS.values()) + " | R crime | R wine | R CLINC150 "
+              "| R XSum | All four |", "|---" * (len(TASKS) + 7) + "|"]
+    lines.append("| base model | – | " + " | ".join(fmt(metric(OURS / f"base_{t}.json", t)) for t in TASKS)
+                 + " | | | | | |")
+    for s in SEEDS:
+        lines.append(f"| experts | {s} | " + " | ".join(fmt(metric(OURS / f"seed_{s}/expert_{t}.json", t))
+                                                       for t in TASKS) + " | 1 | 1 | 1 | 1 | 1 |")
+    for r, label in ROUTERS.items():
+        for s in (s for s in SEEDS if has(s, r)):
+            lines.append(f"| {label} | {s} | " + " | ".join(fmt(metric(OURS / f"seed_{s}/{r}/{t}.json", t))
+                                                          for t in TASKS)
+                         + " | " + " | ".join(fmt(x, 2) for x in recovery(s, r)) + " |")
+    lines += ["", "Over seeds: R on crime for every seed with a crime evaluation, *All four* for every seed with all "
+              "four tasks; median (range):", "",
+              "| router | seeds, crime | R crime | seeds, all four | All four |", "|---" * 5 + "|"]
+    for r, label in ROUTERS.items():
+        crime = [s for s in SEEDS if has(s, r, "crime")]
+        full = [s for s in SEEDS if all(has(s, r, t) for t in TASKS)]
+        lines.append(f"| {label} | {seeds_text(crime)} | {spread([recovery(s, r)[0] for s in crime])} | "
+                     f"{seeds_text(full)} | {spread([recovery(s, r)[-1] for s in full])} |")
+    lines += ["", *main_routers(), "## Routing per prompt", "",
+              "Share of each task's test prompts whose mean router probability (over tokens and layers) picks "
+              "the task's own expert, i.e. how often routing per prompt would use the right expert:", "",
+              "| router | seed | " + " | ".join(EXPERTS) + " |", "|---" * 6 + "|"]
+    for r in ROUTERS:
+        for s in SEEDS:
+            p = OURS / f"seed_{s}/{r}/probe.json"
+            if p.exists():
+                d = json.loads(p.read_text())
+                lines.append(f"| {r} | {s} | " + " | ".join(f"{d[t]['prompt_choice_home']:.2f}" for t in TASKS) + " |")
+    lines += ["", "In seeds 1 and 2, with any of the three new routers every probed prompt is assigned to its own expert, so routing "
+              "per prompt would score as the experts do (R = 1). With main's router it would misroute 20-42% of "
+              "crime prompts.", "",
+              "## Caveats", "",
+              "- Only seeds 1 and 2 are complete and probed; the later seeds lack some routers (above). One model "
+              "(Mistral 7B); main's MoE also has Llama 3.1 8B.",
+              "- The probe uses 300 test prompts per task; the evaluations use the full test sets.",
+              "- XSum for router 1 from seed 2 on and router 2 from seed 3 on ran at batch size 1 (the MoE ran out "
+              "of GPU memory at 2); decoding is greedy, so only the padding differs.",
+              "- Routers 2 and 3 were fitted and trained on the training splits only; router 3's progress was "
+              "checked on 40 validation sequences per task, never on test data.", "",
+              "## Reproducing", "",
+              "On Isambard, in a worktree of main: `merge/submit_moe_rebuild.sh [seed...]` (experts, conversions, base and "
+              "expert evaluations, main's `submit_moe.sh`), then `merge/submit_routing.sh [seed...]` (probes, the three "
+              "routers and their evaluations); `evaluate/export_moe_routing.py` writes the JSONs and this script "
+              "the report."]
+    Path(out).write_text("\n".join(lines) + "\n")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
