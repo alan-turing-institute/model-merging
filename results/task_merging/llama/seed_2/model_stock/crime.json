@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-03T22-07-41-00-00_crime_9kRbhjVBv42sRBbfLrgUeJ.eval",
- "eval_id": "YXMc9VDNqDuoxcySHEzm3N",
- "created": "2026-11-03T22:07:41+00:00",
+ "source_log": "2026-11-05T18-49-38-00-00_crime_Sziy4CW9TvzduPH24HzFQd.eval",
+ "eval_id": "caFpEqTAc5eqfk3z4nNuVR",
+ "created": "2026-11-05T18:49:38+00:00",
  "task": "crime",
  "task_args": {
   "dataset_path": "/home/u6ui/jmcinroy.u6ui/model-merging/datasets/crime/crime_dataset/test",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8052004,
+  "eval_slurm_job": 8102174,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_2/llama3_8b_task_merge_4_model_stock/provenance.json",
@@ -31,8 +31,8 @@
    "full",
    "full"
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8052003",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102173",
   "merge_method": "model_stock",
   "merge_random_seed": 2,
   "merged_models": [
@@ -57,15 +57,15 @@
  "inspect_ai": "0.3.260",
  "samples_total": 1077,
  "metrics": {
-  "accuracy/mean": 0.7483751160631383,
-  "accuracy/stderr": 0.013229100854018126,
-  "accuracy/precision": 0.9951923076923077,
-  "accuracy/recall": 0.4339622641509434,
+  "accuracy/mean": 0.7493036211699164,
+  "accuracy/stderr": 0.013212859304324708,
+  "accuracy/precision": 0.9952153110047847,
+  "accuracy/recall": 0.4360587002096436,
   "accuracy/specificity": 0.9983333333333333,
-  "accuracy/f1": 0.6043795620437956,
-  "accuracy/tp": 207.0,
+  "accuracy/f1": 0.6064139941690962,
+  "accuracy/tp": 208.0,
   "accuracy/fp": 1.0,
-  "accuracy/fn": 270.0,
+  "accuracy/fn": 269.0,
   "accuracy/tn": 599.0,
   "unparsed/mean": 0.0
  },
@@ -1071,7 +1071,7 @@
 {"id": 998, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nScreenshot from the 3rd day of getting my first and only gf and telling my bro how much I love her"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 999, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nEnhance gaming performance with Game Booster. Optimize system resources, free up CPU/GPU power, and reduce lag for faster loading times and improved frame rates. Prioritize gaming experience with smooth gameplay and immersive action. Unlock your gaming PC's full potential with Game Booster."}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 1000, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nTools I have to fight gangstalking"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
-{"id": 1001, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWe Live in a Society of Psychopathic Conformists Pretending to be Individuals. Harassment by Groups Leads to the Deaths of the Best People."}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
+{"id": 1001, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWe Live in a Society of Psychopathic Conformists Pretending to be Individuals. Harassment by Groups Leads to the Deaths of the Best People."}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 1002, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nAbdul being an absolute awesome guy, watched out for the owner for hours after their tries to steal his bike."}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 1003, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nBro, I got you!"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 1004, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nFor Squarespace user and Sad Girls Club founder Elyse Fox, what started as a creative outlet documenting her experiences with mental health soon became a company committed to offering resources, mentorship, and community to women around the globe. Turn your ideas into more, with Squarespace."}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},

@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-05T08-43-14-00-00_crime_SdyQh2pkmWY7YnKTbhuSQL.eval",
- "eval_id": "7zqUfKJeA6gxVHtx5CpA6c",
- "created": "2026-11-05T08:43:14+00:00",
+ "source_log": "2026-11-06T13-05-15-00-00_crime_44N8ErLdg9xf7rqpcJbDK3.eval",
+ "eval_id": "kP2Kw87UjnzreWs8kQ3Gof",
+ "created": "2026-11-06T13:05:15+00:00",
  "task": "crime",
  "task_args": {
   "dataset_path": "/home/u6ui/jmcinroy.u6ui/model-merging/datasets/crime/crime_dataset/test",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8083731,
+  "eval_slurm_job": 8102187,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_2/llama3_8b_task_merge_4_arcee_fusion/provenance.json",
@@ -35,8 +35,8 @@
     "full"
    ]
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8083730",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102186",
   "merge_method": "arcee_fusion",
   "merge_random_seed": 2,
   "merged_models": [
@@ -55,15 +55,15 @@
  "inspect_ai": "0.3.260",
  "samples_total": 1077,
  "metrics": {
-  "accuracy/mean": 0.9693593314763231,
-  "accuracy/stderr": 0.0052539432841960994,
-  "accuracy/precision": 0.9723404255319149,
-  "accuracy/recall": 0.9580712788259959,
+  "accuracy/mean": 0.968430826369545,
+  "accuracy/stderr": 0.005330399674883777,
+  "accuracy/precision": 0.9722814498933902,
+  "accuracy/recall": 0.9559748427672956,
   "accuracy/specificity": 0.9783333333333334,
-  "accuracy/f1": 0.9651531151003168,
-  "accuracy/tp": 457.0,
+  "accuracy/f1": 0.9640591966173362,
+  "accuracy/tp": 456.0,
   "accuracy/fp": 13.0,
-  "accuracy/fn": 20.0,
+  "accuracy/fn": 21.0,
   "accuracy/tn": 587.0,
   "unparsed/mean": 0.0
  },
@@ -486,7 +486,7 @@
 {"id": 415, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI miss her too much"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 416, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI saw this on the road"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 417, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nNYC woman sentenced to 21 years for trying to kill her lookalike with a poisoned cheesecake"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
-{"id": 418, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nThe concept of self help"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
+{"id": 418, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nThe concept of self help"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 419, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI think I got invited on a date tomorrow?"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 420, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nThe Beautiful Voice of Judy Garland"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 421, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI wish I was someone's best friend."}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},

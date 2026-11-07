@@ -104,7 +104,14 @@ sub() {
   [[ $dep != - ]] && args+=(--dependency=afterok:$dep)
   local job
   if $SUBMIT; then
-    job=$(cd "$dir" && sbatch "${args[@]}" "$@")
+    # Merges run online (mergekit lists a Hub base model's files, which offline
+    # mode refuses); teacher, KD and eval jobs offline, against Hugging Face's
+    # rate limit when many start at once (2 Nov).
+    if [[ $dir == ../merge ]]; then
+      job=$(cd "$dir" && env -u HF_HUB_OFFLINE sbatch "${args[@]}" "$@")
+    else
+      job=$(cd "$dir" && HF_HUB_OFFLINE=1 sbatch "${args[@]}" "$@")
+    fi
     echo "$job $dep $what" >> "$JOB_MAP"
   else
     job="<$name>"  # stands in for the job id in a dry run

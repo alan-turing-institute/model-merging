@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-03T22-07-08-00-00_clinc150_JB9muDdAJTMfyNy8rbcYzJ.eval",
- "eval_id": "YJ8RYcMvtRn75RZ7tNKgY6",
- "created": "2026-11-03T22:07:08+00:00",
+ "source_log": "2026-11-06T13-20-05-00-00_clinc150_Xeo4xSwBsBLpAACa2sQqok.eval",
+ "eval_id": "JUGcnab7EZPAUEssr5AZYi",
+ "created": "2026-11-06T13:20:05+00:00",
  "task": "clinc150",
  "task_args": {
   "prompt_variant": "labels",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8051991,
+  "eval_slurm_job": 8102151,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_2/llama3_8b_task_merge_4_ties/provenance.json",
@@ -31,8 +31,8 @@
    "full",
    "full"
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8051988",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102148",
   "merge_method": "ties",
   "merge_random_seed": 2,
   "merged_models": [
