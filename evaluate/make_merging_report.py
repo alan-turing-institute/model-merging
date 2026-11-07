@@ -18,6 +18,7 @@ import argparse
 import json
 import statistics as st
 import subprocess
+import sys
 from datetime import datetime, timezone
 from functools import cache
 from pathlib import Path
@@ -27,11 +28,11 @@ ROOT = RESULTS  # the results folder of the set being reported (main sets it)
 METHODS = ["linear", "ties", "dare_ties", "task_arithmetic", "model_stock", "slerp", "arcee_fusion"]
 SPLITS = [2, 4, 8]
 SEEDS = [1, 2, 3, 4, 5]
-# A seed is outlying when it lies more than FENCE IQRs beyond the nearer
-# quartile, the IQR being the larger of the cell's own and the median IQR of
-# that metric over every arm of the study: with five seeds a cell's own IQR is
-# often a unit or two of the last digit, which would make ordinary noise
-# outlying.
+# A seed of a five-seed cell is outlying when it lies more than FENCE IQRs
+# beyond the nearer quartile, the IQR being the larger of the cell's own and the
+# median IQR of that metric over every arm of the study (cells over fewer seeds
+# included): with five seeds a cell's own IQR is often a unit or two of the last
+# digit, which would make ordinary noise outlying.
 FENCE = 3
 # (JSON metric, column name, decimal places); the first is the task's main metric.
 DATA_PARALLEL = {
@@ -101,9 +102,15 @@ TASKS = {
 # The comparisons of merge methods, by their main metric, and the metrics for which lower is better.
 VERDICT = {"Accuracy", "ROUGE-1", "MAE", "chrF++", "R all four"}
 LOWER = {"MAE", "RMSE"}
+# The random-router MoE: a control for how much routing matters, so left out of the verdict.
+CONTROL = "MoE, random router (control)"
+# The MoE arms of task merging, (folder, row), in table order.
+MOES = [("moe", "MoE (mergekit-moe)"), ("moe_prompt_mean", "MoE, prompt_mean router"), ("moe_random", CONTROL)]
+UNKNOWN = set()  # arm folders the report does not cover, each reported once
 
 cells = {}  # (where, row, column) -> every distinct summarised cell
 FLAGS = {}  # (where, row, column) -> indices of its outlying seeds, from a first pass
+SHORT = set()  # the studies ("Data-parallel Crime", "Task merging") with cells over fewer seeds, from a first pass
 
 
 @cache
@@ -139,9 +146,10 @@ def flag():
     """The outlying seeds of every five-seed cell (see FENCE)."""
     def study(c):
         return c["where"].split(",")[0], c["column"]
-    full = [c for c in cells.values() if not c["single"] and c["d"] and c["d"]["n"] == len(SEEDS)]
+    multi = [c for c in cells.values() if not c["single"] and c["d"] and c["d"]["n"] > 1]
+    full = [c for c in multi if c["d"]["n"] == len(SEEDS)]
     iqrs = {}
-    for c in full:
+    for c in multi:
         iqrs.setdefault(study(c), []).append(c["d"]["q3"] - c["d"]["q1"])
     flags = {}
     for c in full:
@@ -228,9 +236,60 @@ def task_rows(model):
     root = ROOT / "task_merging" / model
     rows = [("Expert (trained on that task)", lambda s, t: root / f"seed_{s}/expert_{t}.json")]
     rows += [(f"merge: {m}", lambda s, t, m=m: root / f"seed_{s}/{m}/{t}.json") for m in METHODS]
-    if any((root / f"seed_{s}/moe").exists() for s in SEEDS):
-        rows.append(("MoE (mergekit-moe)", lambda s, t: root / f"seed_{s}/moe/{t}.json"))
+    for folder, label in MOES:
+        if any((root / f"seed_{s}/{folder}").exists() for s in SEEDS):
+            rows.append((label, lambda s, t, folder=folder: root / f"seed_{s}/{folder}/{t}.json"))
+    known = {*METHODS, *(folder for folder, _ in MOES)}
+    for s in SEEDS:
+        for d in (root / f"seed_{s}").iterdir() if (root / f"seed_{s}").is_dir() else []:
+            if d.is_dir() and d.name not in known and (model, d.name) not in UNKNOWN:
+                UNKNOWN.add((model, d.name))
+                print(f"warning: task_merging/{model}/seed_{s}/{d.name} is not in the report", file=sys.stderr)
     return root, rows
+
+
+def seeds_text(seeds):
+    """1-3 for a run of three or more, else 1 and 2, or 3."""
+    if len(seeds) > 2 and seeds == list(range(seeds[0], seeds[-1] + 1)):
+        return f"{seeds[0]}-{seeds[-1]}"
+    return ", ".join(map(str, seeds[:-1])) + (" and " if len(seeds) > 1 else "") + str(seeds[-1])
+
+
+def coverage(rows):
+    """Which seeds a set of arms has on every task, and which only in part: "seeds 1 and 2, with part of seed 3"."""
+    done = [[path(s, t).exists() for _, path in rows for t in TASKS] for s in SEEDS]
+    full = [s for s, d in zip(SEEDS, done) if all(d)]
+    some = [s for s, d in zip(SEEDS, done) if any(d) and not all(d)]
+    return (f"seed{'s' if len(full) > 1 else ''} {seeds_text(full)}" if full else "no complete seed") + (
+        f", with part of seed{'s' if len(some) > 1 else ''} {seeds_text(some)}" if some else "")
+
+
+def expert_seeds(model):
+    return coverage(task_rows(model)[1][:1])
+
+
+def merge_seeds(model):
+    return coverage(task_rows(model)[1][1:])
+
+
+def per_model(how):
+    """how(model) for every model, said once if they agree."""
+    out = {name: how(model) for model, name in TASK_MODELS.items()}
+    if len(set(out.values())) == 1:
+        return f"{next(iter(out.values()))}, in every model"
+    return "; ".join(f"{name}, {text}" for name, text in out.items())
+
+
+def has_row(label):
+    return any(label in [r for r, _ in task_rows(model)[1]] for model in TASK_MODELS)
+
+
+def git_out(*args):
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True)
+    except OSError:  # no git
+        return ""
+    return r.stdout.strip() if r.returncode == 0 else ""
 
 
 def recovery(model):
@@ -306,7 +365,8 @@ def verdict(stat):
     the best by the mean, and the worst. Ties are at the precision shown, for both statistics."""
     groups = {}
     for c in cells.values():
-        if c["row"].startswith(("merge", "MoE")) and c["column"] in VERDICT and c["d"] and c["d"]["n"] > 1:
+        if (c["row"].startswith(("merge", "MoE")) and c["row"] != CONTROL and c["column"] in VERDICT and c["d"]
+                and c["d"]["n"] > 1):
             groups.setdefault(c["where"], []).append(c)
 
     def name(c):
@@ -322,10 +382,19 @@ def verdict(stat):
         for c in sorted(cs, key=lambda c: sign * value(c), reverse=True):
             out.setdefault(num(value(c), k), []).append(c)
         return list(out.items())
-    rows, same, changed, worst = [], [], [], []
+    rows, same, changed, worst, restricted = [], [], [], [], []
     for where, cs in groups.items():
         if len(cs) < 2:
             continue
+        common = [i for i in range(len(SEEDS)) if all(c["per_seed"][i] is not None for c in cs)]
+        if not common:
+            continue
+        if any(c["d"]["n"] != len(common) for c in cs):  # medians, means and wins over the seeds all arms have
+            cs = [{**c, "per_seed": [v if i in common else None for i, v in enumerate(c["per_seed"])]} for c in cs]
+            for c in cs:
+                c["d"] = c["d_mean"] = describe(c["per_seed"])
+            restricted.append(where)
+            where = f"{where} (seeds {seeds_text([SEEDS[i] for i in common])})"
         k = cs[0]["digits"]
         sign = -1 if cs[0]["column"] in LOWER else 1  # so that larger sign * value is better
         by_median = tiers(cs, k, sign, lambda c: c["d"]["median"])
@@ -362,9 +431,11 @@ def verdict(stat):
             "they agree at the precision shown, and tied methods are listed together, the better unrounded first. "
             "*Next* is the methods with the second-best median. *Wins* counts the seeds on which the first best "
             "method beats each of them, out of the seeds both have: every method of a seed merges the same experts, "
-            "so the comparison is paired. With five seeds neither the medians nor the win counts are a significance "
+            "so the comparison is paired. With five seeds" + (" or fewer" if SHORT else "") + " neither the medians nor the win counts are a significance "
             "test; they show how consistent a lead is. *Same best* says whether the best by the median and by the "
-            "mean have a method in common.", "",
+            "mean have a method in common."
+            + (" Where the arms of a comparison have different seeds, its row uses only the seeds all of them have, "
+               "named after it, so its medians can differ from the table's." if restricted else ""), "",
             "| Comparison | Best by median | Next by median | Wins | Best by mean | Same best |"
             + ("" if common else " Worst by median |"), "|---" * (6 if common else 7) + "|", *rows, ""]
 
@@ -374,7 +445,7 @@ def outliers():
     order = {w: i for i, w in enumerate(dict.fromkeys(c["where"] for c in cells.values()))}
     task_of = {t["title"]: i for i, t in enumerate(TASKS.values())}
     rows_of = {"Expert (trained on that task)": -1, **{f"merge: {m}": i for i, m in enumerate(METHODS)},
-               "MoE (mergekit-moe)": len(METHODS)}
+               **{label: len(METHODS) + i for i, (_, label) in enumerate(MOES)}}
 
     def task_rank(column):  # "Wine MAE", "R Wine", "R all four", or a data-parallel metric
         words = column.split()
@@ -384,10 +455,12 @@ def outliers():
     total = sum(1 for c in cells.values() if not c["single"] and c["d"] and c["d"]["n"] == len(SEEDS))
     out = ["## Outlying seeds", "",
            f"Cells in which a seed lies more than {FENCE} IQRs beyond the nearer quartile, taking as the IQR the larger "
-           "of the cell's own and the median IQR of that metric over every arm of the study (with five seeds a "
+           "of the cell's own and the median IQR of that metric over every arm of the study"
+           + (" (cells over fewer seeds included)" if SHORT else "") + " (with five seeds a "
            "cell's own IQR is often a unit or two of the last digit, which would make ordinary noise outlying): "
            f"{len(found)} of the {total} distinct five-seed cells"
-           + (", the appendix included" if SET["task_merging"] else "") + ". They are marked † in the tables. The median and IQR barely move for such a seed, which is the point of them, but they also hide "
+           + (", the appendix included" if SET["task_merging"] else "")
+           + ("; cells over fewer seeds are not checked" if SHORT else "") + ". They are marked † in the tables. The median and IQR barely move for such a seed, which is the point of them, but they also hide "
            "it, and a method that fails on one seed in five is less reliable than its median suggests. The outlying "
            "values are in bold; *Mean ± SD* is computed as in the mean ± SD reports.", "",
            "| Where | Row | Metric | Seeds 1-5 | Mean ± SD | Median (IQR) |", "|---|---|---|---|---|---|"]
@@ -402,13 +475,20 @@ def outliers():
         for i in c["outlying"]:
             arms.setdefault((c["where"], c["row"], i), []).append(c["column"])
     out += ["", "By arm and seed, with the arm's score on that seed and on its other four, on the main metric of its "
-            "comparison (as in the verdict above), so that a seed can be judged as a whole: a seed outlying on one "
+            "comparison (as in the verdict above" + ("; an expert on its own task's" if SET["task_merging"] else "")
+            + "), so that a seed can be judged as a whole: a seed outlying on one "
             "metric may still be weak, or fine, overall.", "",
             "| Where | Row | Seed | Outlying on | Score on that seed | Other seeds |", "|---|---|---|---|---|---|"]
     for (where, row, i), columns in arms.items():
         study = where.split(",")[0]
-        main = "R all four" if study == "Task merging" else next(
-            spec["metrics"][0][1] for spec in DATA_PARALLEL.values() if study == f"Data-parallel {spec['short']}")
+        if study != "Task merging":
+            main = next(spec["metrics"][0][1] for spec in DATA_PARALLEL.values()
+                        if study == f"Data-parallel {spec['short']}")
+        elif row.startswith("Expert"):  # an expert has no R: its own task's main metric
+            spec = next(t for t in TASKS.values() if columns[0].startswith(t["title"] + " "))
+            main = f"{spec['title']} {spec['metrics'][0][1]}"
+        else:
+            main = "R all four"
         c = cells.get((where, row, main))
         if c is None or c["per_seed"][i] is None:
             score = others = "–"
@@ -434,6 +514,30 @@ def results_commit():
     return f" (as of commit {commit.stdout.strip()}{', with uncommitted changes' if dirty.strip() else ''})"
 
 
+def task_mean_report():
+    """The sentence on task merging's mean ± SD report."""
+    md = RESULTS / "task-merging.md"
+    if not md.exists() or ROOT != RESULTS:
+        return (" Task merging has no mean ± SD report; `make_merging_report.py --stat mean` writes this one that "
+                "way.")
+    md_time, results_time = (git_out("log", "-1", "--format=%ct", "--", x) for x in (md.name, "task_merging"))
+    stale = bool(md_time and results_time) and int(md_time) < int(results_time)
+    return (" Task merging's mean ± SD report is `results/task-merging.md`, whose *Retention* is R over all four "
+            "tasks below" + (", but it was made before the current task-merging results" if stale else "")
+            + "; `make_merging_report.py --stat mean` writes this report that way.")
+
+
+def rerun_text(stat):
+    """Which seeds task merging has, and why (the re-run that moved the earlier results aside)."""
+    moved = git_out("log", "--diff-filter=A", "--format=%h", "--", "superseded/task_merging").split()
+    why = (f"Task merging was re-run after XSum's self-distillation targets were regenerated as 18-24 word summaries "
+           f"({moved[-1]}): the re-run merges replaced the earlier ones, and the earlier results not yet re-run were "
+           "moved to `results/superseded/`. " if moved else "")
+    return (why + f"The experts have {per_model(expert_seeds)}; the merges so far: {per_model(merge_seeds)}. Cells over "
+            "fewer than five seeds say how many"
+            + (", and their IQR is not comparable with a five-seed cell's (see the start)." if stat == "median" else "."))
+
+
 def build(stat):
     title = "median and interquartile range" if stat == "median" else "mean and standard deviation"
     tasks, tm = SET["data_parallel"], SET["task_merging"]
@@ -447,7 +551,8 @@ def build(stat):
                 + "whether the summary statistic changes the verdict; outlying seeds"
                 + ("; an appendix with every task-merging metric." if tm else "."), "",
                 "Each cell is the median over seeds 1-5 with the interquartile range in brackets, *median (IQR)*, as "
-                "each table's corner says; the base model is evaluated once. Quartiles interpolate linearly between "
+                "each table's corner says" + ("; a cell over fewer seeds says how many" if SHORT else "")
+                + "; the base model is evaluated once. Quartiles interpolate linearly between "
                 "the sorted values (Python's `statistics.quantiles` with `method=\"inclusive\"`, numpy's default), so "
                 "with five seeds Q1 and Q3 are the second and fourth smallest values and the IQR, Q3 - Q1, is the "
                 "full width of the middle three seeds, not a ± half-width. For five seeds that scatter normally it "
@@ -455,19 +560,25 @@ def build(stat):
                 "only 0.73 of the IQR of the distribution the seeds come from (1.35 standard deviations), so these "
                 "IQRs understate the spread, by the same factor in every five-seed cell, which leaves comparisons "
                 "between arms unaffected. Q1 and Q3 are single seeds, so the IQR is itself noisy, and (0.000) means "
-                "only that the second and fourth seeds agree at the precision shown.", "",
-                "One seed that fails can move the median and IQR only as far as a neighbouring seed's value, whereas "
+                "only that the second and fourth seeds agree at the precision shown."
+                + (" With three seeds the quartiles fall midway between neighbouring seeds and with two a quarter of "
+                   "the way in, so the IQR is half the range: one failing seed then moves it without limit, with two "
+                   "seeds the median is the mean, and such an IQR is not comparable with a five-seed cell's."
+                   if SHORT else ""), "",
+                "One seed that fails" + (" in a five-seed cell" if SHORT else "") + " can move the median and IQR only as far as a neighbouring seed's value, whereas "
                 "it can move the mean and standard deviation without limit. The price is that the median and IQR "
                 "ignore the best and worst seed, so a method that fails on one seed in five can look reliable: cells "
                 "with such a seed are marked † and listed under *Outlying seeds*.", "",
                 f"The data-parallel tables are also in {SET['reports']} as mean ± SD. Those are built from the `.eval` "
                 "logs, and these JSONs reproduce every row of them (`--stat mean`), so any difference comes from the "
                 "statistic alone."
-                + (" Task merging has no mean ± SD report; `make_merging_report.py --stat mean` writes this one that "
-                   "way." if tm else ""), ""]
+                + (task_mean_report() if tm else ""), ""]
     else:
-        out += ["Each cell is the mean over seeds 1-5 ± the standard deviation; the base model is evaluated once.", ""]
-    out += ["Every arm is repeated with seeds 1-5. The seed sets the training data order (for the LoRA experts also "
+        out += ["Each cell is the mean over seeds 1-5 ± the standard deviation"
+                + ("; a cell over fewer seeds says how many" if SHORT else "") + "; the base model is evaluated once.", ""]
+    out += ["Every arm is repeated with seeds 1-5"
+            + (" (task merging is part-way through a re-run: see its section)" if "Task merging" in SHORT else "")
+            + ". The seed sets the training data order (for the LoRA experts also "
             "the adapter initialisation and dropout) and mergekit's random seed, which dare_ties uses to choose the "
             "weights it drops and arcee_fusion to sample the tensors its thresholds are estimated from.", "",
             "Merge settings (`merge/make_merge_configs.py`" + (", `merge/make_task_merge_configs.py`" if tm else "")
@@ -489,8 +600,14 @@ def build(stat):
                 "and CLINC150; self-distillation for XSum), are merged into one model, which is evaluated on all four "
                 "tasks. Each method merges the same four experts. The MoE (Mistral and Llama only: mergekit has no MoE "
                 "path for Gemma) routes each token, at every layer, to one expert's MLP; its attention, embeddings and "
-                "norms are the base model's. Test sets: "
-                + "; ".join(f"{s['title']}, {s['test']}" for s in TASKS.values()) + ".", "",
+                "norms are the base model's."
+                + (" The prompt_mean MoE is the same MoE with each layer's router set from the router's own inputs "
+                   "on example prompts in the evaluation's format (`merge/set_moe_router.py`), instead of mergekit's "
+                   "hidden-state router." if has_row("MoE, prompt_mean router") else "")
+                + (" The MoE with a random router routes without task information, a control for how much the "
+                   "routing matters; it is left out of the verdict." if has_row(CONTROL) else "")
+                + " Test sets: " + "; ".join(f"{s['title']}, {s['test']}" for s in TASKS.values()) + ".", "",
+                *([rerun_text(stat), ""] if "Task merging" in SHORT else []),
                 "*Recovery R* is the share of the expert's gain over the base model that a merge keeps, for one task "
                 "and seed: (merge - base) / (expert - base), with the expert of the same seed, on the task's main "
                 "metric (crime accuracy, wine MAE, CLINC150 accuracy, XSum ROUGE-1: the columns of each model's first "
@@ -527,10 +644,14 @@ def main():
     needed += [ROOT / "task_merging"] if SET["task_merging"] else []
     if missing := [str(n) for n in needed if not n.exists()]:
         p.error(f"no {', '.join(missing)}: is --results the {args.set} results folder?")
-    if stat == "median":  # a first pass finds the outlying seeds, which the tables then mark
-        build(stat)
+    # A first pass finds the cells over fewer seeds, which the text describes, and the outlying seeds, which the
+    # median tables mark.
+    build(stat)
+    SHORT.update(c["where"].split(",")[0] for c in cells.values()
+                 if not c["single"] and c["d"] and c["d"]["n"] < len(SEEDS))
+    if stat == "median":
         FLAGS.update(flag())
-        cells.clear()
+    cells.clear()
     out = build(stat)
     Path(args.out).write_text("\n".join(out).rstrip() + "\n")
     if args.tsv:
