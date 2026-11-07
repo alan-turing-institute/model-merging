@@ -451,10 +451,11 @@ def build(stat):
                 "the sorted values (Python's `statistics.quantiles` with `method=\"inclusive\"`, numpy's default), so "
                 "with five seeds Q1 and Q3 are the second and fourth smallest values and the IQR, Q3 - Q1, is the "
                 "full width of the middle three seeds, not a ± half-width. For five seeds that scatter normally it "
-                "averages 0.99 standard deviations, about 1.05 times the sample SD the mean ± SD reports give. Q1 and "
-                "Q3 are single "
-                "seeds, so the IQR is itself noisy, and (0.000) means only that the second and fourth seeds agree at "
-                "the precision shown.", "",
+                "averages 0.99 standard deviations, about 1.05 times the sample SD the mean ± SD reports give. That is "
+                "only 0.73 of the IQR of the distribution the seeds come from (1.35 standard deviations), so these "
+                "IQRs understate the spread, by the same factor in every five-seed cell, which leaves comparisons "
+                "between arms unaffected. Q1 and Q3 are single seeds, so the IQR is itself noisy, and (0.000) means "
+                "only that the second and fourth seeds agree at the precision shown.", "",
                 "One seed that fails can move the median and IQR only as far as a neighbouring seed's value, whereas "
                 "it can move the mean and standard deviation without limit. The price is that the median and IQR "
                 "ignore the best and worst seed, so a method that fails on one seed in five can look reliable: cells "
