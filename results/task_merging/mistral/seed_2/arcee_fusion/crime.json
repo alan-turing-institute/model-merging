@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-03T19-34-53-00-00_crime_i2jJgLt8vcDGr7MdbodqSm.eval",
- "eval_id": "gKJNc9qJM2LoNPUQfAV4Eo",
- "created": "2026-11-03T19:34:53+00:00",
+ "source_log": "2026-11-05T19-00-50-00-00_crime_YQgaqdwrdquNfmw5bRZgA2.eval",
+ "eval_id": "YdZko7rYzJYD2eqoaE3yWp",
+ "created": "2026-11-05T19:00:50+00:00",
  "task": "crime",
  "task_args": {
   "dataset_path": "/home/u6ui/jmcinroy.u6ui/model-merging/datasets/crime/crime_dataset/test",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8050868,
+  "eval_slurm_job": 8102137,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_2/mistral_7b_task_merge_4_arcee_fusion/provenance.json",
@@ -35,8 +35,8 @@
     "full"
    ]
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8050867",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102136",
   "merge_method": "arcee_fusion",
   "merge_random_seed": 2,
   "merged_models": [

@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-03T22-07-10-00-00_crime_XrCptchd24X3TmNdpva3vS.eval",
- "eval_id": "AEwWTDhpBve4SfPQZGqKkt",
- "created": "2026-11-03T22:07:10+00:00",
+ "source_log": "2026-11-05T18-49-43-00-00_crime_RjA8wLj8EPCfruvWVVXvKV.eval",
+ "eval_id": "7cwidVpTn9z5znpZH3YKQC",
+ "created": "2026-11-05T18:49:43+00:00",
  "task": "crime",
  "task_args": {
   "dataset_path": "/home/u6ui/jmcinroy.u6ui/model-merging/datasets/crime/crime_dataset/test",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8051994,
+  "eval_slurm_job": 8102154,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_2/llama3_8b_task_merge_4_dare_ties/provenance.json",
@@ -31,8 +31,8 @@
    "full",
    "full"
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8051993",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102153",
   "merge_method": "dare_ties",
   "merge_random_seed": 2,
   "merged_models": [
@@ -57,16 +57,16 @@
  "inspect_ai": "0.3.260",
  "samples_total": 1077,
  "metrics": {
-  "accuracy/mean": 0.9006499535747446,
-  "accuracy/stderr": 0.009119182705491165,
-  "accuracy/precision": 0.9625,
+  "accuracy/mean": 0.9015784586815228,
+  "accuracy/stderr": 0.009081147058531393,
+  "accuracy/precision": 0.9649122807017544,
   "accuracy/recall": 0.8071278825995807,
-  "accuracy/specificity": 0.975,
-  "accuracy/f1": 0.8779931584948689,
+  "accuracy/specificity": 0.9766666666666667,
+  "accuracy/f1": 0.8789954337899544,
   "accuracy/tp": 385.0,
-  "accuracy/fp": 15.0,
+  "accuracy/fp": 14.0,
   "accuracy/fn": 92.0,
-  "accuracy/tn": 585.0,
+  "accuracy/tn": 586.0,
   "unparsed/mean": 0.0
  },
  "samples": [
@@ -852,7 +852,7 @@
 {"id": 779, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nBrent was definitely a highlight for me"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 780, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWho’s driving the handcart at the end of episode 3?"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 781, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\n@TheMoonCarl 👏It's live now airdrop on! WWW.BINPART.[NET]"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
-{"id": 782, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nEvery relationship I’ve had I was used."}], "output": "crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
+{"id": 782, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nEvery relationship I’ve had I was used."}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 783, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nMy First Meme Creation"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 784, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nTexas police searching for missing toddler rip up concrete slab in fugitive mom's backyard"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 785, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nHAS ANYBODY OVERHEARD HANDLERS TALKING TO THE PERPS THAT FOLLOW YOU, OR HAS ANYONE SEEN A TEXT/R.I.S.S MESSAGE ON A PERP'S PHONE?"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},

@@ -1,7 +1,7 @@
 {
- "source_log": "2026-11-03T22-46-27-00-00_crime_MDJjbkftEBpP8CvaV9EP49.eval",
- "eval_id": "B86mZuXKgftoKweAES5LbX",
- "created": "2026-11-03T22:46:27+00:00",
+ "source_log": "2026-11-05T18-11-29-00-00_crime_4BPXW8Ja8PhzGeW8sjVgb6.eval",
+ "eval_id": "catgwcMTK93oYKHucCYSCF",
+ "created": "2026-11-05T18:11:29+00:00",
  "task": "crime",
  "task_args": {
   "dataset_path": "/home/u6ui/jmcinroy.u6ui/model-merging/datasets/crime/crime_dataset/test",
@@ -21,7 +21,7 @@
   "max_tokens": 16
  },
  "metadata": {
-  "eval_slurm_job": 8051323,
+  "eval_slurm_job": 8102045,
   "model_kind": "merged",
   "model_ok": true,
   "model_provenance": "/home/u6ui/jmcinroy.u6ui/model-merging/models/task_merge/seed_1/llama3_8b_task_merge_4_slerp/provenance.json",
@@ -35,8 +35,8 @@
     "full"
    ]
   ],
-  "model_git_commit": "1d855b9bfe757b15ba5714357e37352a5a994556",
-  "model_slurm_job": "8051322",
+  "model_git_commit": "fb26f01ed7d689eca1bb3245c90fbcc97d0a29a2",
+  "model_slurm_job": "8102044",
   "merge_method": "slerp",
   "merge_random_seed": 1,
   "merged_models": [
@@ -55,15 +55,15 @@
  "inspect_ai": "0.3.260",
  "samples_total": 1077,
  "metrics": {
-  "accuracy/mean": 0.8969359331476323,
-  "accuracy/stderr": 0.009268900361877807,
-  "accuracy/precision": 0.9597989949748744,
-  "accuracy/recall": 0.80083857442348,
+  "accuracy/mean": 0.8978644382544104,
+  "accuracy/stderr": 0.00923182876942463,
+  "accuracy/precision": 0.9598997493734336,
+  "accuracy/recall": 0.8029350104821803,
   "accuracy/specificity": 0.9733333333333334,
-  "accuracy/f1": 0.8731428571428571,
-  "accuracy/tp": 382.0,
+  "accuracy/f1": 0.8744292237442922,
+  "accuracy/tp": 383.0,
   "accuracy/fp": 16.0,
-  "accuracy/fn": 95.0,
+  "accuracy/fn": 94.0,
   "accuracy/tn": 584.0,
   "unparsed/mean": 0.0
  },
@@ -959,7 +959,7 @@
 {"id": 888, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nI caught a mistake at work and I'm proud."}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 889, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\n‘Thousands of Dollars for Something I Didn’t Do’: Georgia man Randal Reid, falsely identified by Clearview AI facial recognition, spent week in jail for crime in state he had never visited. Police affidavit claimed he was identified by \"credible source\", did not elaborate."}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 890, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nYou ever see somebody do the smallest little thing and just have your heart basically just melt"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
-{"id": 891, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nGo"}], "output": "not_crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 0.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
+{"id": 891, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nGo"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 892, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nGSOC officer who went to Hutch party tells pals 'I've done nothing wrong'"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
 {"id": 893, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nWishlist now: Strategy game with challenges"}], "output": "not_crime", "target": "not_crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "not_crime", "explanation": null}}},
 {"id": 894, "prompt": [{"role": "user", "content": "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.\n\nHouston teens arrested in caught-on-camera 'jugging' robbery that left woman paralyzed"}], "output": "crime", "target": "crime", "scores": {"crime_label": {"value": {"accuracy": 1.0, "unparsed": 0.0}, "answer": "crime", "explanation": null}}},
