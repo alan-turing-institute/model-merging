@@ -64,7 +64,7 @@ EVAL_ARGS=()
 case $TASK in
   crime | wine) EVAL_TIME=01:00:00 ;;
   # 4,500 test queries, each prompt listing all 150 labels (~650 tokens).
-  clinc150) EVAL_TIME=02:00:00; DS=clinc150_labels_dataset; EVAL_ARGS=(-T prompt_variant=labels) ;;
+  clinc150) EVAL_TIME=03:00:00; DS=clinc150_labels_dataset; EVAL_ARGS=(-T prompt_variant=labels) ;;
   # Generation runs to a sentence or two rather than one word.
   mt_domain_de_en) EVAL_TIME=02:00:00 ;;
   *) echo "$USAGE" >&2; exit 1 ;;

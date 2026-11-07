@@ -28,7 +28,8 @@
 # mt_domain_de_en defaults to the prompt it is trained on (prompt_variant=trained). For translation, COMET is a second step:
 # sbatch comet_score.sbatch on the resulting log.
 #
-# The .eval log is written to logs/; read it with `uv run inspect view`. Its
+# The .eval log is written to logs/ (or $EVAL_LOG_DIR, relative to evaluate/:
+# the 1B runs use logs-1b); read it with `uv run inspect view`. Its
 # metadata says what the model is: for a model or adapter dir with a
 # provenance.json, its kind, method, base model, training data, teacher and
 # targets, coverage, hyperparameters and final losses (see ../provenance.py);
@@ -105,4 +106,4 @@ fi
 # config says float32 would otherwise load in fp32 next to a bf16 base model.
 uv run inspect eval "$TASK_FILE" --model "$PROVIDER/$MODEL_NAME" "${MODEL_ARGS[@]}" \
   -M batch_size=8 -M do_sample=false -M dtype=bfloat16 \
-  "${METADATA[@]}" --log-dir logs "$@"
+  "${METADATA[@]}" --log-dir "${EVAL_LOG_DIR:-logs}" "$@"
