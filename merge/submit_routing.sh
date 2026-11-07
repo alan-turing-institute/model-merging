@@ -1,11 +1,15 @@
 #!/bin/bash
-# Submits the routing experiments for the rebuilt Mistral MoE, seeds 1 and 2,
+# Submits the routing experiments for the rebuilt Mistral MoE, seeds given (default 1 2),
 # waiting on the rebuild's jobs by name. Run from $PROJECTDIR/$USER/mm-moe/merge.
 set -euo pipefail
+SEEDS=("${@:-1 2}"); SEEDS=(${SEEDS[*]})
 export HF_HUB_CACHE=$PROJECTDIR/$USER/mm/hf-cache HF_TOKEN_PATH=$HOME/.cache/huggingface/token UV_NO_SYNC=1
 B=mistralai/Mistral-7B-Instruct-v0.3
 MAP=../evaluate/slurm/routing_jobs.txt
 id() { squeue --me -h -n "$1" -o %i | head -1; }
+# deps <job name...>: the queued ones as an afterok list, or - if all have finished
+deps() { local ids=(); for n in "$@"; do j=$(id "$n"); [[ -n $j ]] && ids+=("$j"); done
+         ((${#ids[@]})) && (IFS=:; echo "${ids[*]}") || echo -; }
 sub() {  # sub <dir> <name> <deps or -> <sbatch args...>
   local dir=$1 name=$2 dep=$3; shift 3
   local args=(--parsable --job-name="$name")
@@ -13,17 +17,17 @@ sub() {  # sub <dir> <name> <deps or -> <sbatch args...>
   local j; j=$(cd "$dir" && sbatch "${args[@]}" "$@"); echo "$j $dep $name" >> $MAP; echo "$j"
 }
 evals() {  # evals <build job> <model dir under models/> <tag>
-  for t in crime wine "clinc150 -T prompt_variant=labels" "xsum -T prompt_variant=long -M batch_size=2"; do
+  for t in crime wine "clinc150 -T prompt_variant=labels" "xsum -T prompt_variant=long -M batch_size=1"; do
     set -- "$1" "$2" "$3"; read -r task extra <<<"$t"
     # shellcheck disable=SC2086
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True HF_HUB_OFFLINE=1 \
-      sub ../evaluate eval_moe_${task}_${3} "$1" --time=03:00:00 evaluate.sbatch $task ../models/$2 $extra >/dev/null
+      sub ../evaluate eval_moe_${task}_${3} "$1" --time=04:00:00 evaluate.sbatch $task ../models/$2 $extra >/dev/null
   done
 }
-for S in 1 2; do
+for S in "${SEEDS[@]}"; do
   M=task_merge/seed_$S/mistral_7b_task_moe_4
-  base=$(id moe_mistral_s$S)
-  experts=$(IFS=:; echo "$(id convert_crime_mistral_s$S):$(id convert_wine_mistral_s$S):$(id convert_clinc150_mistral_s$S):$(id mlp_xsum_mistral_s$S)")
+  base=$(deps moe_mistral_s$S)
+  experts=$(deps convert_crime_mistral_s$S convert_wine_mistral_s$S convert_clinc150_mistral_s$S mlp_xsum_mistral_s$S)
   sub . probe_mistral_s$S "$base" moe_routing.sbatch probe ../models/$M ../models/$M/probe.json >/dev/null
   # option 1: real chat-formatted examples as mergekit's prompts
   ../evaluate/.venv/bin/python moe_routing.py prompts moe/mistral_task_moe_4_seed_${S}_config.yaml \

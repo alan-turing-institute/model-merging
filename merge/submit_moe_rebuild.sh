@@ -1,9 +1,12 @@
 #!/bin/bash
-# Rebuilds main's Mistral task-merging MoE (seeds 1 and 2) in its own worktree,
+# Rebuilds main's Mistral task-merging MoE (seeds given, default 1 2) in its own worktree,
 # $PROJECTDIR/$USER/mm-moe at origin/main: the XSum teacher (once), the four
 # MLP experts, the conversions to full models, base and expert evaluations, and
-# merge/submit_moe.sh (MoE + 4 evals). Job ids go to evaluate/slurm/rebuild_jobs.txt.
+# merge/submit_moe.sh (MoE + 4 evals). The teacher and the base evaluations are
+# skipped once done. Job ids go to evaluate/slurm/rebuild_jobs.txt.
+# Usage: bash submit_moe_rebuild.sh [seed...]
 set -euo pipefail
+SEEDS=("${@:-1 2}"); SEEDS=(${SEEDS[*]})
 P=$PROJECTDIR/$USER
 W=$P/mm-moe
 B=mistralai/Mistral-7B-Instruct-v0.3
@@ -30,14 +33,18 @@ sub() {  # sub <dir> <name> <dependency or -> <sbatch args...>
   echo "$j $dep $name" >> "$MAP"; echo "$j"
 }
 
-teacher=$(sub self-distill teacher_xsum_mistral - generate_teacher_logprobs.sbatch "$B" \
-  ../datasets/xsum/xsum_prompts ../datasets/xsum mistral_7b_xsum_gold_kd_data --targets gold --seed 1)
-sub evaluate eval_base_crime_mistral - --time=02:00:00 evaluate.sbatch crime "$B" >/dev/null
-sub evaluate eval_base_wine_mistral - --time=02:00:00 evaluate.sbatch wine "$B" >/dev/null
-sub evaluate eval_base_clinc150_mistral - --time=03:00:00 evaluate.sbatch clinc150 "$B" -T prompt_variant=labels >/dev/null
-sub evaluate eval_base_xsum_mistral - --time=03:00:00 evaluate.sbatch xsum "$B" -T prompt_variant=long >/dev/null
+# The teacher's data is the same for every seed; the base model is evaluated once.
+teacher=-
+if [[ ! -d datasets/xsum/mistral_7b_xsum_gold_kd_data_long ]]; then
+  teacher=$(sub self-distill teacher_xsum_mistral - generate_teacher_logprobs.sbatch "$B" \
+    ../datasets/xsum/xsum_prompts ../datasets/xsum mistral_7b_xsum_gold_kd_data --targets gold --seed 1)
+  sub evaluate eval_base_crime_mistral - --time=02:00:00 evaluate.sbatch crime "$B" >/dev/null
+  sub evaluate eval_base_wine_mistral - --time=02:00:00 evaluate.sbatch wine "$B" >/dev/null
+  sub evaluate eval_base_clinc150_mistral - --time=03:00:00 evaluate.sbatch clinc150 "$B" -T prompt_variant=labels >/dev/null
+  sub evaluate eval_base_xsum_mistral - --time=03:00:00 evaluate.sbatch xsum "$B" -T prompt_variant=long >/dev/null
+fi
 
-for S in 1 2; do
+for S in "${SEEDS[@]}"; do
   for spec in "crime crime_dataset mistral_7b_crime_mlp 02:00:00" \
               "wine wine_dataset mistral_7b_wine_mlp 02:00:00" \
               "clinc150 clinc150_labels_dataset mistral_7b_clinc150_labels_mlp 03:00:00"; do
