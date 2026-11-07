@@ -12,11 +12,9 @@ Main's MoE (its own experts) and the rebuild (ours), same config and code:
 
 | | seed | Crime accuracy | Wine MAE | CLINC150 accuracy | XSum ROUGE-1 |
 |---|---|---|---|---|---|
-| main's MoE | 1 | 0.876 | 1.210 | 0.973 | 0.363 |
-| main's MoE | 2 | 0.906 | 1.223 | 0.975 | 0.332 |
-| main's MoE | 3 | 0.920 | 1.187 | 0.976 | 0.351 |
-| main's MoE | 4 | 0.941 | 1.188 | 0.972 | 0.351 |
-| main's MoE | 5 | 0.835 | 1.194 | 0.978 | 0.281 |
+| main's MoE | 1 | 0.877 | 1.209 | 0.973 | 0.363 |
+| main's MoE | 2 | 0.904 | 1.223 | 0.975 | 0.330 |
+| main's MoE | 3 | 0.916 | 1.191 | 0.976 | 0.349 |
 | rebuilt MoE | 1 | 0.848 | 1.218 | 0.975 | 0.361 |
 | rebuilt MoE | 2 | 0.896 | 1.212 | 0.978 | 0.331 |
 | rebuilt MoE | 3 | 0.911 | 1.201 | 0.976 | 0.348 |
@@ -25,7 +23,7 @@ Main's MoE (its own experts) and the rebuild (ours), same config and code:
 | rebuilt MoE | 6 | 0.898 | 1.199 | 0.977 | 0.222 |
 | rebuilt MoE | 7 | 0.916 | 1.224 | 0.978 | – |
 
-The rebuild's crime accuracy (0.783-0.922 over 7 seeds) overlaps main's (0.835-0.941 over 5), so it reproduces the weakness rather than an accident of training.
+The rebuild's crime accuracy (0.783-0.922 over 7 seeds) overlaps main's (0.877-0.916 over 3), so it reproduces the weakness rather than an accident of training. Main's experts (as of 866ffd7) match the rebuild's on seeds 1-5: crime accuracy identical, wine MAE within 0.007, CLINC150 accuracy within 0.005, XSum ROUGE-1 within 0.004.
 
 ## Where crime's routing fails
 
@@ -89,6 +87,24 @@ Over seeds: R on crime for every seed with a crime evaluation, *All four* for ev
 | 1. real chat-formatted examples as mergekit's prompts | 1-4 | 0.97 (0.88 to 0.99) | 1-4 | 0.98 (0.96 to 0.99) |
 | 2. fitted on hidden states (logistic regression) | 1-3 | 1.00 (1.00 to 1.00) | 1-3 | 0.99 (0.99 to 1.00) |
 | 3. trained (routing + answer loss) | 1 and 2 | 1.00 (1.00 to 1.00) | 1 and 2 | 0.99 (0.99 to 1.00) |
+
+## Main's routers
+
+Main has since evaluated two more routers for its own MoE (866ffd7): prompt_mean (`merge/set_moe_router.py`), which sets each layer's router from the router's own inputs on example prompts in the evaluation's format, and a random router, a control. R against main's own experts and base model:
+
+| router | seed | R crime | R wine | R CLINC150 | R XSum | All four |
+|---|---|---|---|---|---|---|
+| mergekit hidden (main's prompts) | 1 | 0.49 | 0.88 | 1.00 | 0.91 | 0.82 |
+| mergekit hidden (main's prompts) | 2 | 0.62 | 0.84 | 1.00 | 0.69 | 0.79 |
+| mergekit hidden (main's prompts) | 3 | 0.67 | 0.89 | 1.00 | 0.82 | 0.84 |
+| prompt_mean | 1 | 0.96 | 1.00 | 1.00 | 0.25 | 0.80 |
+| prompt_mean | 2 | 0.96 | 0.97 | 1.00 | 0.37 | 0.83 |
+| prompt_mean | 3 | 0.96 | 0.98 | 1.00 | 0.65 | 0.90 |
+| random (control) | 1 | 0.68 | 0.61 | 0.95 | 0.79 | 0.76 |
+| random (control) | 2 | 0.67 | 0.60 | 0.95 | 0.36 | 0.65 |
+| random (control) | 3 | 0.74 | 0.70 | 0.95 | 0.65 | 0.76 |
+
+Medians over seeds: prompt_mean keeps R 0.96 on crime and 0.37 on XSum, 0.83 over all four, against 0.97-1.00, 0.97-0.99 and 0.98-0.99 for routers 1-3 here. On crime the random router keeps R 0.68, more than mergekit's hidden router (0.62), which sends crime's answer position to other experts (above).
 
 ## Routing per prompt
 
