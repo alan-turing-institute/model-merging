@@ -16,16 +16,20 @@
 #            --adapter ../models/crime/gemma3_4b_crime
 #        sbatch evaluate.sbatch translation google/gemma-3-4b-it \
 #            -T prompt_variant=short -T split=validation
+#        sbatch evaluate.sbatch mt_domain_de_en google/gemma-3-1b-it \
+#            --adapter ../models/mt_domain_de_en_1b/seed_1/gemma3_1b_mt_domain_de_en
 #
-# task is crime, wine, clinc150, xsum, translation or translation_en_zh (runs <task>_task.py). model is a Hugging Face hub id or
+# task is crime, wine, clinc150, xsum, translation, translation_en_zh or mt_domain_de_en (runs <task>_task.py). model is a Hugging Face hub id or
 # a full model saved on disk (config.json + model.safetensors); --adapter puts a
 # PEFT/LoRA adapter on top of it via the hf-peft provider. Everything after that
 # goes to `inspect eval` unchanged. xsum and the translation tasks need
 # -T prompt_variant=short|long|teacher, and clinc150 -T prompt_variant=short|labels,
-# matching the prompt the model was trained on, so it is required here. For translation, COMET is a second step:
+# matching the prompt the model was trained on, so it is required here;
+# mt_domain_de_en defaults to the prompt it is trained on (prompt_variant=trained). For translation, COMET is a second step:
 # sbatch comet_score.sbatch on the resulting log.
 #
-# The .eval log is written to logs/; read it with `uv run inspect view`. Its
+# The .eval log is written to logs/ (or $EVAL_LOG_DIR, relative to evaluate/:
+# the 1B runs use logs-1b); read it with `uv run inspect view`. Its
 # metadata says what the model is: for a model or adapter dir with a
 # provenance.json, its kind, method, base model, training data, teacher and
 # targets, coverage, hyperparameters and final losses (see ../provenance.py);
@@ -33,7 +37,7 @@
 # A model whose record says its run went NaN (health.ok false) is refused, as
 # it can only score NaN; set ALLOW_BROKEN_MODEL=1 to evaluate it anyway.
 set -euo pipefail
-USAGE="usage: sbatch evaluate.sbatch <crime|wine|clinc150|xsum|translation|translation_en_zh> <model> [--adapter <dir>] [inspect eval args...]"
+USAGE="usage: sbatch evaluate.sbatch <crime|wine|clinc150|xsum|translation|translation_en_zh|mt_domain_de_en> <model> [--adapter <dir>] [inspect eval args...]"
 TASK=${1:?$USAGE}
 MODEL=${2:?$USAGE}
 shift 2
@@ -50,7 +54,7 @@ cd "$SLURM_SUBMIT_DIR"
 TASK_FILE=${TASK}_task.py
 [[ -f $TASK_FILE ]] || { echo "no $TASK_FILE in $PWD - submit from evaluate/" >&2; exit 1; }
 
-if [[ $TASK != crime && $TASK != wine && " $* " != *" prompt_variant="* ]]; then
+if [[ $TASK != crime && $TASK != wine && $TASK != mt_domain_de_en && " $* " != *" prompt_variant="* ]]; then
   [[ $TASK == clinc150 ]] && variants=short\|labels || variants=short\|long\|teacher
   echo "$TASK needs -T prompt_variant=$variants (the prompt the model was trained on)" >&2
   exit 1
@@ -102,4 +106,4 @@ fi
 # config says float32 would otherwise load in fp32 next to a bf16 base model.
 uv run inspect eval "$TASK_FILE" --model "$PROVIDER/$MODEL_NAME" "${MODEL_ARGS[@]}" \
   -M batch_size=8 -M do_sample=false -M dtype=bfloat16 \
-  "${METADATA[@]}" --log-dir logs "$@"
+  "${METADATA[@]}" --log-dir "${EVAL_LOG_DIR:-logs}" "$@"

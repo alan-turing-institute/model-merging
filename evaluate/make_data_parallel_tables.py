@@ -1,21 +1,26 @@
 # Writes the data-parallel merging results for one task as a markdown report:
 # for each split N (2, 4, 8), the untrained base model, the model trained on all
 # the data, the N experts each trained on 1/N of it, and the merges of those
-# experts by each method, over the seed repeats (models/<task>/seed_<S>/).
+# experts by each method, over the seed repeats (models/<task>/seed_<S>/, or
+# models/<task>_<size>/seed_<S>/ for a base other than gemma-3-4b-it).
 #
 # Usage, from evaluate/:
 #   uv run python make_data_parallel_tables.py crime ../results/crime-data-parallel-gemma.md
 #   uv run python make_data_parallel_tables.py xsum ../results/xsum-data-parallel-gemma.md
+#   uv run python make_data_parallel_tables.py wine ../results/gemma3_1b/wine-data-parallel-gemma-1b.md \
+#       --base google/gemma-3-1b-it --logs logs-1b
 #
-# Every number comes from the .eval logs in logs/: a log is matched to its model
+# Every number comes from the .eval logs in logs/ (or --logs, relative to
+# evaluate/; the 1B runs' logs are kept apart, in logs-1b/): a log is matched to its model
 # through the model_provenance path that evaluate.sbatch records in its
 # metadata, and where a model was evaluated more than once the latest
 # successful log counts. XSum is the gold-target, long-prompt students
-# (gemma3_4b_xsum_gold_*_long), evaluated with the long prompt they were trained
-# on; the base model with the same prompt.
+# (gemma3_<size>_xsum_gold_*_long), evaluated with the long prompt they were
+# trained on; the base model with the same prompt. Translation is German->English
+# medical/legal, with the prompt it was trained on.
+import argparse
 import re
 import statistics as st
-import sys
 from datetime import datetime, timezone
 
 from inspect_ai.log import list_eval_logs, read_eval_log
@@ -23,31 +28,75 @@ from inspect_ai.log import list_eval_logs, read_eval_log
 METHODS = ["linear", "ties", "dare_ties", "task_arithmetic", "model_stock", "slerp", "arcee_fusion"]
 SPLITS = [2, 4, 8]
 SEEDS = [1, 2, 3, 4, 5]
+BASE = "google/gemma-3-4b-it"
+# Model names carry {size}, the base model's size (4b, 1b). A metric is
+# (score, metric, label[, decimals]); three decimals unless given.
 TASKS = {
     "crime": {
         "title": "Crime classification (Reddit posts)",
         "metrics": [("accuracy", "mean", "Accuracy"), ("accuracy", "f1", "F1")],
-        "full": r"gemma3_4b_crime", "part": r"gemma3_4b_crime_(\d)_of_(\d)", "merge": r"gemma3_4b_crime_merge_(\d)_(\w+)",
-        "prompt": None, "base_model": "hf/google/gemma-3-4b-it",
+        "full": r"gemma3_{size}_crime", "part": r"gemma3_{size}_crime_(\d)_of_(\d)",
+        "merge": r"gemma3_{size}_crime_merge_(\d)_(\w+)",
+        "prompt": None, "method": "LoRA",
         "test": "the 1,077 test posts; accuracy and F1 for the crime class",
+    },
+    "wine": {
+        "title": "Wine review points (80-100)",
+        "metrics": [("abs_error", "mean", "MAE"), ("abs_error", "rmse", "RMSE"), ("abs_error", "pearson", "Pearson"),
+                    ("unanswered", "mean", "Unanswered")],
+        "full": r"gemma3_{size}_wine", "part": r"gemma3_{size}_wine_(\d)_of_(\d)",
+        "merge": r"gemma3_{size}_wine_merge_(\d)_(\w+)",
+        "prompt": None, "method": "LoRA",
+        "test": "the 1,000 test reviews; mean absolute and root-mean-square error in points and Pearson correlation "
+                "over the answered reviews, and the share with no number in the answer",
+    },
+    "clinc150": {
+        "title": "CLINC150 intent classification (labels prompt)",
+        "metrics": [("accuracy", "mean", "Accuracy"), ("valid", "mean", "Valid label")],
+        "full": r"gemma3_{size}_clinc150", "part": r"gemma3_{size}_clinc150_(\d)_of_(\d)",
+        "merge": r"gemma3_{size}_clinc150_merge_(\d)_(\w+)",
+        "prompt": "labels", "method": "LoRA",
+        "test": "the 4,500 test queries (30 per intent), with the prompt that lists all 150 labels; accuracy, and "
+                "the share of answers that are one of the labels",
     },
     "xsum": {
         "title": "XSum summarisation (gold targets, long prompt)",
         "metrics": [("rouge1", "mean", "ROUGE-1"), ("rouge2", "mean", "ROUGE-2"), ("rougeL", "mean", "ROUGE-L"),
-                    ("pred_words", "mean", "Words")],
-        "full": r"gemma3_4b_xsum_gold_long", "part": r"gemma3_4b_xsum_gold_(\d)_of_(\d)_long",
-        "merge": r"gemma3_4b_xsum_gold_long_merge_(\d)_(\w+)",
-        "prompt": "long", "base_model": "hf/google/gemma-3-4b-it",
+                    ("pred_words", "mean", "Words", 1)],
+        "full": r"gemma3_{size}_xsum_gold_long", "part": r"gemma3_{size}_xsum_gold_(\d)_of_(\d)_long",
+        "merge": r"gemma3_{size}_xsum_gold_long_merge_(\d)_(\w+)",
+        "prompt": "long", "method": "self-distillation",
         "test": "1,000 test articles, long prompt; ROUGE F-measures, and mean summary length in words",
+    },
+    "mt_domain_de_en": {
+        "title": "German-English translation (medical and legal)",
+        "metrics": [("chrf", "mean", "chrF++", 2), ("chrf_medical", "mean", "Medical", 2),
+                    ("chrf_law", "mean", "Legal", 2), ("length_ratio", "mean", "Length ratio", 2)],
+        "full": r"gemma3_{size}_mt_domain_de_en", "part": r"gemma3_{size}_mt_domain_de_en_(\d)_of_(\d)",
+        "merge": r"gemma3_{size}_mt_domain_de_en_merge_(\d)_(\w+)",
+        "prompt": None, "method": "LoRA",
+        "test": "the EMEA and JRC-Acquis test pairs; mean sentence chrF++, overall and per domain, and output "
+                "length over reference length in words",
     },
 }
 
 
-def collect(task):
+def spec_for(task, base_model):
+    """The task's spec with its model names for this base, the models' folder and the base's size."""
+    size = re.fullmatch(r"google/gemma-3-(\d+b)-it", base_model).group(1)
+    folder = task + ("" if base_model == BASE else f"_{size}")
     spec = TASKS[task]
-    found = {}  # (seed or None, model name) -> (created, {metric: value})
-    for info in list_eval_logs("logs"):
-        if f"_{task}_" not in info.name:
+    return {**spec, **{k: spec[k].replace("{size}", size) for k in ("full", "part", "merge")}}, folder, size
+
+
+def latest(task, base, folder, logs):
+    """(seed or None, model name) -> (created, {metric: value}, log path): the latest successful log of each
+    model (export_data_parallel.py writes these same logs to JSON)."""
+    spec = TASKS[task]
+    found = {}
+    for info in list_eval_logs(logs):
+        # Inspect writes the task's name into the log's with hyphens.
+        if f"_{task.replace('_', '-')}_" not in info.name:
             continue
         h = read_eval_log(info, header_only=True)
         if h.status != "success" or h.eval.task != task:
@@ -56,10 +105,10 @@ def collect(task):
             continue
         values = {(s.name, k): m.value for s in h.results.scores for k, m in s.metrics.items()}
         md = h.eval.metadata or {}
-        m = re.search(rf"models/{task}/seed_(\d)/(?:split_\d/)?([^/]+)/provenance\.json", md.get("model_provenance") or "")
+        m = re.search(rf"models/{folder}/seed_(\d)/(?:split_\d/)?([^/]+)/provenance\.json", md.get("model_provenance") or "")
         if m:
             key = (int(m.group(1)), m.group(2))
-        elif (h.eval.model == spec["base_model"] and md.get("model_kind") in ("base", None)
+        elif (h.eval.model == f"hf/{base}" and md.get("model_kind") in ("base", None)
               and not {"adapter", "model_path"} & set(h.eval.model_args or {})):
             # The base model alone; logs from before evaluate.sbatch recorded
             # model_kind (e.g. XSum's of 12 Oct, on the same 1,000 test
@@ -68,29 +117,33 @@ def collect(task):
         else:
             continue
         if key not in found or h.eval.created > found[key][0]:
-            found[key] = (h.eval.created, values)
-    return {k: v for k, (_, v) in found.items()}
+            found[key] = (h.eval.created, values, info.name)
+    return found
+
+
+def collect(task, base, folder, logs):
+    return {k: v for k, (_, v, _) in latest(task, base, folder, logs).items()}
 
 
 def fmt(vals, metric):
     if not vals:
         return "–"
-    digits = 1 if metric[0] == "pred_words" else 3
+    digits = metric[3] if len(metric) > 3 else 3
     mean = st.mean(vals)
     sd = f" ± {st.stdev(vals):.{digits}f}" if len(vals) > 1 else ""
     return f"{mean:.{digits}f}{sd}"
 
 
-def report(task):
-    spec = TASKS[task]
-    res = collect(task)
-    head = "| | " + " | ".join(label for *_, label in spec["metrics"]) + " | seeds |"
+def report(task, base_model, logs):
+    spec, folder, size = spec_for(task, base_model)
+    res = collect(task, base_model, folder, logs)
+    head = "| | " + " | ".join(m[2] for m in spec["metrics"]) + " | seeds |"
     sep = "|---" * (len(spec["metrics"]) + 2) + "|"
-    out = [f"# Data-parallel merging: {spec['title']}, Gemma 3 4B", "",
+    out = [f"# Data-parallel merging: {spec['title']}, Gemma 3 {size.upper()}", "",
            f"Generated {datetime.now(timezone.utc):%Y-%m-%d} by `evaluate/make_data_parallel_tables.py` from the "
-           "`.eval` logs in `evaluate/logs/`.", "",
-           "The training data is split into N equal parts; an expert is trained on each part (LoRA for crime, "
-           "self-distillation for XSum) and the N experts are merged. Every arm is repeated with seeds 1-5 "
+           f"`.eval` logs in `evaluate/{logs.rstrip('/')}/`.", "",
+           f"The training data is split into N equal parts; an expert is trained on each part ({spec['method']}, "
+           f"from {base_model}) and the N experts are merged. Every arm is repeated with seeds 1-5 "
            "(training data order and initialisation, and dare_ties' random dropping), so each cell is the mean "
            "± standard deviation over the seeds; the base model is evaluated once. "
            f"Test set: {spec['test']}.", "",
@@ -126,7 +179,14 @@ def report(task):
 
 
 if __name__ == "__main__":
-    task, path = sys.argv[1], sys.argv[2]
-    text = report(task)
-    open(path, "w").write(text)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("task", choices=TASKS)
+    ap.add_argument("path", help="the markdown report to write")
+    ap.add_argument("--base", default=BASE, help="the base model the experts were trained from (default %(default)s)")
+    ap.add_argument("--logs", default="logs", help="the directory of .eval logs, relative to evaluate/ (default %(default)s)")
+    args = ap.parse_args()
+    if not re.fullmatch(r"google/gemma-3-\d+b-it", args.base):
+        ap.error(f"--base must be google/gemma-3-<size>-it, not {args.base}")
+    text = report(args.task, args.base, args.logs)
+    open(args.path, "w").write(text)
     print(text)

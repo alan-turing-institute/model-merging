@@ -7,13 +7,15 @@
 #SBATCH --mem=115000M
 #SBATCH --time=06:00:00
 # Usage, from train/:
-#   sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir> [--seed <n|random>]
+#   sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir> [--seed <n|random>] [--base-model <id>]
 #   e.g. sbatch train.sbatch crime_gemma.yaml \
 #            ../datasets/crime/split_2/crime_dataset_1_of_2 ../models/crime/split_2/gemma3_4b_crime_1_of_2
 #        sbatch train.sbatch wine_gemma.yaml \
 #            ../datasets/wine/wine_dataset ../models/wine/gemma3_4b_wine
 #        sbatch train.sbatch crime_gemma.yaml \
 #            ../datasets/crime/crime_dataset ../models/crime/gemma3_4b_crime --seed random
+#        sbatch train.sbatch crime_gemma.yaml \
+#            ../datasets/crime/crime_dataset ../models/crime_1b/gemma3_1b_crime --base-model google/gemma-3-1b-it
 #
 # dataset_dir must hold train/ and validation/ (the layout prepare_data_crime.py
 # and prepare_data_wine.py write); they replace the datasets/test_datasets paths in the config, and
@@ -30,12 +32,20 @@
 # Trainer's data order and dropout, and, through ../seed_plugin.py, the LoRA
 # adapter's initial weights. "random" draws one from /dev/urandom. Either way it
 # is written into config.yaml, so provenance.json records it.
+#
+# --base-model replaces the config's base_model (e.g. google/gemma-3-1b-it, to
+# train the same recipe at another size), and is written into config.yaml too.
 set -euo pipefail
-USAGE="usage: sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir> [--seed <n|random>]"
+USAGE="usage: sbatch train.sbatch <config.yaml> <dataset_dir> <output_dir> [--seed <n|random>] [--base-model <id>]"
 SEED=42
+BASE_MODEL=
 ARGS=()
 while (( $# )); do
-  if [[ $1 == --seed ]]; then SEED=${2:?$USAGE}; shift 2; else ARGS+=("$1"); shift; fi
+  case $1 in
+    --seed) SEED=${2:?$USAGE}; shift 2 ;;
+    --base-model) BASE_MODEL=${2:?$USAGE}; shift 2 ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
 done
 set -- "${ARGS[@]}"
 [[ $SEED == random ]] && SEED=$(od -An -N4 -tu4 /dev/urandom | tr -d ' ')
@@ -74,16 +84,18 @@ export HF_HOME=${HF_HOME:-$PROJECTDIR/$USER/hf_cache}
 
 uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is a CUDA compat lib on LD_LIBRARY_PATH?'"
 
-# Write a copy of the config with the dataset and output paths and the seed
-# changed (and dataset_num_proc capped, below).
+# Write a copy of the config with the dataset and output paths, the seed and
+# any base model changed (and dataset_num_proc capped, below).
 RUN_CONFIG="$OUTPUT_DIR/config.yaml"
-uv run python - "$CONFIG" "$RUN_CONFIG" "$DATASET_DIR" "$OUTPUT_DIR" "$SEED" <<'EOF'
+uv run python - "$CONFIG" "$RUN_CONFIG" "$DATASET_DIR" "$OUTPUT_DIR" "$SEED" "$BASE_MODEL" <<'EOF'
 import os, sys, yaml
-src, dst, dataset_dir, output_dir, seed = sys.argv[1:]
+src, dst, dataset_dir, output_dir, seed, base_model = sys.argv[1:]
 with open(src) as f:
     cfg = yaml.safe_load(f)
 cfg["output_dir"] = output_dir
 cfg["seed"] = int(seed)
+if base_model:
+    cfg["base_model"] = base_model
 # Seeds every RNG before the model loads, so the seed also fixes the LoRA
 # adapter's initialisation (see ../seed_plugin.py).
 cfg["plugins"] = [*(cfg.get("plugins") or []), "seed_plugin.SeedPlugin"]
@@ -103,6 +115,7 @@ for key, split in (("datasets", "train"), ("test_datasets", "validation")):
 cfg.setdefault("dataset_num_proc", min(16, int(os.environ.get("SLURM_CPUS_PER_TASK", 16))))
 with open(dst, "w") as f:
     yaml.safe_dump(cfg, f, sort_keys=False)
+print(f"base_model: {cfg['base_model']}")
 print(f"output_dir: {cfg['output_dir']}")
 print(f"prepared:   {cfg['dataset_prepared_path']}")
 print(f"train:      {[d['path'] for d in cfg['datasets']]}")
@@ -122,5 +135,10 @@ uv run axolotl train      "$RUN_CONFIG"
 # Axolotl overwrites config.json's eos_token_id [1, 106] with 1, dropping
 # Gemma's <end_of_turn>; restore it from the base model (see ../fix_eos.py).
 uv run python ../fix_eos.py "$OUTPUT_DIR"
+
+# A base whose embedding is shorter than its tokenizer (Gemma 3 1B) leaves a
+# resized embedding in the adapter, which then no longer loads on the base; drop
+# it (see ../strip_resized_embeddings.py). A no-op at 4B.
+uv run python ../strip_resized_embeddings.py "$OUTPUT_DIR"
 
 uv run python ../provenance.py model "$OUTPUT_DIR" --script train.sbatch
