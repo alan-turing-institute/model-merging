@@ -1,6 +1,8 @@
-# Routing the task MoE: Mistral 7B, seeds 1-2
+# Routing the task MoE: Mistral 7B, seeds 1-7
 
-Main's sparse task MoE (`merge/moe/mistral_task_moe_4_seed_<S>_config.yaml`: four MLP-only experts, crime, wine, CLINC150 with the labels prompt and XSum by self-distillation, one expert per token, mergekit's `gate_mode: hidden`) keeps most of its experts' gains on wine and CLINC150 but loses much of crime's. This study rebuilt it and asked whether a better router recovers crime. The experts and the MoE were rebuilt from main (7122af6) with its configs, seeds 1 and 2, because main's models are not readable to us; every router below routes the same four experts of a seed, and is fitted on training data only. Each MoE is evaluated as main evaluates its MoEs (test sets in full; CLINC150 with the labels prompt, XSum with the long one).
+Main's sparse task MoE (`merge/moe/mistral_task_moe_4_seed_<S>_config.yaml`: four MLP-only experts, crime, wine, CLINC150 with the labels prompt and XSum by self-distillation, one expert per token, mergekit's `gate_mode: hidden`) keeps most of its experts' gains on wine and CLINC150 but loses much of crime's. This study rebuilt it and asked whether a better router recovers crime. The experts and the MoE were rebuilt from main (7122af6) with its configs, because main's models are not readable to us; every router below routes the same four experts of a seed, and is fitted on training data only. Each MoE is evaluated as main evaluates its MoEs (test sets in full; CLINC150 with the labels prompt, XSum with the long one).
+
+Seeds 1 and 2 are complete. The later seeds were cut short when the project's GPU budget on Isambard ran out (6 November 2026), so they cover: main's router: seeds 1-6 (some tasks also for 7); router 1: seeds 1-4 (some tasks also for 5); router 2: seeds 1-3; router 3: seeds 1 and 2.
 
 *R* is the share of the expert's gain over the base model a model keeps, for one task and seed: (model - base) / (expert of the same seed - base), on the task's main metric (wine's MAE is lower-better, which the ratio handles). 1 is as good as the expert, 0 no better than the base model. *All four* is the mean of a seed's four R values.
 
@@ -12,10 +14,18 @@ Main's MoE (its own experts) and the rebuild (ours), same config and code:
 |---|---|---|---|---|---|
 | main's MoE | 1 | 0.876 | 1.210 | 0.973 | 0.363 |
 | main's MoE | 2 | 0.906 | 1.223 | 0.975 | 0.332 |
+| main's MoE | 3 | 0.920 | 1.187 | 0.976 | 0.351 |
+| main's MoE | 4 | 0.941 | 1.188 | 0.972 | 0.351 |
+| main's MoE | 5 | 0.835 | 1.194 | 0.978 | 0.281 |
 | rebuilt MoE | 1 | 0.848 | 1.218 | 0.975 | 0.361 |
 | rebuilt MoE | 2 | 0.896 | 1.212 | 0.978 | 0.331 |
+| rebuilt MoE | 3 | 0.911 | 1.201 | 0.976 | 0.348 |
+| rebuilt MoE | 4 | 0.922 | 1.195 | 0.973 | 0.354 |
+| rebuilt MoE | 5 | 0.783 | 1.189 | 0.977 | 0.280 |
+| rebuilt MoE | 6 | 0.898 | 1.199 | 0.977 | 0.222 |
+| rebuilt MoE | 7 | 0.916 | 1.224 | 0.978 | – |
 
-The rebuild's crime accuracy sits inside main's five seeds (0.835-0.941), so it reproduces the weakness rather than an accident of training.
+The rebuild's crime accuracy (0.783-0.922 over 7 seeds) overlaps main's (0.835-0.941 over 5), so it reproduces the weakness rather than an accident of training.
 
 ## Where crime's routing fails
 
@@ -48,14 +58,37 @@ With main's router, about half of the decisions at crime's answer position go to
 | base model | – | 0.776 | 1.685 | 0.454 | 0.237 | | | | | |
 | experts | 1 | 0.982 | 1.137 | 0.975 | 0.378 | 1 | 1 | 1 | 1 | 1 |
 | experts | 2 | 0.983 | 1.140 | 0.979 | 0.375 | 1 | 1 | 1 | 1 | 1 |
+| experts | 3 | 0.985 | 1.129 | 0.977 | 0.374 | 1 | 1 | 1 | 1 | 1 |
+| experts | 4 | 0.983 | 1.127 | 0.978 | 0.372 | 1 | 1 | 1 | 1 | 1 |
+| experts | 5 | 0.980 | 1.153 | 0.977 | 0.374 | 1 | 1 | 1 | 1 | 1 |
+| experts | 6 | 0.981 | 1.129 | 0.978 | 0.379 | 1 | 1 | 1 | 1 | 1 |
+| experts | 7 | 0.981 | 1.142 | 0.978 | 0.375 | 1 | 1 | 1 | 1 | 1 |
 | main's router (mergekit hidden, main's prompts) | 1 | 0.848 | 1.218 | 0.975 | 0.361 | 0.35 | 0.85 | 1.00 | 0.88 | 0.77 |
 | main's router (mergekit hidden, main's prompts) | 2 | 0.896 | 1.212 | 0.978 | 0.331 | 0.58 | 0.87 | 1.00 | 0.68 | 0.78 |
+| main's router (mergekit hidden, main's prompts) | 3 | 0.911 | 1.201 | 0.976 | 0.348 | 0.64 | 0.87 | 1.00 | 0.81 | 0.83 |
+| main's router (mergekit hidden, main's prompts) | 4 | 0.922 | 1.195 | 0.973 | 0.354 | 0.70 | 0.88 | 0.99 | 0.87 | 0.86 |
+| main's router (mergekit hidden, main's prompts) | 5 | 0.783 | 1.189 | 0.977 | 0.280 | 0.03 | 0.93 | 1.00 | 0.31 | 0.57 |
+| main's router (mergekit hidden, main's prompts) | 6 | 0.898 | 1.199 | 0.977 | 0.222 | 0.60 | 0.87 | 1.00 | -0.10 | 0.59 |
+| main's router (mergekit hidden, main's prompts) | 7 | 0.916 | 1.224 | 0.978 | – | 0.69 | 0.85 | 1.00 | – | – |
 | 1. real chat-formatted examples as mergekit's prompts | 1 | 0.980 | 1.142 | 0.973 | 0.369 | 0.99 | 0.99 | 1.00 | 0.94 | 0.98 |
 | 1. real chat-formatted examples as mergekit's prompts | 2 | 0.976 | 1.147 | 0.976 | 0.370 | 0.96 | 0.99 | 0.99 | 0.96 | 0.98 |
+| 1. real chat-formatted examples as mergekit's prompts | 3 | 0.961 | 1.136 | 0.977 | 0.371 | 0.88 | 0.99 | 1.00 | 0.97 | 0.96 |
+| 1. real chat-formatted examples as mergekit's prompts | 4 | 0.977 | 1.134 | 0.971 | 0.371 | 0.97 | 0.99 | 0.99 | 1.00 | 0.99 |
+| 1. real chat-formatted examples as mergekit's prompts | 5 | – | – | – | 0.368 | – | – | – | 0.96 | – |
 | 2. fitted on hidden states (logistic regression) | 1 | 0.982 | 1.151 | 0.975 | 0.374 | 1.00 | 0.97 | 1.00 | 0.97 | 0.99 |
 | 2. fitted on hidden states (logistic regression) | 2 | 0.983 | 1.145 | 0.977 | 0.371 | 1.00 | 0.99 | 1.00 | 0.97 | 0.99 |
+| 2. fitted on hidden states (logistic regression) | 3 | 0.985 | 1.134 | 0.976 | 0.376 | 1.00 | 0.99 | 1.00 | 1.01 | 1.00 |
 | 3. trained (routing + answer loss) | 1 | 0.982 | 1.143 | 0.975 | 0.377 | 1.00 | 0.99 | 1.00 | 0.99 | 1.00 |
 | 3. trained (routing + answer loss) | 2 | 0.984 | 1.156 | 0.980 | 0.374 | 1.00 | 0.97 | 1.00 | 0.99 | 0.99 |
+
+Over seeds: R on crime for every seed with a crime evaluation, *All four* for every seed with all four tasks; median (range):
+
+| router | seeds, crime | R crime | seeds, all four | All four |
+|---|---|---|---|---|
+| main's router (mergekit hidden, main's prompts) | 1-7 | 0.60 (0.03 to 0.70) | 1-6 | 0.78 (0.57 to 0.86) |
+| 1. real chat-formatted examples as mergekit's prompts | 1-4 | 0.97 (0.88 to 0.99) | 1-4 | 0.98 (0.96 to 0.99) |
+| 2. fitted on hidden states (logistic regression) | 1-3 | 1.00 (1.00 to 1.00) | 1-3 | 0.99 (0.99 to 1.00) |
+| 3. trained (routing + answer loss) | 1 and 2 | 1.00 (1.00 to 1.00) | 1 and 2 | 0.99 (0.99 to 1.00) |
 
 ## Routing per prompt
 
@@ -72,15 +105,15 @@ Share of each task's test prompts whose mean router probability (over tokens and
 | moe_train | 1 | 1.00 | 1.00 | 1.00 | 1.00 |
 | moe_train | 2 | 1.00 | 1.00 | 1.00 | 1.00 |
 
-With any of the three new routers every probed prompt is assigned to its own expert, so routing per prompt would score as the experts do (R = 1). With main's router it would misroute 20-42% of crime prompts.
+In seeds 1 and 2, with any of the three new routers every probed prompt is assigned to its own expert, so routing per prompt would score as the experts do (R = 1). With main's router it would misroute 20-42% of crime prompts.
 
 ## Caveats
 
-- Two seeds and one model (Mistral 7B); main's MoE has five seeds and also Llama 3.1 8B.
+- Only seeds 1 and 2 are complete and probed; the later seeds lack some routers (above). One model (Mistral 7B); main's MoE also has Llama 3.1 8B.
 - The probe uses 300 test prompts per task; the evaluations use the full test sets.
-- XSum for router 1, seed 2 ran at batch size 1 (the MoE ran out of GPU memory at 2); decoding is greedy, so only the padding differs.
+- XSum for router 1 from seed 2 on and router 2 from seed 3 on ran at batch size 1 (the MoE ran out of GPU memory at 2); decoding is greedy, so only the padding differs.
 - Routers 2 and 3 were fitted and trained on the training splits only; router 3's progress was checked on 40 validation sequences per task, never on test data.
 
 ## Reproducing
 
-On Isambard, in a worktree of main: `merge/submit_moe_rebuild.sh` (experts, conversions, base and expert evaluations, main's `submit_moe.sh`), then `merge/submit_routing.sh` (probes, the three routers and their evaluations); `evaluate/export_moe_routing.py` writes the JSONs and this script the report.
+On Isambard, in a worktree of main: `merge/submit_moe_rebuild.sh [seed...]` (experts, conversions, base and expert evaluations, main's `submit_moe.sh`), then `merge/submit_routing.sh [seed...]` (probes, the three routers and their evaluations); `evaluate/export_moe_routing.py` writes the JSONs and this script the report.

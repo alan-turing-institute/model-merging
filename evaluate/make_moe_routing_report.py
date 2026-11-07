@@ -1,7 +1,7 @@
 # Writes the routing study of the Mistral task MoE as a markdown report, from
 # results/task_merging_routing/mistral/ (export_moe_routing.py: the rebuilt MoE
-# with main's router and three new ones, its experts and the base model, seeds
-# 1-2, and the routing probes of merge/moe_routing.py) and, for comparison,
+# with main's router and three new ones, its experts and the base model, every
+# seed exported, and the routing probes of merge/moe_routing.py) and, for comparison,
 # main's own MoE in results/task_merging/mistral/.
 #
 # Usage, from evaluate/:
@@ -13,7 +13,7 @@ from pathlib import Path
 
 RES = Path(__file__).resolve().parents[1] / "results"
 OURS, MAIN = RES / "task_merging_routing" / "mistral", RES / "task_merging" / "mistral"
-SEEDS = [1, 2]
+SEEDS = sorted(int(d.name[5:]) for d in OURS.glob("seed_*"))
 TASKS = {"crime": ("accuracy/mean", "Crime accuracy", 3), "wine": ("abs_error/mean", "Wine MAE", 3),
          "clinc150": ("accuracy/mean", "CLINC150 accuracy", 3), "xsum": ("rouge1/mean", "XSum ROUGE-1", 3)}
 ROUTERS = {"moe": "main's router (mergekit hidden, main's prompts)",
@@ -41,16 +41,47 @@ def recovery(seed, router):
     return rs + [st.mean(rs) if None not in rs else None]
 
 
+def has(seed, router, task=None):
+    return any((OURS / f"seed_{seed}/{router}/{t}.json").exists() for t in ([task] if task else TASKS))
+
+
+def seeds_text(seeds):
+    """1-4 for a run of three or more, else 1 and 2, or 5."""
+    if len(seeds) > 2 and seeds == list(range(seeds[0], seeds[-1] + 1)):
+        return f"{seeds[0]}-{seeds[-1]}"
+    return "none" if not seeds else ", ".join(map(str, seeds[:-1])) + (" and " if len(seeds) > 1 else "") + str(seeds[-1])
+
+
+def coverage():
+    """Which seeds each router has all four tasks for, and which only some."""
+    out = []
+    for r, label in ROUTERS.items():
+        full = [s for s in SEEDS if all(has(s, r, t) for t in TASKS)]
+        part = [s for s in SEEDS if has(s, r) and s not in full]
+        out.append(f"{'main' + chr(39) + 's router' if r == 'moe' else 'router ' + label[0]}: seeds {seeds_text(full)}"
+                   + (f" (some tasks also for {seeds_text(part)})" if part else ""))
+    return "; ".join(out)
+
+
+def spread(xs, k=2):
+    return "–" if not xs else f"{st.median(xs):.{k}f} ({min(xs):.{k}f} to {max(xs):.{k}f})"
+
+
 def main(out):
-    lines = ["# Routing the task MoE: Mistral 7B, seeds 1-2", "",
+    ours_crime = [metric(OURS / f"seed_{s}/moe/crime.json", "crime") for s in SEEDS if has(s, "moe", "crime")]
+    main_seeds = sorted(int(d.name[5:]) for d in MAIN.glob("seed_*") if (d / "moe/crime.json").exists())
+    main_crime = [metric(MAIN / f"seed_{s}/moe/crime.json", "crime") for s in main_seeds]
+    lines = [f"# Routing the task MoE: Mistral 7B, seeds {SEEDS[0]}-{SEEDS[-1]}", "",
              "Main's sparse task MoE (`merge/moe/mistral_task_moe_4_seed_<S>_config.yaml`: four MLP-only experts, "
              "crime, wine, CLINC150 with the labels prompt and XSum by self-distillation, one expert per token, "
              "mergekit's `gate_mode: hidden`) keeps most of its experts' gains on wine and CLINC150 but loses much "
              "of crime's. This study rebuilt it and asked whether a better router recovers crime. The experts and "
-             "the MoE were rebuilt from main (7122af6) with its configs, seeds 1 and 2, because main's models are "
-             "not readable to us; every router below routes the same four experts of a seed, and is fitted on "
-             "training data only. Each MoE is evaluated as main evaluates its MoEs (test sets in full; CLINC150 "
-             "with the labels prompt, XSum with the long one).", "",
+             "the MoE were rebuilt from main (7122af6) with its configs, because main's models are not readable to us; every router below "
+             "routes the same four experts of a seed, and is fitted on training data only. Each MoE is evaluated "
+             "as main evaluates its MoEs (test sets in full; CLINC150 with the labels prompt, XSum with the long "
+             "one).", "",
+             "Seeds 1 and 2 are complete. The later seeds were cut short when the project's GPU budget on "
+             "Isambard ran out (6 November 2026), so they cover: " + coverage() + ".", "",
              "*R* is the share of the expert's gain over the base model a model keeps, for one task and seed: "
              "(model - base) / (expert of the same seed - base), on the task's main metric (wine's MAE is lower-"
              "better, which the ratio handles). 1 is as good as the expert, 0 no better than the base model. "
@@ -58,12 +89,13 @@ def main(out):
              "## The rebuild", "",
              "Main's MoE (its own experts) and the rebuild (ours), same config and code:", "",
              "| | seed | " + " | ".join(v[1] for v in TASKS.values()) + " |", "|---" * (len(TASKS) + 2) + "|"]
-    for name, root in (("main's MoE", MAIN), ("rebuilt MoE", OURS)):
-        for s in SEEDS:
+    for name, root, seeds in (("main's MoE", MAIN, main_seeds), ("rebuilt MoE", OURS, SEEDS)):
+        for s in seeds:
             lines.append(f"| {name} | {s} | " + " | ".join(fmt(metric(root / f"seed_{s}/moe/{t}.json", t))
                                                           for t in TASKS) + " |")
-    lines += ["", "The rebuild's crime accuracy sits inside main's five seeds (0.835-0.941), so it reproduces the "
-              "weakness rather than an accident of training.", "",
+    lines += ["", f"The rebuild's crime accuracy ({min(ours_crime):.3f}-{max(ours_crime):.3f} over {len(ours_crime)} "
+              f"seeds) overlaps main's ({min(main_crime):.3f}-{max(main_crime):.3f} over {len(main_crime)}), so it reproduces "
+              "the weakness rather than an accident of training.", "",
               "## Where crime's routing fails", "",
               "The probe (`merge/moe_routing.py probe`, 300 test prompts per task) records the expert each layer "
               "picks for every prompt token. A crime answer is decided at the answer position, the last prompt "
@@ -115,10 +147,18 @@ def main(out):
         lines.append(f"| experts | {s} | " + " | ".join(fmt(metric(OURS / f"seed_{s}/expert_{t}.json", t))
                                                        for t in TASKS) + " | 1 | 1 | 1 | 1 | 1 |")
     for r, label in ROUTERS.items():
-        for s in SEEDS:
+        for s in (s for s in SEEDS if has(s, r)):
             lines.append(f"| {label} | {s} | " + " | ".join(fmt(metric(OURS / f"seed_{s}/{r}/{t}.json", t))
                                                           for t in TASKS)
                          + " | " + " | ".join(fmt(x, 2) for x in recovery(s, r)) + " |")
+    lines += ["", "Over seeds: R on crime for every seed with a crime evaluation, *All four* for every seed with all "
+              "four tasks; median (range):", "",
+              "| router | seeds, crime | R crime | seeds, all four | All four |", "|---" * 5 + "|"]
+    for r, label in ROUTERS.items():
+        crime = [s for s in SEEDS if has(s, r, "crime")]
+        full = [s for s in SEEDS if all(has(s, r, t) for t in TASKS)]
+        lines.append(f"| {label} | {seeds_text(crime)} | {spread([recovery(s, r)[0] for s in crime])} | "
+                     f"{seeds_text(full)} | {spread([recovery(s, r)[-1] for s in full])} |")
     lines += ["", "## Routing per prompt", "",
               "Share of each task's test prompts whose mean router probability (over tokens and layers) picks "
               "the task's own expert, i.e. how often routing per prompt would use the right expert:", "",
@@ -129,19 +169,20 @@ def main(out):
             if p.exists():
                 d = json.loads(p.read_text())
                 lines.append(f"| {r} | {s} | " + " | ".join(f"{d[t]['prompt_choice_home']:.2f}" for t in TASKS) + " |")
-    lines += ["", "With any of the three new routers every probed prompt is assigned to its own expert, so routing "
+    lines += ["", "In seeds 1 and 2, with any of the three new routers every probed prompt is assigned to its own expert, so routing "
               "per prompt would score as the experts do (R = 1). With main's router it would misroute 20-42% of "
               "crime prompts.", "",
               "## Caveats", "",
-              "- Two seeds and one model (Mistral 7B); main's MoE has five seeds and also Llama 3.1 8B.",
+              "- Only seeds 1 and 2 are complete and probed; the later seeds lack some routers (above). One model "
+              "(Mistral 7B); main's MoE also has Llama 3.1 8B.",
               "- The probe uses 300 test prompts per task; the evaluations use the full test sets.",
-              "- XSum for router 1, seed 2 ran at batch size 1 (the MoE ran out of GPU memory at 2); decoding is "
-              "greedy, so only the padding differs.",
+              "- XSum for router 1 from seed 2 on and router 2 from seed 3 on ran at batch size 1 (the MoE ran out "
+              "of GPU memory at 2); decoding is greedy, so only the padding differs.",
               "- Routers 2 and 3 were fitted and trained on the training splits only; router 3's progress was "
               "checked on 40 validation sequences per task, never on test data.", "",
               "## Reproducing", "",
-              "On Isambard, in a worktree of main: `merge/submit_moe_rebuild.sh` (experts, conversions, base and "
-              "expert evaluations, main's `submit_moe.sh`), then `merge/submit_routing.sh` (probes, the three "
+              "On Isambard, in a worktree of main: `merge/submit_moe_rebuild.sh [seed...]` (experts, conversions, base and "
+              "expert evaluations, main's `submit_moe.sh`), then `merge/submit_routing.sh [seed...]` (probes, the three "
               "routers and their evaluations); `evaluate/export_moe_routing.py` writes the JSONs and this script "
               "the report."]
     Path(out).write_text("\n".join(lines) + "\n")
