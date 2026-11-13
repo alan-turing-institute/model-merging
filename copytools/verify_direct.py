@@ -58,7 +58,9 @@ def md5(path):
 
 
 def remote_files(azcopy, dest_url, sas, raw_out):
-    """dest path -> (size, md5 base64 or '') from azcopy list."""
+    """dest path (relative to files_<TAG>/) -> (size, md5 base64 or '') from azcopy list,
+    which may print each blob's path from the container root or relative to the prefix."""
+    prefix = dest_url.split(".net/", 1)[1].split("/", 1)[1].rstrip("/") + "/"   # model-merging/files_<TAG>/
     cmd = [azcopy, "list", dest_url + "/?" + sas, "--properties", "ContentMD5", "--machine-readable"]
     out = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True).stdout
     out = re.sub(r"sig=[^&\s\"]*", "sig=<redacted>", out)
@@ -70,7 +72,10 @@ def remote_files(azcopy, dest_url, sas, raw_out):
         if not m:
             continue
         md = re.search(r"ContentMD5: *([A-Za-z0-9+/=]+)", line)
-        blobs[m.group(1)] = (int(m.group(2)), md.group(1) if md else "")
+        name = m.group(1).strip().lstrip("/")
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+        blobs[name] = (int(m.group(2)), md.group(1) if md else "")
     return blobs
 
 
@@ -91,6 +96,13 @@ def main():
     print("%d blobs under model-merging/files_%s/" % (len(blobs), args.tag), flush=True)
     if files and not blobs:
         sys.exit("no blobs parsed from azcopy list: see azcopy_list.txt (format, or SAS?)")
+    found = sum(1 for n in files if n in blobs)
+    if found < len(files) / 2:   # most missing: more likely a naming mismatch than a failed upload
+        print("only %d of %d local files found by name on Azure; names compared, e.g.:" % (found, len(files)))
+        for n in sorted(files)[:3]:
+            print("   local: %r" % n)
+        for n in sorted(blobs)[:3]:
+            print("   Azure: %r" % n)
 
     names = sorted(files)
     sums = {}
