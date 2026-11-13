@@ -1,0 +1,19 @@
+# Task merge of the four MLP-only llama experts, seed 3: crime, wine, CLINC150, XSum
+# (see make_task_merge_configs.py).
+# Linear: weighted average of the raw weights.
+merge_method: linear
+models:
+  - model: "meta-llama/Llama-3.1-8B-Instruct+../models/crime/seed_3/llama3_8b_crime_mlp"
+    parameters:
+      weight: 0.25
+  - model: "meta-llama/Llama-3.1-8B-Instruct+../models/wine/seed_3/llama3_8b_wine_mlp"
+    parameters:
+      weight: 0.25
+  - model: "meta-llama/Llama-3.1-8B-Instruct+../models/clinc150/seed_3/llama3_8b_clinc150_labels_mlp"
+    parameters:
+      weight: 0.25
+  - model: "../models/xsum/seed_3/llama3_8b_xsum_gold_long_mlp"
+    parameters:
+      weight: 0.25
+tokenizer_source: union
+dtype: bfloat16

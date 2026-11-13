@@ -1,0 +1,28 @@
+# Task merge of the four MLP-only llama experts, seed 3: crime, wine, CLINC150, XSum
+# (see make_task_merge_configs.py).
+# Arcee Fusion: keeps base_model and adds the other model's deltas whose
+# importance (KL shift vs size) is above a computed threshold.
+# Takes exactly two models, so the 4 parts are merged pairwise,
+# bottom-up, with mergekit-multi (see make_merge_configs.py).
+name: llama3_8b_task_merge_4_arcee_fusion_parts_1_2
+merge_method: arcee_fusion
+base_model: "meta-llama/Llama-3.1-8B-Instruct+../models/crime/seed_3/llama3_8b_crime_mlp"
+models:
+  - model: "meta-llama/Llama-3.1-8B-Instruct+../models/wine/seed_3/llama3_8b_wine_mlp"
+tokenizer_source: union
+dtype: bfloat16
+---
+name: llama3_8b_task_merge_4_arcee_fusion_parts_3_4
+merge_method: arcee_fusion
+base_model: "meta-llama/Llama-3.1-8B-Instruct+../models/clinc150/seed_3/llama3_8b_clinc150_labels_mlp"
+models:
+  - model: "../models/xsum/seed_3/llama3_8b_xsum_gold_long_mlp"
+tokenizer_source: union
+dtype: bfloat16
+---
+merge_method: arcee_fusion
+base_model: "llama3_8b_task_merge_4_arcee_fusion_parts_1_2"
+models:
+  - model: "llama3_8b_task_merge_4_arcee_fusion_parts_3_4"
+tokenizer_source: union
+dtype: bfloat16

@@ -1,0 +1,71 @@
+# SLERP: spherical interpolation of two models at t = 0.5.
+# Takes exactly two models, so the 8 parts are merged pairwise,
+# bottom-up, with mergekit-multi (see make_merge_configs.py).
+name: gemma3_4b_xsum_gold_long_merge_8_slerp_parts_1_2
+merge_method: slerp
+base_model: "../models/xsum/seed_3/split_8/gemma3_4b_xsum_gold_1_of_8_long"
+models:
+  - model: "../models/xsum/seed_3/split_8/gemma3_4b_xsum_gold_2_of_8_long"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_xsum_gold_long_merge_8_slerp_parts_3_4
+merge_method: slerp
+base_model: "../models/xsum/seed_3/split_8/gemma3_4b_xsum_gold_3_of_8_long"
+models:
+  - model: "../models/xsum/seed_3/split_8/gemma3_4b_xsum_gold_4_of_8_long"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_xsum_gold_long_merge_8_slerp_parts_5_6
+merge_method: slerp
+base_model: "../models/xsum/seed_3/split_8/gemma3_4b_xsum_gold_5_of_8_long"
+models:
+  - model: "../models/xsum/seed_3/split_8/gemma3_4b_xsum_gold_6_of_8_long"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_xsum_gold_long_merge_8_slerp_parts_7_8
+merge_method: slerp
+base_model: "../models/xsum/seed_3/split_8/gemma3_4b_xsum_gold_7_of_8_long"
+models:
+  - model: "../models/xsum/seed_3/split_8/gemma3_4b_xsum_gold_8_of_8_long"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_xsum_gold_long_merge_8_slerp_parts_1_4
+merge_method: slerp
+base_model: "gemma3_4b_xsum_gold_long_merge_8_slerp_parts_1_2"
+models:
+  - model: "gemma3_4b_xsum_gold_long_merge_8_slerp_parts_3_4"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_xsum_gold_long_merge_8_slerp_parts_5_8
+merge_method: slerp
+base_model: "gemma3_4b_xsum_gold_long_merge_8_slerp_parts_5_6"
+models:
+  - model: "gemma3_4b_xsum_gold_long_merge_8_slerp_parts_7_8"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+merge_method: slerp
+base_model: "gemma3_4b_xsum_gold_long_merge_8_slerp_parts_1_4"
+models:
+  - model: "gemma3_4b_xsum_gold_long_merge_8_slerp_parts_5_8"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16

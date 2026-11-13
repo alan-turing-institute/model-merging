@@ -1,0 +1,33 @@
+# Task merge of the four MLP-only mistral experts, seed 5: crime, wine, CLINC150, XSum
+# (see make_task_merge_configs.py).
+# SLERP: spherical interpolation of two models at t = 0.5.
+# Takes exactly two models, so the 4 parts are merged pairwise,
+# bottom-up, with mergekit-multi (see make_merge_configs.py).
+name: mistral_7b_task_merge_4_slerp_parts_1_2
+merge_method: slerp
+base_model: "mistralai/Mistral-7B-Instruct-v0.3+../models/crime/seed_5/mistral_7b_crime_mlp"
+models:
+  - model: "mistralai/Mistral-7B-Instruct-v0.3+../models/wine/seed_5/mistral_7b_wine_mlp"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+name: mistral_7b_task_merge_4_slerp_parts_3_4
+merge_method: slerp
+base_model: "mistralai/Mistral-7B-Instruct-v0.3+../models/clinc150/seed_5/mistral_7b_clinc150_labels_mlp"
+models:
+  - model: "../models/xsum/seed_5/mistral_7b_xsum_gold_long_mlp"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+merge_method: slerp
+base_model: "mistral_7b_task_merge_4_slerp_parts_1_2"
+models:
+  - model: "mistral_7b_task_merge_4_slerp_parts_3_4"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16

@@ -1,0 +1,31 @@
+# SLERP: spherical interpolation of two models at t = 0.5.
+# Takes exactly two models, so the 4 parts are merged pairwise,
+# bottom-up, with mergekit-multi (see make_merge_configs.py).
+name: gemma3_4b_crime_merge_4_slerp_parts_1_2
+merge_method: slerp
+base_model: "google/gemma-3-4b-it+../models/crime/seed_2/split_4/gemma3_4b_crime_1_of_4"
+models:
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_4/gemma3_4b_crime_2_of_4"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_crime_merge_4_slerp_parts_3_4
+merge_method: slerp
+base_model: "google/gemma-3-4b-it+../models/crime/seed_2/split_4/gemma3_4b_crime_3_of_4"
+models:
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_4/gemma3_4b_crime_4_of_4"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16
+---
+merge_method: slerp
+base_model: "gemma3_4b_crime_merge_4_slerp_parts_1_2"
+models:
+  - model: "gemma3_4b_crime_merge_4_slerp_parts_3_4"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16

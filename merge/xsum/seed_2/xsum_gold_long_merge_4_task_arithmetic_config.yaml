@@ -1,0 +1,19 @@
+# Task Arithmetic (https://arxiv.org/abs/2212.04089): weighted sum of
+# the (model - base) deltas.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "../models/xsum/seed_2/split_4/gemma3_4b_xsum_gold_1_of_4_long"
+    parameters:
+      weight: 0.25
+  - model: "../models/xsum/seed_2/split_4/gemma3_4b_xsum_gold_2_of_4_long"
+    parameters:
+      weight: 0.25
+  - model: "../models/xsum/seed_2/split_4/gemma3_4b_xsum_gold_3_of_4_long"
+    parameters:
+      weight: 0.25
+  - model: "../models/xsum/seed_2/split_4/gemma3_4b_xsum_gold_4_of_4_long"
+    parameters:
+      weight: 0.25
+tokenizer_source: union
+dtype: bfloat16

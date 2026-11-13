@@ -1,0 +1,25 @@
+# Task merge of the four MLP-only llama experts, seed 5: crime, wine, CLINC150, XSum
+# (see make_task_merge_configs.py).
+# DARE + TIES (https://arxiv.org/abs/2311.03099): randomly keeps `density`
+# of each delta, rescaled, then applies TIES' sign consensus.
+merge_method: dare_ties
+base_model: "meta-llama/Llama-3.1-8B-Instruct"
+models:
+  - model: "meta-llama/Llama-3.1-8B-Instruct+../models/crime/seed_5/llama3_8b_crime_mlp"
+    parameters:
+      weight: 0.25
+      density: 0.3
+  - model: "meta-llama/Llama-3.1-8B-Instruct+../models/wine/seed_5/llama3_8b_wine_mlp"
+    parameters:
+      weight: 0.25
+      density: 0.3
+  - model: "meta-llama/Llama-3.1-8B-Instruct+../models/clinc150/seed_5/llama3_8b_clinc150_labels_mlp"
+    parameters:
+      weight: 0.25
+      density: 0.3
+  - model: "../models/xsum/seed_5/llama3_8b_xsum_gold_long_mlp"
+    parameters:
+      weight: 0.25
+      density: 0.3
+tokenizer_source: union
+dtype: bfloat16

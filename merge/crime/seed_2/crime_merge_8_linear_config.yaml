@@ -1,0 +1,29 @@
+# Linear: weighted average of the raw weights.
+merge_method: linear
+models:
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_1_of_8"
+    parameters:
+      weight: 0.125
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_2_of_8"
+    parameters:
+      weight: 0.125
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_3_of_8"
+    parameters:
+      weight: 0.125
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_4_of_8"
+    parameters:
+      weight: 0.125
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_5_of_8"
+    parameters:
+      weight: 0.125
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_6_of_8"
+    parameters:
+      weight: 0.125
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_7_of_8"
+    parameters:
+      weight: 0.125
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_8_of_8"
+    parameters:
+      weight: 0.125
+tokenizer_source: union
+dtype: bfloat16

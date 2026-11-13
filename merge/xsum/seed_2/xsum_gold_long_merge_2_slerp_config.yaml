@@ -1,0 +1,11 @@
+# SLERP: spherical interpolation of two models at t = 0.5.
+# Takes exactly two models, so the 2 parts are merged pairwise,
+# bottom-up, with mergekit-multi (see make_merge_configs.py).
+merge_method: slerp
+base_model: "../models/xsum/seed_2/split_2/gemma3_4b_xsum_gold_1_of_2_long"
+models:
+  - model: "../models/xsum/seed_2/split_2/gemma3_4b_xsum_gold_2_of_2_long"
+parameters:
+  t: 0.5
+tokenizer_source: union
+dtype: bfloat16

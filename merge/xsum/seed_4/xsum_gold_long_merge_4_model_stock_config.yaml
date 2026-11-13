@@ -1,0 +1,11 @@
+# Model Stock (https://arxiv.org/abs/2403.19522): interpolates towards the
+# base by an amount estimated from the angles between the deltas.
+merge_method: model_stock
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "../models/xsum/seed_4/split_4/gemma3_4b_xsum_gold_1_of_4_long"
+  - model: "../models/xsum/seed_4/split_4/gemma3_4b_xsum_gold_2_of_4_long"
+  - model: "../models/xsum/seed_4/split_4/gemma3_4b_xsum_gold_3_of_4_long"
+  - model: "../models/xsum/seed_4/split_4/gemma3_4b_xsum_gold_4_of_4_long"
+tokenizer_source: union
+dtype: bfloat16

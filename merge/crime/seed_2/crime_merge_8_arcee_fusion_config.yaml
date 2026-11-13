@@ -1,0 +1,58 @@
+# Arcee Fusion: keeps base_model and adds the other model's deltas whose
+# importance (KL shift vs size) is above a computed threshold.
+# Takes exactly two models, so the 8 parts are merged pairwise,
+# bottom-up, with mergekit-multi (see make_merge_configs.py).
+name: gemma3_4b_crime_merge_8_arcee_fusion_parts_1_2
+merge_method: arcee_fusion
+base_model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_1_of_8"
+models:
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_2_of_8"
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_crime_merge_8_arcee_fusion_parts_3_4
+merge_method: arcee_fusion
+base_model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_3_of_8"
+models:
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_4_of_8"
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_crime_merge_8_arcee_fusion_parts_5_6
+merge_method: arcee_fusion
+base_model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_5_of_8"
+models:
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_6_of_8"
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_crime_merge_8_arcee_fusion_parts_7_8
+merge_method: arcee_fusion
+base_model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_7_of_8"
+models:
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/split_8/gemma3_4b_crime_8_of_8"
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_crime_merge_8_arcee_fusion_parts_1_4
+merge_method: arcee_fusion
+base_model: "gemma3_4b_crime_merge_8_arcee_fusion_parts_1_2"
+models:
+  - model: "gemma3_4b_crime_merge_8_arcee_fusion_parts_3_4"
+tokenizer_source: union
+dtype: bfloat16
+---
+name: gemma3_4b_crime_merge_8_arcee_fusion_parts_5_8
+merge_method: arcee_fusion
+base_model: "gemma3_4b_crime_merge_8_arcee_fusion_parts_5_6"
+models:
+  - model: "gemma3_4b_crime_merge_8_arcee_fusion_parts_7_8"
+tokenizer_source: union
+dtype: bfloat16
+---
+merge_method: arcee_fusion
+base_model: "gemma3_4b_crime_merge_8_arcee_fusion_parts_1_4"
+models:
+  - model: "gemma3_4b_crime_merge_8_arcee_fusion_parts_5_8"
+tokenizer_source: union
+dtype: bfloat16

@@ -1,0 +1,21 @@
+# Task merge of the four MLP-only gemma experts, seed 2: crime, wine, CLINC150, XSum
+# (see make_task_merge_configs.py).
+# Task Arithmetic (https://arxiv.org/abs/2212.04089): weighted sum of
+# the (model - base) deltas.
+merge_method: task_arithmetic
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "google/gemma-3-4b-it+../models/crime/seed_2/gemma3_4b_crime_mlp"
+    parameters:
+      weight: 0.25
+  - model: "google/gemma-3-4b-it+../models/wine/seed_2/gemma3_4b_wine_mlp"
+    parameters:
+      weight: 0.25
+  - model: "google/gemma-3-4b-it+../models/clinc150/seed_2/gemma3_4b_clinc150_labels_mlp"
+    parameters:
+      weight: 0.25
+  - model: "../models/xsum/seed_2/gemma3_4b_xsum_gold_long_mlp"
+    parameters:
+      weight: 0.25
+tokenizer_source: union
+dtype: bfloat16

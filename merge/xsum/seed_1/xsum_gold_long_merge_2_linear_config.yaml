@@ -1,0 +1,11 @@
+# Linear: weighted average of the raw weights.
+merge_method: linear
+models:
+  - model: "../models/xsum/seed_1/split_2/gemma3_4b_xsum_gold_1_of_2_long"
+    parameters:
+      weight: 0.5
+  - model: "../models/xsum/seed_1/split_2/gemma3_4b_xsum_gold_2_of_2_long"
+    parameters:
+      weight: 0.5
+tokenizer_source: union
+dtype: bfloat16

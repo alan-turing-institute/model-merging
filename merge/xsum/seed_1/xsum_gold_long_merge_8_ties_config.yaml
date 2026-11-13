@@ -1,0 +1,39 @@
+# TIES (https://arxiv.org/abs/2306.01708): trims each delta to its top
+# `density` by magnitude, then keeps only the majority-sign contributions.
+merge_method: ties
+base_model: "google/gemma-3-4b-it"
+models:
+  - model: "../models/xsum/seed_1/split_8/gemma3_4b_xsum_gold_1_of_8_long"
+    parameters:
+      weight: 0.125
+      density: 0.5
+  - model: "../models/xsum/seed_1/split_8/gemma3_4b_xsum_gold_2_of_8_long"
+    parameters:
+      weight: 0.125
+      density: 0.5
+  - model: "../models/xsum/seed_1/split_8/gemma3_4b_xsum_gold_3_of_8_long"
+    parameters:
+      weight: 0.125
+      density: 0.5
+  - model: "../models/xsum/seed_1/split_8/gemma3_4b_xsum_gold_4_of_8_long"
+    parameters:
+      weight: 0.125
+      density: 0.5
+  - model: "../models/xsum/seed_1/split_8/gemma3_4b_xsum_gold_5_of_8_long"
+    parameters:
+      weight: 0.125
+      density: 0.5
+  - model: "../models/xsum/seed_1/split_8/gemma3_4b_xsum_gold_6_of_8_long"
+    parameters:
+      weight: 0.125
+      density: 0.5
+  - model: "../models/xsum/seed_1/split_8/gemma3_4b_xsum_gold_7_of_8_long"
+    parameters:
+      weight: 0.125
+      density: 0.5
+  - model: "../models/xsum/seed_1/split_8/gemma3_4b_xsum_gold_8_of_8_long"
+    parameters:
+      weight: 0.125
+      density: 0.5
+tokenizer_source: union
+dtype: bfloat16
