@@ -17,6 +17,7 @@ import re
 import stat
 import subprocess
 import sys
+import time
 from multiprocessing import Pool
 
 CONTAINER = ("https://tiremodelmergi5417488796.blob.core.windows.net/"
@@ -94,10 +95,22 @@ def main():
     names = sorted(files)
     sums = {}
     if not args.no_md5:
-        print("hashing with %d processes ..." % args.jobs, flush=True)
+        total = sum(files[n][1] for n in names)
+        print("hashing %.1f GB with %d processes (progress every ~2 min) ..." % (total / 1e9, args.jobs), flush=True)
+        t0 = last = time.time()
+        done = 0
         with Pool(args.jobs) as pool:
-            for name, h in zip(names, pool.imap(md5, [files[n][0] for n in names], chunksize=4)):
+            for name, h in zip(names, pool.imap(md5, [files[n][0] for n in names], chunksize=1)):
                 sums[name] = h
+                done += files[name][1]
+                now = time.time()
+                if now - last >= 120 or len(sums) == len(names):
+                    last = now
+                    rate = done / max(now - t0, 1e-9)
+                    eta = (total - done) / rate if rate else 0
+                    print("  %s  %d/%d files, %.0f/%.0f GB, %.0f MB/s, ~%.0f min left"
+                          % (time.strftime("%H:%M:%S"), len(sums), len(names), done / 1e9, total / 1e9,
+                             rate / 1e6, eta / 60), flush=True)
         with open("manifest.tsv", "w") as f:
             for n in names:
                 f.write("%s\t%d\t%s\n" % (n, files[n][1], sums[n]))
