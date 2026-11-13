@@ -2,12 +2,14 @@
 """Checks an upload_direct.sh transfer: every local file of every plan.tsv entry
 is on Azure under model-merging/files_<TAG>/ with the same size and Content-MD5.
 
-    export SAS; python3 verify_direct.py [--no-md5] [--jobs 16]    (from the transfer dir)
+    export SAS; nohup setsid python3 verify_direct.py >> verify.log 2>&1 < /dev/null &
 
 The MD5s are computed here, from the files on Lustre, independently of azcopy
-(which set each blob's Content-MD5 from the bytes it read, --put-md5). Writes
-manifest.tsv (path, size, md5 base64) and verify_report.txt; exit 0 only if all match.
-The SAS is never printed.
+(which set each blob's Content-MD5 from the bytes it read, --put-md5). Restartable:
+each MD5 is appended to md5_done.tsv as soon as it is computed, and a rerun hashes
+only files not there (or changed since: size or mtime differ). Writes manifest.tsv
+(path, size, md5 base64) and verify_report.txt; exit 0 only if all match.
+--no-md5 checks sizes only (a minute or two). The SAS is never printed.
 """
 import argparse
 import base64
@@ -26,13 +28,14 @@ EXCLUDE = re.compile(r"(^|/)(intermediate|\.lora_merge_cache[^/]*)(/|$)")  # as 
 
 
 def local_files(plan):
-    """dest path (relative to files_<TAG>/) -> (local path, size), as azcopy uploads them."""
+    """dest path (relative to files_<TAG>/) -> (local path, size, mtime_ns), as azcopy uploads them."""
     files = {}
     for line in open(plan):
         root, rel = line.rstrip("\n").split("\t")
         src = os.path.join(root, rel)
         if os.path.isfile(src):
-            files[rel] = (src, os.path.getsize(src))
+            st = os.stat(src)
+            files[rel] = (src, st.st_size, st.st_mtime_ns)
             continue
         parent = os.path.dirname(rel)
         for d, dirs, names in os.walk(src):
@@ -45,16 +48,17 @@ def local_files(plan):
                 if EXCLUDE.search(inside):
                     continue
                 dest = os.path.join(parent, os.path.relpath(p, os.path.dirname(src)))
-                files[dest] = (p, st.st_size)
+                files[dest] = (p, st.st_size, st.st_mtime_ns)
     return files
 
 
-def md5(path):
+def md5(job):
+    name, path = job
     h = hashlib.md5()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(16 << 20), b""):
             h.update(chunk)
-    return base64.b64encode(h.digest()).decode()
+    return name, base64.b64encode(h.digest()).decode()
 
 
 def remote_files(azcopy, dest_url, sas, raw_out):
@@ -93,7 +97,7 @@ def main():
     azcopy = os.path.join(os.environ["PROJECTDIR"], "shared", "azcopy")
 
     files = local_files("plan.tsv")
-    print("%d local files, %.1f GB" % (len(files), sum(s for _, s in files.values()) / 1e9), flush=True)
+    print("%s  %d local files, %.1f GB" % (time.strftime("%F %T"), len(files), sum(v[1] for v in files.values()) / 1e9), flush=True)
     blobs = remote_files(azcopy, CONTAINER + "/model-merging/files_" + args.tag, sas, "azcopy_list.txt")
     print("%d blobs under model-merging/files_%s/" % (len(blobs), args.tag), flush=True)
     if files and not blobs:
@@ -109,21 +113,35 @@ def main():
     names = sorted(files)
     sums = {}
     if not args.no_md5:
+        # Resume: MD5s already computed, kept if the file is unchanged (same size and mtime).
+        done_file = "md5_done.tsv"
+        if os.path.exists(done_file):
+            for line in open(done_file):
+                f = line.rstrip("\n").split("\t")
+                if len(f) == 4 and f[0] in files and files[f[0]][1:] == (int(f[1]), int(f[2])):
+                    sums[f[0]] = f[3]
+        todo = [n for n in names if n not in sums]
         total = sum(files[n][1] for n in names)
-        print("hashing %.1f GB with %d processes (progress every ~2 min) ..." % (total / 1e9, args.jobs), flush=True)
+        resumed = sum(files[n][1] for n in sums)
+        print("hashing %.1f GB of %.1f GB (%d files already in %s) with %d processes, progress every ~2 min ..."
+              % ((total - resumed) / 1e9, total / 1e9, len(sums), done_file, args.jobs), flush=True)
         t0 = last = time.time()
-        done = 0
-        with Pool(args.jobs) as pool:
-            for name, h in zip(names, pool.imap(md5, [files[n][0] for n in names], chunksize=1)):
+        new = 0
+        with Pool(args.jobs) as pool, open(done_file, "a") as out:
+            if out.tell() and open(done_file, "rb").read()[-1:] != b"\n":
+                out.write("\n")   # a line cut short by a kill: start a fresh one
+            for name, h in pool.imap_unordered(md5, [(n, files[n][0]) for n in todo], chunksize=1):
                 sums[name] = h
-                done += files[name][1]
+                out.write("%s\t%d\t%d\t%s\n" % (name, files[name][1], files[name][2], h))
+                out.flush()
+                new += files[name][1]
                 now = time.time()
                 if now - last >= 120 or len(sums) == len(names):
                     last = now
-                    rate = done / max(now - t0, 1e-9)
-                    eta = (total - done) / rate if rate else 0
+                    rate = new / max(now - t0, 1e-9)
+                    eta = (total - resumed - new) / rate if rate else 0
                     print("  %s  %d/%d files, %.0f/%.0f GB, %.0f MB/s, ~%.0f min left"
-                          % (time.strftime("%H:%M:%S"), len(sums), len(names), done / 1e9, total / 1e9,
+                          % (time.strftime("%H:%M:%S"), len(sums), len(names), (resumed + new) / 1e9, total / 1e9,
                              rate / 1e6, eta / 60), flush=True)
         with open("manifest.tsv", "w") as f:
             for n in names:
