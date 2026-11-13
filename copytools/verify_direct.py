@@ -68,14 +68,16 @@ def remote_files(azcopy, dest_url, sas, raw_out):
         f.write(out)
     blobs = {}
     for line in out.splitlines():
-        m = re.match(r"^(?:INFO: )?(.+?);\s*Content Length: *([0-9]+)", line)
-        if not m:
+        # "<path>; ContentMD5: <b64>; Content Length: <n>" (azcopy 10.34; fields in either order)
+        m = re.match(r"^(?:INFO: )?(.+?);\s*(?:ContentMD5|Content Length):", line)
+        size = re.search(r"Content Length: *([0-9]+)", line)
+        if not (m and size):
             continue
         md = re.search(r"ContentMD5: *([A-Za-z0-9+/=]+)", line)
         name = m.group(1).strip().lstrip("/")
         if name.startswith(prefix):
             name = name[len(prefix):]
-        blobs[name] = (int(m.group(2)), md.group(1) if md else "")
+        blobs[name] = (int(size.group(1)), md.group(1) if md else "")
     return blobs
 
 
