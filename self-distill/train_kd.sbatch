@@ -7,7 +7,7 @@
 #SBATCH --mem=115000M
 #SBATCH --time=06:00:00
 # Usage, from self-distill/:
-#   sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir] [--seed <n|random>]
+#   sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir] [--seed <n|random>] [--base-model <id>]
 #   e.g. sbatch train_kd.sbatch self-distillation_xsum.yaml \
 #            ../models/xsum/gemma3_4b_xsum_short ../datasets/xsum/gemma3_4b_xsum_kd_data_short
 #        sbatch train_kd.sbatch self-distillation_nc_zh_en.yaml \
@@ -32,12 +32,21 @@
 # Trainer's data order, with every RNG seeded before the model loads by
 # ../seed_plugin.py. "random" draws one from /dev/urandom. Either way it is
 # written into config.yaml, so provenance.json records it.
+#
+# --base-model replaces the config's base_model, the student's starting point
+# (e.g. google/gemma-3-1b-it, with a teacher of the same size for
+# self-distillation), and is written into config.yaml too.
 set -euo pipefail
-USAGE="usage: sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir] [--seed <n|random>]"
+USAGE="usage: sbatch train_kd.sbatch <config.yaml> <output_dir> [dataset_dir] [--seed <n|random>] [--base-model <id>]"
 SEED=42
+BASE_MODEL=
 ARGS=()
 while (( $# )); do
-  if [[ $1 == --seed ]]; then SEED=${2:?$USAGE}; shift 2; else ARGS+=("$1"); shift; fi
+  case $1 in
+    --seed) SEED=${2:?$USAGE}; shift 2 ;;
+    --base-model) BASE_MODEL=${2:?$USAGE}; shift 2 ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
 done
 set -- "${ARGS[@]}"
 [[ $SEED == random ]] && SEED=$(od -An -N4 -tu4 /dev/urandom | tr -d ' ')
@@ -79,13 +88,15 @@ uv run python -c "import torch; assert torch.cuda.is_available(), 'no GPU: is a 
 # Axolotl's --datasets flag only takes a string, not the list of dicts the KD
 # dataset needs, so write the overrides into a copy of the config instead.
 RUN_CONFIG="$OUTPUT_DIR/config.yaml"
-uv run python - "$CONFIG" "$RUN_CONFIG" "$OUTPUT_DIR" "$DATASET_DIR" "$SEED" <<'EOF'
+uv run python - "$CONFIG" "$RUN_CONFIG" "$OUTPUT_DIR" "$DATASET_DIR" "$SEED" "$BASE_MODEL" <<'EOF'
 import os, sys, yaml
-src, dst, output_dir, dataset_dir, seed = sys.argv[1:]
+src, dst, output_dir, dataset_dir, seed, base_model = sys.argv[1:]
 with open(src) as f:
     cfg = yaml.safe_load(f)
 cfg["output_dir"] = output_dir
 cfg["seed"] = int(seed)
+if base_model:
+    cfg["base_model"] = base_model
 # Seeds every RNG before the model loads (see ../seed_plugin.py).
 cfg["plugins"] = [*(cfg.get("plugins") or []), "seed_plugin.SeedPlugin"]
 # A per-run cache: Axolotl's hash ignores the base model, so concurrent runs on
@@ -101,6 +112,7 @@ if dataset_dir:
             ds["path"] = path
 with open(dst, "w") as f:
     yaml.safe_dump(cfg, f, sort_keys=False)
+print(f"base_model: {cfg['base_model']}")
 print(f"output_dir: {cfg['output_dir']}")
 print(f"prepared:   {cfg['dataset_prepared_path']}")
 print(f"train:      {[d['path'] for d in cfg['datasets']]}")

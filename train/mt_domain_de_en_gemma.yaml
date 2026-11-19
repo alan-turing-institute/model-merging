@@ -1,0 +1,71 @@
+base_model: google/gemma-3-4b-it
+
+# German->English medical/legal translation (EMEA and JRC-Acquis pairs, from
+# prepare_mt_domain_data.py --direction de-en), for the data-parallel repeats:
+# train.sbatch replaces the dataset and output paths, and --base-model the
+# base. The recipe is crime_gemma.yaml's (bf16 LoRA on the attention
+# projections), with the translation screen's data settings.
+
+# Plain bf16 LoRA, not 4-bit QLoRA: evaluation (evaluate.sbatch) and mergekit
+# apply the adapter to the bf16 base model, so train on those same weights.
+# bf16, not fp16: Gemma 3's activations overflow fp16's range.
+load_in_4bit: false
+bf16: true
+
+adapter: lora
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+
+# The prompt is built by prepare_mt_domain_data.py's convert_to_prompt, which
+# ../evaluate/mt_domain_task.py imports, so training and evaluation wording
+# cannot drift apart. Only the reference translation is trained on.
+chat_template: tokenizer_default
+eot_tokens:
+  - "<end_of_turn>"
+train_on_eos: turn
+train_on_inputs: false
+
+datasets:
+  - path: ../datasets/mt_domain_de_en/mt_domain_de_en_dataset/train
+    type: chat_template
+
+test_datasets:
+  - path: ../datasets/mt_domain_de_en/mt_domain_de_en_dataset/validation
+    type: chat_template
+
+# prepare_mt_domain_data.py drops training pairs over 1024 rendered tokens
+# rather than truncating them: a cut source sentence no longer matches its
+# reference, and the example would teach the model to invent the missing half.
+# Raise rather than truncate if one ever gets through.
+sequence_len: 1024
+excess_length_strategy: raise
+dataset_num_proc: 8
+
+# Gemma 3's default attention gives NaN gradients in bf16 from the first step,
+# and the run never recovers (the loss is then logged as 0.0); eager is stable.
+attn_implementation: eager
+gradient_checkpointing: true
+
+# An effective batch of 16, as crime's.
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+
+num_epochs: 3
+warmup_steps: 10
+evals_per_epoch: 2
+
+learning_rate: 2e-4
+
+output_dir: ../models/mt_domain_de_en/gemma3_4b_mt_domain_de_en
