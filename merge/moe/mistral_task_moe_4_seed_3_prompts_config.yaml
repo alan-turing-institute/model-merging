@@ -1,0 +1,1323 @@
+# mistral_task_moe_4_seed_3_config.yaml with the positive prompts replaced by real chat-formatted training
+# examples (moe_routing.py prompts, k = 16, seed 3): 16 per expert end at the
+# answer position, 16 at a random token, since the hidden gate reads each prompt's last token.
+base_model: mistralai/Mistral-7B-Instruct-v0.3
+gate_mode: hidden
+experts_per_token: 1
+dtype: bfloat16
+experts:
+- source_model: ../models/crime/seed_3/mistral_7b_crime_mlp_full
+  positive_prompts:
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    If you could talk to anyone in the world and ask for help, who would you ask?[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    I have to ask because I have never seen it talked about on here before.[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Babyfaced 12-year-old charged in Florida triple murder led cuffed to jail[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    When I see mugshots of villains in which they''re trying to pull an intimidating face, my reaction is invariably “but you''re in-custody, you silly twit!!”... with a notable exception: major British Police-Officer-murdering Dale Cregan, who does, in this, ImO, pull it off to considerable degree.[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Oh God of course[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    How did it happen?[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    The Ground''s Trinity and Bar and Branches''s Breach and Private and Worse and Military[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Florida sheriff''s deputies rescue baby sea turtle hatchlings from hotel[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Stormy Daniels ordered to pay Trump team another $120,000 in legal fees | CNN Politics[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    My girlfriend was unemployed last Christmas and couldn’t afford a gift for me so she painted this.[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Went to see the Red Hot Chili Peppers last night. Guess I’m going to the bad place.[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    good[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    All I want to do is make her smile.[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    This is the type of stupid trash gangstalkers do[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    New York carjacking suspects crash into bus full of children[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Appropriate consequences for 16-year-old testing positive for marijuana?[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one'
+  - '[INST] Is the following Reddit post about crime?'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word,'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    4K Abstract Flu'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'''
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Nashville school shooter Audrey Hale sent these messages to a friend 9:57am minutes before first 911 call at school at 10:13am. The friend who received these messages called the sheriff''s office (police department)'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Very'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Texas police searching for missing toddler rip up concrete slab in fugitive mom''s backyard'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    I just want to hug someone for like 3 hours.[/INST] not'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    '
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    Name the top 5 characteristics'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    This video might put a smile on your face[/INST]'
+  - '[INST] Is the following Reddit post about crime? Answer with exactly one word, either ''crime'' or ''not_crime'', and nothing else.
+
+
+    "He made sure she was victimized a second time." Former New Orleans cop is sent'
+- source_model: ../models/wine/seed_3/mistral_7b_wine_mlp_full
+  positive_prompts:
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    This chewy, dense and dark Syrah softly intrigues with black fruit and gamy notes. Given 20 months in new and used French oak, it''s structured and ageable through 2020, a substantial wine with a sense of elegance around the edges.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Smoky, meaty and attractive from the start, with vanilla, tobacco, plum, berry and herbal notes on the nose. Rich, layered and fairly tannic in the mouth, with flavors of tobacco, coconut, sweet berry and cassis. Long, stylish and nice on the finish; a well-oaked blend of 50% Tempranillo, 40% Cabernet Sauvignon and 10% Merlot.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Inky in color, this wine has plump aromas of ripe fruit, blackberry jam and rum cake. On the palate, it is soft and smooth.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Vigneron David Reynaud has only been apart from the co-operative for a couple of years, but this is an impressive effort. On the nose, this wine has it all, from flowers to spice to fruit. Then it backs that complexity up with mouthfilling flavors of tart red berries and finely wrought tannins on the finish. Drink now–2015.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    This Bordeaux-style red is blended from the Seven Hills, Klipsun, Canoe Ridge and Wallula vineyards. It shows a lovely structure, which takes its ripe blueberry, black cherry and cassis fruit and complements it with lush barrel flavors of coffee and dark chocolate. Fine-grained, dusty tannins smooth it along through an elegant, mouth-coating finish.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Sweet and sugary in pineapple, lime and green apple flavors, this Chardonnay has a strong overlay of sweet oak. Everything is too much. It lacks subtlely and complexity.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    This screaming deal is majority varietal, with small amounts of Merlot, Malbec and Cabernet Franc. It works deliciously, thick and concentrated in cherry, cranberry and a tease of orange peel, staying crisply intriguing and amazingly light bodied on the palate. This is well worth case-stocking in one''s home.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    A step up from Sélection in the Moulin-à-Vent range from Duboeuf, this wine has been aged in oak for six months. The result is a ripe, smoothly textured wine, its cherry fruits offering an attractive smoky character. It could do with a year, even two, for aging.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Gorgeously aromatic with notes of white blossoms and waxy lime and lemon skins, this dry, delicately composed Riesling is a stunner. Tart mango and and tangerine flavors are juicy on the palate, accented with lemon verbena and a lingering waxiness. It finishes remarkably long with a streak of lemon acidity and a zesty astringency. Delicious now for its youth and exuberance, but likely to develop well over through 2021–2024.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    This is a deeply ripe, authoritatively structured Syrah of great power and finesse. It''s drinkable now for the velvety texture and massive flavors of grilled blackberries, blueberries, currants, dark unsweetened chocolate, leather, black pepper and lots of sweet, smoky new oak. But it''s also fairly tannic. Very fine now, with a brief decant, and through 2013.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Fragrant oak spice invites you to contemplate a mix of autumnal, ripe red fruit: plums perhaps, in a compote with strawberry. Mellow tannins come with echoes of clove and cinnamon. This friendly and soft red also works without food.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Expensive, yes, but very lovely and dramatic. Creamy and smooth in the mouth, this is perfectly dry, with rich notes of honey, Mandarin oranges and sweet buttered toast, girded with minerals. Shows control and precision.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Sweet plum juice and strawberry flavors, a typical wine of the vintage. Acidity and tannins are well integrated into the ripe character of this delicious wine.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    There are a lot of varieties in this blend, from Merlot, which makes up the majority, to handfuls of Syrah, Zinfandel and Petit Verdot. Sizable tannins wrap themselves around flavors of tobacco, juicy plum and oaky vanilla, finishing dry and ripe.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    This cuvée offers a classic mix of rose petals, black cherry and cola. It''s lively, fruity and light on its feet. Delicate touches of herb, pinpoint acidity, a hint of lime and perfect balance keep it satisfying through an extended finish.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Quite pale in color, this is an aromatically expressive, very varietal wine, with notes of forest floor, sarsaparilla and cherry. The flavors are light—not delivering on the aroma''s promise—but still having richness, with nervy acids keeping it energized.[/INST]'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on'
+  - '[INST] The following is a wine review from Wine Enth'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. W'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Three things characterize this 100% varietal wine. It''s crisp with acidity, fruity with lemons, limes and'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Supertight yet smooth; this reserve-quality Sangiovese is exactly as it should be. Chocolate, raspberry and leather aromas lead to a corpulent but structured body veiling ultrapure red-fruit flavors. Neither tannic nor hard; hold for another 12 to 18 months. A Marc de Grazia Selection, various importers.[/INST] '
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Septima''s first crack at making a big wine leaves us intrigued but not thrilled'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    This is a new brand for me, and they''re off to a promising start with this dry, minerally Chardonnay. It packs a punch with upfront lemon and lime, passion fruit and pineapple flavors that are pushed forward by great acidity, while oak adds a fine appliqué. This wine is notable for its balance, elegance and sheer'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    W'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points'
+  - '[INST] The following is a wine review from'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points'
+  - '[INST] The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine''s points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+
+
+    Dry tannins dominate this wine. Pavie'''
+- source_model: ../models/clinc150/seed_3/mistral_7b_clinc150_labels_mlp_full
+  positive_prompts:
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: set a timer for two hours[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: please say my credit card''s apr[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: what is the balance on my bills[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: how much on bills to i have to pay[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: would you like to live with a cat or a dog[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: i need help getting a w-2[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: what is the record high temperature for today[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: does stanleys take brunch reservations[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: can you tell me my spending limit[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: how much do i pay in taxes, please[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: my capital one credit card was stolen[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: for the dates april 1st to the 7th, find me round trip air tickets from la to sfo[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: that would be a no[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: how long does it take to get to virginia by bus[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: do you consider yourself a bot[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes
+
+
+    Query: what''s the traffic like on the way to the mall[/INST]'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_l'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life,'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text,'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist,'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, m'
+  - '[INST] Classify the user query into exactly one intent label. Answer with the label only.
+
+
+    Labels: accept_reservations'
+- source_model: ../models/xsum/seed_3/mistral_7b_xsum_gold_long_mlp
+  positive_prompts:
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Every month, Neha Singh sends a text about the next midnight walk to a group of women.
+
+    A quick discussion on the route follows. The date fixed, they agree to meet at midnight, with a plan to loiter until 03:00.
+
+    It''s a time when you normally don''t see women out on their own. Even well-lit streets are considered unsafe after midnight anywhere in India.
+
+    But these women refuse to be boxed in.
+
+    On the night I join the walk, four members turn up. One of them, Celina John, is wearing shorts and a sleeveless top.
+
+    "Why should I dress differently at night?" she asks.
+
+    "The more you dress freely, the more people will get used to it, and in a tiny way that will change their attitudes to women."
+
+    These attitudes started getting questioned after a 23-year-old physiotherapy student, Jyoti Singh was raped by multiple men on a moving bus in Delhi, in December 2012.  She died from her injuries.
+
+    It was so shocking that it caused an international outcry and India tightened its laws that deal with violence against women.
+
+    Neha was one of the thousands who marched in the streets in protest.
+
+    And as she thought of ways to bring about lasting change, she stumbled upon a book called Why Loiter, which argues that women''s access to public spaces in India is "at best, conditional".
+
+    The book argued that women should have equal access to public spaces, and inspired Neha to start her group, also called Why Loiter.
+
+    "It has its challenges, like once when a man stepped out of his car and started masturbating in front of us," says Ms. Singh.
+
+    "But the loitering had changed us and instead of feeling ashamed or blaming ourselves for it, I took out my camera, pointed it at him and said this will make a viral video on YouTube, and the man zipped up and fled."
+
+    Every four minutes in India in 2015, a sexual crime against women was reported to the police.
+
+    Observers suggest broader definitions of violence and harsher penalties have encouraged more women to report attacks.
+
+    Some women have also felt emboldened enough to report instances of sexual harassment and rape against men in authority.
+
+    Sameera Khan, a journalist and co-author of the book Why Loiter, says the Indian woman has turned defiant and this defiance is taking different forms across the country.
+
+    Protest groups like Why Loiter in Mumbai, Pinjra Tod''(Break the Cages) in Delhi and Blank Noise in Bangalore are being led by young women but have found support among men too.
+
+    "The message out there to the west is that we are not only about violence and being victims," Ms. Khan says.
+
+    "Instead we are empowering our lives in many different ways, raising questions, talking about our personal narratives of facing violence and understanding that these are not private stories that need to be hidden under the carpet anymore or in the closet."
+
+    BBC 100 Women names 100 influential and inspirational women around the world every year. We create documentaries, features and interviews about their lives, giving more space for stories that put women at the centre.
+
+    Other stories you might like:
+
+    Should women be given time off
+
+    I am a ''surrendered wife''
+
+    Who is on the BBC''s 100 Women 2016 list?
+
+    Recently, one of India''s top sportswomen Mary Kom went public about how she was molested as a teenager.
+
+    Indian women don''t normally talk about harassment because of the shame associated with it.
+
+    It took Mary Kom, a five time world boxing champion and an Olympic bronze medallist, almost a decade to come out with her story.
+
+    "I was nobody at that time and wasn''t sure I''d get support if I spoke up," she tells me when we meet at her boxing academy in the north-eastern state of Manipur.
+
+    Now, after having put her state on the world map, and witnessed a change in the way women are perceived, Mary Kom believes it is time for people like her speak up.
+
+    "In India we place the burden of honour on women," Ms. Kom says.
+
+    "I believe that women should not be shamed whatever harassment or violence they face. We should speak up. Only then society will change."
+
+    Even Bollywood seems to be opening up to progressive portrayals of attitudes towards women.
+
+    Far from depicting stalking and rape threats as romantic overtures in popular cinema, the newly released Bollywood film Pink has a strong message that no means no.
+
+    On the streets and elsewhere, women sense that some doors are finally opening.
+
+    Neha of Why Loiter is getting married next year and says her partner fully supports her activities.
+
+    She says: "I want to be as free as any man in the country. Why should we settle for anything less?"[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Marc Martin, 22, and Matt Preece, 21, died when the BMW crashed in High Beeches Lane, Handcross, West Sussex, in December 2014.
+
+    The driver Kyle Witney, 21, of Lindfield, admitted the charges at Lewes Crown Court.
+
+    He is due to be sentenced at the same court on 15 January 2016.
+
+    Mr Martin, from Haywards Heath, and Mr Preece, of Lindfield, were both sitting in the back of the BMW.
+
+    A 16-year-old girl was also injured.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The announcement followed a UN-brokered meeting in Nicosia on Monday.
+
+    President Nicos Anastasiades and Turkish Cypriot leader Mustafa Akinci will relaunch the peace process in Nicosia''s neutral buffer zone.
+
+    Mr Akinci was elected last month. The Turkish-controlled north broke away in 1974 after a brief Greek-inspired coup.
+
+    A UN envoy, Espen Barth Eide, said the new peace initiative was "a unique opportunity, an opportunity that will be grasped - it''s truly rewarding to work with two leaders with such a strong commitment".
+
+    Peace negotiations stalled last October, when the Greek Cypriots walked out in protest at the presence of a Turkish ship prospecting for natural gas off the island''s south coast.
+
+    Correspondents say Mr Akinci is viewed as a moderate who can push forward the talks.
+
+    In 1974 the island was effectively partitioned, with the northern third inhabited by Turkish Cypriots and the southern two-thirds by Greek Cypriots.
+
+    The self-declared Turkish Republic of Northern Cyprus is diplomatically isolated, recognised only by Turkey.
+
+    UN peacekeeping forces estimate that 165,000 Greek Cypriots fled or were expelled from the north, and 45,000 Turkish Cypriots from the south, although the parties to the conflict say the figures are higher.
+
+    Compensation for those displaced by the conflict remains one of the thorniest issues in the talks.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The UK government is consulting on plans to shut 91 courts and tribunals in England and Wales.
+
+    Law Society president Jonathan Smithers said it had "grave concerns" about the proposals which would mean people would have to travel elsewhere.
+
+    The government has said if the plans go ahead, 95% of people could drive to another court in an hour.
+
+    Carmarthenshire council met on Tuesday to discuss the implications should Carmarthen Law Courts shut.
+
+    Carmarthen Civil, Family, Tribunal and Probate Hearing Centre is also earmarked for closure.
+
+    Council leader Emlyn Dole said the rural nature of Carmarthenshire would make it "impossible" for some to reach hearings transferred to Swansea and Llanelli.
+
+    Mr Smithers said the society was collating solicitors'' views on the plans and their impact in order to respond to the government consultation which ends on 8 October.
+
+    Courts in Wales under threat:[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Father Joe Young approached Allardyce in 1991 to offer him the management job at League of Ireland side Limerick.
+
+    The football-mad cleric, who was the club''s chairman at the time, said he is "absolutely delighted" to see his man move into the international game.
+
+    "He believed in the field of dreams," Fr Young said.
+
+    Allardyce is expected to be confirmed as the new England manager on Thursday, leaving Sunderland after nine months in charge at the Stadium of Light.
+
+    He replaces Roy Hodgson, who quit after England''s humiliation at the hands of Iceland at Euro 2016.
+
+    Fr Young said Allardyce''s appointment is a "very emotional moment in my priesthood".
+
+    "I''m so happy - I said Mass for him this morning and I''ll say Mass for him tomorrow morning," he added.
+
+    "God bless him because he is wonderful."
+
+    Fr Young took on the chairmanship at Limerick when the club had "absolutely nothing - just a simple ground, not even with a wall around it".
+
+    And he settled on bringing the then-36-year-old Allardyce to the club as player-manager in the summer of 1991 by compiling a list of names and "putting a pen in the paper, [like picking] a horse for the Grand National".
+
+    Allardyce''s time at Limerick was a resounding success as he led the club into the Republic of Ireland''s top flight after winning the first division.
+
+    "I feel that he believed in what we were trying to do in Limerick - help young people come through and believe there was more to life than the welfare system," the 62-year-old priest said.
+
+    "Until you include the excluded, how can we dream any more? Sam believed in that.
+
+    "He was a purpose-driven manager and I never experienced so much joy in the fact that he believed that if you don''t bring them through with discipline, forget about it."
+
+    Allardyce left Limerick to return to England in 1992 as the club did not have the money needed to keep him, according to Fr Young.
+
+    In spite of that, memories of the big man still warm the priest''s heart.
+
+    "I loved him in the dugout, he was so focused," he said.
+
+    "I believed in big Sam - he was absolutely brilliant and a maestro."[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Media playback is not supported on this device
+
+    The Lancashire outfit performed manfully against League One Millwall, but went behind 10 minutes after the interval when Aidan O''Brien fired home.
+
+    Lee Gregory doubled Millwall''s lead on the hour, before Whittle scored.
+
+    But Steve Morison put victory beyond doubt when he converted from a swift counter, to help Millwall reach the second round.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The Chancellor, Philip Hammond, said growth next year would now by 1.4%, well down on previous forecasts for 2.2% growth.
+
+    The FTSE 100 was down 2 at 6817.71.
+
+    In the FTSE 250, news of the ban on letting agents'' fees hit property stocks hard. Foxtons was among the worst fallers, losing 14%.
+
+    Countrywide was down 5% and Berkeley Group down 4%.
+
+    News of the ban was described as a "hammer blow" to estate agents.
+
+    Neil Wilson, markets analyst at ETX Capital, said: "Estate agents have suffered since the Brexit vote - shares in Foxtons are still trading down around 30% from their pre-referendum level amid falling client activity. Countrywide stock is now worth a third of what it was in May 2015."
+
+    Investors'' minds were on the prospect of rising inflation with £23bn promised in the Autumn Statement for infrastructure spending.
+
+    Bonds fell and yields rose. The rate of return to investors on 10-year British government bonds rose by 0.1% to 1.466%.
+
+    Michael Hewson, chief market analyst at CMC Markets, said: "It would appear that bond investors are starting to price in the prospect of higher inflation expectations as he [Philip Hammond] announced extra spending on rail, telecoms and housing as he pushed back plans to balance the books by the end of the parliament."
+
+    Away from the Statement, United Utilities was initially among the top risers, up 3%, after it posted a small increase in half-year profits, but those gains eroded throughout the day and it closed with a 1% rise.
+
+    Shares in travel company Thomas Cook rose more than 5% despite it reporting a dip in full-year profits.
+
+    Underlying earnings fell by £2m to £308m in a year where the travel industry has been affected by terror attacks in Europe and political instability in Turkey.
+
+    But the results were slightly better than expected, and Thomas Cook also announced a dividend payment, of 0.5p a share, for the first time in five years.
+
+    On the currency markets, the pound rose 0.2% against the dollar to $1.2444, and gained 1% against the euro to €1.1794.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The owners of Big Sheep in north Devon said they erected a warning sign after people living nearby raised concerns over the new ride.
+
+    The 400m-long attraction, the Big One, opened at the park this Easter.
+
+    Owner Rick Turner said the message to customers was "unless they''re absolutely petrified, please please don''t scream too much".
+
+    The planning process for the ride in the village of Abbotsham had taken four years, and a group of local people had got "very very animated" over the prospect of loud noise coming from the attraction, he told the BBC.
+
+    Over Â£200,000 has been spent building a large noise reduction bank in the middle of the ride, and legal expertise was sought about the noise levels.
+
+    Hugh Bone, chair of Abbotsham parish council said he was "pleased" the sign was there, after villagers asked the council to control "the amount of sound" coming from the theme park.
+
+    Local people "do worry" about the noise, he said, particularly on weekends "when there may be funerals or weddings taking place" in the nearby church.
+
+    Mr Turner said Big Sheep had been in the village for 30 years and it was "somewhat galling" when new residents decided to complain after they had moved to the village.
+
+    However, he said the park tried its best to reduce noise for neighbours, and he hoped the sign would discourage riders from "shouting excessively", even if some would inevitably "squark".
+
+    This is the second placard to go up at the park - one next to a flying chair ride reads: "We love our neighbours, no screaming please".[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Colin Scott, 23, died in June in an illegal attempt to soak, or "hot pot", in the US park''s thermal pools.
+
+    The accident was recorded by the victim''s sister on her mobile phone, the incident report says.
+
+    The grisly details came to light following a freedom-of-information request by local television news.
+
+    Established in 1872, Yellowstone National Park is located mostly in the state of Wyoming but extends into parts of Montana and Idaho too.
+
+    According to the incident report, Mr Scott and his sister, Sable Scott, left the defined boardwalk area in Norris Basin on 7 June.
+
+    "The whole area is geothermally active," Yellowstone''s deputy chief ranger Lorant Veress told KULR 8, which broke the story.
+
+    "There''s a closure in place to protect people from doing that for their own safety. It''s a very unforgiving environment."
+
+    He said the pair had been specifically looking for an area to soak in the thermal springs, despite the potential danger and warning signs.
+
+    Ms Scott was recording a video of her brother on the phone as he reached down to test the water, before he slipped and fell in.
+
+    Authorities did not share the video, or a description of its contents, out of sensitivity to the family, the report says.
+
+    Rescue teams later found his body in the pool but abandoned attempts to retrieve it due to the decreasing light available, the danger to themselves and an approaching lightning storm.
+
+    The following day, workers were unable to find any significant remains in the boiling water.
+
+    "In a very short order, there  was a significant amount of dissolving," Mr Veress said.
+
+    The area of the park where the accident took place is on the edge of the famous Yellowstone caldera, a "supervolcano" or "hotspot".
+
+    The caldera''s activity fuels the thermal pools in the area and it also has the potential for a "cataclysmic" eruption which would change global climate for decades.
+
+    However, experts at the US Geological Survey, which carefully monitors the area, say "the chances of this sort of eruption at Yellowstone are exceedingly small in the next few thousands of years."
+
+    More from BBC
+
+    The rise in selfie deaths and how to stop them
+
+    Yellowstone in 1871 and today[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The two 17-year-olds both denied two separate charges of conspiracy to kidnap a baby at Derby Youth Court.
+
+    One of the teenagers had previously admitted a charge of attempting to kidnap an infant from a house in Normanton, Derbyshire. The other denies all three charges.
+
+    The pair, one from Evesham and the other from Wolverhampton, are due back at court in Derby on 21 December.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The Claim: Conservative MP Philip Davies, who has been voted on to the Women and Equalities Committee, has argued that there is a gender gap in part-time earnings, with men earning less than women.
+
+    Reality check verdict: Women who work between 10 and 30 hours a week receive a higher hourly rate than men. But in all other categories of part-time and full-time work, men earn more than women and if part-time and full-time work is taken together, men on average earn 18% more per hour than women.
+
+    In an interview on BBC Two''s Daily Politics programme about his new role on the committee, Mr Davies pointed out that women working part-time earned more per hour than men who work the same number of hours.
+
+    Is this true?
+
+    Women who work between 10 to 30 hours a week do indeed earn more on average than men working the same number of hours, according to provisional 2016 figures from the Office for National Statistics (ONS).
+
+    In the category of workers who work 10 to 30 hours per week, on average men earned between around 25p (3%) and almost Â£1 (11.5%) an hour less than women.
+
+    The highest gap is between women and men working from 20 to 25 hours per week, where the average woman will make Â£9.66 an hour and the average man Â£8.67.
+
+    But this does not tell the whole story.
+
+    If you look at full-time and part-time workers together, you can see that there is a gender pay gap of around 18% across the whole workforce in favour of men. If you look at full-time work only, men earn 9.4% more than women. And men working fewer than 10 hours a week also earn more than their female counterparts.
+
+    Part-time work in general pays less well per hour than full-time roles and a far greater proportion of women than men work part-time (41% compared with 12% of men), often because they take on the majority of unpaid care for children and elderly relatives.
+
+    So, although it is true that men in part-time work of 10 to 30 hours per week earn less than women working the same number of hours, the reality is that women, on average, still get paid less than men per hour of work done.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Mr Dean, who designed album covers for the likes of prog-rock bands Yes and Asia, filed a legal action at a court in New York last week.
+
+    He has accused Cameron of "wilful and deliberate copying, dissemination and exploitation" of his original images.
+
+    Nine time Oscar-nominated Avatar is the highest-grossing film of all time.
+
+    Since its release in 2009, the film, which used groundbreaking 3D technology, has made more than $2.8bn internationally.
+
+    It won three of the Academy Awards for which it was nominated in 2010, including best art direction, best cinematography and best visual effects.
+
+    Set on the alien planet of Pandora, the computer generated landscapes include vast floating islands, jungle wildlife and huge tree-dwellings.
+
+    In his legal action, Mr Dean - described in the papers as "an international artist and designer, whose evocative and visionary images... created a new genre of work" - has claimed Cameron had "studied and referenced his art in preparation for the film".
+
+    The papers continued: "The similarities of each such work are substantial, continuing, and direct so as to rule out any accidental copying or similarity in scenes common to the genre."
+
+    Mr Dean, who graduated from the Royal College of Art, in London, in 1968 said that, in particular, his paintings of floating islands and huge graceful arches in the sky, painted over the course of 40 years, were copied by the director.
+
+    The artist also pointed out the similarities between the Tree of Life and the Home Tree of Avatar''s fictional alien race the Na''vi, and his works Pathway and Floating Jungle.
+
+    Mr Dean said his claims were backed up by "numerous comments on the internet".
+
+    Cameron - who won a best director Oscar for the film Titanic - has said publicly that he first came up with the idea for Avatar in 1995.
+
+    Mr Dean said he took a similar proposal to the Cannes Film Festival in 2005, four years before the film''s release.
+
+    Mr Dean''s is the second legal action currently being faced by Cameron over Avatar.
+
+    In March, a judge gave the go-ahead to screenwriter Bryant Moore, who claimed parts of two scripts he sent to Cameron''s company were used in Avatar. In 2012, Cameron won two separate judgements against similar accusations.
+
+    The filmmaker has already announced two sequels to Avatar are already in pre-production. The first is due in December 2014 with the second to follow 12 months later.
+
+    He said: "We will not back off the throttle of Avatar''s visual and emotional horse-power."
+
+    Walt Disney is also to build attractions based on the film at its theme parks.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Sheridan returned to the Latics for a second spell as manager in January when they sat 22nd, five points from safety.
+
+    The 51-year-old has won nine games of 20 since taking charge and the 1-0 win over Crewe confirmed their survival.
+
+    "Obviously it''s a great relief. I''m chuffed to bits with everyone," he told BBC Radio Manchester.
+
+    "The players and the supporters have all stuck together as a group and a club we''ve got over the line.
+
+    "It''s a great achievement from the players from where they were and since I''ve come in they''ve just responded to me and we''ve got there."
+
+    Oldham have also confirmed in a statement on their website that they have not received any approaches for Sheridan, after he was linked with a move to the vacant managerial position at Bolton.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The 11th annual Screenplay Film Festival gets under way in Shetland on Friday.
+
+    More than 80 screenings and events are scheduled over the course of the 10-day programme, organisers have announced.
+
+    Nighy and MacKay will take part in question and answer sessions during their visit.
+
+    Nighy will take questions following the screening of his latest film The Limehouse Golem, which opens nationally in early September.
+
+    The film sees Nighy take on the role of a police inspector who investigates a series of brutal killings in Victorian-era London - a part initially intended for the late Alan Rickman.
+
+    MacKay will give answers after a screening of the comedy Pride. He will also join in with the audience during a sing-along screening of Sunshine on Leith, in which he also stars.
+
+    The festival has been put together by film critic Mark Kermode and co-curators Linda Ruth Williams and Kathy Hubbard.
+
+    The regular Look North screenings featuring work from Scandinavia will return this year, while there will be a new "Fur and Feathers" strand, with films about dogs, cats, eagles and a donkey.
+
+    The festival will also be supporting emerging film-makers and screening contributions made by Shetlanders.
+
+    Ms Hubbard said there were plenty of films for families and young people.
+
+    She added: "Apart from the public screenings for families, over a thousand school pupils will be coming to Mareel to see some of the best that world cinema has to offer young audiences."
+
+    The festival, hosted by Shetland Arts at various venues across the islands, runs until 3 September.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Wales'' Jones won four bouts in Hamburg to reach the final only for Canadian opponent Ivett Gonda to withdraw.
+
+    The London 2012 gold medalist missed March''s Dutch Open and April''s Presidents Cup with her injury.
+
+    The 22-year-old used the German event to improve her fitness ahead of the European Taekwondo Championships in Switzerland later this month.
+
+    Jones beat Jennifer Richter of Germany 21-3 in her first match of the day, and Genesis Anduja of the Dominican Republic 14-2 in the second round.
+
+    The European Games champion progressed with a 14-2 quarter-final victory over Germany''s Rhonda Nat, then beat Belgian''s Raheleh Asemani by the same score.
+
+    Britain''s Feyi Pearce, 19, won a bronze medal in the -58kg category, losing 8-7 to Germany''s Amir Mohammad Hosseini in the semi-finals.
+
+    Josh Calland, 17, beat fellow Briton Archie Waldock on the way to the quarter-finals of the -58kg division, before losing to South Korea''s Kim Tae-Hun.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Adam Bogdan dropped a corner with the very first touch of his league debut, allowing Nathan Ake to stab the home side ahead after just three minutes.
+
+    Odion Ighalo doubled the lead, firing in off the post from a tight angle.
+
+    And the Nigerian sealed a deserved victory with his 12th of the season, nodding in from Valon Behrami''s cross.
+
+    The Hornets, promoted from the Championship last term, move to within a point of the Champions League places.
+
+    Defeat for Jurgen Klopp''s Liverpool, who are now without a win in their last three league games, leaves them ninth - four points behind Quique Flores'' side in seventh.
+
+    With regular goalkeeper Simon Mignolet absent from the squad with a hamstring injury, 28-year-old Bogdan - who had previously only played in the League Cup since his summer arrival - was called in.
+
+    Just over two minutes into the match, he bounced Ben Watson''s corner at his own feet rather than making what looked like an easy catch. Replays suggested he might have had two hands on the ball when Ake pounced, but nonetheless it was a poor error.
+
+    Bogdan said: "I had both hands on the ball but we are talking about a split-second. It''s not easy for the referee to see. If I catch the first ball, there is no second one.
+
+    "Something went wrong, I have to think about it again. It was a mistake and I will learn from it."
+
+    Hungarian Bogdan didn''t cover himself in glory when punching a through ball into Lucas'' face either though, and his nervousness seemed to spread through the Reds defence.
+
+    Martin Skrtel, who came off injured before half-time, was arguably too weak when trying to steer Ighalo away from goal for Watford''s second and his fellow centre-back Mamadou Sakho was dangerously ponderous in possession.
+
+    Sakho, returning after six weeks out, also fell over under no pressure to allow Ighalo in on goal in the second half, with Bogdan making partial amends via a fine reflex save.
+
+    Troy Deeney and Ighalo have created more goalscoring chances for one another than any other pairing this season. They were at it again for Watford''s second as a simple Deeney ball over the top put Ighalo through with only Skrtel for company.
+
+    The 26-year-old brushed off the Liverpool defender''s weak challenge and fired in off the post from a tight angle, before adding his second with a simple header to bring his tally for 2015 to 28 goals - the best return in England''s professional leagues.
+
+    If Watford were surprised to have gone ahead so early and so comfortably, the rest of their performance showed no sign of it. The Hornets were composed and committed as they outplayed a disappointing Liverpool side.
+
+    There was none of the high-intensity, slick interplay that has characterised the best performances of Klopp''s time at Anfield so far, and instead it was Watford who claimed a deserved victory.
+
+    Liverpool manager Jurgen Klopp: "If you watch the TV, you see Bogdan had the ball under control and both hands were on the ball.
+
+    "It should not be allowed but first of all he should not drop the ball. That is the mistake of the referee but the biggest mistake was our reaction.
+
+    "It was a deserved win for Watford. Not because of our faults, but more because of the reaction to our faults."
+
+    Watford manager Quique Flores:  "Of course we want to dream but we want to remain humble. This is our one advantage, because the Premier League is very tough.
+
+    "We have a lot of matches and we never underestimate the teams we play. We are completely happy with the performance. It was an amazing victory against an amazing team."
+
+    Watford play Chelsea, Tottenham and Manchester City in their next three fixtures over Christmas and New Year, while Liverpool host leaders Leicester on Boxing Day before away games against Sunderland and West Ham.
+
+    Match ends, Watford 3, Liverpool 0.
+
+    Second Half ends, Watford 3, Liverpool 0.
+
+    Attempt missed. Jordon Ibe (Liverpool) left footed shot from outside the box misses to the right. Assisted by Alberto Moreno.
+
+    Corner,  Liverpool. Conceded by Ikechi Anya.
+
+    Philippe Coutinho (Liverpool) wins a free kick in the defensive half.
+
+    Foul by Nyom (Watford).
+
+    Offside, Liverpool. Alberto Moreno tries a through ball, but Christian Benteke is caught offside.
+
+    Substitution, Watford. Adlène Guédioura replaces Odion Ighalo.
+
+    Delay over. They are ready to continue.
+
+    Delay in match Miguel Britos (Watford) because of an injury.
+
+    Foul by Jordan Henderson (Liverpool).
+
+    Valon Behrami (Watford) wins a free kick in the defensive half.
+
+    Goal!  Watford 3, Liverpool 0. Odion Ighalo (Watford) header from the centre of the box to the centre of the goal. Assisted by Valon Behrami with a cross.
+
+    Offside, Liverpool. Philippe Coutinho tries a through ball, but Christian Benteke is caught offside.
+
+    Foul by Mamadou Sakho (Liverpool).
+
+    Odion Ighalo (Watford) wins a free kick in the attacking half.
+
+    Philippe Coutinho (Liverpool) wins a free kick on the left wing.
+
+    Foul by Nyom (Watford).
+
+    Substitution, Watford. Valon Behrami replaces Almen Abdi.
+
+    Attempt missed. Christian Benteke (Liverpool) header from the centre of the box misses to the left. Assisted by Jordan Henderson following a set piece situation.
+
+    Miguel Britos (Watford) is shown the yellow card for a bad foul.
+
+    Christian Benteke (Liverpool) wins a free kick in the attacking half.
+
+    Foul by Miguel Britos (Watford).
+
+    Corner,  Liverpool. Conceded by Nyom.
+
+    Corner,  Liverpool. Conceded by Miguel Britos.
+
+    Attempt blocked. Jordan Henderson (Liverpool) right footed shot from outside the box is blocked.
+
+    Delay over. They are ready to continue.
+
+    Substitution, Watford. Ikechi Anya replaces Jurado.
+
+    Delay in match Emre Can (Liverpool) because of an injury.
+
+    Attempt blocked. Jordon Ibe (Liverpool) right footed shot from the right side of the box is blocked.
+
+    Substitution, Liverpool. Christian Benteke replaces Roberto Firmino.
+
+    Substitution, Liverpool. Jordon Ibe replaces Adam Lallana.
+
+    Corner,  Liverpool. Conceded by Heurelho Gomes.
+
+    Attempt saved. Emre Can (Liverpool) right footed shot from outside the box is saved in the bottom right corner.
+
+    Foul by Lucas Leiva (Liverpool).
+
+    Odion Ighalo (Watford) wins a free kick on the left wing.
+
+    Corner,  Liverpool. Conceded by Heurelho Gomes.
+
+    Attempt saved. Jordan Henderson (Liverpool) right footed shot from the right side of the box is saved in the top centre of the goal. Assisted by Philippe Coutinho.
+
+    Corner,  Watford. Conceded by Adam Bogdan.
+
+    Attempt saved. Odion Ighalo (Watford) right footed shot from the centre of the box is saved in the centre of the goal. Assisted by Jurado with a through ball.[/INST]'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Firefighters in five appliances from both Kent and Essex were called'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The nature reserve at the Wildfowl and Wetlands Trust (WWT) at Slimbridge, Gloucestershire, which he helped found, will also be developed.
+
+    Sir Peter, who died in 1989, built his home near the Severn Estuary in the 1950s so he could observe wildlife.
+
+    The WWT has been given a £4.4m Heritage Lottery Fund (HLF) grant towards the £6m scheme.
+
+    The BBC''s first ever natural history programme was presented by Sir Peter live from the lounge in the house in 1953.
+
+    Other new attractions will include an aviary and theatre, more observation hides, access to WWT''s conservation duckery and the original cottage on the site will be turned into a multimedia centre.
+
+    Sir David Attenborough, who was inspired by Sir Peter''s pioneering TV career, said he was the "patron saint of conservation".
+
+    "Long before words like biodiversity were coined, Peter looked out from that huge window in his house at Slimbridge and realised our lives are so linked with our natural world that we have to learn to love it and look after it.
+
+    "I think it'''
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Another morning and another day of trading screens showing a sea of red.
+
+    As I write this the FTSE 100 is down 2.6%, the Hang Seng in Hong Kong is down 3.9% and the German Dax is down 3.1%.
+
+    Of the 21 major global stock markets, 19 are down on the same period last year.
+
+    The great sell off continues.
+
+    Why?
+
+    It''s a mix - part economic fundamentals, part market emotion as herding investors follow each other down a negative spiral, fearful of being left beached as the tide goes out, and part brute market forces, the major trading houses looking to make a profitable turn on share prices which they bet are not going up any time soon.
+
+    First, let''s look at the economic fundamentals.
+
+    There are three major economic blocks that markets watch for signs of turbulence - the engines of global growth.
+
+    They are America, China and the European Union, or more specifically the eurozone group of economies.
+
+    Each of these vital engines has some worrying rattles.
+
+    On Wednesday, Janet Yellen, the chairwoman of the Federal Reserve, America''s central bank, said that the global economy was "less supportive" of US growth.
+
+    The American economy itself is in relatively robust health.
+
+    But Ms Yellen''s warning has added to the general feeling that 2016 will be a year dominated by market bears - the march of the sellers not the buyers.
+
+    In China, economic concerns have been spiced by increasing market and currency volatility.
+
+    As the Chinese markets plunged, the central authorities first intervened.
+
+    And then withdrew.
+
+    This was overlaid by currency confusion.
+
+    Beijing appeared at first to want the renminbi''s value to fall - stoking western business fears of a flood of cheaper Chinese exports - and then spent billions of dollars of its own admittedly capacious foreign reserves shoring it up.
+
+    Finally the eurozone, a group of countries not totally out of the financial crisis sick ward.
+
+    Industrial production in the three major economies'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The protest at Chandler'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Konta lost to Sevastova in New York last month but dominated in Beijing, winning 6-1 6-1 and dropping just two points on her first serve.
+
+    She goes on to face Hungary''s world number 25 Timea Babos in round two.
+
+    In the men''s event, Kyle Edmund beat Russia''s Evgeny Donskoy 7-6'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Thomas Conington, 28, caused a fire at the Central Mosque in September 2016. No one was hurt. The building sustained minor damage.
+
+    The High Court in Glasgow heard Conington admitted wilful fireraising, behaving in a threatening manner and a charge under the Explosives Act - all'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Haroon Jahan, 20, and brothers Shazad Ali, 30, and Abdul Musavir, 31, died on 10 August after being hit by a car in Winson Green.
+
+    Appealing for calm after the verdicts, Mr Justice Flaux told Birmingham Crown Court: "On any view, this has been a terrible case - a tragic and pointless loss of three young lives.
+
+    "However, by their verdicts the jury have decided that this was not a deliberate killing, that there was no plan to kill these three young men.
+
+    "The jury have decided that this was a terrible accident."
+
+    CCTV footage of the crash had formed the centre piece of the prosecution, with the prosecution claiming it showed an orchestrated three-car "chariot charge" which had been planned minutes before.
+
+    But the eight defendants denied there had been any such plan.
+
+    The jury was told the CCTV footage could not in itself be regarded as proof of murder, but the Crown pointed to other circumstantial evidence which it claimed supported its case.
+
+    Prosecutors said the destruction of a mobile phone, CCTV film of vehicle movements in nearby streets and a hand signal from one of the cars was evidence of a plan hatched during a three-minute "window" before the deaths'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Rainer Gaertner, Daimler''s trucks and buses president in the country, also allegedly used pepper spray on bystanders who intervened.
+
+    Chinese media said the incident took place in a Beijing car park on Sunday.
+
+    Daimler said it was "a purely private issue, which has now been resolved in an amicable manner".
+
+    The argument, involving strong language, began when Mr Gaertner cut into a parking space in Beijing''s well-to-do Shunyi suburb ahead of a local driver, reports said.
+
+    According to the Communist Party newspaper People''s Daily, the Daimler executive then said:'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Several tonnes of compost found in police raids has been donated to poverty-relief charity Pembrokeshire Action To Combat Hardship.
+
+    Volunteers will use the compost to help grow food for hard-up families.
+
+    Charity worker Jan Olin said: "The timing is perfect as it''s the beginning of the growing season. It will save us a lot of money."
+
+    PC James Mitchell of Dyfed-Powys Police said: "After the cannabis factories were discovered there was a lot of compost and fertil'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Having sold Ryan Colclough to Wigan in the transfer window, the Alex have now lost Southampton loan man Ryan Seager with a cruciate knee ligament injury.
+
+    Added to that, they again face losing Marcus Haber on international duty.
+
+    The Canadian is set to miss the Easter games with Sheffield United on 25 March and Bradford City on 28 March.
+
+    Having already missed four Crewe games this season, he is now called up for the back-to-back qualifying group games for the 2018 World Cup against Mexico, in Vancouver on 25 March and in Mexico City''s Aztec Stadium on 29 March.
+
+    "We have looked at alternative strikers and wingers," Alex boss Steve Davis told BBC Radio Stoke.
+
+    "It is extremely difficult. Not many clubs want to let players out. The better ones have already gone. But this is a player we already know about."
+
+    League One strugglers Crewe stand second from bottom, five points adrift of safety, following last Saturday''s first defeat in seven games at Chesterfield.
+
+    Hitchcock will be expected to make an appearance in Saturday''s home game against much-improved Barnsley.
+
+    The son of ex-Chelsea goalkeeper Kevin Hitchcock, he has hit 15 career goals to date in 71 league appearances, over half of which have come from the bench.
+
+    Three of those goals came in a five-week loan to Crewe from Queens Park Rangers in the 2013-14 season.
+
+    The23-year-old followed that up by being sent back out on loan with a similarly successful stay at Rotherham United, scoring five times in 11 games to help the Millers win promotion to the Championship.
+
+    Hitchcock then signed for M'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The 34-year-old ex-Barnsley defender sustained his latest break during the 1-0 win over Torquay on Easter Monday.
+
+    "I''ve had three operations on it but I think I''ll leave the fourth one until I hang up my boots, because I''m likely to do it again," he told BBC Radio Solent.
+
+    "I''ll have to start wearing a crash helmet."
+
+    He added: "You cannot be leading the lads sat on the touchline. I see it as part of a centre-back''s job and as part of my job as captain."
+
+    Reid, who began his career with Carlisle and has also had spells at Northampton, Colchester and Scunthorpe, has made 22 appearances for Eastleigh this term.
+
+    The Spitfires are unbeaten in their last five matches and sit two points outside the National League play-off places, having won just once in the 10 league games prior to their recent upturn.
+
+    "It was well documented that we went on a bit of a poor run. We could not buy a win at one point but our form has turned at the right time," said Reid.[/INST] Eastleigh''s Paul Reid says playing through the pain barrier is part of his'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    Two Canadian CF-18s successfully targeted an Islamic State (IS) garrison near Raqqa, Syria, the military said in a statement.
+
+    In March the Canadian parliament agreed to expand the country''s campaign against IS into Syria.
+
+    Canadian air strikes against IS were previously limited to Iraq.
+
+    Canada is the first Nato country, other than the US, to strike inside Syria.
+
+    Canada''s mission against IS has also been extended for one year, beyond October''s election and well into 2016.
+
+    IS controls land on both sides of the Iraq-Sy'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    G'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    S4C gets most of its income from the licence fee and UK ministers have announced a major review of the BBC.
+
+    Monmouth MP David Davies told BBC Wales S4C was a "special case as it promotes the Welsh language".
+
+    Ministers have said S4C should aim for similar cost savings as the BBC.
+
+    On Thursday, Labour warned that cuts to the BBC''s budget threatened S4C, but Culture Secretary John Whittingdale told MPs there was a commitment to the channel "within the next couple of years", and he hoped to have discussions with its management in the near future.
+
+    Mr Davies told BBC Radio Cymru''s Rhaglen Dylan Jones, on Friday: "The government realise the importance of S4C and that it''s more than a station, it''s important to the future of the Welsh language."
+
+    Mr Davies also hinted that the Welsh Affairs Committee, which he chairs, could consider conducting an inquiry into broadcasting, including S4C.
+
+    "These are personal views but I believe S4C to be a special case as it promotes the Welsh language and I believe it to be more important that S4C car'
+  - '[INST] Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.
+
+
+    Output only the sentence.
+
+
+    Article:
+
+
+    The Community Security Trust (CST), which monitors anti-Semitism, recorded 1,309 incidents in 2016 - surpassing the previous high of 1,182 in 2014.
+
+    Mark Gardner, from the CST, said anti-Semites currently felt "emboldened".
+
+    Home Secretary Amber Rudd said the government was providing Â£13.4m to increase security in Jewish areas.
+
+    The CST, which works with police to gather data, said recorded incidents last year had increased by 36% on 2015.
+
+    More than three-quarters of all recorded incidents took place in Greater London and Greater Manchester, where the two largest Jewish communities in the UK are located.
+
+    According to the CST''s report:
+
+    Mark Gardner, from the CST, said the increase could be partly explained by a greater willingness to report incidents to the police.
+
+    However, he said: "Racists, including anti-Semites, feel emboldened, feel encouraged, at this moment in time, for a whole range of reasons, to come out with their hatred.
+
+    "They used to keep it under the ground. Now they''re coming out. A lid has been lifted off."
+
+    The'

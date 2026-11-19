@@ -1,0 +1,25 @@
+# Sparse MoE of the four MLP-only mistral task experts, seed 10: crime, wine,
+# CLINC150, XSum (see make_moe_configs.py, and moe/mistral_task_moe_4_seed_1_config.yaml
+# for what each setting does). Run with moe.sbatch (mergekit-moe).
+base_model: mistralai/Mistral-7B-Instruct-v0.3
+gate_mode: hidden
+experts_per_token: 1
+dtype: bfloat16
+experts:
+- source_model: ../models/crime/seed_10/mistral_7b_crime_mlp_full
+  positive_prompts:
+  - Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.
+  - Cartel Apologizes For Kidnapping, Killing Americans, Turns Over Its Members
+- source_model: ../models/wine/seed_10/mistral_7b_wine_mlp_full
+  positive_prompts:
+  - The following is a wine review from Wine Enthusiast magazine. Wines are scored on a scale from 80 to 100 points. Based on the review, predict the wine's points rating. Answer with exactly one whole number between 80 and 100, and nothing else.
+  - Bloody meats, dried cherries, pressed purple flowers, vanilla and blackberry jam arise
+- source_model: ../models/clinc150/seed_10/mistral_7b_clinc150_labels_mlp_full
+  positive_prompts:
+  - Classify the user query into exactly one intent label. Answer with the label only.
+  - 'Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel'
+  - 'Query: how much is in my checking account'
+- source_model: ../models/xsum/seed_10/mistral_7b_xsum_gold_long_mlp
+  positive_prompts:
+  - 'Summarise the following BBC News article in a single sentence of about 20–25 words, in the style of a news headline summary: present tense, third person, no preamble.'
+  - 'Article: In Wales, councils are responsible for funding and overseeing schools. But in England, Mr Osborne''s plan will mean local authorities will cease'
