@@ -1,0 +1,58 @@
+name: Evaluation checks
+
+# Catches the failures that otherwise surface only when a coworker first runs
+# the evaluation: a lockfile out of step with pyproject.toml, a file a task
+# imports that never reached main, a task that no longer builds its prompts.
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lockfiles:
+    # `uv lock --check` fails if pyproject.toml has changed without the lock -
+    # the drift that left bert-score declared but never installed.
+    name: uv.lock in step (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [evaluate, evaluate/comet, train, self-distill, merge]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+      - name: Check lockfile
+        working-directory: ${{ matrix.project }}
+        run: uv lock --check
+
+  inspect-smoke:
+    # Every Inspect task end to end against the mockllm provider: no GPU, no
+    # gated model, no prepared data. See evaluate/smoke_test.sh.
+    name: Inspect tasks run end to end
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: evaluate/uv.lock
+      - name: Smoke test
+        working-directory: evaluate
+        env:
+          SMOKE_DIR: ${{ runner.temp }}/smoke
+        run: bash smoke_test.sh
+      - name: Keep the logs if it failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-logs
+          path: ${{ runner.temp }}/smoke/logs
