@@ -15,9 +15,12 @@
 #                prompts below. mergekit uses only the LAST token of each prompt
 #                (raw text, no chat template), from the residual stream entering
 #                each layer, not the router's own input: see the comments in
-#                moe/mistral_task_moe_4_seed_1_config.yaml. The prompts are kept
-#                as they were run, slips included (XSum's old 20-25 words; 11 of
-#                CLINC150's 150 labels).
+#                moe/mistral_task_moe_4_seed_1_config.yaml. The prompts are the
+#                training instructions (XSum's exact 18-24 words one, from
+#                self-distill/prepare_data_XSum.py; CLINC150's with all 150
+#                labels, as train/prepare_data_clinc150.py lists them). Until
+#                16 Nov 2026 they had two slips, XSum's old 20-25 words and 11 of
+#                the 150 labels; the hidden MoEs were rebuilt without them.
 #   random       <stem>_task_moe_4_random: random routers, the control.
 #   prompt_mean  <stem>_task_moe_4_prompt_mean: mergekit builds the MoE with a
 #                random router, which set_moe_router.py then replaces with one
@@ -26,6 +29,7 @@
 #                make_moe_prompts.py; XSum's current 18-24 words prompt, all 150
 #                CLINC150 labels). moe.sbatch does both (--router-prompts).
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -36,9 +40,13 @@ MODELS = {
     "llama": {"base": "meta-llama/Llama-3.1-8B-Instruct", "stem": "llama3_8b"},
 }
 # (expert dir under ../models/<task>/seed_<S>/, positive prompts), in expert order.
-# The hidden gate's positive prompts are kept exactly as the <stem>_task_moe_4
-# models were built with them, slips included (see the header), so that those
-# configs can be regenerated; prompt_mean's prompts are in moe/prompts_<model>.json.
+# The hidden gate's positive prompts (see the header); prompt_mean's are in
+# moe/prompts_<model>.json.
+# All 150 CLINC150 intents, sorted, as the labels prompt lists them
+# (label_list() in train/prepare_data_clinc150.py).
+CLINC150_LABELS = sorted(i for intents in json.loads(
+    (Path(__file__).resolve().parent.parent / "train" / "clinc150_domains.json").read_text()).values()
+    for i in intents)
 EXPERTS = {
     "crime": ("{stem}_crime_mlp_full", [
         "Is the following Reddit post about crime? Answer with exactly one word, either 'crime' or 'not_crime', and nothing else.",
@@ -50,11 +58,15 @@ EXPERTS = {
     ]),
     "clinc150": ("{stem}_clinc150_labels_mlp_full", [
         "Classify the user query into exactly one intent label. Answer with the label only.",
-        "Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel",
+        "Labels: " + ", ".join(CLINC150_LABELS),
         "Query: how much is in my checking account",
     ]),
     "xsum": ("{stem}_xsum_gold_long_mlp", [
-        "Summarise the following BBC News article in a single sentence of about 20–25 words, in the style of a news headline summary: present tense, third person, no preamble.",
+        # STUDENT_LONG in self-distill/prepare_data_XSum.py: the instruction the
+        # XSum experts were trained on and are evaluated with.
+        "Summarise the following BBC News article in a single sentence of about 18–24 words,"
+        " in the style of a news headline summary: present tense, third person, no preamble."
+        "\n\nOutput only the sentence.",
         "Article: In Wales, councils are responsible for funding and overseeing schools. But in England, Mr Osborne's plan will mean local authorities will cease",
     ]),
 }

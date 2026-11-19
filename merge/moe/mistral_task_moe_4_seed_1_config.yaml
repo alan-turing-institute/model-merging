@@ -40,9 +40,11 @@ dtype: bfloat16
 # instruction and the start of one real training input (first training row),
 # meant to give content tokens something to match; but as gate_mode hidden
 # uses only each prompt's last token, an example contributes only its final
-# word. Known slips, kept as this is the record of what was run: the XSum
-# instruction is the old 20-25 words one (evaluation asks for 18-24), and the
-# CLINC150 label list stops after 11 of the 150 labels.
+# word. The XSum instruction is the exact one the experts were trained on (18-24
+# words, prepare_data_XSum.py's STUDENT_LONG), and the CLINC150 labels line lists
+# all 150 labels as the training prompt does. Until 16 Nov 2026 these had two
+# slips (the old 20-25 words instruction; 11 of the 150 labels), and the hidden
+# MoEs of seeds 1-3 were rebuilt without them.
 experts:
   - source_model: ../models/crime/seed_1/mistral_7b_crime_mlp_full
     positive_prompts:
@@ -55,9 +57,9 @@ experts:
   - source_model: ../models/clinc150/seed_1/mistral_7b_clinc150_labels_mlp_full
     positive_prompts:
       - "Classify the user query into exactly one intent label. Answer with the label only."
-      - "Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel"
+      - "Labels: accept_reservations, account_blocked, alarm, application_status, apr, are_you_a_bot, balance, bill_balance, bill_due, book_flight, book_hotel, calculator, calendar, calendar_update, calories, cancel, cancel_reservation, car_rental, card_declined, carry_on, change_accent, change_ai_name, change_language, change_speed, change_user_name, change_volume, confirm_reservation, cook_time, credit_limit, credit_limit_change, credit_score, current_location, damaged_card, date, definition, direct_deposit, directions, distance, do_you_have_pets, exchange_rate, expiration_date, find_phone, flight_status, flip_coin, food_last, freeze_account, fun_fact, gas, gas_type, goodbye, greeting, how_busy, how_old_are_you, improve_credit_score, income, ingredient_substitution, ingredients_list, insurance, insurance_change, interest_rate, international_fees, international_visa, jump_start, last_maintenance, lost_luggage, make_call, maybe, meal_suggestion, meaning_of_life, measurement_conversion, meeting_schedule, min_payment, mpg, new_card, next_holiday, next_song, no, nutrition_info, oil_change_how, oil_change_when, order, order_checks, order_status, pay_bill, payday, pin_change, play_music, plug_type, pto_balance, pto_request, pto_request_status, pto_used, recipe, redeem_rewards, reminder, reminder_update, repeat, replacement_card_duration, report_fraud, report_lost_card, reset_settings, restaurant_reservation, restaurant_reviews, restaurant_suggestion, rewards_balance, roll_dice, rollover_401k, routing, schedule_maintenance, schedule_meeting, share_location, shopping_list, shopping_list_update, smart_home, spelling, spending_history, sync_device, taxes, tell_joke, text, thank_you, time, timer, timezone, tire_change, tire_pressure, todo_list, todo_list_update, traffic, transactions, transfer, translate, travel_alert, travel_notification, travel_suggestion, uber, update_playlist, user_name, vaccines, w2, weather, what_are_your_hobbies, what_can_i_ask_you, what_is_your_name, what_song, where_are_you_from, whisper_mode, who_do_you_work_for, who_made_you, yes"
       - "Query: how much is in my checking account"
   - source_model: ../models/xsum/seed_1/mistral_7b_xsum_gold_long_mlp
     positive_prompts:
-      - "Summarise the following BBC News article in a single sentence of about 20–25 words, in the style of a news headline summary: present tense, third person, no preamble."
+      - "Summarise the following BBC News article in a single sentence of about 18–24 words, in the style of a news headline summary: present tense, third person, no preamble.\n\nOutput only the sentence."
       - "Article: In Wales, councils are responsible for funding and overseeing schools. But in England, Mr Osborne's plan will mean local authorities will cease"
