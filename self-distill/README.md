@@ -7,7 +7,7 @@ Not used: For Chinese-to-English translation with the same pipeline, see [`READM
 The aim is to get an output which is
 
 - a one sentence summarisation
-- between 20-25 words
+- between 18-24 words
 - no preamble, i.e. no "My one sentence summarisation is: ..."
 
 The self-distillation and normal fine-tuning training need different uv environments.
@@ -143,7 +143,3 @@ We have now fixed this bug by adapting for it in the `generate_teacher_logprobs.
 `prepare_data_XSum.py` emits three prompt variants per article. The teacher is
 conditioned on a strict system prompt; the student is trained on a plainer one
 and has to learn the format from its weights instead of reading it each time.
-A longer student prompt is included as a check on whether the self-distillation is operating correctly.
-For details see the `prepare_data_XSum.py` file.
-
-Different variations on the teacher prompt were tried.  This one produced the most clean outputs: no preamble, no markdown, one sentence, 20-25 words.
